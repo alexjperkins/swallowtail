@@ -75,7 +75,7 @@ func (pr *PortfolioRow) ToArray() []interface{} {
 func (pr *PortfolioRow) Refresh() {
 	pr.CurrentValue = pr.CurrentPrice * pr.Amount
 	pr.PNL = pr.CurrentValue - pr.Bought
-	pr.PNLPercentage = calcPNLPerc(pr.CurrentPrice, pr.Bought)
+	pr.PNLPercentage = calcPNLPerc(pr.CurrentPrice, pr.AverageEntry)
 }
 
 func (pr *PortfolioRow) WithTarget() bool {
@@ -120,9 +120,13 @@ func (ht *HistoricalTradeRow) ToArray() []interface{} {
 	return r
 }
 
-func calcPNLPerc(currentPrice, boughtFor float64) float64 {
-	if boughtFor == 0.0 {
+func calcPNLPerc(currentPrice, boughtAt float64) float64 {
+	if boughtAt == 0.0 {
 		return 0.0
 	}
-	return ((currentPrice / boughtFor) - 1) * 100
+	v := ((currentPrice / boughtAt) - 1) * 100
+	if v < 0.01 && v > 0.0 {
+		return 0.0
+	}
+	return v
 }

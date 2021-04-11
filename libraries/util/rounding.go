@@ -17,7 +17,7 @@ func FormatPriceFromString(price string) (string, error) {
 		return "", terrors.Augment(err, "Failed to parse price string", nil)
 	}
 	if f > 1.0 {
-		return fmt.Sprintf("%.2f", f), nil
+		return fmt.Sprintf("%.3f", f), nil
 	}
 
 	var numZeros int
@@ -42,7 +42,7 @@ func FormatPriceAsString(price float64) (string, error) {
 		return "0.00", nil
 	}
 	if price > 1.0 {
-		return fmt.Sprintf("%.2f", price), nil
+		return fmt.Sprintf("%.3f", price), nil
 	}
 
 	strPrice := fmt.Sprintf("%f", price)
