@@ -1,0 +1,9 @@
+setup infra & tooling
+binance client to trade
+coinbase pro client
+coinbase pro cron - automated weekly buys
+ftx client
+ethereum client
+authentication
+portfolio
+trading strat

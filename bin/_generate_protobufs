@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -e
+
+# Usage:
+#   ./bin/_generate_protobufs service.foo
+#   ./bin/_generate_protobufs service.foo /desired/output/dir
+
+# This script generates protobufs directly, without performing any validation on the installed protoc, protobuf versions.
+# This should only be run from the CircleCI proto_integrity check, which does not need to validate versions.
+# If you want to generate protobufs from your laptop, please use bin/generate_protobufs.
+
+is_experimental=false
+
+while getopts 'x' flag; do
+  case "${flag}" in
+    x) is_experimental=true ;;
+    *) ;;
+  esac
+done
+
+# Remove optional flag params and continue as normal
+shift $(( OPTIND - 1 ))
+output_dir=$2
+
+if [[ ! -d $output_dir ]]
+then
+    echo "Error: expected 2nd argument to be directory"
+    exit 1;
+fi
+
+_realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
+ROOT=$(_realpath "${1:-$(pwd)}")
+
+if ! [[ -d $ROOT ]]
+then
+    >&2 echo "Provide a valid directory name"
+    exit 1
+fi
+
+
+files=$(find "${ROOT}" -maxdepth 3 -type f -name "*.proto")
+for f in $files; do
+    echo "Compiling $f";
+    # The protoc option --descriptor_set_out takes a filepath, while the other generators take a directory ($output_dir).
+    # The file $f is the absolute path to the proto file that is being compiled.
+    # In our development environment this will be like:
+    # $GOPATH/src/github.com/monzo/wearedev/<rest of the path to the proto file here>
+    #
+    # The following lines extract the file path, relative to $GOPATH/src, so that when it's concatenated with the $output_dir
+    # it produces the .desc file in the same folder as the rest of the generators.
+    rel_file_path=${f#*${GOPATH}/src/}
+    descriptor_out_file=${output_dir}/${rel_file_path}.desc
+
+    # We specify both the wearedev vendor directory and the GOPATH src directory so
+    # that it is possible to import a protobuf definition from a vendored package
+    # and have the path used for that be consistent with the path that must be used
+    # to import the generated Go package. If you import it directly including the
+    # vendor directory in the specified path, the resulting Go code is invalid.
+    #
+    # We specify the vendor path first so that if you have a copy of the package
+    # checked out into your GOPATH, the compiler still picks the vendored version
+    # first
+    if [[ "$is_experimental" = true ]]
+    then
+        echo "Generating experimental router..."
+        protoc --proto_path="${GOPATH}/src/github.com/monzo/wearedev/vendor" --proto_path="${GOPATH}/src" --go_out="${output_dir}" --typhon_out="${output_dir}" --firehose_out="${output_dir}" --streams_out="${output_dir}" --validator_out="${output_dir}" --router_out="${output_dir}" "${f}";
+    else
+        protoc --proto_path="${GOPATH}/src/github.com/monzo/wearedev/vendor" --proto_path="${GOPATH}/src" --go_out="${output_dir}" --typhon_out="${output_dir}" --firehose_out="${output_dir}" --streams_out="${output_dir}" --validator_out="${output_dir}" --include_imports --descriptor_set_out="${descriptor_out_file}" "${f}";
+    fi
+done

@@ -1,0 +1,19 @@
+syntax = 'proto3';
+
+message POSTLimitOrderRequest {
+    string symbol = 1;
+    string side = 2;
+    string type = 3;
+    string timeInForce = 4;
+    float quantity = 5;
+    float price = 6;
+    float stopPrice = 7;
+    string timestamp = 8;
+}
+
+message POSTLimitOrderResponse {
+}
+
+service Binance {
+    rpc POSTLimitOrder(POSTLimitOrderRequest) returns (POSTLimitOrderResponse);
+}

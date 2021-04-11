@@ -1,0 +1,1 @@
+export { gqlClient } from './gql'

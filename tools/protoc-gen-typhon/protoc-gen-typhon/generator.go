@@ -1,0 +1,600 @@
+package main
+
+import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"go/parser"
+	"go/token"
+	"os"
+	"path"
+	"strconv"
+	"strings"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/golang/protobuf/protoc-gen-go/generator"
+	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
+	"github.com/monzo/wearedev/tools/protoc-gen-typhon/gen"
+	"github.com/monzo/wearedev/tools/protoc-gen-typhon/gen/stringutils"
+	"github.com/monzo/wearedev/tools/protoc-gen-typhon/gen/typemap"
+	typhonproto "github.com/monzo/wearedev/tools/protoc-gen-typhon/proto"
+	"github.com/pkg/errors"
+	"golang.org/x/tools/imports"
+)
+
+type typhon struct {
+	filesHandled   int
+	currentPackage string // Go name of current package we're working on
+
+	reg *typemap.Registry
+
+	// Map to record whether we've built each package
+	pkgs          map[string]string
+	pkgNamesInUse map[string]bool
+
+	// Package naming:
+	genPkgName          string // Name of the package that we're generating
+	fileToGoPackageName map[*descriptor.FileDescriptorProto]string
+
+	// List of files that were inputs to the generator. We need to hold this in
+	// the struct so we can write a header for the file that lists its inputs.
+	genFiles []*descriptor.FileDescriptorProto
+
+	// Output buffer that holds the bytes we want to write out for a single file.
+	// Gets reset after working on a file.
+	output *bytes.Buffer
+}
+
+func newGenerator() *typhon {
+	t := &typhon{
+		pkgs:                make(map[string]string),
+		pkgNamesInUse:       make(map[string]bool),
+		fileToGoPackageName: make(map[*descriptor.FileDescriptorProto]string),
+		output:              bytes.NewBuffer(nil),
+	}
+
+	return t
+}
+
+func (t *typhon) Generate(in *plugin.CodeGeneratorRequest) *plugin.CodeGeneratorResponse {
+	t.genFiles = gen.FilesToGenerate(in)
+
+	// Collect information on types.
+	t.reg = typemap.New(in.ProtoFile)
+
+	// Register names of packages that we import.
+	t.registerPackageName("context")
+
+	// Time to figure out package names of objects defined in protobuf. First,
+	// we'll figure out the name for the package we're generating.
+	genPkgName, err := deduceGenPkgName(t.genFiles)
+	if err != nil {
+		gen.Fail(err.Error())
+	}
+	t.genPkgName = genPkgName
+
+	// Next, we need to pick names for all the files that are dependencies.
+	for _, f := range in.ProtoFile {
+		if fileDescSliceContains(t.genFiles, f) {
+			// This is a file we are generating. It gets the shared package name.
+			t.fileToGoPackageName[f] = t.genPkgName
+		} else {
+			// This is a dependency. Use its package name.
+			name := f.GetPackage()
+			if name == "" {
+				name = stringutils.BaseName(f.GetName())
+			}
+			name = stringutils.CleanIdentifier(name)
+			t.fileToGoPackageName[f] = name
+			t.registerPackageName(name)
+		}
+	}
+
+	// We expect typhon will be referenced in the proto file already.
+	if t.pkgs["typhon"] == "" {
+		t.registerPackageName("typhon")
+	}
+
+	// Showtime! Generate the response.
+	resp := new(plugin.CodeGeneratorResponse)
+	for _, f := range t.genFiles {
+		respFile := t.generate(f)
+		if respFile != nil {
+			resp.File = append(resp.File, respFile)
+		}
+	}
+	return resp
+}
+
+func (t *typhon) registerPackageName(name string) (alias string) {
+	alias = name
+	i := 1
+	for t.pkgNamesInUse[alias] {
+		alias = name + strconv.Itoa(i)
+		i++
+	}
+	t.pkgNamesInUse[alias] = true
+	t.pkgs[name] = alias
+	return alias
+}
+
+// deduceGenPkgName figures out the go package name to use for generated code.
+// Will try to use the explicit go_package setting in a file (if set, must be
+// consistent in all files). If no files have go_package set, then use the
+// protobuf package name (must be consistent in all files)
+func deduceGenPkgName(genFiles []*descriptor.FileDescriptorProto) (string, error) {
+	var genPkgName string
+	for _, f := range genFiles {
+		name, explicit := goPackageName(f)
+		if explicit {
+			name = stringutils.CleanIdentifier(name)
+			if genPkgName != "" && genPkgName != name {
+				// Make sure they're all set consistently.
+				return "", errors.Errorf("files have conflicting go_package settings, must be the same: %q and %q", genPkgName, name)
+			}
+			genPkgName = name
+		}
+	}
+	if genPkgName != "" {
+		return genPkgName, nil
+	}
+
+	// If there is no explicit setting, then check the implicit package name
+	// (derived from the protobuf package name) of the files and make sure it's
+	// consistent.
+	for _, f := range genFiles {
+		name, _ := goPackageName(f)
+		name = stringutils.CleanIdentifier(name)
+		if genPkgName != "" && genPkgName != name {
+			return "", errors.Errorf("files have conflicting package names, must be the same or overriden with go_package: %q and %q", genPkgName, name)
+		}
+		genPkgName = name
+	}
+
+	// All the files have the same name, so we're good.
+	return genPkgName, nil
+}
+
+func (t *typhon) generateFileHeader(file *descriptor.FileDescriptorProto) {
+	t.P("// Code generated by protoc-gen-typhon ", gen.Version, ", DO NOT EDIT.")
+	t.P("// source: ", file.GetName())
+	t.P()
+	if t.filesHandled == 0 {
+		t.P("/*")
+		t.P("Package ", t.genPkgName, " is a generated typhon stub package.")
+		t.P("This code was generated with github.com/monzo/wearedev/tools/protoc-gen-typhon/protoc-gen-typhon ", gen.Version, ".")
+		t.P()
+		comment, err := t.reg.FileComments(file)
+		if err == nil && comment.Leading != "" {
+			for _, line := range strings.Split(comment.Leading, "\n") {
+				line = strings.TrimPrefix(line, " ")
+				// ensure we don't escape from the block comment
+				line = strings.Replace(line, "*/", "* /", -1)
+				t.P(line)
+			}
+			t.P()
+		}
+		t.P("It is generated from these files:")
+		for _, f := range t.genFiles {
+			t.P("\t", f.GetName())
+		}
+		t.P("*/")
+	}
+	t.P(`package `, t.genPkgName)
+	t.P()
+}
+
+func (t *typhon) generateImports(file *descriptor.FileDescriptorProto) {
+	if len(file.Service) == 0 {
+		return
+	}
+	t.P(`import `, t.pkgs["context"], ` "context"`)
+	t.P()
+	t.P(`import `, t.pkgs["typhon"], ` "github.com/monzo/typhon"`)
+	t.P()
+
+	// It's legal to import a message and use it as an input or output for a
+	// method. Make sure to import the package of any such message. First, dedupe
+	// them.
+	deps := make(map[string]string) // Map of package name to quoted import path.
+	for _, s := range file.Service {
+		for _, m := range s.Method {
+			defs := []*typemap.MessageDefinition{
+				t.reg.MethodInputDefinition(m),
+				t.reg.MethodOutputDefinition(m),
+			}
+			for _, def := range defs {
+				if def.File != file {
+					pkg := t.goPackageName(def.File)
+					importPath := path.Dir(goFileName(def.File))
+					deps[pkg] = strconv.Quote(importPath)
+				}
+			}
+		}
+	}
+	for pkg, importPath := range deps {
+		t.P(`import `, pkg, ` `, importPath)
+	}
+	if len(deps) > 0 {
+		t.P()
+	}
+}
+
+// P forwards to g.gen.P, which prints output.
+func (t *typhon) P(args ...string) {
+	for _, v := range args {
+		t.output.WriteString(v)
+	}
+	t.output.WriteByte('\n')
+}
+
+// Big header comments to makes it easier to visually parse a generated file.
+func (t *typhon) sectionComment(sectionTitle string) {
+	t.P()
+	t.P(`// `, strings.Repeat("=", len(sectionTitle)))
+	t.P(`// `, sectionTitle)
+	t.P(`// `, strings.Repeat("=", len(sectionTitle)))
+	t.P()
+}
+
+func (t *typhon) printComments(comments typemap.DefinitionComments) bool {
+	text := strings.TrimSuffix(comments.Leading, "\n")
+	if len(strings.TrimSpace(text)) == 0 {
+		return false
+	}
+	split := strings.Split(text, "\n")
+	for _, line := range split {
+		t.P("// ", strings.TrimPrefix(line, " "))
+	}
+	return len(split) > 0
+}
+
+// Given a protobuf name for a Message, return the Go name we will use for that
+// type, including its package prefix.
+func (t *typhon) goTypeName(protoName string) string {
+	def := t.reg.MessageDefinition(protoName)
+	if def == nil {
+		gen.Fail("could not find message for", protoName)
+	}
+
+	var prefix string
+	if pkg := t.goPackageName(def.File); pkg != t.genPkgName {
+		prefix = pkg + "."
+	}
+
+	var name string
+	for _, parent := range def.Lineage() {
+		name += parent.Descriptor.GetName() + "_"
+	}
+	name += def.Descriptor.GetName()
+	return prefix + name
+}
+
+func (t *typhon) goPackageName(file *descriptor.FileDescriptorProto) string {
+	return t.fileToGoPackageName[file]
+}
+
+func (t *typhon) formattedOutput(filename string) string {
+	// Reformat generated code.
+	fset := token.NewFileSet()
+	raw := t.output.Bytes()
+	_, err := parser.ParseFile(fset, "", raw, parser.ParseComments)
+	if err != nil {
+		// Print out the bad code with line numbers.
+		// This should never happen in practice, but it can while changing generated code,
+		// so consider this a debugging aid.
+		var src bytes.Buffer
+		s := bufio.NewScanner(bytes.NewReader(raw))
+		for line := 1; s.Scan(); line++ {
+			fmt.Fprintf(&src, "%5d\t%s\n", line, s.Bytes())
+		}
+		gen.Fail("bad Go source code was generated:", err.Error(), "\n"+src.String())
+	}
+
+	opts := &imports.Options{
+		Comments:  true,
+		TabIndent: true,
+		TabWidth:  8}
+	out, err := imports.Process(filename, t.output.Bytes(), opts)
+	if err != nil {
+		gen.Fail("generated Go source code could not be reformatted: ", err.Error())
+	}
+	return string(out)
+}
+
+func unexported(s string) string { return strings.ToLower(s[:1]) + s[1:] }
+
+func pkgName(file *descriptor.FileDescriptorProto) string {
+	return file.GetPackage()
+}
+
+func fileDescSliceContains(slice []*descriptor.FileDescriptorProto, f *descriptor.FileDescriptorProto) bool {
+	for _, sf := range slice {
+		if f == sf {
+			return true
+		}
+	}
+	return false
+}
+
+// Generate generates code for the services in the given file.
+func (g *typhon) generate(file *descriptor.FileDescriptorProto) *plugin.CodeGeneratorResponse_File {
+	resp := new(plugin.CodeGeneratorResponse_File)
+	if len(file.Service) == 0 {
+		return nil
+	}
+
+	g.generateFileHeader(file)
+
+	g.generateImports(file)
+
+	for _, service := range file.Service {
+		comments, err := g.reg.ServiceComments(file, service)
+		if err == nil {
+			g.printComments(comments)
+		}
+		g.P()
+
+		g.sectionComment(serviceHost(service) + " client")
+		g.generateTyphonClient(file, service)
+
+		if legacyServices[serviceHost(service)] {
+			g.sectionComment(serviceHost(service) + " router")
+			g.generateTyphonRouter(file, service)
+		}
+	}
+
+	filename := goFileName(file)
+	resp.Name = proto.String(filename)
+	resp.Content = proto.String(g.formattedOutput(filename))
+	g.output.Reset()
+
+	g.filesHandled++
+	return resp
+}
+
+func die(message string) {
+	fmt.Fprintln(os.Stderr, message)
+	os.Exit(1)
+}
+
+func dieWithImportWarning(err error) {
+	die(
+		err.Error() + "\n" +
+			"Did you import \"github.com/monzo/wearedev/tools/protoc-gen-typhon/proto/typhon.proto\"?",
+	)
+}
+
+func serviceHost(service *descriptor.ServiceDescriptorProto) string {
+	var host string
+	if service.Options != nil {
+		opts, err := proto.GetExtension(service.Options, typhonproto.E_Router)
+		if err != nil {
+			dieWithImportWarning(err)
+		}
+		serviceOpts := opts.(*typhonproto.TyphonRouter)
+		host = serviceOpts.Name
+	}
+
+	// infer name from service name
+	if host == "" {
+		host = "service." + strings.Replace(service.GetName(), "_", "-", -1)
+	}
+	return host
+}
+
+func (g *typhon) generateTyphonClient(file *descriptor.FileDescriptorProto, service *descriptor.ServiceDescriptorProto) {
+	for _, method := range service.Method {
+		if method.Options == nil {
+			die("no typhon options for rpc: " + method.GetName())
+		}
+
+		opts, err := proto.GetExtension(method.Options, typhonproto.E_Handler)
+		if err == proto.ErrMissingExtension {
+			die("no typhon options for rpc: " + method.GetName())
+		}
+		if err != nil {
+			dieWithImportWarning(err)
+		}
+		methodOpts := opts.(*typhonproto.TyphonHandler)
+		g.generateClientMethod(file, service, method, methodOpts)
+	}
+}
+
+// HTTP method are case sensitive (see https://tools.ietf.org/html/rfc7230#section-3.1.1)
+// We use envoy and envoy is preventing us from using custom method. If a request is sent
+// with a 'put' http method instead of a 'PUT', envoy will reject it with a 400 error.
+var validMethods = []string{"GET", "PUT", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE"}
+
+func isValidMethod(method string) bool {
+	for _, m := range validMethods {
+		if m == method {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *typhon) generateClientMethod(
+	file *descriptor.FileDescriptorProto,
+	service *descriptor.ServiceDescriptorProto,
+	method *descriptor.MethodDescriptorProto,
+	options *typhonproto.TyphonHandler,
+) {
+	methName := generator.CamelCase(method.GetName())
+	inType := g.goTypeName(method.GetInputType())
+	outType := g.goTypeName(method.GetOutputType())
+	futureType := generator.CamelCase(method.GetName() + "Future")
+
+	httpMethod := inferHttpMethod(method, options)
+	if options.Path == "" {
+		die("no path for rpc: " + methName)
+	}
+
+	if !isValidMethod(httpMethod) {
+		message := fmt.Sprintf("<%s> is not a valid method. Please use one of [%s]", httpMethod, strings.Join(validMethods, ","))
+		die(message)
+	}
+
+	fullPath := "/" + serviceHost(service) + options.Path
+
+	g.sectionComment(fmt.Sprintf("%s %s", httpMethod, options.Path))
+
+	comments, err := g.reg.MethodComments(file, service, method)
+	if err == nil {
+		g.printComments(comments)
+	}
+
+	// We prefer the method style, so this is only generated if necessary
+	// (i.e. the method would conflict since there are multiple endpoints
+	// with the same request proto).
+
+	if options.OmitProtoMethod {
+		g.P("func ", methName+"RequestMethod", "() string {")
+	} else {
+		g.P("func (body ", inType, ") RequestMethod() string {")
+	}
+	g.P("return ", strconv.Quote(httpMethod))
+	g.P("}")
+	g.P()
+
+	if options.OmitProtoMethod {
+		g.P("func ", methName+"RequestPath", "() string {")
+	} else {
+		g.P("func (body ", inType, ") RequestPath() string {")
+	}
+	g.P("return ", strconv.Quote(options.Path))
+	g.P("}")
+	g.P()
+	if options.OmitProtoMethod {
+		g.P("func ", methName+"RequestHost", "() string {")
+	} else {
+		g.P("func (body ", inType, ") RequestHost() string {")
+	}
+	g.P("return ", strconv.Quote(serviceHost(service)))
+	g.P("}")
+	g.P()
+
+	if options.OmitProtoMethod {
+		g.P("func ", methName+"FullRequestPath", "() string {")
+	} else {
+		g.P("func (body ", inType, ") FullRequestPath() string {")
+	}
+	g.P("return ", strconv.Quote(fullPath))
+	g.P("}")
+	g.P()
+
+	if options.OmitProtoMethod {
+		g.P("func ", methName+"Request", "(ctx ", g.pkgs["context"], ".Context, body *", inType, ") ",
+			g.pkgs["typhon"], ".Request {")
+		g.P("return ", g.pkgs["typhon"], ".NewRequest(ctx, ", strconv.Quote(httpMethod), ", ", strconv.Quote(fullPath), ", body)")
+
+	} else {
+		g.P("func (body ", inType, ") Request(ctx ", g.pkgs["context"], ".Context) ", g.pkgs["typhon"], ".Request {")
+		g.P("return ", g.pkgs["typhon"], ".NewRequest(ctx, "+strconv.Quote(httpMethod)+", "+strconv.Quote(fullPath)+", body)")
+	}
+	g.P("}")
+	g.P()
+
+	if options.OmitProtoMethod {
+		// Function for sending request
+		//
+		g.P("func ", methName, "(ctx ", g.pkgs["context"], ".Context, body *", inType, ") (*", futureType, ") {")
+		g.P("return &", futureType, "{ ", "Future: ", methName+"Request", "(ctx, body).Send() }")
+
+	} else {
+		// Method for sending request
+		// sugar for sending a proto directly
+		g.P("func (body ", inType, ") Send(ctx ", g.pkgs["context"], ".Context) (*", futureType, ") {")
+		g.P("return &", futureType, "{ ", "Future: body.Request(ctx).Send() }")
+	}
+	g.P("}")
+	g.P()
+
+	// method-specific Future type
+	g.P("type ", futureType, " struct {")
+	g.P("Future *", g.pkgs["typhon"], ".ResponseFuture")
+	g.P("Response *", g.pkgs["typhon"], ".Response")
+	g.P("}")
+	g.P()
+
+	g.P("func (f *", futureType, ") Done() {")
+	g.P("if f.Response == nil { rsp := f.Future.Response(); f.Response = &rsp }")
+	g.P("}")
+	g.P()
+
+	g.P("func (f *", futureType, ") DecodeResponse() (*", outType, ", error) {")
+	g.P("f.Done()")
+	g.P("body := &", outType, "{}")
+	g.P("if err := f.Response.Decode(body); err != nil { return nil, err }")
+	g.P("return body, nil")
+	g.P("}")
+	g.P()
+}
+
+func (g *typhon) generateTyphonRouter(
+	file *descriptor.FileDescriptorProto,
+	service *descriptor.ServiceDescriptorProto,
+) {
+	handlersStructName := generator.CamelCase(*service.Name + "Handlers")
+	g.P("type ", handlersStructName, " struct {")
+	for _, method := range service.Method {
+		methName := generator.CamelCase(method.GetName())
+
+		comments, err := g.reg.MethodComments(file, service, method)
+		if err == nil {
+			g.printComments(comments)
+		}
+
+		g.P(methName, " typhon.Service")
+	}
+	g.P("}")
+
+	g.P("func (handlers ", handlersStructName, ") Router() typhon.Router {")
+	g.P("router := typhon.Router{}")
+	for _, method := range service.Method {
+		methName := generator.CamelCase(method.GetName())
+
+		opts, err := proto.GetExtension(method.Options, typhonproto.E_Handler)
+		if err == proto.ErrMissingExtension {
+			die("no typhon options for rpc: " + method.GetName())
+		}
+		if err != nil {
+			dieWithImportWarning(err)
+		}
+		options := opts.(*typhonproto.TyphonHandler)
+
+		httpMethod := inferHttpMethod(method, options)
+		if options.Path == "" {
+			die("no path for rpc: " + methName)
+		}
+
+		g.P("router.Register(", strconv.Quote(httpMethod), ", ", strconv.Quote(options.Path), ", handlers.", methName, ")")
+	}
+	g.P("return router")
+	g.P("}")
+}
+
+func inferHttpMethod(
+	method *descriptor.MethodDescriptorProto,
+	options *typhonproto.TyphonHandler,
+) string {
+	if options.Method != "" {
+		return options.Method
+	}
+
+	// Infer HTTP httpMethod from name of request proto
+	switch {
+	case strings.Contains(method.GetInputType(), "GET"):
+		return "GET"
+	case strings.Contains(method.GetInputType(), "PUT"):
+		return "PUT"
+	case strings.Contains(method.GetInputType(), "DELETE"):
+		return "DELETE"
+	case strings.Contains(method.GetInputType(), "PATCH"):
+		return "PATCH"
+	default:
+		return "POST"
+	}
+}
