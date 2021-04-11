@@ -12,6 +12,7 @@ import (
 type PortfolioMetadata struct {
 	TotalPNL   float64
 	TotalWorth float64
+	AssetPair  string
 }
 
 type PortfolioRow struct {

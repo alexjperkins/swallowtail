@@ -15,7 +15,7 @@ import (
 
 const (
 	defaultPortfolioRowRange          = "C8:L100"
-	defaultPortfolioMetatdataRange    = "D2:D3"
+	defaultPortfolioMetatdataRange    = "D2:D4"
 	defaultPortfolioTradeHistoryRange = "Q8:W100"
 )
 
@@ -39,8 +39,7 @@ func (gsp *GoogleSheetPortfolio) ID() string {
 	return gsp.id
 }
 
-func (gsp *GoogleSheetPortfolio) Rows(ctx context.Context) ([]*domain.PortfolioRow, error) {
-	sheetID := gsp.SheetIDs[0]
+func (gsp *GoogleSheetPortfolio) Rows(ctx context.Context, sheetID string) ([]*domain.PortfolioRow, error) {
 	fs := formatRowsRange(sheetID)
 	vs, err := gsp.c.Values(gsp.ID(), fs)
 	if err != nil {

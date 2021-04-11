@@ -67,7 +67,7 @@ func main() {
 	owners := []*owner.GooglesheetOwner{
 		owner.New(
 			defaultAlexGoogleSpreadsheetID, "Alex", "805513165428883487",
-			[]string{"TestSpots"},
+			[]string{"ParentsSpots"},
 			mc, true,
 		),
 		// owner.New(defaultBenGoogleSpreadsheetID, "Ben", "814142503393558558", sheetIDs, mc, true),

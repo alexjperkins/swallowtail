@@ -98,6 +98,7 @@ func (cgc *CoinGeckoClient) GetCurrentPriceFromID(ctx context.Context, id, asset
 	if p == nil || hasExpired {
 		ssp, err := cgc.c.SimpleSinglePrice(strings.ToLower(id), strings.ToLower(assetPair))
 		if err != nil {
+			slog.Error(ctx, "id: %v,  asset_pair: %v", id, assetPair)
 			return 0.0, terrors.Augment(err, "Failed to retreive current price", map[string]string{
 				"coingecko_id": id,
 				"asset_pair":   assetPair,

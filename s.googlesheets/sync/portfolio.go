@@ -87,7 +87,7 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 		select {
 		case <-t.C:
 			wg := sync.WaitGroup{}
-			rows, err := p.Spreadsheet.Rows(ctx)
+			rows, err := p.Spreadsheet.Rows(ctx, sheetID)
 			if err != nil {
 				slog.Error(ctx, "Failed to retrieve values", map[string]string{
 					"spreadsheet_id": p.Spreadsheet.ID(),
@@ -194,7 +194,12 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 			}
 
 			m.TotalPNL = calculateTotalPNL(mutatedRows) + historicalPNL
-			m.TotalWorth = calculateTotalWorth(mutatedRows)
+			m.TotalWorth, err = calculateTotalWorth(ctx, mutatedRows, m.AssetPair, p.ec)
+			if err != nil {
+				slog.Error(ctx, "Failed to update googlesheet metadata", map[string]string{
+					"error_msg": err.Error(),
+				})
+			}
 
 			err = p.Spreadsheet.UpdateMetadata(ctx, sheetID, m)
 			if err != nil {
@@ -233,12 +238,41 @@ func calculateTotalPNL(rows []*domain.PortfolioRow) float64 {
 	return total
 }
 
-func calculateTotalWorth(rows []*domain.PortfolioRow) float64 {
+func calculateTotalWorth(ctx context.Context, rows []*domain.PortfolioRow, assetPair string, exchangeClient ExchangeClient) (float64, error) {
 	var total float64
-	for _, row := range rows {
-		total += row.CurrentValue
+
+	validAssetPair, ok := isValidAssetPairOrConvert(assetPair)
+	if !ok {
+		return 0.0, terrors.BadRequest("invalid-asset-pair", "Failed to convert asset pair; invalid", map[string]string{
+			"asset_pair": "assetPair",
+		})
 	}
-	return total
+
+	for _, row := range rows {
+		validRowAssetPair, ok := isValidAssetPairOrConvert(row.AssetPair)
+		if !ok {
+			return 0.0, terrors.BadRequest("invalid-asset-pair", "Failed to convert asset pair; invalid", map[string]string{
+				"asset_pair": "assetPair",
+			})
+		}
+
+		if validRowAssetPair == validAssetPair {
+			total += row.CurrentValue
+			continue
+		}
+
+		slog.Trace(ctx, "Fetching conversion coeff. for %s [%s -> %s]", row.Ticker, row.AssetPair, assetPair)
+		coefficient, err := exchangeClient.GetPrice(ctx, validRowAssetPair, validAssetPair)
+		if err != nil {
+			return 0.0, terrors.Augment(err, "Failed to calculate total net worth", map[string]string{
+				"ticker":            row.Ticker,
+				"ticker_asset_pair": row.AssetPair,
+				"net_asset_pair":    assetPair,
+			})
+		}
+		total += row.CurrentValue * coefficient
+	}
+	return total, nil
 }
 
 // calculateHistoricalPNL iterates through all rows, refreshes them to recalculate the PNL
