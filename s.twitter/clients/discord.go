@@ -29,6 +29,7 @@ var (
 	DiscordNewsChannel      = "crypto-news"
 	DiscordExchangesChannel = "exchanges-alerts"
 	DiscordProjectsChannel  = "project-alerts"
+	DiscordPriceBotChannel  = "price-bot"
 
 	channelIDMapping = map[string]string{
 		DiscordTwitterChannel:   "816794087868465163",
@@ -39,6 +40,7 @@ var (
 		DiscordNewsChannel:      "817789219656826970",
 		DiscordExchangesChannel: "818909423530541116",
 		DiscordProjectsChannel:  "826528849374216192",
+		DiscordPriceBotChannel:  "831234720943702066",
 	}
 )
 

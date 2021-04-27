@@ -33,3 +33,24 @@ func TestTTLCache_GetAndSet(t *testing.T) {
 	v, expired = tc.Get(key)
 	assert.True(t, expired)
 }
+
+func TestTTLCache_SetNullAndExist(t *testing.T) {
+	t.Parallel()
+	key := "test-key"
+
+	tc := New(time.Hour)
+	exists := tc.Exists(key)
+	assert.False(t, exists)
+
+	tc.SetNull(key)
+	exists = tc.Exists(key)
+	assert.True(t, exists)
+
+	tc = New(100 * time.Millisecond)
+	tc.SetNull(key)
+
+	time.Sleep(110 * time.Millisecond)
+
+	exists = tc.Exists(key)
+	assert.False(t, exists)
+}

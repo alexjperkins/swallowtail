@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	coingecko "swallowtail/s.coingecko/clients"
 	"swallowtail/s.twitter/clients"
 	"sync"
 	"syscall"
@@ -80,7 +81,7 @@ type CoinInfo struct {
 	ID string
 }
 
-func NewATHAlerter(symbol string, interval time.Duration, discordClient *clients.DiscordClient, coingeckoClient *clients.CoinGeckoClient, withJitter bool) *ATHAlerter {
+func NewATHAlerter(symbol string, interval time.Duration, discordClient *clients.DiscordClient, coingeckoClient *coingecko.CoinGeckoClient, withJitter bool) *ATHAlerter {
 	done := make(chan struct{}, 1)
 	errCh := make(chan error, 32)
 	a := &ATHAlerter{
@@ -111,7 +112,7 @@ func NewATHAlerter(symbol string, interval time.Duration, discordClient *clients
 type ATHAlerter struct {
 	symbol     string
 	interval   time.Duration
-	cgc        *clients.CoinGeckoClient
+	cgc        *coingecko.CoinGeckoClient
 	dc         *clients.DiscordClient
 	done       chan struct{}
 	errCh      chan error
@@ -131,7 +132,7 @@ func (a *ATHAlerter) Run(ctx context.Context) {
 	}
 	slog.Info(context.TODO(), "Starting ATH Alerter for %s every %v", a.symbol, a.interval)
 
-	currentATH, err := a.cgc.GetATHFromID(id)
+	currentATH, err := a.cgc.GetATHFromID(ctx, id)
 	if err != nil {
 		slog.Error(context.TODO(), "Failed to get ATH for %s, error: %s", a.symbol, err)
 		return
@@ -147,7 +148,7 @@ func (a *ATHAlerter) Run(ctx context.Context) {
 	for {
 		select {
 		case <-t.C:
-			currentPrice, err = a.cgc.GetCurrentPriceFromID(id)
+			currentPrice, err = a.cgc.GetCurrentPriceFromID(ctx, id, "usd")
 			slog.Info(context.TODO(), "Recieved current price for: %s, %.4f", a.symbol, currentPrice)
 			if err != nil {
 				slog.Info(context.TODO(), "Failed to get the current price %s", err.Error())

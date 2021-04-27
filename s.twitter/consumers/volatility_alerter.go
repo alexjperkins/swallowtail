@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"swallowtail/libraries/util"
 	"swallowtail/s.twitter/clients"
 	"syscall"
 	"time"
@@ -158,25 +159,41 @@ func (a *VolatilityAlerter) Done() {
 }
 
 func percentageIncreaseMsg(symbol string, prev, current, diff float64, interval time.Duration) string {
+	c, err := util.FormatPriceAsString(current)
+	if err != nil {
+		c = ""
+	}
+	p, err := util.FormatPriceAsString(prev)
+	if err != nil {
+		p = ""
+	}
 	return fmt.Sprintf(
-		":new_moon_with_face: %s **MOON** %.3f%% INCREASE in %v from %.2f :arrow_forward: %.2f \n %s",
+		":new_moon_with_face: %s **MOON** %.3f%% INCREASE in %v from %s :arrow_forward: %s \n %s",
 		symbol,
 		abs(diff*100),
 		interval,
-		prev,
-		current,
+		p,
+		c,
 		increasingGIF,
 	)
 }
 
 func percentageDecreaseMsg(symbol string, prev, current, diff float64, interval time.Duration) string {
+	c, err := util.FormatPriceAsString(current)
+	if err != nil {
+		c = ""
+	}
+	p, err := util.FormatPriceAsString(prev)
+	if err != nil {
+		p = ""
+	}
 	return fmt.Sprintf(
-		":warning: %s **REKT** %.3f%% DECREASE in %v from %.2f :arrow_forward: %.2f \n %s",
+		":warning: %s **REKT** %.3f%% DECREASE in %v from %s :arrow_forward: %s \n %s",
 		symbol,
 		abs(diff*100),
 		interval,
-		prev,
-		current,
+		p,
+		c,
 		decreasingGIF,
 	)
 }

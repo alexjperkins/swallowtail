@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"swallowtail/libraries/util"
+	coingecko "swallowtail/s.coingecko/clients"
 	"swallowtail/s.twitter/clients"
 	"sync"
 	"time"
@@ -20,7 +22,8 @@ var (
 
 	binanceClient *clients.BinanceClient
 
-	coingeckoClient *clients.CoinGeckoClient
+	coingeckoClient *coingecko.CoinGeckoClient
+	coingeckoMtx    sync.Mutex
 
 	discordClient           *clients.DiscordClient
 	discordTwitterChannel   = clients.DiscordTwitterChannel
@@ -29,6 +32,8 @@ var (
 	discordNewsChannel      = clients.DiscordNewsChannel
 	discordExchangesChannel = clients.DiscordExchangesChannel
 	discordProjectsChannel  = clients.DiscordProjectsChannel
+	discordTestingChannel   = clients.DiscordTestingChannel
+	discordPriceBotChannel  = clients.DiscordPriceBotChannel
 
 	defaultAlertsChannel  = clients.DiscordAlertsChannel
 	defaultAlertsInterval = time.Duration(10 * time.Minute)
@@ -55,10 +60,16 @@ var (
 func init() {
 	register(PostToDiscordConsumer)
 
+	ctx := context.Background()
+
 	// Clients
 	discordClient = clients.NewDiscordClient()
 	binanceClient = clients.NewBinanceClient()
-	coingeckoClient = clients.NewCoinGeckoClient()
+	coingeckoClient = coingecko.New(ctx)
+
+	// Price Bot
+	priceBot := NewPriceBot(ctx, discordPriceBotChannel, coingeckoClient, discordClient)
+	go priceBot.Start(ctx)
 
 	// Default ATH Alerting Setup
 	athMtx.Lock()
@@ -80,6 +91,7 @@ func init() {
 	discordClient.AddHandler(dealerterHandler)
 	discordClient.AddHandler(athHandler)
 	discordClient.AddHandler(whoIsThatHandler)
+	discordClient.AddHandler(riskCalculator)
 
 	// Check connectivity
 	if err := binanceClient.Ping(); err != nil {
@@ -144,10 +156,6 @@ func pingHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func priceHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if _, ok := adminIDs[m.Author.ID]; !ok {
-		return
-	}
-
 	if !strings.HasPrefix(m.Content, "!price") {
 		return
 	}
@@ -163,14 +171,12 @@ func priceHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for _, symbol := range symbols {
 		slog.Info(nil, "Received !price cmd for %s from: %s", symbol, m.Author.Username)
 
-		binanceRsp, err := binanceClient.GetPrice(context.TODO(), symbol)
+		price, err := coingeckoClient.GetCurrentPriceFromSymbol(context.TODO(), symbol, "usd")
 		if err != nil {
 			slog.Error(nil, "Failed to get %s, err -> %v", symbol, err)
 		}
 
-		slog.Info(nil, "%v", binanceRsp)
-
-		formattedPrice, err := util.FormatPriceFromString(binanceRsp.MarkPrice)
+		formattedPrice, err := util.FormatPriceAsString(price)
 		if err != nil {
 			slog.Info(nil, "Failedl to format price: %v", err.Error())
 			s.ChannelMessageSend(
@@ -355,7 +361,51 @@ func whoIsThatHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Username: %s\nName: %s\nBio: %s\nTwitter: %s\nYoutube: %s\nTwitch: %s\n", twitterUser, twitterMetaData.Name, twitterMetaData.Bio, twitterMetaData.Twitter, twitterMetaData.Youtube, twitterMetaData.Twitch))
 }
 
+func riskCalculator(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if !strings.HasPrefix(m.Content, "!risk") {
+		return
+	}
+
+	tokens := strings.Split(m.Content, " ")
+	if len(tokens) != 5 {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, `!risk usage: <entry> <stop loss> <account size> <percentage eg 0.05>`", m.Author.Username))
+		return
+	}
+	entry, err := strconv.ParseFloat(tokens[1], 64)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse entry: %v into a float, please check.", m.Author.Username, tokens[1]))
+		return
+	}
+	stopLoss, err := strconv.ParseFloat(tokens[2], 64)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse stop loss: %v into a float, please check.", m.Author.Username, tokens[2]))
+		return
+	}
+	accountSize, err := strconv.ParseFloat(tokens[3], 64)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse accountSize: %v into a float, please check.", m.Author.Username, tokens[3]))
+		return
+	}
+	percentage, err := strconv.ParseFloat(tokens[4], 64)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse percentage: %v into a float, please check.", m.Author.Username, tokens[4]))
+		return
+	}
+
+	contracts := calculateRisk(entry, stopLoss, accountSize, percentage)
+
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, you need to buy **%.2f** contracts for %v%% risk.", m.Author.Username, contracts, percentage*100))
+	return
+}
+
 func randomInsultGenerator() string {
 	nIndexes := len(insults)
 	return insults[rand.Intn(nIndexes)]
+}
+
+// calculateRisk returns the number of contracts to buy.
+func calculateRisk(entry, stopLoss, accountSize, percentage float64) float64 {
+	maxRiskToLose := percentage * accountSize
+	lossPerContract := entry - stopLoss
+	return maxRiskToLose / lossPerContract
 }

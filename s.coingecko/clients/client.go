@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"swallowtail/libraries/ttlcache"
@@ -17,7 +18,7 @@ var (
 	CoingeckoClientID = "coingecko-client-id"
 	coingeckoClient   *CoinGeckoClient
 
-	defaultCoinGeckoClientTimeout = time.Second * 10
+	defaultCoinGeckoClientTimeout = time.Second * 30
 
 	defaultPriceTTL = time.Duration(30 * time.Second)
 
@@ -42,7 +43,7 @@ func init() {
 	c := New(ctx)
 	coins, err := c.GetAllCoinIDs(ctx)
 	if err != nil {
-		panic("Failed to retreive coingecko coins")
+		panic(fmt.Sprintf("Failed to retreive coingecko coins: err: %v", err.Error()))
 	}
 
 	symbolMu.Lock()
@@ -147,6 +148,9 @@ func (cgc *CoinGeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoList
 
 func (cgc *CoinGeckoClient) Ping(ctx context.Context) bool {
 	_, err := cgc.c.Ping()
+	if err != nil {
+		slog.Error(ctx, "Failed to connect to coingecko: %v", err)
+	}
 	return err == nil
 }
 

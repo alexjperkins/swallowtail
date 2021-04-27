@@ -2,6 +2,10 @@ package owner
 
 import (
 	"context"
+	"fmt"
+	"hash/fnv"
+	"swallowtail/libraries/ttlcache"
+	"time"
 
 	"github.com/monzo/slog"
 )
@@ -18,20 +22,36 @@ type MessageClient interface {
 	SendPrivateMessage(ctx context.Context, id, msg string) error
 }
 
-func New(spreadsheetID string, name string, discordID string, sheetIDs []string, mc MessageClient, isPrivate bool) *GooglesheetOwner {
+func New(spreadsheetID string, name string, discordID string, sheetIDs []string, mc MessageClient, minimumTimeBetweenPagers time.Duration, isPrivate bool) *GooglesheetOwner {
+	ttl := ttlcache.New(minimumTimeBetweenPagers)
+	pager := func(ctx context.Context, msg string) error {
+		ttlKey := fmt.Sprintf("%s-%s-%s", name, discordID, hashMsg(msg))
+		slog.Error(ctx, "key: %v, ttlcache: %v", ttlKey, ttl)
+		if ttl.Exists(ttlKey) {
+			return nil
+		}
+		slog.Info(ctx, "Paging: %s: %s", name, discordID)
+		var err error
+		if isPrivate {
+			err = mc.SendPrivateMessage(ctx, discordID, msg)
+		} else {
+			err = mc.Send(ctx, discordID, msg)
+		}
+		if err != nil {
+			return err
+		}
+		// Only set the key if we manage to send
+		ttl.SetNull(ttlKey)
+		return nil
+	}
+
 	return &GooglesheetOwner{
 		SpreadsheetID: spreadsheetID,
 		SheetsID:      sheetIDs,
 		Name:          name,
 		DiscordID:     discordID,
-		Page: func(ctx context.Context, msg string) error {
-			slog.Info(ctx, "Paging: %s: %s", name, discordID)
-			if isPrivate {
-				return mc.SendPrivateMessage(ctx, discordID, msg)
-			}
-			return mc.Send(ctx, discordID, msg)
-		},
-		IsPrivate: isPrivate,
+		Page:          pager,
+		IsPrivate:     isPrivate,
 	}
 }
 
@@ -45,4 +65,10 @@ type GooglesheetOwner struct {
 	// Pager pings owner
 	Page      func(ctx context.Context, msg string) error
 	IsPrivate bool
+}
+
+func hashMsg(h string) string {
+	a := fnv.New32a()
+	a.Write([]byte(h))
+	return fmt.Sprintf("%v", a.Sum32())
 }

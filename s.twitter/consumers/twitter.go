@@ -115,7 +115,6 @@ var (
 			DiscordChannel: discordTradersChannel,
 			Bio:            "Unbelievable Alt coin trader; ignore at your own peril.",
 			Twitter:        "https://twitter.com/CryptoKaleo",
-			Tags:           []string{"futures"},
 		},
 		"ShardiB2": {
 			Id:             "1091099554605395968",
@@ -123,7 +122,6 @@ var (
 			DiscordChannel: discordTradersChannel,
 			Bio:            "Similar to Kaleo, great alt coin trader, she also shares solid algos",
 			Twitter:        "https://twitter.com/ShardiB2",
-			Tags:           []string{"futures"},
 		},
 
 		/// --- Twitter Channels --- ///
@@ -219,11 +217,6 @@ var (
 			Id:             "1350187523759251456",
 			Bio:            "An observation the current 4 year market cycle relative to the two prior.",
 			DiscordChannel: discordNewsChannel,
-		},
-		"whale_alert": {
-			Id:             "1039833297751302144",
-			Bio:            "Big money movement alerts",
-			DiscordChannel: discordWhaleChannel,
 		},
 	}
 )

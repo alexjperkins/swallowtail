@@ -21,6 +21,8 @@ type TTLCache struct {
 	mu    sync.RWMutex
 }
 
+type TTLCacheNull struct{}
+
 func New(ttl time.Duration) *TTLCache {
 	return &TTLCache{
 		cache: map[string]*cacheResult{},
@@ -48,6 +50,20 @@ func (tc *TTLCache) Set(key string, value interface{}) {
 		value:          value,
 	}
 	tc.cache[key] = r
+}
+
+func (tc *TTLCache) Exists(key string) bool {
+	v, hasExpired := tc.Get(key)
+	if v == nil {
+		return false
+	}
+	return !hasExpired
+}
+
+// SetNull is for when the caller doesn't care about the value. But wants to use the ttlcache
+// to determine some key has been accessed in some time.
+func (tc *TTLCache) SetNull(key string) {
+	tc.Set(key, TTLCacheNull{})
 }
 
 //GetAndRefreshExpiry will get the key, if expired it will update the expiry data to now plus the default ttl

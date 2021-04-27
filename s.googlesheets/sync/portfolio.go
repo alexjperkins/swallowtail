@@ -3,10 +3,11 @@ package sync
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
+	"sort"
 	"strconv"
 	"strings"
-	"swallowtail/libraries/ttlcache"
 	"swallowtail/s.googlesheets/domain"
 	"swallowtail/s.googlesheets/spreadsheet"
 	"sync"
@@ -19,7 +20,9 @@ import (
 var (
 	defaultMaxJitterRange = 30.0
 	defaultJitterUnit     = time.Second
-	defaultPagerGif       = "https://tenor.com/view/cynical-pepe-cynical-p-pepe-the-frog-frog-cynical-gif-14037546"
+
+	pagerMultipleAmountDelta = 0.02
+	defaultPagerGif          = "https://tenor.com/view/cynical-pepe-cynical-p-pepe-the-frog-frog-cynical-gif-14037546"
 
 	validAssetPairs = map[string]bool{
 		"USDT": true,
@@ -44,11 +47,12 @@ func NewGoogleSheetsPorfolioSyncer(
 	withJitter bool,
 ) *GoogleSheetsPortfolioSyncer {
 	return &GoogleSheetsPortfolioSyncer{
-		Spreadsheet: googleSpreadsheet,
-		ec:          exchangeClient,
-		interval:    interval,
-		done:        done,
-		withJitter:  withJitter,
+		Spreadsheet:           googleSpreadsheet,
+		ec:                    exchangeClient,
+		interval:              interval,
+		done:                  done,
+		withJitter:            withJitter,
+		increaseAmountsPagers: []float64{2.0, 5.0, 10.0},
 	}
 }
 
@@ -59,6 +63,8 @@ type GoogleSheetsPortfolioSyncer struct {
 	interval    time.Duration
 	done        chan struct{}
 	withJitter  bool
+	// The entry price increase for which warrants a pager.
+	increaseAmountsPagers []float64
 }
 
 func (p *GoogleSheetsPortfolioSyncer) Start(ctx context.Context) {
@@ -70,8 +76,6 @@ func (p *GoogleSheetsPortfolioSyncer) Start(ctx context.Context) {
 
 func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) {
 	// Basic cache that stores TTL to stop owners being pinged too often.
-	ttlcache := ttlcache.New(time.Duration(12 * time.Hour))
-
 	t := time.NewTicker(p.interval)
 	defer slog.Info(ctx, "Closing down google sheets price syncer", nil)
 
@@ -103,8 +107,6 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 				}
 				continue
 			}
-			// Do I need this?
-			mutatedRows := make([]*domain.PortfolioRow, len(rows))
 			for i, row := range rows {
 				i, row := i, row
 				wg.Add(1)
@@ -136,27 +138,24 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 						slog.Warn(ctx, "Failed to get current price", map[string]string{
 							"ticker": row.Ticker,
 						})
-						// Only page if doesn't exist in the cache
-						if _, expired := ttlcache.GetAndRefreshExpiry(p.Spreadsheet.Owner.DiscordID); !expired {
-
-							err := p.Spreadsheet.Owner.Page(ctx, formatPagerMsg(p.Spreadsheet.Owner.Name, row.Ticker, err.Error(), row.Index))
-							if err != nil {
-								slog.Info(ctx, "Failed to page user", map[string]string{
-									"user_id":       p.Spreadsheet.Owner.Name,
-									"error_message": err.Error(),
-								})
-							}
+						err := p.Spreadsheet.Owner.Page(ctx, formatPagerMsg(p.Spreadsheet.Owner.Name, row.Ticker, "", row.Index))
+						if err != nil {
+							slog.Info(ctx, "Failed to page user", map[string]string{
+								"user_id":       p.Spreadsheet.Owner.Name,
+								"error_message": err.Error(),
+							})
 						}
+
 					}
 					slog.Info(ctx, fmt.Sprintf("Current Price [%s]: %v", row.Ticker, row.CurrentPrice))
 					// Update all row values now that price has been updated.
 					row.Refresh()
-					mutatedRows[i] = row
+					rows[i] = row
 				}()
 			}
 			wg.Wait()
 
-			err = p.Spreadsheet.UpdateRows(ctx, sheetID, mutatedRows)
+			err = p.Spreadsheet.UpdateRows(ctx, sheetID, rows)
 			if err != nil {
 				slog.Info(ctx, "Failed to upload googlesheet row", map[string]string{
 					"owner":          p.Spreadsheet.Owner.Name,
@@ -190,11 +189,12 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 					"spreadsheet_id": p.Spreadsheet.ID(),
 					"sheet_id":       sheetID,
 				})
+				p.Spreadsheet.Owner.Page(ctx, ":wave: Yo champ! I couldn't parse your metadata in your portfolio tracker; please can you check, thanks.")
 				continue
 			}
 
-			m.TotalPNL = calculateTotalPNL(mutatedRows) + historicalPNL
-			m.TotalWorth, err = calculateTotalWorth(ctx, mutatedRows, m.AssetPair, p.ec)
+			m.TotalPNL = calculateTotalPNL(rows) + historicalPNL
+			m.TotalWorth, err = calculateTotalWorth(ctx, rows, m.AssetPair, p.ec)
 			if err != nil {
 				slog.Error(ctx, "Failed to update googlesheet metadata", map[string]string{
 					"error_msg": err.Error(),
@@ -215,6 +215,10 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 				"spreadsheet_id": p.Spreadsheet.ID(),
 				"sheet_id":       sheetID,
 			})
+
+			// Best effort
+			// pagerOnIncrease(ctx, p.Spreadsheet.Owner.Page, p.Spreadsheet.Owner.Name, rows, p.increaseAmountsPagers, pagerMultipleAmountDelta)
+
 		case <-ctx.Done():
 			return
 		case <-p.done:
@@ -225,14 +229,17 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 
 func formatPagerMsg(name, ticker, errorMsg string, rowIndex int) string {
 	return fmt.Sprintf(
-		":wave: Hello there, %s\n```Failed to get price for row: `%v` with ticker `%s`\nError: %v\n```Please check it is correct.\n%s\n",
-		name, strconv.Itoa(rowIndex), ticker, errorMsg, defaultPagerGif,
+		":wave: Hello there, %s\n```Failed to get price for row: `%v` with ticker `%s`\nError: %v\n```Please check it is correct.\n",
+		name, strconv.Itoa(rowIndex), ticker, errorMsg,
 	)
 }
 
 func calculateTotalPNL(rows []*domain.PortfolioRow) float64 {
 	var total float64
 	for _, row := range rows {
+		if row == nil {
+			continue
+		}
 		total += row.PNL
 	}
 	return total
@@ -275,6 +282,20 @@ func calculateTotalWorth(ctx context.Context, rows []*domain.PortfolioRow, asset
 	return total, nil
 }
 
+func pagerOnIncrease(ctx context.Context, pager func(ctx context.Context, msg string) error, ownerName string, rows []*domain.PortfolioRow, multipleIncreases []float64, delta float64) {
+	sort.Float64s(multipleIncreases)
+	for _, row := range rows {
+		for _, increaseAmount := range multipleIncreases {
+			if within(row.AverageEntry, delta) {
+				msg := fmt.Sprintf(":wave: Hi %s, %s entry [%v] is close to a multiple target [%v].\nPlease consider taking out your initial investmentl.", ownerName, row.Ticker, row.AverageEntry, increaseAmount)
+				if err := pager(ctx, msg); err != nil {
+					slog.Error(ctx, "Failed to page %v on increase", ownerName)
+				}
+			}
+		}
+	}
+}
+
 // calculateHistoricalPNL iterates through all rows, refreshes them to recalculate the PNL
 // and returns the total.
 func calculateHistoricalPNL(rows []*domain.HistoricalTradeRow) float64 {
@@ -297,4 +318,16 @@ func isValidAssetPairOrConvert(assetPair string) (string, bool) {
 		return "usd", true
 	}
 	return assetPair, true
+}
+
+func within(value, delta float64) bool {
+	deltaValue := math.Abs(value - (value * delta))
+	l, r := value-deltaValue, value+deltaValue
+	if value < l {
+		return false
+	}
+	if value > r {
+		return false
+	}
+	return true
 }
