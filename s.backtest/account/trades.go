@@ -1,21 +1,8 @@
-package domain
+package account
 
-import "time"
+import "swallowtail/s.backtest/domain"
 
-type Trade struct {
-	Ticker      string
-	Type        string
-	Entry       float64
-	StopLosses  []float64
-	TakeProfits []float64
-	PNL         float64
-	TradeSize   float64
-	Reason      string
-	Opened      time.Time
-	Closed      time.Time
-}
-
-type TradeHistory []*Trade
+type TradeHistory []*domain.Trade
 
 func (t TradeHistory) StrikeRate() float64 {
 	var won int
@@ -27,4 +14,35 @@ func (t TradeHistory) StrikeRate() float64 {
 		won--
 	}
 	return float64(won / len(t))
+}
+
+func (t TradeHistory) FundingFees() float64 {
+	var total float64
+	for _, trade := range t {
+		total += trade.FundingFees
+	}
+	return total
+}
+
+func (t TradeHistory) Fees() float64 {
+	var total float64
+	for _, trade := range t {
+		total += trade.Fees
+	}
+	return total
+}
+
+func (t TradeHistory) TotalFees() float64 {
+	return t.Fees() + t.FundingFees()
+}
+
+func (t TradeHistory) TotalRealizedPNL() float64 {
+	var total float64
+	for _, trade := range t {
+		if trade.Status != domain.StatusComplete {
+			continue
+		}
+		total += trade.PNL
+	}
+	return total
 }

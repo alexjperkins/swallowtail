@@ -33,32 +33,32 @@ func init() {
 	discordToken = util.SetEnv("DISCORD_API_TOKEN")
 }
 
+type DiscordClient interface {
+	Send(ctx context.Context, message, channelID string) error
+	SendPrivateMessage(ctx context.Context, message, userID string) error
+	Subscribe(ctx context.Context, subscriberID string) error
+}
+
 // New creates a new discord client
-func New() *DiscordClient {
+func New() DiscordClient {
 	s, err := discordgo.New("Bot " + discordToken)
 	if err != nil {
-		panic(err)
+		panic(terrors.Augment(err, "Failed to create discord client", nil))
 	}
-
 	slog.Info(nil, "Created discord bot: %s", discordBotUsername)
-
-	return &DiscordClient{
+	return &discordClient{
 		session: s,
 	}
 }
 
 type Handler func(context.Context, *discordgo.Session, *discordgo.MessageCreate) error
 
-type Attachment struct {
-	link string
-}
-
-type DiscordClient struct {
+type discordClient struct {
 	session *discordgo.Session
 }
 
-func (d *DiscordClient) Send(ctx context.Context, channel, content string) error {
-	msg, err := d.session.ChannelMessageSend(channel, content)
+func (d *discordClient) Send(ctx context.Context, message, channelID string) error {
+	msg, err := d.session.ChannelMessageSend(channelID, message)
 	if err != nil {
 		return err
 	}
@@ -66,34 +66,32 @@ func (d *DiscordClient) Send(ctx context.Context, channel, content string) error
 	return nil
 }
 
-func (d *DiscordClient) SendPrivateMessage(ctx context.Context, discordID string, content string) error {
-	channelID, ok := privateChannelMapping[discordID]
+func (d *discordClient) SendPrivateMessage(ctx context.Context, message, userID string) error {
+	channelID, ok := privateChannelMapping[userID]
 	if ok {
-		return d.Send(ctx, channelID, content)
+		return d.Send(ctx, channelID, message)
 	}
-
-	ch, err := d.session.UserChannelCreate(discordID)
+	ch, err := d.session.UserChannelCreate(message)
 	if err != nil {
 		return terrors.Augment(err, "Failed to create private channel", map[string]string{
-			"discord_user_id": discordID,
+			"discord_user_id": userID,
 		})
 	}
-	return d.Send(ctx, ch.ID, content)
+	return d.Send(ctx, ch.ID, message)
 }
 
-func (d *DiscordClient) AddHandlerToAllChannel(ctx context.Context, handler Handler) error {
+func (d *discordClient) Subscribe(ctx context.Context, subscriberID string) error {
 	return nil
 }
 
-func (d *DiscordClient) AddHandlerToChannel(ctx context.Context, channel string, handler Handler) func() {
+func (d *discordClient) AddHandlerToChannel(ctx context.Context, channel string, handler Handler) func() {
 	return d.session.AddHandler(handler)
 }
 
-func (d *DiscordClient) BidirectionalSubscription(ctx context.Context) error {
+func (d *discordClient) BidirectionalSubscription(ctx context.Context) error {
 	if err := d.session.Open(); err != nil {
 		return err
 	}
-
 	defer d.session.Close()
 	sc := make(chan os.Signal, 1)
 	select {

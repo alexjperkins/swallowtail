@@ -16,12 +16,18 @@ var (
 	defaultTokenFilePath = "./token.json"
 )
 
-type GoogleSheetsClient struct {
+type GooglesheetsClient interface {
+	Ping(ctx context.Context) bool
+	Values(sheetID string, rowsRange string) ([][]interface{}, error)
+	UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error
+}
+
+type googlesheetsClient struct {
 	s *sheets.Service
 }
 
 // New creates a new google sheets client for interacting with googlesheets.
-func New(ctx context.Context) (*GoogleSheetsClient, error) {
+func New(ctx context.Context) (*googlesheetsClient, error) {
 	b, err := ioutil.ReadFile(defaultConfigPath)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to load googlesheets credentials", nil)
@@ -35,16 +41,16 @@ func New(ctx context.Context) (*GoogleSheetsClient, error) {
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to create sheets client", nil)
 	}
-	return &GoogleSheetsClient{
+	return &googlesheetsClient{
 		s: srv,
 	}, nil
 }
 
-func (g *GoogleSheetsClient) Ping(ctx context.Context) bool {
+func (g *googlesheetsClient) Ping(ctx context.Context) bool {
 	return false
 }
 
-func (g *GoogleSheetsClient) Values(sheetID string, rowsRange string) ([][]interface{}, error) {
+func (g *googlesheetsClient) Values(sheetID string, rowsRange string) ([][]interface{}, error) {
 	r, err := g.s.Spreadsheets.Values.Get(sheetID, rowsRange).Do()
 	if err != nil {
 		return nil, err
@@ -58,7 +64,7 @@ func (g *GoogleSheetsClient) Values(sheetID string, rowsRange string) ([][]inter
 	return r.Values, nil
 }
 
-func (g *GoogleSheetsClient) UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error {
+func (g *googlesheetsClient) UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error {
 	v := &sheets.ValueRange{
 		Range:  rowsRange,
 		Values: values,

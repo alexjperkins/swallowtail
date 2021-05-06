@@ -1,22 +1,46 @@
 syntax = "proto3";
+
 package discordproto;
+
+option go_package = "./;discordproto";
 
 service discord {
   rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse) {
+  }
+
+  rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgPrivateToChannelResponse) {
+  }
+
+  rpc Subscribe (SuscribeRequest) returns (SubscribeResponse) {
   }
 }
 
 message Message {
   string sender_id = 1;
   string content = 2;
-  string emoji = 3;
   string timestamp = 4;
 }
 
 message SendMsgToChannelRequest {
   Message msg = 1;
-  string channel = 2;
+  string channel_id = 2;
 }
 
 message SendMsgToChannelResponse {
+}
+
+message SendMsgToPrivateChannelRequest {
+  Message msg = 1;
+  string user_id = 2;
+}
+
+message SendMsgPrivateToChannelResponse{
+}
+
+message SuscribeRequest {
+  string subscriber_id = 1;
+  string filter_set_id = 2;
+}
+
+message SubscribeResponse {
 }

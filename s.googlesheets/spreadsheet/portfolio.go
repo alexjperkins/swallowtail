@@ -19,7 +19,7 @@ const (
 	defaultPortfolioTradeHistoryRange = "Q8:W100"
 )
 
-func New(id string, sheetIDs []string, client *clients.GoogleSheetsClient, owner *owner.GooglesheetOwner) *GoogleSheetPortfolio {
+func New(id string, sheetIDs []string, client clients.GooglesheetsClient, owner *owner.GooglesheetOwner) *GoogleSheetPortfolio {
 	return &GoogleSheetPortfolio{
 		Owner:    owner,
 		SheetIDs: sheetIDs,
@@ -31,7 +31,7 @@ func New(id string, sheetIDs []string, client *clients.GoogleSheetsClient, owner
 type GoogleSheetPortfolio struct {
 	Owner    *owner.GooglesheetOwner
 	SheetIDs []string
-	c        *clients.GoogleSheetsClient
+	c        clients.GooglesheetsClient
 	id       string
 }
 

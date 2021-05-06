@@ -138,9 +138,9 @@ func (cgc *CoinGeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoList
 	coins := []*CoingeckoListCoinItem{}
 	for _, coin := range *l {
 		coins = append(coins, &CoingeckoListCoinItem{
-			ID:     coin.ID,
-			Name:   coin.Name,
-			Symbol: coin.Symbol,
+			ID:     strings.ToLower(coin.ID),
+			Name:   strings.ToLower(coin.Name),
+			Symbol: strings.ToLower(coin.Symbol),
 		})
 	}
 	return coins, nil
@@ -158,6 +158,7 @@ func getIDFromSymbol(symbol string) (string, error) {
 	symbolMu.RLock()
 	defer symbolMu.RUnlock()
 	id, ok := symbolToCoingeckoID[strings.ToLower(symbol)]
+	fmt.Println("HERE", id, symbol)
 	if !ok {
 		return "", terrors.BadResponse("failed-to-convert-symbol-to-id", "No id found for this symbol", map[string]string{
 			"symbol": symbol,
