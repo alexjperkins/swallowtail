@@ -48,6 +48,7 @@ func init() {
 	discordMtx.Lock()
 	defer discordMtx.Unlock()
 	discordToken = util.SetEnv("DISCORD_API_TOKEN")
+
 }
 
 type Attachment struct {

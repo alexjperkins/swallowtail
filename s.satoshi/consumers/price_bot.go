@@ -62,6 +62,9 @@ var (
 		"STEP",
 		"LINK",
 		"MEDIA",
+		"SAMO",
+		"ONT",
+		"MATIC",
 	}
 	priceBotMtx sync.RWMutex
 )

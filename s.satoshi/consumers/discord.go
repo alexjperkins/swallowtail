@@ -372,7 +372,6 @@ func whoIsThatHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Sorry @%s, no twitter metadata stored for: %s", m.Author.Username, twitterUser))
 		return
 	}
-
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Username: %s\nName: %s\nBio: %s\nTwitter: %s\nYoutube: %s\nTwitch: %s\n", twitterUser, twitterMetaData.Name, twitterMetaData.Bio, twitterMetaData.Twitter, twitterMetaData.Youtube, twitterMetaData.Twitch))
 }
 
