@@ -1,5 +1,5 @@
 FROM golang:rc-buster
-MAINTAINER Alex Perkins
+MAINTAINER alexperkins.crypto@gmail.com
 
 WORKDIR /build
 COPY go.mod .
@@ -9,6 +9,6 @@ RUN go mod download
 COPY . . 
 RUN go build -o main .
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["/bin/bash"]

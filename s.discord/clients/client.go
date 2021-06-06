@@ -2,9 +2,9 @@ package clients
 
 import (
 	"context"
-	"os"
+	"fmt"
+
 	"swallowtail/libraries/util"
-	"sync"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
@@ -12,53 +12,78 @@ import (
 )
 
 var (
-	DiscordClientID    = "discord-client-id"
-	discordToken       string
-	discordBotUsername = "satoshi"
+	// TODO: change implementation to use own defined mocks
+	DiscordClientID = "discord-client-id"
 
-	mtx sync.Mutex
-
-	discordTwitterChannel = "twitter"
-	channelIDMapping      = map[string]string{
-		discordTwitterChannel: "816794087868465163",
-	}
-
-	privateChannelMapping = map[string]string{}
-	pMu                   sync.Mutex
+	isActiveFlag          bool
+	discordTestingChannel = "817513133274824715"
 )
 
 func init() {
-	mtx.Lock()
-	defer mtx.Unlock()
-	discordToken = util.SetEnv("DISCORD_API_TOKEN")
+	v := util.EnvGetOrDefault("DISCORD_TESTING_MODE", "0")
+	if v != "1" {
+		isActiveFlag = true
+	}
 }
 
+// DiscordClient
 type DiscordClient interface {
 	Send(ctx context.Context, message, channelID string) error
 	SendPrivateMessage(ctx context.Context, message, userID string) error
-	Subscribe(ctx context.Context, subscriberID string) error
+	AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate))
+	Close()
 }
 
 // New creates a new discord client
-func New() DiscordClient {
-	s, err := discordgo.New("Bot " + discordToken)
+func New(name, token string, isBot bool) DiscordClient {
+	t := formatToken(token, isBot)
+	s, err := discordgo.New(t)
 	if err != nil {
-		panic(terrors.Augment(err, "Failed to create discord client", nil))
+		panic(terrors.Augment(err, "Failed to create discord client", map[string]string{
+			"discord_token": t,
+			"name":          name,
+		}))
 	}
-	slog.Info(nil, "Created discord bot: %s", discordBotUsername)
+
+	s.LogLevel = 0
+	s.Debug = true
+
+	// Open websocket session.
+	err = s.Open()
+	if err != nil {
+		panic(err)
+	}
+
+	slog.Info(nil, "USER-AGENT: %s", s.UserAgent)
+	if !isActiveFlag {
+		slog.Warn(context.TODO(), "Discord client set to TESTING MODE.")
+	}
+
+	slog.Info(context.TODO(), "Created discord bot: %s, token: %s", name, t)
 	return &discordClient{
-		session: s,
+		session:  s,
+		isBot:    isBot,
+		isActive: isActiveFlag,
 	}
 }
 
 type Handler func(context.Context, *discordgo.Session, *discordgo.MessageCreate) error
 
 type discordClient struct {
-	session *discordgo.Session
+	session  *discordgo.Session
+	isBot    bool
+	isActive bool
 }
 
 func (d *discordClient) Send(ctx context.Context, message, channelID string) error {
-	msg, err := d.session.ChannelMessageSend(channelID, message)
+	var (
+		cID = channelID
+	)
+	if !d.isActive {
+		cID = discordTestingChannel
+
+	}
+	msg, err := d.session.ChannelMessageSend(cID, message)
 	if err != nil {
 		return err
 	}
@@ -67,9 +92,9 @@ func (d *discordClient) Send(ctx context.Context, message, channelID string) err
 }
 
 func (d *discordClient) SendPrivateMessage(ctx context.Context, message, userID string) error {
-	channelID, ok := privateChannelMapping[userID]
-	if ok {
-		return d.Send(ctx, channelID, message)
+	if !d.isActive {
+		// If not active; we simply send to the testing channel.
+		return d.Send(ctx, discordTestingChannel, message)
 	}
 	ch, err := d.session.UserChannelCreate(message)
 	if err != nil {
@@ -80,24 +105,18 @@ func (d *discordClient) SendPrivateMessage(ctx context.Context, message, userID 
 	return d.Send(ctx, ch.ID, message)
 }
 
-func (d *discordClient) Subscribe(ctx context.Context, subscriberID string) error {
-	return nil
+func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate)) {
+	slog.Info(nil, "Adding handler")
+	d.session.AddHandler(handler)
 }
 
-func (d *discordClient) AddHandlerToChannel(ctx context.Context, channel string, handler Handler) func() {
-	return d.session.AddHandler(handler)
+func (d *discordClient) Close() {
+	d.session.Close()
 }
 
-func (d *discordClient) BidirectionalSubscription(ctx context.Context) error {
-	if err := d.session.Open(); err != nil {
-		return err
+func formatToken(token string, isBot bool) string {
+	if !isBot {
+		return token
 	}
-	defer d.session.Close()
-	sc := make(chan os.Signal, 1)
-	select {
-	case <-sc:
-		return nil
-	case <-ctx.Done():
-		return nil
-	}
+	return fmt.Sprintf("Bot %s", token)
 }
