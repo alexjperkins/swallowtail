@@ -12,7 +12,7 @@ import (
 const (
 	pingCommandID = "pingCommand"
 
-	pingCommandPrefix = "!price"
+	pingCommandPrefix = "!ping"
 )
 
 func init() {
