@@ -16,6 +16,8 @@ require (
 	github.com/monzo/slog v0.0.0-20200930150111-c5ba10c39368
 	github.com/monzo/terrors v0.0.0-20201123122426-526801726c25 // indirect
 	github.com/monzo/typhon v0.0.0-20210303111521-a0b41c74ff77
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/spf13/cobra v1.1.3 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/superoo7/go-gecko v1.0.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
@@ -27,4 +29,5 @@ require (
 	google.golang.org/genproto v0.0.0-20210312152112-fc591d9ea70f // indirect
 	google.golang.org/grpc v1.36.0 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
+	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 )

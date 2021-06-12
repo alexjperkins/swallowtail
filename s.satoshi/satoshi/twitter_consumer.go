@@ -57,7 +57,6 @@ func (tw TwitterConsumer) Receiver(ctx context.Context, c chan *SatoshiConsumerM
 	tweetHandler := postTweetToDiscordHandler(ctx, c, tw.Active)
 	err := cli.NewStream(ctx, filterParams, tweetHandler)
 	if err != nil {
-		// TODO capture this error better
 		slog.Error(ctx, "Failed to start twitter stream.", map[string]string{
 			"consumer_id": twitterConsumerID,
 			"error":       err.Error(),

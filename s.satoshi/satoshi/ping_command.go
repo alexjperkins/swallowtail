@@ -1,6 +1,7 @@
 package satoshi
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,8 @@ import (
 
 const (
 	pingCommandID = "pingCommand"
+
+	pingCommandPrefix = "!price"
 )
 
 func init() {
@@ -17,10 +20,10 @@ func init() {
 }
 
 func pingCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if !strings.HasPrefix(m.Content, "!ping") {
+	if !strings.HasPrefix(m.Content, pingCommandPrefix) {
 		return
 	}
 
-	slog.Info(nil, "Received PING from: %s", m.Author.Username)
+	slog.Info(context.TODO(), "Received %s command from: %s", pingCommandPrefix, m.Author.Username)
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: Hello <@%s>, what can I do for you?", m.Author.ID))
 }

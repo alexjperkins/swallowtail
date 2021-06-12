@@ -1,15 +1,18 @@
 package satoshi
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/monzo/slog"
 )
 
 const (
-	riskCommandID = "risk-command"
+	riskCommandID     = "risk-command"
+	riskCommandPrefix = "!risk"
 )
 
 func init() {
@@ -17,7 +20,7 @@ func init() {
 }
 
 func riskCalculator(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if !strings.HasPrefix(m.Content, "!risk") {
+	if !strings.HasPrefix(m.Content, riskCommandPrefix) {
 		return
 	}
 
@@ -26,6 +29,8 @@ func riskCalculator(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, `!risk usage: <entry> <stop loss> <account size> <percentage eg 0.05>`", m.Author.Username))
 		return
 	}
+	slog.Info(context.TODO(), "Received %s command, args: %v", riskCommandPrefix, tokens)
+
 	entry, err := strconv.ParseFloat(tokens[1], 64)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse entry: %v into a float, please check.", m.Author.Username, tokens[1]))

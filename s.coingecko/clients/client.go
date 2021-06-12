@@ -31,6 +31,7 @@ var (
 	}
 )
 
+// TODO: fix to a singleton here.
 type CoinGeckoClient interface {
 	// Ping checks the connectivity of the client, returns bool if we can reach the coingecko API.
 	Ping(ctx context.Context) bool

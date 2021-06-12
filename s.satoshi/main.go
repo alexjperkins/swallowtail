@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"os/signal"
+
+	binanceclient "swallowtail/s.binance/client"
 	"swallowtail/s.satoshi/satoshi"
 	"syscall"
 
@@ -13,6 +15,10 @@ import (
 func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
+
+	// Initialize the binance client.
+	binanceclient.Init()
+
 	satoshi := satoshi.New(true)
 
 	sc := make(chan os.Signal, 1)

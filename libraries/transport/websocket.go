@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/monzo/slog"
+	"github.com/monzo/terrors"
 )
 
 type WsConfig struct {
@@ -15,32 +16,33 @@ type WsConfig struct {
 }
 
 type Websocket struct {
-	cfg          *WsConfig
-	conn         *websocket.Conn
-	recevierDone chan struct{}
+	cfg  *WsConfig
+	conn *websocket.Conn
+	done chan struct{}
 }
 
 type WsMessage struct {
 	Type    int
 	Raw     []byte
 	Created time.Time
-	Sender  string
+	From    string
 }
 
 func NewWebsocket(ctx context.Context, cfg *WsConfig) *Websocket {
 	c, _, err := websocket.DefaultDialer.DialContext(ctx, cfg.Endpoint, nil)
 	if err != nil {
-		panic("Shit! No websocket connection")
+		panic(terrors.Augment(err, "Failed to create a new websocket", nil))
 	}
 	slog.Info(ctx, fmt.Sprintf("creating ws -> %s", cfg.Endpoint))
 	return &Websocket{
-		cfg:          cfg,
-		conn:         c,
-		recevierDone: make(chan struct{}, 1),
+		cfg:  cfg,
+		conn: c,
+		done: make(chan struct{}, 1),
 	}
 }
 
 func (ws *Websocket) Send(ctx context.Context, msg *WsMessage, timeout time.Duration) {
+
 	sent := make(chan error)
 	defer close(sent)
 	go func() {
@@ -92,15 +94,9 @@ func (ws *Websocket) Receiver(ctx context.Context) (chan *WsMessage, chan error)
 		defer func() {
 			close(c)
 			close(errC)
-			slog.Info(nil, "Websocket receiver stopped.")
+			slog.Warn(nil, "Websocket receiver stopped.")
 		}()
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
 			t, msg, err := ws.conn.ReadMessage()
 			if err != nil {
 				errC <- err
@@ -108,21 +104,30 @@ func (ws *Websocket) Receiver(ctx context.Context) (chan *WsMessage, chan error)
 			wsMsg := &WsMessage{
 				Type:    t,
 				Raw:     msg,
-				Sender:  ws.cfg.Endpoint,
+				From:    ws.cfg.Endpoint,
 				Created: time.Now(),
 			}
-
 			select {
 			case c <- wsMsg:
-			default:
-				// best effort for now
+				continue
+			case <-ctx.Done():
+				return
+			case <-ws.done:
+				return
 			}
 		}
 	}()
 	return c, errC
 }
 
-func (ws *Websocket) StopReceiver() {
-	defer slog.Info(nil, "Web receiver stopping...")
-	ws.recevierDone <- struct{}{}
+func (ws *Websocket) ReceiveJSON(v interface{}) error {
+	return ws.conn.ReadJSON(v)
+}
+
+func (ws *Websocket) Close() {
+	defer slog.Warn(nil, "Web receiver stopping...")
+	select {
+	case ws.done <- struct{}{}:
+	default:
+	}
 }

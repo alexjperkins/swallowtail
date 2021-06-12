@@ -1,3 +1,1 @@
-default:
-	./setenv
-	go run ./main.go
+../Makefile-service

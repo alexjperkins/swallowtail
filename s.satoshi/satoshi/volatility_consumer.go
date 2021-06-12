@@ -85,11 +85,10 @@ func (v VolatilityConumser) Receiver(ctx context.Context, c chan *SatoshiConsume
 					case difference < trigger:
 						publishVolatilityMsg(c, symbol, pa, difference, false, v.IsActive())
 					default:
-						slog.Trace(ctx, "Low volatility [%s]", symbol)
 						continue
 					}
-
 					pa.prev = pa.curr
+
 				case <-d:
 					return
 				case <-ctx.Done():
@@ -129,7 +128,6 @@ func publishVolatilityMsg(c chan *SatoshiConsumerMessage, symbol string, pa pric
 		IsActive:         isActive,
 		Created:          time.Now(),
 	}:
-		return
 	}
 }
 

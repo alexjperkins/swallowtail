@@ -64,7 +64,7 @@ func (s *satoshi) consume(ctx context.Context) {
 	for id, c := range s.consumers {
 		id, c := id, c
 		go func() {
-			slog.Info(ctx, "Starting satoshi consumer %s", id)
+			slog.Info(ctx, "Starting registered satoshi consumer %s", id)
 			c.Receiver(ctx, s.consumerStream, s.done, s.withJitter)
 		}()
 	}
@@ -74,9 +74,8 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 	for {
 		select {
 		case e := <-s.consumerStream:
-			slog.Trace(ctx, "Received satoshi consumer event; %+v", e)
+			slog.Info(ctx, "Received satoshi consumer event; %+v, isActive: %b", e, e.IsActive)
 			if !e.IsActive {
-				slog.Info(ctx, "Recevied inactive satoshi consumer event: %+v", e)
 				continue
 			}
 			if e.IsPrivate {
@@ -89,14 +88,13 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 					)
 					continue
 				}
-				// Currently only the functionalitity to send to one participent.
+				// Currently we only have the functionality to send to one participent.
 				participent := e.ParticipentIDs[0]
 				s.dc.SendPrivateMessage(ctx, e.Message, participent)
 				continue
 			}
 			// Send the event message to the appropriate discord channel.
 			s.dc.Send(ctx, e.Message, e.DiscordChannelID)
-
 		case <-ctx.Done():
 			return
 		case <-s.done:

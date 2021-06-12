@@ -11,6 +11,7 @@ import (
 )
 
 var (
+	// To aid with mocking in tests.
 	defaultCoingeckoClient = coingecko.New
 )
 
@@ -46,7 +47,6 @@ func (p *priceBotService) GetPrices(ctx context.Context, symbols []string) []*Pr
 		prices = make([]*PriceBotPrice, len(symbols))
 		wg     sync.WaitGroup
 	)
-	slog.Trace(ctx, "Price bot gathering prices")
 	sort.Strings(symbols)
 	for i, symbol := range symbols {
 		i, symbol := i, symbol
@@ -56,7 +56,7 @@ func (p *priceBotService) GetPrices(ctx context.Context, symbols []string) []*Pr
 			price, err := p.GetPrice(ctx, symbol)
 			if err != nil {
 				// Best effort
-				slog.Info(ctx, "Failed to retreive price for %s; [%v]", symbol, err)
+				slog.Info(ctx, "Pricebot failed to retreive price for %s; [%v]", symbol, err)
 			}
 			prices[i] = price
 		}()

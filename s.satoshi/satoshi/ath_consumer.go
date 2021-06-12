@@ -31,7 +31,9 @@ var (
 )
 
 func init() {
-	// registerSatoshiConsumer(athConsumerID, ATHConsumer{	Active: true, })
+	registerSatoshiConsumer(athConsumerID, ATHConsumer{
+		Active: true,
+	})
 	defaultATHSymbols = coins.GetCoinSymbols()
 }
 
@@ -41,8 +43,6 @@ type ATHConsumer struct {
 }
 
 func (a ATHConsumer) Receiver(ctx context.Context, c chan *SatoshiConsumerMessage, d chan struct{}, withJitter bool) {
-	slog.Info(ctx, "Starting %s receiver", athConsumerID)
-
 	cli := coingecko.New(ctx)
 
 	// TODO: Move to tombstones; https://blog.labix.org/2011/10/09/death-of-goroutines-under-control

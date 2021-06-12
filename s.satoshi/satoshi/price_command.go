@@ -15,6 +15,7 @@ import (
 
 const (
 	priceCommandID       = "price-comamnd"
+	priceCommandPrefix   = "!price"
 	priceCommandUsageMsg = ":wave: <@%s>: `Usage: !price [symbols... | all ]`\nExamples:\n`!price BTC ETH LTC`\n`!price all\n`"
 )
 
@@ -29,14 +30,17 @@ func init() {
 
 func priceCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Check if we're parsing the correct command
-	if !strings.HasPrefix(m.Content, "!price") {
+	if !strings.HasPrefix(m.Content, priceCommandPrefix) {
 		return
 	}
+
 	tokens := strings.Split(m.Content, " ")
 	if len(tokens) < 2 {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(priceCommandUsageMsg, m.Author.ID))
 		return
 	}
+	slog.Info(context.TODO(), "Received %s command, args: %v", priceCommandPrefix, tokens)
+
 	var (
 		symbols      []string
 		channelID    = m.ChannelID
@@ -51,9 +55,6 @@ func priceCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	symbols = tokens[1:]
 
 	pricesMsg := priceBotSvc.GetPricesAsFormattedString(nil, symbols, withGreeting)
-	_, err := s.ChannelMessageSend(channelID, pricesMsg)
-	if err != nil {
-		// Best effort
-		slog.Info(nil, "Price command failed to send prices")
-	}
+	// Best Effort.
+	s.ChannelMessageSend(channelID, pricesMsg)
 }

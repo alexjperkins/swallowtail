@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+
 	"swallowtail/libraries/util"
-	discord "swallowtail/s.discord/clients"
+	binanceclient "swallowtail/s.binance/client"
+	discordclient "swallowtail/s.discord/clients"
 	discordproto "swallowtail/s.discord/proto"
 	"time"
 
@@ -24,6 +27,8 @@ const (
 var (
 	discordConsumerToken string
 	discordConsumerName  = "satoshi_consumer"
+
+	binanceAssetPairs = map[string]bool{}
 )
 
 func init() {
@@ -31,6 +36,7 @@ func init() {
 	registerSatoshiConsumer(discordConsumerID, DiscordConsumer{
 		Active: true,
 	})
+
 }
 
 type DiscordConsumer struct {
@@ -38,7 +44,19 @@ type DiscordConsumer struct {
 }
 
 func (dc DiscordConsumer) Receiver(ctx context.Context, c chan *SatoshiConsumerMessage, d chan struct{}, _ bool) {
-	discordClient := discord.New(discordConsumerName, discordConsumerToken, false)
+	discordClient := discordclient.New(discordConsumerName, discordConsumerToken, false)
+
+	// Build a list of asset pairs that have futures trading enabled.
+	assets, err := binanceclient.ListAllAssetPairs(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	for _, asset := range assets.Symbols {
+		if asset.WithMarginTrading {
+			binanceAssetPairs[strings.ToLower(asset.BaseAsset)] = true
+		}
+	}
+	slog.Info(ctx, "Fetched all binance asset pairs for the discord consumer; total: %v", len(binanceAssetPairs))
 
 	// Add handlers
 	discordClient.AddHandler(handleModMessages(ctx, c, dc.Active))
@@ -49,9 +67,7 @@ func (dc DiscordConsumer) Receiver(ctx context.Context, c chan *SatoshiConsumerM
 
 	select {
 	case <-d:
-		return
 	case <-ctx.Done():
-		return
 	}
 }
 
@@ -59,8 +75,17 @@ func (dc DiscordConsumer) IsActive() bool {
 	return dc.Active
 }
 
-func formatContent(username, timestamp, content string) string {
-	return fmt.Sprintf("%s: [%v] %s", username, timestamp, content)
+func formatContent(ctx context.Context, username, timestamp, content string) string {
+	var strTs string
+	ts, err := time.Parse(time.RFC3339, timestamp)
+	switch {
+	case err != nil:
+		slog.Warn(ctx, "Failed to parse timestamp; setting as original: %s, err: %v", timestamp, err)
+		strTs = timestamp
+	default:
+		strTs = ts.Truncate(time.Minute).String()
+	}
+	return fmt.Sprintf("Mod: %s:\nTimestamp:[%v]\nContent: %s", username, strTs, content)
 }
 
 func handleModMessages(
@@ -77,16 +102,24 @@ func handleModMessages(
 			return
 		}
 		for i, pc := range parsedContent {
+			// We want to reduce the noise here; we only care if the content contains a Ticker.
+			if !containsTicker(pc.Content) {
+				slog.Debug(ctx, "Received mod message without ticker: %s", pc.Content)
+				return
+			}
 			msg := &SatoshiConsumerMessage{
 				ConsumerID:       discordConsumerID,
 				DiscordChannelID: discordproto.DiscordSatoshiModMessagesChannel,
-				Message:          formatContent(pc.Author.Username, pc.Timestamp, pc.Content),
+				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
 				Created:          time.Now(),
 				IsActive:         isActive,
+				Metadata: map[string]string{
+					"message": fmt.Sprintf("%v", i),
+					"total":   fmt.Sprintf("%v", len(parsedContent)),
+				},
 			}
 			select {
 			case c <- msg:
-				slog.Info(ctx, "Published mod msg %v/%v, %+v", i, len(parsedContent), msg)
 			default:
 				slog.Warn(ctx, "Failed to publish satoshi mods msg; blocked channel")
 			}
@@ -107,17 +140,21 @@ func handleSwingMessages(
 			slog.Error(ctx, "Failed to get latest mod message: %v", err)
 			return
 		}
+
 		for i, pc := range parsedContent {
 			msg := &SatoshiConsumerMessage{
 				ConsumerID:       discordConsumerID,
 				DiscordChannelID: discordproto.DiscordSatoshiSwingsChannel,
-				Message:          formatContent(pc.Author.Username, pc.Timestamp, pc.Content),
+				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
 				Created:          time.Now(),
 				IsActive:         isActive,
+				Metadata: map[string]string{
+					"message": fmt.Sprintf("%v", i),
+					"total":   fmt.Sprintf("%v", len(parsedContent)),
+				},
 			}
 			select {
 			case c <- msg:
-				slog.Info(ctx, "Published swing msg %v/%v, %+v", i, len(parsedContent), msg)
 			default:
 				slog.Warn(ctx, "Failed to publish satoshi swings msg; blocked channel")
 			}
@@ -138,6 +175,10 @@ type channelMessageAuthor struct {
 }
 
 func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channelID string) ([]*channelMessage, error) {
+	// TODO: A hack for testing purposes.
+	if s == nil {
+		return nil, nil
+	}
 	url := fmt.Sprintf(discordChannelUrl, channelID)
 	slogParams := map[string]string{
 		"channel_id": channelID,
@@ -155,7 +196,7 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	// Execute request.
 	rsp, err := s.Client.Do(req)
 	if err != nil {
-		return nil, terrors.Augment(err, "Oh no, failed to get response", slogParams)
+		return nil, terrors.Augment(err, "Failed to make request", slogParams)
 	}
 	defer rsp.Body.Close()
 
@@ -164,9 +205,35 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to read response.", slogParams)
 	}
-
 	var msgList []*channelMessage
 	json.Unmarshal([]byte(body), &msgList)
 
 	return msgList, nil
+}
+
+// containsTicker checks if the contain contains a ticker that is traded on Binance
+// it assumes that the content passed with be normalized to lowercase.
+func containsTicker(content string) bool {
+	tokens := strings.Fields(content)
+	for _, token := range tokens {
+		switch {
+		case
+			token == "usd",
+			token == "usdc",
+			token == "usdt":
+			// If we match against some stablecoin inadvertly; then we can skip.
+			continue
+		case strings.Contains(token, "/"):
+			// Some mods format their trades as `BTC/USDT`.
+			childContent := strings.ReplaceAll(token, "/", " ")
+			if containsTicker(childContent) {
+				return true
+			}
+		}
+
+		if _, ok := binanceAssetPairs[token]; ok {
+			return true
+		}
+	}
+	return false
 }

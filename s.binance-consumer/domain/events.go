@@ -1,7 +1,5 @@
 package domain
-
-// BinanceEvent encapsulates the JSON response from Binance streams
-type BinanceEvent struct {
+// BinanceEvent encapsulates the JSON response from Binance streams type BinanceEvent struct {
 	EventType                   string `json:"e"`
 	EventTime                   int    `json:"E"`
 	Symbol                      string `json:"s"`

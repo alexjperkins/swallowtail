@@ -17,56 +17,9 @@ func TestHandleModMessages(t *testing.T) {
 		isActive      bool
 		messageCreate *discordgo.MessageCreate
 		shouldPublish bool
-	}{
-		{
-			name:     "inactive-and-should-publish",
-			isActive: false,
-			messageCreate: &discordgo.MessageCreate{
-				Message: &discordgo.Message{
-					Attachments: []*discordgo.MessageAttachment{
-						{
-							URL: "this-is-a-url",
-						},
-					},
-					ChannelID: discordproto.DiscordMoonModMessagesChannel,
-					Content:   "Harry Potter and the Chamber of Secrets",
-				},
-			},
-			shouldPublish: true,
-		},
-		{
-			name:     "active-and-should-publish",
-			isActive: true,
-			messageCreate: &discordgo.MessageCreate{
-				Message: &discordgo.Message{
-					Attachments: []*discordgo.MessageAttachment{
-						{
-							URL: "this-is-a-url-2",
-						},
-					},
-					ChannelID: discordproto.DiscordMoonModMessagesChannel,
-					Content:   "Harry Potter and the Goblet of Fire",
-				},
-			},
-			shouldPublish: true,
-		},
-		{
-			name:     "active-but-should-not-publish",
-			isActive: false,
-			messageCreate: &discordgo.MessageCreate{
-				Message: &discordgo.Message{
-					Attachments: []*discordgo.MessageAttachment{
-						{
-							URL: "this-is-a-url",
-						},
-					},
-					ChannelID: "Invalid channel id",
-					Content:   "Harry Potter and the Chamber of Secrets",
-				},
-			},
-			shouldPublish: false,
-		},
-	}
+	}{}
+	// TODO: We want non-blocking test cases here; the difficulty lies in the fact that
+	// we can't mock the discord session.
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
@@ -101,61 +54,15 @@ func TestHandleModMessages(t *testing.T) {
 
 func TestHandleSwingMessages(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name          string
 		isActive      bool
 		messageCreate *discordgo.MessageCreate
 		shouldPublish bool
-	}{
-		{
-			name:     "inactive-and-should-publish",
-			isActive: false,
-			messageCreate: &discordgo.MessageCreate{
-				Message: &discordgo.Message{
-					Attachments: []*discordgo.MessageAttachment{
-						{
-							URL: "this-is-a-url",
-						},
-					},
-					ChannelID: discordproto.DiscordMoonSwingGroupChannel,
-					Content:   "Harry Potter and the Chamber of Secrets",
-				},
-			},
-			shouldPublish: true,
-		},
-		{
-			name:     "active-and-should-publish",
-			isActive: true,
-			messageCreate: &discordgo.MessageCreate{
-				Message: &discordgo.Message{
-					Attachments: []*discordgo.MessageAttachment{
-						{
-							URL: "this-is-a-url-2",
-						},
-					},
-					ChannelID: discordproto.DiscordMoonSwingGroupChannel,
-					Content:   "Harry Potter and the Goblet of Fire",
-				},
-			},
-			shouldPublish: true,
-		},
-		{
-			name:     "active-but-should-not-publish",
-			isActive: false,
-			messageCreate: &discordgo.MessageCreate{
-				Message: &discordgo.Message{
-					Attachments: []*discordgo.MessageAttachment{
-						{
-							URL: "this-is-a-url",
-						},
-					},
-					ChannelID: "Invalid channel id",
-					Content:   "Harry Potter and the Chamber of Secrets",
-				},
-			},
-			shouldPublish: false,
-		},
-	}
+	}{}
+	// TODO: We want non-blocking test cases here; the difficulty lies in the fact that
+	// we can't mock the discord session.
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
@@ -185,6 +92,52 @@ func TestHandleSwingMessages(t *testing.T) {
 				assert.Equal(t, tt.messageCreate.Attachments, e.Attachments)
 				assert.Equal(t, discordproto.DiscordSatoshiSwingsChannel, e.DiscordChannelID)
 			}
+		})
+	}
+}
+
+func TestContainsTicker(t *testing.T) {
+	// Set our map of binance asset pairs to something we can test against.
+	originalBinanceAssetPairs := binanceAssetPairs
+	binanceAssetPairs = map[string]bool{
+		"btc": true,
+		"eth": true,
+	}
+	t.Cleanup(func() {
+		binanceAssetPairs = originalBinanceAssetPairs
+	})
+
+	tests := []struct {
+		name            string
+		content         string
+		doesTickerExist bool
+	}{
+		{
+			name:            "ticker_does_not_exist",
+			content:         "this is some content with not ticker at all.",
+			doesTickerExist: false,
+		},
+		{
+			name:            "contains_stable_coin",
+			content:         "this contains a stablecoin e.g usd usdt usdc",
+			doesTickerExist: false,
+		},
+		{
+			name:            "contains_bluntz styled_ticker",
+			content:         "this contains btc/usd & eth/usd tickers",
+			doesTickerExist: true,
+		},
+		{
+			name:            "contains_ticker",
+			content:         "contains regular styled ticker with newline \n btc and a few 5.9 \n sol",
+			doesTickerExist: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			res := containsTicker(tt.content)
+			assert.Equal(t, tt.doesTickerExist, res)
 		})
 	}
 }
