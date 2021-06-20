@@ -3,9 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"swallowtail/libraries/transport"
-	"swallowtail/s.eth/domain"
 	"time"
 
 	"gopkg.in/tomb.v2"
@@ -20,29 +18,29 @@ const (
 	infuraClientID   = "infura-client"
 )
 
-func NewInfuraClient(ctx context.Context) (EthClient, error) {
+func NewInfuraClient(ctx context.Context) (Web3Client, error) {
 	cfg := &transport.WsConfig{
 		Endpoint: fmt.Sprintf("%s/%s", infuraWSEndpoint, projectID),
 		BufSize:  32,
 	}
+	headers := map[string]string{}
 	i := &infuraClient{
-		&http.Client{
-			Timeout:   time.Duration(30 * time.Second),
-			Transport: &metricsRoundTripper{},
-		},
-		transport.NewWebsocket(ctx, cfg),
+		c:  transport.NewHTTPClient(ctx, time.Duration(30*time.Second), headers),
+		ws: transport.NewWebsocket(ctx, cfg),
+		t:  tomb.Tomb{},
 	}
 	go i.keepAlive()
 	return i, nil
 }
 
 type infuraClient struct {
-	*http.Client
-	*transport.Websocket
+	c  transport.HttpClient
+	ws *transport.Websocket
+	t  tomb.Tomb
 }
 
-func (i *infuraClient) SubscribePendingTransactions(ctx context.Context) (<-chan *domain.EthMempoolTxEvent, error) {
-	i.SendJSON(ctx, &domain.SubscribeToInfuraRequest{
+func (i *infuraClient) SubscribePendingTransactions(ctx context.Context) (<-chan *PendingTransactionEvent, error) {
+	i.ws.SendJSON(ctx, SubscribeToInfuraRequest{
 		Id:      0,
 		JSONRPC: "2.0",
 		Method:  "eth_subscribe",
@@ -52,8 +50,8 @@ func (i *infuraClient) SubscribePendingTransactions(ctx context.Context) (<-chan
 	}, time.Duration(30*time.Second))
 
 	// The first message received should be a subscribed message.
-	rsp := &domain.SubscribeToInfuraResponse{}
-	err := i.ReceiveJSON(rsp)
+	rsp := &SubscribeToInfuraResponse{}
+	err := i.ws.ReceiveJSON(rsp)
 	if err != nil {
 		// If we have something expected then return; we may want to put this in a retry loop.
 		return nil, terrors.Augment(err, "Failed to subscribe to pending transactions", map[string]string{
@@ -61,12 +59,11 @@ func (i *infuraClient) SubscribePendingTransactions(ctx context.Context) (<-chan
 		})
 	}
 
-	receiverCh := make(chan *domain.EthMempoolTxEvent, 32)
-	t, _ := tomb.WithContext(ctx)
-	t.Go(func() error {
+	receiverCh := make(chan *PendingTransactionEvent, 32)
+	i.t.Go(func() error {
 		for {
-			msg := &domain.EthMempoolTxEvent{}
-			err := i.ReceiveJSON(msg)
+			msg := &PendingTransactionEvent{}
+			err := i.ws.ReceiveJSON(msg)
 			if err != nil {
 				return err
 			}
@@ -77,16 +74,9 @@ func (i *infuraClient) SubscribePendingTransactions(ctx context.Context) (<-chan
 }
 
 func (i *infuraClient) StopReceiver() {
+	slog.Info(context.TODO(), "Stop receiver call received.")
+	i.t.Kill(tomb.ErrDying)
 }
 
 func (i *infuraClient) keepAlive() {
-}
-
-type metricsRoundTripper struct{}
-
-func (m *metricsRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	start := time.Now()
-	// TODO replace with metrics
-	defer slog.Info(r.Context(), "Request: %+v took %v", r, time.Now().Sub(start))
-	return http.DefaultTransport.RoundTrip(r)
 }

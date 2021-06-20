@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"swallowtail/s.api.gateway/graph/model"
 	"sync"
 	"sync/atomic"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"swallowtail/s.api.gateway/graph/model"
 )
 
 // region    ************************** generated!.gotpl **************************

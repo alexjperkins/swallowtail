@@ -33,7 +33,7 @@ var (
 
 type exchangeClient struct {
 	exchangeID string
-	c          *coingecko.CoinGeckoClient
+	c          coingecko.CoinGeckoClient
 }
 
 func (ex exchangeClient) GetPrice(ctx context.Context, symbol, assetPair string) (float64, error) {

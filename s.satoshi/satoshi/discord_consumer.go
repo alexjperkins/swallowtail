@@ -103,7 +103,7 @@ func handleModMessages(
 		}
 		for i, pc := range parsedContent {
 			// We want to reduce the noise here; we only care if the content contains a Ticker.
-			if !containsTicker(pc.Content) {
+			if !containsTicker(strings.ToLower(pc.Content)) {
 				slog.Debug(ctx, "Received mod message without ticker: %s", pc.Content)
 				return
 			}
