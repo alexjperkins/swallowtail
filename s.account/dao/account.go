@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"swallowtail/s.account/domain"
+	"time"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/imdario/mergo"
@@ -64,12 +65,21 @@ func ReadAccountByUsername(ctx context.Context, username string) (*domain.Accoun
 // CreateAccount creates a new account in the datastore.
 func CreateAccount(ctx context.Context, account *domain.Account) error {
 	var (
-		sql = `INSERT INTO accounts(username,password email,discord_id,phone_number,high_priority_pager,low_priority_pager) values($1,$2,$3,$4,$5,$6,$7)`
+		sql = `
+		INSERT INTO
+			accounts(username, password, email, discord_id, phone_number,
+				created, updated, last_payment_timestamp,
+				high_priority_pager, low_priority_pager, is_admin, is_futures_member) 
+		VALUES
+			($1, $2, $3 ,$4, $5, $6, $7, $8, $9, $10, $11, $12)`
 	)
+	now := time.Now()
+	// TODO: encrypt password.
 	if _, err := (db.Exec(
 		ctx, sql,
-		account.Email, account.Password, account.Email, account.DiscordID, account.PhoneNumber, account.HighPriorityPager,
-		account.LowPriorityPager,
+		account.Username, account.Password, account.Email, account.DiscordID, account.PhoneNumber,
+		now, now, now,
+		account.HighPriorityPager, account.LowPriorityPager, account.IsAdmin, account.IsFuturesMember,
 	)); err != nil {
 		return terrors.Propagate(err)
 	}
@@ -80,7 +90,10 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 // AccountID must be provided at least to the passed domain account struct, `mutation`.
 func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Account, error) {
 	var (
-		sql = `UPDATE accounts set username=$1,password=$2,email=$3,discord_id=$4,phone_number$5,high_priority_pager=$6,low_priority_pager=$7 WHERE user_id=$8`
+		sql = `
+		UPDATE accounts
+		set username=$1, password=$2, email=$3, discord_id=$4, phone_number=$5, created=$6, updated=$7, high_priority_pager=$8,low_priority_pager=$9
+		WHERE user_id=$10`
 	)
 	if mutation.AccountID == "" {
 		return nil, terrors.PreconditionFailed("mutation-without-id", "Account mutation requires at least the account ID", nil)

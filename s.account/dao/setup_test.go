@@ -11,7 +11,6 @@ import (
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
-
 	c, err := Init(ctx, &pgconn.Config{
 		Database: "swallowtail_test",
 		User:     "test",
@@ -23,9 +22,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to established connection to test db: %v", err)
 	}
-
 	code := m.Run()
-
 	// Close database connection & cleanup.
 	db.Exec(ctx, `DROP TABLE IF EXISTS accounts`)
 	c()

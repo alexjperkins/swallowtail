@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS googlesheets (
 	sheet_id VARCHAR(200) NOT NULL UNIQUE,
 	account_id uuid,
 
+	created TIME NOT NULL,
+	updated TIME NOT NULL,
+
 	PRIMARY KEY(googlesheets_id),
 	CONSTRAINT fk_account
 		FOREIGN KEY(account_id)
@@ -34,6 +37,9 @@ CREATE TABLE IF NOT EXISTS exchanges (
 	api_key VARCHAR(200),
 	secret_key VARCHAR(200),
 	account_id uuid,
+
+	created TIME NOT NULL,
+	updated TIME NOT NULL,
 
 	PRIMARY KEY(exchange_id),
 	CONSTRAINT fk_account
@@ -51,6 +57,13 @@ CREATE TABLE IF NOT EXISTS accounts (
 
 	high_priority_pager pager NOT NULL DEFAULT 'unknown',
 	low_priority_pager pager NOT NULL DEFAULT 'unknown',
+
+	created TIME NOT NULL,
+	updated TIME NOT NULL,
+	last_payment_timestamp TIME NOT NULL,
+
+	is_admin BOOLEAN DEFAULT FALSE,
+	is_futures_member BOOLEAN DEFAULT FALSE,
 
 	PRIMARY KEY(account_id)
 );

@@ -3,6 +3,9 @@ package dao
 import (
 	"context"
 	"testing"
+	"time"
+
+	"swallowtail/s.account/domain"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -124,5 +127,65 @@ func TestReadAccountByUsername(t *testing.T) {
 	assert.Equal(t, phoneNumber2, account.PhoneNumber)
 
 }
-func TestCreateAccount(t *testing.T) {}
+func TestCreateAccount(t *testing.T) {
+	ctx := context.Background()
+	db.Exec(ctx, `DELETE FROM accounts`)
+	t.Cleanup(func() {
+		db.Exec(ctx, `DELETE FROM accounts`)
+	})
+
+	start := time.Now()
+	var (
+		username        = "haskellcurry"
+		password        = "mockingbird"
+		email           = "haskellcurry@functional.co.uk"
+		discordID       = "discordid_i484294"
+		phoneNumber     = "07865482902"
+		isAdmin         = false
+		isFuturesMember = false
+	)
+
+	// Create an account.
+	err := CreateAccount(ctx, &domain.Account{
+		Username:    username,
+		Password:    password,
+		Email:       email,
+		DiscordID:   discordID,
+		PhoneNumber: phoneNumber,
+		IsAdmin:     isAdmin,
+	})
+	require.NoError(t, err)
+
+	// Read account back out. This probably should be done via a SQL statement for isolation,
+	// but these tests are more like integration tests anyway.
+	account, err := ReadAccountByUsername(ctx, username)
+	require.NoError(t, err, "Failed to read account back out")
+
+	end := time.Now()
+
+	// Run assertions.
+	assert.Equal(t, username, account.Username)
+	assert.Equal(t, password, account.Password)
+	assert.Equal(t, email, account.Email)
+	assert.Equal(t, discordID, account.DiscordID)
+	assert.Equal(t, phoneNumber, account.PhoneNumber)
+	assert.Equal(t, isAdmin, account.IsAdmin)
+	assert.Equal(t, isFuturesMember, account.IsFuturesMember)
+
+	// Timestamp assertions; we don't care for exactness, as long as they're in the right
+	// ballpark.
+	assert.True(t, between(account.Created, start, end))
+	assert.True(t, between(account.Updated, start, end))
+	assert.True(t, between(account.LastPaymentTimestamp, start, end))
+}
 func TestUpdateAccount(t *testing.T) {}
+
+func between(t, start, end time.Time) bool {
+	if t.After(end) {
+		return false
+	}
+	if t.Before(start) {
+		return false
+	}
+	return true
+}
