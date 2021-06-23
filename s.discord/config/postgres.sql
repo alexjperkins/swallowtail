@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS s_discord_touches (
 	sender_id VARCHAR(255) NOT NULL
 );
 
-CREATE INDEX idx_s_discord_touches_idempotency_key
+CREATE INDEX IF NOT EXISTS idx_s_discord_touches_idempotency_key
 ON s_discord_touches(idempotency_key);

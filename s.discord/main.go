@@ -3,14 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
+	"net"
 	"strconv"
-	"swallowtail/libraries/util"
-	"swallowtail/s.discord/dao"
-	"syscall"
 
 	"github.com/jackc/pgconn"
+	"google.golang.org/grpc"
+
+	"swallowtail/libraries/util"
+	"swallowtail/s.discord/dao"
+	"swallowtail/s.discord/handler"
+	discordproto "swallowtail/s.discord/proto"
 )
 
 var (
@@ -33,13 +35,13 @@ func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 
+	// Dao
 	port, err := strconv.ParseUint(pgPort, 10, 16)
 	if err != nil {
 		panic(fmt.Sprintf("Cannot parse port: %v; %v", pgPort, err))
 	}
 
-	// Options
-	opts := &pgconn.Config{
+	daoOpts := &pgconn.Config{
 		Host:     pgHost,
 		Port:     uint16(port),
 		Database: pgDB,
@@ -47,7 +49,7 @@ func main() {
 		Password: pgPassword,
 	}
 
-	dbCloser, err := dao.Init(ctx, opts)
+	dbCloser, err := dao.Init(ctx, daoOpts)
 	if err != nil {
 		panic(err)
 	}
@@ -55,12 +57,14 @@ func main() {
 	defer dbCloser()
 	defer cancel()
 
-	// Only whilst we don't have a server running.
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	// gRPC server
+	lis, err := net.Listen("tcp", "8000")
+	if err != nil {
+		panic(nil)
+	}
 
-	select {
-	case <-sc:
-		return
+	s := grpc.NewServer()
+	discordproto.RegisterDiscordServer(s, &handler.DiscordService{})
+	if err := s.Serve(lis); err != nil {
 	}
 }

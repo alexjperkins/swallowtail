@@ -5,6 +5,7 @@ package discordproto;
 option go_package = "./;discordproto";
 
 service discord {
+
   rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse) {
   }
 

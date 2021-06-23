@@ -4,6 +4,7 @@ import (
 	discordproto "swallowtail/s.discord/proto"
 )
 
-func init() {
-	s := discordproto.Stream
+// DiscordService implements the service for discord.
+type DiscordService struct {
+	discordproto.UnimplementedDiscordServer
 }
