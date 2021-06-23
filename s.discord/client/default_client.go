@@ -1,38 +1,13 @@
-package clients
+package client
 
 import (
 	"context"
 	"fmt"
 
-	"swallowtail/libraries/util"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 )
-
-var (
-	// TODO: change implementation to use own defined mocks
-	DiscordClientID = "discord-client-id"
-
-	isActiveFlag          bool
-	discordTestingChannel = "817513133274824715"
-)
-
-func init() {
-	v := util.EnvGetOrDefault("DISCORD_TESTING_MODE", "0")
-	if v != "1" {
-		isActiveFlag = true
-	}
-}
-
-// DiscordClient
-type DiscordClient interface {
-	Send(ctx context.Context, message, channelID string) error
-	SendPrivateMessage(ctx context.Context, message, userID string) error
-	AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate))
-	Close()
-}
 
 // New creates a new discord client
 func New(name, token string, isBot bool) DiscordClient {
@@ -66,8 +41,6 @@ func New(name, token string, isBot bool) DiscordClient {
 		isActive: isActiveFlag,
 	}
 }
-
-type Handler func(context.Context, *discordgo.Session, *discordgo.MessageCreate) error
 
 type discordClient struct {
 	session  *discordgo.Session
@@ -112,6 +85,11 @@ func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discord
 
 func (d *discordClient) Close() {
 	d.session.Close()
+}
+
+func (d *discordClient) Ping(ctx context.Context) error {
+	// TODO: best way to ping the discord client?
+	return nil
 }
 
 func formatToken(token string, isBot bool) string {

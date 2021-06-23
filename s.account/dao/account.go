@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"swallowtail/s.account/domain"
+	accountproto "swallowtail/s.account/proto"
 	"time"
 
 	"github.com/georgysavva/scany/pgxscan"
@@ -14,7 +15,7 @@ import (
 // ReadAccounts returns a list of all domain accounts from the underlying datastore.
 func ReadAccounts(ctx context.Context) ([]*domain.Account, error) {
 	var (
-		sql      = `SELECT * FROM accounts`
+		sql      = `SELECT * FROM s_account_accounts`
 		accounts []*domain.Account
 	)
 	err := pgxscan.Select(ctx, db, &accounts, sql)
@@ -27,7 +28,7 @@ func ReadAccounts(ctx context.Context) ([]*domain.Account, error) {
 // ReadAccountByID returns the a domain account from the underlying datastore, by ID.
 func ReadAccountByID(ctx context.Context, accountID string) (*domain.Account, error) {
 	var (
-		sql      = `SELECT * FROM accounts WHERE account_id=$1`
+		sql      = `SELECT * FROM s_account_accounts WHERE account_id=$1`
 		accounts []*domain.Account
 	)
 	err := pgxscan.Select(ctx, db, &accounts, sql, accountID)
@@ -36,7 +37,7 @@ func ReadAccountByID(ctx context.Context, accountID string) (*domain.Account, er
 	}
 	if len(accounts) > 1 {
 		// We shouldn't have this case, since this is enforced at the persistence layer.
-		slog.Error(ctx, "More than one account with identical id", map[string]string{
+		slog.Critical(ctx, "More than one account with identical id", map[string]string{
 			"account_id": accountID,
 		})
 	}
@@ -46,7 +47,7 @@ func ReadAccountByID(ctx context.Context, accountID string) (*domain.Account, er
 // ReadAccountByUsername returns the a domain account from the underlying datastore, by username.
 func ReadAccountByUsername(ctx context.Context, username string) (*domain.Account, error) {
 	var (
-		sql      = `SELECT * FROM accounts WHERE username=$1`
+		sql      = `SELECT * FROM s_account_accounts WHERE username=$1`
 		accounts []*domain.Account
 	)
 	err := pgxscan.Select(ctx, db, &accounts, sql, username)
@@ -67,19 +68,30 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 	var (
 		sql = `
 		INSERT INTO
-			accounts(username, password, email, discord_id, phone_number,
+			s_account_accounts(username, password, email, discord_id, phone_number,
 				created, updated, last_payment_timestamp,
 				high_priority_pager, low_priority_pager, is_admin, is_futures_member) 
 		VALUES
 			($1, $2, $3 ,$4, $5, $6, $7, $8, $9, $10, $11, $12)`
 	)
+
+	var (
+		lowPriorityPager  = account.LowPriorityPager
+		highPriorityPager = account.HighPriorityPager
+	)
+	if lowPriorityPager == "" {
+		lowPriorityPager = accountproto.AccountPagerTypeUnknown
+	}
+	if highPriorityPager == "" {
+		highPriorityPager = accountproto.AccountPagerTypeUnknown
+	}
+
 	now := time.Now()
-	// TODO: encrypt password.
 	if _, err := (db.Exec(
 		ctx, sql,
 		account.Username, account.Password, account.Email, account.DiscordID, account.PhoneNumber,
 		now, now, now,
-		account.HighPriorityPager, account.LowPriorityPager, account.IsAdmin, account.IsFuturesMember,
+		highPriorityPager, lowPriorityPager, account.IsAdmin, account.IsFuturesMember,
 	)); err != nil {
 		return terrors.Propagate(err)
 	}
@@ -91,8 +103,8 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Account, error) {
 	var (
 		sql = `
-		UPDATE accounts
-		set username=$1, password=$2, email=$3, discord_id=$4, phone_number=$5, created=$6, updated=$7, high_priority_pager=$8,low_priority_pager=$9
+		UPDATE s_account_accounts
+		SET username=$1, password=$2, email=$3, discord_id=$4, phone_number=$5, created=$6, updated=$7, high_priority_pager=$8,low_priority_pager=$9
 		WHERE user_id=$10`
 	)
 	if mutation.AccountID == "" {

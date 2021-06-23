@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"swallowtail/libraries/util"
 	coingecko "swallowtail/s.coingecko/clients"
-	discord "swallowtail/s.discord/clients"
+	discord "swallowtail/s.discord/client"
 	"swallowtail/s.googlesheets/clients"
 	"swallowtail/s.googlesheets/owner"
 	"swallowtail/s.googlesheets/spreadsheet"

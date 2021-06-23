@@ -16,7 +16,7 @@ BEGIN
 END
 $$;
 
-CREATE TABLE IF NOT EXISTS googlesheets (
+CREATE TABLE IF NOT EXISTS s_account_googlesheets (
 	googlesheets_id uuid DEFAULT uuid_generate_v4(),
 	spreadsheet_id VARCHAR(200) NOT NULL UNIQUE,
 	sheet_id VARCHAR(200) NOT NULL UNIQUE,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS googlesheets (
 			REFERENCES accounts(account_id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS exchanges (
+CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	exchange_id uuid DEFAULT uuid_generate_v4(),
 	exchange exchange,
 	api_key VARCHAR(200),
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS exchanges (
 			REFERENCES accounts(account_id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS accounts (
+CREATE TABLE IF NOT EXISTS s_account_accounts (
 	account_id uuid DEFAULT uuid_generate_v4(),
 	username VARCHAR(50) NOT NULL UNIQUE,
 	password VARCHAR(50) NOT NULL,

@@ -10,7 +10,7 @@ import (
 
 	"swallowtail/libraries/util"
 	binanceclient "swallowtail/s.binance/client"
-	discordclient "swallowtail/s.discord/clients"
+	discordclient "swallowtail/s.discord/client"
 	discordproto "swallowtail/s.discord/proto"
 	"time"
 

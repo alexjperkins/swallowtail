@@ -53,7 +53,7 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/superoo7/go-gecko v1.0.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
-	github.com/vektah/gqlparser/v2 v2.2.0
+	github.com/vektah/gqlparser/v2 v2.1.0
 	github.com/vektra/mockery/v2 v2.7.4 // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
 	github.com/vmihailenco/msgpack/v4 v4.3.11 // indirect

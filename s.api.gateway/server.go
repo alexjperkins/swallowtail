@@ -4,7 +4,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"swallowtail/s.api.gateway/graphql/generated"
+	"swallowtail/s.api.gateway/graph"
+	"swallowtail/s.api.gateway/graph/generated"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"

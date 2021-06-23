@@ -45,8 +45,10 @@ type priceAction struct {
 }
 
 func init() {
-	// registerSatoshiConsumer(volatilityConsumerID, VolatilityConumser{ Active: false, })
 	defaultVolatilitySymbols = coins.GetCoinSymbols()
+	registerSatoshiConsumer(volatilityConsumerID, VolatilityConumser{
+		Active: false,
+	})
 }
 
 type VolatilityConumser struct {

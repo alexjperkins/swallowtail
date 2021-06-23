@@ -23,3 +23,7 @@ account:
 
 test: postgres_test
 	docker-compose -f local.yml run --rm -e swallowtail.s.account go test ./...
+
+protos:
+	find . -type d -name s.\* -exec bash -c './bin/generate_protobufs {}' \;
+

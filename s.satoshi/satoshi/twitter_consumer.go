@@ -35,7 +35,9 @@ type TwitterUserMetaData struct {
 }
 
 func init() {
-	//registerSatoshiConsumer(twitterConsumerID, TwitterConsumer{	Active: false, })
+	registerSatoshiConsumer(twitterConsumerID, TwitterConsumer{
+		Active: false,
+	})
 }
 
 type TwitterConsumer struct {

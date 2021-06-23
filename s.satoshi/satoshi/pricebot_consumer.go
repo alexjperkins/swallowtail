@@ -26,6 +26,9 @@ func init() {
 		priceBotSymbols = coins.GetCoinSymbols()
 		sort.Strings(priceBotSymbols)
 	})
+	registerSatoshiConsumer(PriceBotConsumerID, PriceBotConsumer{
+		Active: true,
+	})
 }
 
 // PriceBotConsumer

@@ -5,16 +5,14 @@ import (
 	"sync"
 
 	"github.com/monzo/terrors"
-
-	accountproto "swallowtail/s.account/proto"
 )
 
 var (
-	pagers  = map[accountproto.PagerType]Pager{}
+	pagers  = map[string]Pager{}
 	pagerMu sync.RWMutex
 )
 
-func register(id accountproto.PagerType, pager Pager) {
+func register(id string, pager Pager) {
 	pagerMu.Lock()
 	defer pagerMu.Unlock()
 
@@ -26,7 +24,7 @@ func register(id accountproto.PagerType, pager Pager) {
 }
 
 // GetPagerByID is a concurrency safe way to retrieve the given pager by ID
-func GetPagerByID(id accountproto.PagerType) (Pager, error) {
+func GetPagerByID(id string) (Pager, error) {
 	pagerMu.RLock()
 	defer pagerMu.RUnlock()
 	pager, ok := pagers[id]

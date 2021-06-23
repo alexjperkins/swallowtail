@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"swallowtail/libraries/util"
-	discord "swallowtail/s.discord/clients"
+	discord "swallowtail/s.discord/client"
 
 	"github.com/monzo/slog"
 )
