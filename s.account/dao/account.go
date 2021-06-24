@@ -6,7 +6,6 @@ import (
 	accountproto "swallowtail/s.account/proto"
 	"time"
 
-	"github.com/georgysavva/scany/pgxscan"
 	"github.com/imdario/mergo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
@@ -18,7 +17,7 @@ func ReadAccounts(ctx context.Context) ([]*domain.Account, error) {
 		sql      = `SELECT * FROM s_account_accounts`
 		accounts []*domain.Account
 	)
-	err := pgxscan.Select(ctx, db, &accounts, sql)
+	err := db.Select(ctx, &accounts, sql)
 	if err != nil {
 		return nil, terrors.Propagate(err)
 	}
@@ -31,7 +30,7 @@ func ReadAccountByID(ctx context.Context, accountID string) (*domain.Account, er
 		sql      = `SELECT * FROM s_account_accounts WHERE account_id=$1`
 		accounts []*domain.Account
 	)
-	err := pgxscan.Select(ctx, db, &accounts, sql, accountID)
+	err := db.Select(ctx, &accounts, sql, accountID)
 	if err != nil {
 		return nil, terrors.Propagate(err)
 	}
@@ -50,7 +49,7 @@ func ReadAccountByUsername(ctx context.Context, username string) (*domain.Accoun
 		sql      = `SELECT * FROM s_account_accounts WHERE username=$1`
 		accounts []*domain.Account
 	)
-	err := pgxscan.Select(ctx, db, &accounts, sql, username)
+	err := db.Select(ctx, &accounts, sql, username)
 	if err != nil {
 		return nil, terrors.Propagate(err)
 	}

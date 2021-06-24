@@ -5,15 +5,11 @@ package discordproto;
 option go_package = "./;discordproto";
 
 service discord {
+  rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse);
 
-  rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse) {
-  }
+  rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgPrivateToChannelResponse);
 
-  rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgPrivateToChannelResponse) {
-  }
-
-  rpc Subscribe (SuscribeRequest) returns (SubscribeResponse) {
-  }
+  rpc Subscribe (SuscribeRequest) returns (SubscribeResponse);
 }
 
 message SendMsgToChannelRequest {
