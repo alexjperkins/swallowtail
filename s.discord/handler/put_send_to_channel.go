@@ -14,27 +14,27 @@ import (
 
 // PUTSendToChannel gPRC handler for sending messages to a given channel via discord.
 func (s *DiscordService) PUTSendToChannel(
-	ctx context.Context, req *discordproto.SendMsgToChannelRequest,
+	ctx context.Context, in *discordproto.SendMsgToChannelRequest,
 ) (*discordproto.SendMsgToChannelResponse, error) {
 
 	errParams := map[string]string{
-		"idempotency_key": req.IdempotencyKey,
-		"channel_id":      req.ChannelId,
-		"sender_id":       req.SenderId,
+		"idempotency_key": in.IdempotencyKey,
+		"channel_id":      in.ChannelId,
+		"sender_id":       in.SenderId,
 	}
 
 	// First lets check if the idempotency key exists in persistent storage.
-	_, exists, err := dao.Exists(ctx, req.IdempotencyKey)
+	_, exists, err := dao.Exists(ctx, in.IdempotencyKey)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to read existing; dao failed to read", errParams)
 	}
 	switch {
-	case exists && !req.Force:
+	case exists && !in.Force:
 		return &discordproto.SendMsgToChannelResponse{}, nil
 	}
 
 	// Send message via discord.
-	if err := client.Send(ctx, req.Content, req.ChannelId); err != nil {
+	if err := client.Send(ctx, in.Content, in.ChannelId); err != nil {
 		return nil, terrors.Augment(err, "Failed to send message via discord.", errParams)
 	}
 
@@ -42,8 +42,8 @@ func (s *DiscordService) PUTSendToChannel(
 	switch {
 	case !exists:
 		if _, err := (dao.Create(ctx, &domain.Touch{
-			IdempotencyKey: req.IdempotencyKey,
-			SenderID:       req.SenderId,
+			IdempotencyKey: in.IdempotencyKey,
+			SenderID:       in.SenderId,
 			Updated:        time.Now(),
 		})); err != nil {
 			// We do have the case whereby the write fails but we still send the message; this is preferable
@@ -53,8 +53,8 @@ func (s *DiscordService) PUTSendToChannel(
 		}
 	default:
 		if _, err := (dao.Update(ctx, &domain.Touch{
-			IdempotencyKey: req.IdempotencyKey,
-			SenderID:       req.SenderId,
+			IdempotencyKey: in.IdempotencyKey,
+			SenderID:       in.SenderId,
 			Updated:        time.Now(),
 		})); err != nil {
 			// We have the same case as above here too.

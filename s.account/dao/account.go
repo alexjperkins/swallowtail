@@ -2,13 +2,14 @@ package dao
 
 import (
 	"context"
-	"swallowtail/s.account/domain"
-	accountproto "swallowtail/s.account/proto"
 	"time"
 
 	"github.com/imdario/mergo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	"swallowtail/s.account/domain"
+	accountproto "swallowtail/s.account/proto"
 )
 
 // ReadAccounts returns a list of all domain accounts from the underlying datastore.
@@ -79,10 +80,10 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 		highPriorityPager = account.HighPriorityPager
 	)
 	if lowPriorityPager == "" {
-		lowPriorityPager = accountproto.AccountPagerTypeUnknown
+		lowPriorityPager = accountproto.PagerType_UNKNOWN.String()
 	}
 	if highPriorityPager == "" {
-		highPriorityPager = accountproto.AccountPagerTypeUnknown
+		highPriorityPager = accountproto.PagerType_UNKNOWN.String()
 	}
 
 	now := time.Now()

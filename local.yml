@@ -1,0 +1,63 @@
+version: "3"
+
+volumes:
+  swallowtail_postgres_data: {}
+  swallowtail_postgres_data_backup: {}
+  swallowtail_zookeeper_data: {}
+  swallowtail_zookeeper_datalog: {}
+  swallowtail_kafka_data: {}
+
+services:
+  ### --- Infrastructure --- ###
+
+  ## -- postgres -- ##
+  postgres:
+    build:
+      context: .
+      dockerfile: ./infrastructure/postgres/Dockerfile
+    image: i.postgres 
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=swallowtail
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - swallowtail_postgres_data:/var/lib/postgresql/data
+      - swallowtail_postgres_data_backup:/backups
+
+  postgres_test:
+    build:
+      context: .
+      dockerfile: ./infrastructure/postgres/Dockerfile
+    image: test.swallowtail.i.postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=swallowtail_test
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+
+  ### --- RPC Layer --- ###
+
+  ### --- APIs --- ###
+
+  ### --- Backend --- ###
+  swallowtail.s.account:
+    hostname: swallowtail_s_account
+    image: swallowtail.s.account
+    env_file:
+      - .envs/postgres.env
+
+  swallowtail.s.satoshi:
+    hostname: swallowtail_s_satoshi
+    image: swallowtail.s.satoshi
+    env_file:
+      - .envs/postgres.env
+      - .envs/discord.env
+      - .envs/binance.env
+      - .envs/twitter.env

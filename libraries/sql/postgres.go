@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"swallowtail/libraries/util"
+	"sync"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgconn"
@@ -16,20 +17,21 @@ import (
 )
 
 var (
-	url string
+	connUrl string
+	mu      sync.Mutex
 )
 
 func init() {
-	util.SetEnv("SWALLOWTAIL_POSTGRES_CONNECTION_URL")
+	connUrl = util.SetEnv("SWALLOWTAIL_POSTGRES_CONNECTION_URL")
 }
 
-// NewPostgresDatabase creates a new postgres database connection.
+// NewPostgresSQL creates a new postgres database connection.
 // TODO: find a way to not pass the service name but to find it dynamically; maybe from hostname?
 func NewPostgresSQL(ctx context.Context, applySchema bool, serviceName string) (Database, error) {
-	cfg, err := pgconn.ParseConfig(url)
+	cfg, err := pgconn.ParseConfig(connUrl)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to parse config from postgres connection URL.", map[string]string{
-			"postgres_connection_url": url,
+			"postgres_connection_url": connUrl,
 		})
 	}
 
@@ -53,7 +55,7 @@ func NewPostgresSQL(ctx context.Context, applySchema bool, serviceName string) (
 	slog.Debug(ctx, "Established connection to postgres database", errParams)
 
 	if applySchema {
-		err = createSchema(ctx, pool, serviceName)
+		err = CreateSchema(ctx, pool, serviceName)
 		if err != nil {
 			pool.Close()
 			return nil, err
@@ -79,7 +81,6 @@ type psql struct {
 }
 
 // TODO: add metrics.
-
 func (p *psql) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Postgres query.")
 	defer span.Finish()

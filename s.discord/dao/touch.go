@@ -4,7 +4,6 @@ import (
 	"context"
 	"swallowtail/s.discord/domain"
 
-	"github.com/georgysavva/scany/pgxscan"
 	"github.com/imdario/mergo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
@@ -20,7 +19,7 @@ func Exists(ctx context.Context, idempotencyKey string) (*domain.Touch, bool, er
 		return nil, false, nil
 	}
 
-	err := pgxscan.Select(ctx, db, &touches, sql, idempotencyKey)
+	err := db.Select(ctx, &touches, sql, idempotencyKey)
 	if err != nil {
 		return nil, false, terrors.Propagate(err)
 	}

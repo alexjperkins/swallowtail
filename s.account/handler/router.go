@@ -6,5 +6,5 @@ import (
 
 // AccountService ...
 type AccountService struct {
-	accountproto.UnimplementedAccountServer
+	*accountproto.UnimplementedAccountServer
 }

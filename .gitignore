@@ -4,7 +4,5 @@ s.twitter/setenv
 credentials.json
 token.json
 setenv
-*local.yml*
-Dockerfile
-.dockerignore
-
+*Dockerfile*
+*.dockerignore*

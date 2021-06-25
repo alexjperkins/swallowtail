@@ -16,8 +16,9 @@ const (
 	postgresConfigFileName = "postgres.sql"
 )
 
-// createSchema creates the schema in the local config `postgres.sql` file if it doesn't already exist.
-func createSchema(ctx context.Context, dbpool *pgxpool.Pool, serviceName string) error {
+// CreateSchema creates the schema in the local config `postgres.sql` file if it doesn't already exist.
+// TODO: diff between postgres & other dbs config files.
+func CreateSchema(ctx context.Context, dbpool *pgxpool.Pool, serviceName string) error {
 	sql, err := loadSQLFile(ctx, serviceName)
 	if err != nil {
 		return err

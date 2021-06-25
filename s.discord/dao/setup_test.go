@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	connectionURL := os.Getenv("SWALLOWTAIL_TEST_POSTGRES_CONNECTION_URL")
 	sql.SetPostgresConnectionURL(connectionURL)
 
-	err := Init(ctx, "s.account")
+	err := Init(ctx, "s.discord")
 	if err != nil {
 		log.Fatalf("Failed to established connection to test db: %v", err)
 	}

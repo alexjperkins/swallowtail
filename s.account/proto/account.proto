@@ -23,6 +23,7 @@ enum PagerType {
     PHONE = 1;
     SMS = 2;
     EMAIL = 3;
+    UNKNOWN = 4;
 }
 
 enum PagerPriority {

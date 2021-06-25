@@ -22,7 +22,7 @@ var (
 )
 
 func init() {
-	v := util.EnvGetOrDefault("DISCORD_TESTING_MODE", "0")
+	v := util.EnvGetOrDefault("DISCORD_TESTING_OVERRIDE", "0")
 	if v != "1" {
 		isActiveFlag = true
 	}
