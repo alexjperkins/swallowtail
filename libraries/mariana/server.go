@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc"
@@ -36,7 +37,12 @@ type server struct {
 }
 
 func (s *server) Run(ctx context.Context) {
-	addr := formatAddr(s.ServiceName, defaultServicePort)
+	hostname, err := os.Hostname()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to establish hostname: %v", err))
+	}
+
+	addr := formatAddr(hostname, defaultServicePort)
 	errParams := map[string]string{
 		"addr":         addr,
 		"service_name": s.ServiceName,
@@ -44,7 +50,7 @@ func (s *server) Run(ctx context.Context) {
 
 	listener, err := net.Listen(network, addr)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("%s failed to listen on %s:%s: %v", s.ServiceName, network, addr, err))
 	}
 
 	slog.Info(ctx, "%s listening on %s", s.ServiceName, addr, errParams)

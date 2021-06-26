@@ -5,5 +5,9 @@ package sql
 func SetPostgresConnectionURL(url string) {
 	mu.Lock()
 	defer mu.Unlock()
-	connUrl = url
+
+	connURL = "postgresql://test:test@postgres:5433/swallowtail_test"
+	if url != "" {
+		connURL = url
+	}
 }

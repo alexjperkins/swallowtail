@@ -1,9 +1,8 @@
-// +build intergration
-
 package dao
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"swallowtail/libraries/sql"
@@ -11,6 +10,10 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	flag.Parse()
+	if testing.Short() {
+		os.Exit(0)
+	}
 	ctx := context.Background()
 
 	connectionURL := os.Getenv("SWALLOWTAIL_TEST_POSTGRES_CONNECTION_URL")
@@ -21,13 +24,10 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to established connection to test db: %v", err)
 	}
 
-	// Cleanup before starting.
-	db.Exec(ctx, `DROP TABLE IF EXISTS accounts`)
-
 	// Run our test assertions.
 	code := m.Run()
 
 	// Close database connection & cleanup.
-	db.Exec(ctx, `DROP TABLE IF EXISTS accounts`)
+	db.Exec(ctx, `DROP TABLE IF EXISTS s_account_accounts CASCADE`)
 	os.Exit(code)
 }

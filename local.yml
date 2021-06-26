@@ -1,8 +1,6 @@
 version: "3"
 
 volumes:
-  swallowtail_postgres_data: {}
-  swallowtail_postgres_data_backup: {}
   swallowtail_zookeeper_data: {}
   swallowtail_zookeeper_datalog: {}
   swallowtail_kafka_data: {}
@@ -15,7 +13,7 @@ services:
     build:
       context: .
       dockerfile: ./infrastructure/postgres/Dockerfile
-    image: i.postgres 
+    image: i.swallowtail.postgres 
     ports:
       - "5432:5432"
     environment:
@@ -24,9 +22,6 @@ services:
       - POSTGRES_DB=swallowtail
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
-    volumes:
-      - swallowtail_postgres_data:/var/lib/postgresql/data
-      - swallowtail_postgres_data_backup:/backups
 
   postgres_test:
     build:
@@ -48,13 +43,27 @@ services:
 
   ### --- Backend --- ###
   swallowtail.s.account:
-    hostname: swallowtail_s_account
+    hostname: swallowtail-s-account
     image: swallowtail.s.account
+    ports:
+      - "8000:8000"
     env_file:
       - .envs/postgres.env
+    depends_on:
+      - postgres
+
+  swallowtail.s.discord:
+    hostname: swallowtail-s-discord
+    image: swallowtail.s.discord
+    ports:
+      - "8000:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
 
   swallowtail.s.satoshi:
-    hostname: swallowtail_s_satoshi
+    hostname: swallowtail-s-satoshi
     image: swallowtail.s.satoshi
     env_file:
       - .envs/postgres.env

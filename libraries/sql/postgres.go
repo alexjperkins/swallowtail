@@ -17,21 +17,21 @@ import (
 )
 
 var (
-	connUrl string
+	connURL string
 	mu      sync.Mutex
 )
 
 func init() {
-	connUrl = util.SetEnv("SWALLOWTAIL_POSTGRES_CONNECTION_URL")
+	connURL = util.SetEnv("SWALLOWTAIL_POSTGRES_CONNECTION_URL")
 }
 
 // NewPostgresSQL creates a new postgres database connection.
 // TODO: find a way to not pass the service name but to find it dynamically; maybe from hostname?
 func NewPostgresSQL(ctx context.Context, applySchema bool, serviceName string) (Database, error) {
-	cfg, err := pgconn.ParseConfig(connUrl)
+	cfg, err := pgconn.ParseConfig(connURL)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to parse config from postgres connection URL.", map[string]string{
-			"postgres_connection_url": connUrl,
+			"postgres_connection_url": connURL,
 		})
 	}
 

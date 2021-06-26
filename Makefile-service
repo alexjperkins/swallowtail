@@ -10,6 +10,7 @@ define DOCKERFILE_CONTENTS
 FROM alpine:latest
 MAINTAINER alexperkins.crypto@gmail.com
 ADD $(fq-binary) /
+ADD ./config /$(binary)/config
 EXPOSE 8080
 RUN apk --no-cache add ca-certificates
 ENTRYPOINT ["/$(fq-binary)"]
@@ -20,6 +21,7 @@ export DOCKERFILE_CONTENTS
 define DOCKERFILEIGNORE_CONTENTS
 **/*
 !$(fq-binary)
+!config/
 web
 endef
 export DOCKERFILEIGNORE_CONTENTS
