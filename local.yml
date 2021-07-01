@@ -65,8 +65,26 @@ services:
   swallowtail.s.satoshi:
     hostname: swallowtail-s-satoshi
     image: swallowtail.s.satoshi
+    ports:
+      - "8000:8000"
     env_file:
       - .envs/postgres.env
       - .envs/discord.env
       - .envs/binance.env
       - .envs/twitter.env
+
+  swallowtail.s.googlesheets:
+    hostname: swallowtail-s-googlesheets
+    image: swallowtail.s.googlesheets
+    ports:
+      - "8000:8000"
+
+  swallowtail.s.binance:
+    hostname: swallowtail-s-binance
+    image: swallowtail.s.binance
+    ports:
+      - "8000:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres

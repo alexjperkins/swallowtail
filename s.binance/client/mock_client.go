@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"swallowtail/s.binance/domain"
 	"sync"
 	"testing"
 )
@@ -63,4 +64,9 @@ func (m *mockClient) AssertListAllAssetPairs(t *testing.T, expectedNumberOfCalls
 	if howManyCalls != expectedNumberOfCalls {
 		t.Errorf("ListAllAssetPairs: Expecting %v calls, got %v", expectedNumberOfCalls, howManyCalls)
 	}
+}
+
+// TODO
+func (m *mockClient) ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error {
+	return nil
 }

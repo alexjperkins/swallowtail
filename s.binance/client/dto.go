@@ -16,6 +16,10 @@ type ListAllAssetPairsResponse struct {
 	Symbols []*BinanceAssetItem `json:"symbols"`
 }
 
+type ExecuteSpotTradeRequest struct{}
+
+type ExecuteSpotTradeResponse struct{}
+
 // PingRequest data transfer object for ping request.
 type PingRequest struct{}
 

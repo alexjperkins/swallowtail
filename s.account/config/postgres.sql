@@ -5,11 +5,7 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pager') THEN
 		CREATE TYPE pager AS ENUM ('DISCORD', 'EMAIL', 'SMS', 'PHONE', 'UNKNOWN');
 	END IF;
-END
-$$;
 
-DO $$ 
-BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'exchange') THEN
 		CREATE TYPE exchange AS ENUM ('BINANCE', 'FTX');
 	END IF;

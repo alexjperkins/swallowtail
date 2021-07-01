@@ -2,23 +2,35 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"swallowtail/s.binance/client"
-	"syscall"
 
-	"github.com/monzo/slog"
+	"swallowtail/libraries/mariana"
+	"swallowtail/s.account/dao"
+	"swallowtail/s.binance/client"
+	"swallowtail/s.binance/handler"
+	binanceproto "swallowtail/s.binance/proto"
+)
+
+const (
+	svcName = "s.binance"
 )
 
 func main() {
 	ctx := context.Background()
-	client.Init()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	defer slog.Warn(ctx, "Received shutdown signal....")
+	// Init Dao
+	if err := dao.Init(ctx, svcName); err != nil {
+		panic(err)
+	}
 
-	select {
-	case <-sc:
+	// Init Mariana Server
+	srv := mariana.Init(svcName)
+	binanceproto.RegisterBinanceServer(srv.Grpc(), &handler.BinanceService{})
+	srv.Run(ctx)
+
+	// Init Binance client.
+	if err := client.Init(ctx); err != nil {
+		panic(err)
 	}
 }

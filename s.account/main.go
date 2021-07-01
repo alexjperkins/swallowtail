@@ -23,7 +23,7 @@ func main() {
 		panic(err)
 	}
 
-	// Mariana Server
+	// Init Mariana Server
 	srv := mariana.Init(svcName)
 	accountproto.RegisterAccountServer(srv.Grpc(), &handler.AccountService{})
 	srv.Run(ctx)

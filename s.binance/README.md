@@ -1,3 +1,3 @@
 # s.binance
 
-The binance service used to execute trades & check accounts.
+The binance service is used to execute trades & check accounts.

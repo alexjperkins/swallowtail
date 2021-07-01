@@ -2,6 +2,8 @@
 default: build
 	docker-compose -f local.yml up --build
 
+backend: build account discord
+
 build:
 	find . -type d -name s.\* -exec bash -c 'cd {} && sudo make docker' \;
 
@@ -26,11 +28,16 @@ account:
 	cd s.account &&  sudo make docker &&  cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.account
 
+
 test:
 	go test ./... -short
 
 test-integration: postgres_test
 	go test ./... --tags=integration
-	
+
 protos:
 	find . -type d -name s.\* -exec bash -c './bin/generate_protobufs {}' \;
+	
+.PHONY: ecr-login
+ecr-login:
+	aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 638234331039.dkr.ecr.us-east-2.amazonaws.com

@@ -106,6 +106,8 @@ func validateStatusCode(rsp *http.Response, errParams map[string]string) error {
 		code = terrors.ErrUnauthorized
 	case 404:
 		code = terrors.ErrNotFound
+	case 429:
+		code = terrors.ErrRateLimited
 	default:
 		code = terrors.ErrBadRequest + ".bad_status"
 	}

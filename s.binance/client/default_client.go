@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"swallowtail/libraries/transport"
+	"swallowtail/s.binance/domain"
 	"time"
 
 	"github.com/monzo/terrors"
@@ -31,6 +32,10 @@ func (d *defaultClient) ListAllAssetPairs(ctx context.Context) (*ListAllAssetPai
 		return nil, terrors.Augment(err, "Failed to list all asset pairs", nil)
 	}
 	return rspBody, nil
+}
+
+func (d *defaultClient) ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error {
+	return nil
 }
 
 func (d *defaultClient) Ping(ctx context.Context) error {
