@@ -65,6 +65,8 @@ func (g *googlesheetsClient) Values(sheetID string, rowsRange string) ([][]inter
 }
 
 func (g *googlesheetsClient) UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error {
+	context.Background()
+
 	v := &sheets.ValueRange{
 		Range:  rowsRange,
 		Values: values,

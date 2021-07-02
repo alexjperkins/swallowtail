@@ -70,7 +70,7 @@ func NewStreamingClient(ctx context.Context, instrument string, multiplexers []*
 		BufSize:  bufSize,
 	}
 	c := &StreamClient{
-		ws:           transport.NewWebsocket(ctx, cfg),
+		ws:           transport.StreamingJSONTransport(ctx, cfg),
 		wsCfg:        cfg,
 		wsMtx:        sync.Mutex{},
 		multiplexers: multiplexers,

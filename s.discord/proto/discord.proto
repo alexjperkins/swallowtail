@@ -5,42 +5,36 @@ package discordproto;
 option go_package = "./;discordproto";
 
 service discord {
-  rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse) {
-  }
+  rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse);
 
-  rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgPrivateToChannelResponse) {
-  }
+  rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgPrivateToChannelResponse);
 
-  rpc Subscribe (SuscribeRequest) returns (SubscribeResponse) {
-  }
-}
-
-message Message {
-  string sender_id = 1;
-  string content = 2;
-  string timestamp = 4;
+  rpc Subscribe (SuscribeRequest) returns (SubscribeResponse);
 }
 
 message SendMsgToChannelRequest {
-  Message msg = 1;
-  string channel_id = 2;
+  string channel_id = 1;
+  string sender_id = 2;
+  string content = 3;
+  string idempotency_key = 4;
+  bool force = 5;
 }
 
-message SendMsgToChannelResponse {
-}
+message SendMsgToChannelResponse {}
 
 message SendMsgToPrivateChannelRequest {
-  Message msg = 1;
-  string user_id = 2;
+  string user_id = 1;
+  string sender_id = 2;
+  string content = 3;
+  string idempotency_key = 4;
+  bool force = 5;
 }
 
-message SendMsgPrivateToChannelResponse{
-}
+message SendMsgPrivateToChannelResponse{}
 
 message SuscribeRequest {
   string subscriber_id = 1;
-  string filter_set_id = 2;
+  repeated string filter_id = 2;
 }
 
-message SubscribeResponse {
-}
+message SubscribeResponse {}

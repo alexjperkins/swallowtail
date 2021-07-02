@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package accountproto;
+
+option go_package = "./;accountproto";
+
+service account {
+  rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {
+  }
+
+  rpc ReadAccount (ReadAccountRequest) returns (ReadAccountResponse) {
+  }
+
+  rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {
+  }
+
+  rpc PageAccount (PageAccountRequest) returns (PageAccountResponse) {
+  }
+}
+
+enum PagerType {
+    DISCORD = 0;
+    PHONE = 1;
+    SMS = 2;
+    EMAIL = 3;
+    UNKNOWN = 4;
+}
+
+enum PagerPriority {
+  HIGH = 0;
+  LOW = 1;
+}
+
+message Account {
+}
+
+message ListAccountsRequest{}
+
+message ListAccountsResponse {
+  repeated Account accounts = 1;
+}
+
+message ReadAccountRequest {
+  string id = 1;
+}
+
+message ReadAccountResponse {
+  Account account = 2;
+}
+
+message CreateAccountRequest {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string discord_id = 4;
+  string phone_number = 5;
+  PagerType high_priority_pager = 6;
+  PagerType low_priority_pager = 7;
+}
+
+message CreateAccountResponse {}
+
+message PageAccountRequest {
+  string id = 1;
+  string content = 2;
+  PagerPriority priority = 3;
+
+}
+message PageAccountResponse {}

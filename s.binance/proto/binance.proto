@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package binanceproto;
+
+option go_package = "./;binanceproto";
+
+service binance {
+    rpc ListAllAssetPairs (ListAllAssetPairsRequest) returns (ListAllAssetPairsResponse) {
+    }
+
+    rpc SpotTrade (SpotTradeRequest) returns (SpotTradeResponse) {
+    }
+
+    rpc PerpetualFutureTrade (PerpetualFutureTradeRequest) returns (PerpetualFutureTradeResponse) {
+    }
+}
+
+message AssetPair {
+    string symbol = 1;
+    string base_asset = 2;
+    bool with_margin_trading = 3;
+    bool with_spot_trading = 4;
+}
+
+message ListAllAssetPairsRequest {}
+
+message ListAllAssetPairsResponse {
+    repeated AssetPair asset_pairs = 1;
+}
+
+enum TradeSide {
+    BUY = 0;
+    SELL = 1;
+}
+
+enum TradeType {
+    SPOT = 0;
+    PERPETUAL_FUTURES = 1;
+    QUARTERLY_FUTURES = 2;
+}
+
+message SpotTradeRequest {
+    string user_discord_id = 1;
+    string idempotency_key = 2;
+    TradeSide side = 3;
+    string asset_pair = 4;
+    string amount = 5;
+    string value = 6;
+    google.protobuf.Timestamp created = 7;
+    google.protobuf.Timestamp attempt_retry_until = 8;
+}
+
+message SpotTradeResponse {
+    bool executed = 1;
+    string trade_id = 2;
+}
+
+message PerpetualFutureTradeRequest {
+    string user_discord_id = 1;
+    string idempotency_key = 2;
+    TradeSide side = 3;
+    string asset_pair = 4;
+    string amount = 5;
+    string value = 6;
+    google.protobuf.Timestamp created = 7;
+    google.protobuf.Timestamp attempt_retry_until = 8;
+}
+
+message PerpetualFutureTradeResponse {
+    bool executed = 1;
+    string trade_id = 2;
+}

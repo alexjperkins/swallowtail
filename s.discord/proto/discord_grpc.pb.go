@@ -158,5 +158,5 @@ var _Discord_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/discord.proto",
+	Metadata: "s.discord/proto/discord.proto",
 }

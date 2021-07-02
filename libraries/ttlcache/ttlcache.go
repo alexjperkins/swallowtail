@@ -14,15 +14,21 @@ func (ttlr *cacheResult) HasExpired() bool {
 	return ttlr.expirationDate.Before(time.Now())
 }
 
-// Move to own library
+// TTLCache provides a simple cache with a time-to-live eviction policy policy.
+// old expired keys aren't removed, rather replaced; so this isn't intented for uses
+// with a large possible set of keys.
+// It works well for a small finite set of known keys, that are both hot & liable to refresh
+// in near term.
 type TTLCache struct {
 	ttl   time.Duration
 	cache map[string]*cacheResult
 	mu    sync.RWMutex
 }
 
+// TTLCacheNull ...
 type TTLCacheNull struct{}
 
+// New creates a new TTLCache, with the given time-to-live duration.
 func New(ttl time.Duration) *TTLCache {
 	return &TTLCache{
 		cache: map[string]*cacheResult{},

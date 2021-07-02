@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 	"fmt"
-
 	"swallowtail/s.api.gateway/graph/generated"
 	"swallowtail/s.api.gateway/graph/model"
 )

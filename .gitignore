@@ -3,3 +3,6 @@
 s.twitter/setenv
 credentials.json
 token.json
+setenv
+*Dockerfile*
+*.dockerignore*

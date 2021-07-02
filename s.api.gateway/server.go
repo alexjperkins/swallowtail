@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"swallowtail/s.api.gateway/graph"
+	"swallowtail/s.api.gateway/graph/generated"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"swallowtail/s.api.gateway/graph"
-	"swallowtail/s.api.gateway/graph/generated"
 )
 
 const defaultPort = "8080"

@@ -1,2 +1,1 @@
-default:
-	go run ./main.go
+../Makefile-service

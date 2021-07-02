@@ -6,8 +6,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"swallowtail/libraries/util"
 	coingecko "swallowtail/s.coingecko/clients"
-	discord "swallowtail/s.discord/clients"
+	discord "swallowtail/s.discord/client"
 	"swallowtail/s.googlesheets/clients"
 	"swallowtail/s.googlesheets/owner"
 	"swallowtail/s.googlesheets/spreadsheet"
@@ -25,11 +26,14 @@ var (
 
 	defaultSyncInterval = time.Duration(1 * time.Minute)
 	defaultWithJitter   = true
+
+	discordBotName = "googlesheets-bot"
+	discordToken   = util.SetEnv("SATOSHI_DISCORD_API_TOKEN")
 )
 
 type exchangeClient struct {
 	exchangeID string
-	c          *coingecko.CoinGeckoClient
+	c          coingecko.CoinGeckoClient
 }
 
 func (ex exchangeClient) GetPrice(ctx context.Context, symbol, assetPair string) (float64, error) {
@@ -55,9 +59,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to init googlesheets spreadsheet: %v", err)
 	}
-	// MessageClient TODO: fetch from elsewhere as to not have two discord clients
-	mc := discord.New()
-	// ExchangeClient
+	mc := discord.New(discordBotName, discordToken, true)
 	ex := exchangeClient{
 		c: coingecko.New(ctx),
 	}

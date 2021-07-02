@@ -7,6 +7,4 @@ This portfolio must be of a certain schema in order to work. As such syncing is 
 Any failure to read the schema, the service will page the designated owner every 12h at least until
 the issue is resolved.
 
-TODO: A way to silence paging
-
 ![example](./assets/example.png)
