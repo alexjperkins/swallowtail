@@ -25,22 +25,30 @@ func ReadAccounts(ctx context.Context) ([]*domain.Account, error) {
 	return accounts, nil
 }
 
-// ReadAccountByID returns the a domain account from the underlying datastore, by ID.
-func ReadAccountByID(ctx context.Context, accountID string) (*domain.Account, error) {
+// ReadAccountByUserID returns the a domain account from the underlying datastore, by UserID.
+func ReadAccountByUserID(ctx context.Context, userID string) (*domain.Account, error) {
 	var (
-		sql      = `SELECT * FROM s_account_accounts WHERE account_id=$1`
+		sql      = `SELECT * FROM s_account_accounts WHERE user_id=$1`
 		accounts []*domain.Account
 	)
-	err := db.Select(ctx, &accounts, sql, accountID)
+
+	err := db.Select(ctx, &accounts, sql, userID)
 	if err != nil {
 		return nil, terrors.Propagate(err)
 	}
-	if len(accounts) > 1 {
-		// We shouldn't have this case, since this is enforced at the persistence layer.
-		slog.Critical(ctx, "More than one account with identical id", map[string]string{
-			"account_id": accountID,
-		})
+
+	switch len(accounts) {
+	case 0:
+		return nil, terrors.NotFound("account-not-found", "Failed to find account", nil)
+	case 1:
+		return accounts[0], nil
 	}
+
+	// We shouldn't have this case, since this is enforced at the persistence layer.
+	slog.Critical(ctx, "More than one account with identical id", map[string]string{
+		"userID": userID,
+	})
+
 	return accounts[0], nil
 }
 
@@ -68,7 +76,7 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 	var (
 		sql = `
 		INSERT INTO
-			s_account_accounts(username, password, email, discord_id, phone_number,
+			s_account_accounts(username, password, email, user_id, phone_number,
 				created, updated, last_payment_timestamp,
 				high_priority_pager, low_priority_pager, is_admin, is_futures_member) 
 		VALUES
@@ -89,7 +97,7 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 	now := time.Now()
 	if _, err := (db.Exec(
 		ctx, sql,
-		account.Username, account.Password, account.Email, account.DiscordID, account.PhoneNumber,
+		account.Username, account.Password, account.Email, account.UserID, account.PhoneNumber,
 		now, now, now,
 		highPriorityPager, lowPriorityPager, account.IsAdmin, account.IsFuturesMember,
 	)); err != nil {
@@ -104,14 +112,14 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	var (
 		sql = `
 		UPDATE s_account_accounts
-		SET username=$1, password=$2, email=$3, discord_id=$4, phone_number=$5, created=$6, updated=$7, high_priority_pager=$8,low_priority_pager=$9
-		WHERE user_id=$10`
+		SET username=$1, password=$2, email=$3, phone_number=$4, created=$5, updated=$6, high_priority_pager=$7, low_priority_pager=$8
+		WHERE user_id=$9`
 	)
-	if mutation.AccountID == "" {
+	if mutation.UserID == "" {
 		return nil, terrors.PreconditionFailed("mutation-without-id", "Account mutation requires at least the account ID", nil)
 	}
 
-	account, err := ReadAccountByID(ctx, mutation.AccountID)
+	account, err := ReadAccountByUserID(ctx, mutation.UserID)
 	if err != nil {
 		return nil, terrors.Propagate(err)
 	}
@@ -124,8 +132,8 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		account.Email, account.Password, account.Email, account.DiscordID, account.PhoneNumber, account.HighPriorityPager,
-		account.LowPriorityPager, account.AccountID,
+		account.Email, account.Password, account.Email, account.PhoneNumber, account.HighPriorityPager,
+		account.LowPriorityPager, account.UserID,
 	)); err != nil {
 		return nil, terrors.Propagate(err)
 	}

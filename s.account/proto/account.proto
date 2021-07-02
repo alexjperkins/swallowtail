@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package accountproto;
 
 option go_package = "./;accountproto";
@@ -12,6 +14,9 @@ service account {
   }
 
   rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {
+  }
+
+  rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse) {
   }
 
   rpc PageAccount (PageAccountRequest) returns (PageAccountResponse) {
@@ -31,28 +36,37 @@ enum PagerPriority {
   LOW = 1;
 }
 
+// Only used for responses, we currently don't have mechanisms to remove sensitived data such
+// as keys or phones. This should only contain insensitive data.
 message Account {
+  string user_id = 1;
+  string email = 2;
+  bool is_futures_member = 3;
+  bool is_admin = 4;
+  google.protobuf.Timestamp created = 7;
+  google.protobuf.Timestamp last_updated = 8;
 }
 
-message ListAccountsRequest{}
+message ListAccountsRequest{
+}
 
 message ListAccountsResponse {
   repeated Account accounts = 1;
 }
 
 message ReadAccountRequest {
-  string id = 1;
+  string user_id = 1;
 }
 
 message ReadAccountResponse {
-  Account account = 2;
+  Account account = 1;
 }
 
 message CreateAccountRequest {
+  string user_id = 4;
   string username = 1;
   string password = 2;
   string email = 3;
-  string discord_id = 4;
   string phone_number = 5;
   PagerType high_priority_pager = 6;
   PagerType low_priority_pager = 7;
@@ -60,8 +74,22 @@ message CreateAccountRequest {
 
 message CreateAccountResponse {}
 
+message UpdateAccountRequest {
+  string user_id = 1;
+  string username = 2;
+  string password = 3;
+  string email = 4;
+  string phone_number = 5;
+  PagerType high_priority_pager = 6;
+  PagerType low_priority_pager = 7;
+}
+
+message UpdateAccountResponse {
+  Account account = 1;
+}
+
 message PageAccountRequest {
-  string id = 1;
+  string user_id = 1;
   string content = 2;
   PagerPriority priority = 3;
 

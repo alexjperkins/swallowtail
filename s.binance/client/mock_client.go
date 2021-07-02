@@ -70,3 +70,11 @@ func (m *mockClient) AssertListAllAssetPairs(t *testing.T, expectedNumberOfCalls
 func (m *mockClient) ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error {
 	return nil
 }
+
+func (m *mockClient) ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error) {
+	return nil, nil
+}
+
+func (m *mockClient) ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error) {
+	return nil, nil
+}

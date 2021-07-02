@@ -15,6 +15,12 @@ service binance {
 
     rpc PerpetualFutureTrade (PerpetualFutureTradeRequest) returns (PerpetualFutureTradeResponse) {
     }
+
+    rpc ReadSpotAccount (ReadSpotAccountRequest) returns (ReadSpotAccountResponse) {
+    }
+
+    rpc ReadPerpetualFuturesAccount (ReadPerpetualFuturesAccountRequest) returns (ReadPerpetualFuturesAccountResponse) {
+    }
 }
 
 message AssetPair {
@@ -71,4 +77,18 @@ message PerpetualFutureTradeRequest {
 message PerpetualFutureTradeResponse {
     bool executed = 1;
     string trade_id = 2;
+}
+
+message ReadSpotAccountRequest {
+  string user_discord_id = 1;
+}
+
+message ReadSpotAccountResponse {
+}
+
+message ReadPerpetualFuturesAccountRequest {
+  string user_discord_id = 1;
+}
+
+message ReadPerpetualFuturesAccountResponse {
 }

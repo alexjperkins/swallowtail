@@ -13,10 +13,10 @@ END
 $$;
 
 CREATE TABLE IF NOT EXISTS s_account_accounts (
-	account_id uuid DEFAULT uuid_generate_v4(),
+	-- use the discord id associate to the user here
+	user_id VARCHAR(20) NOT NULL UNIQUE,
 	username VARCHAR(50) NOT NULL UNIQUE,
 	password VARCHAR(50) NOT NULL,
-	discord_id VARCHAR(20) NOT NULL UNIQUE,
 
 	email VARCHAR(50),
 	phone_number VARCHAR(20),
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	is_admin BOOLEAN DEFAULT FALSE,
 	is_futures_member BOOLEAN DEFAULT FALSE,
 
-	PRIMARY KEY(account_id)
+	PRIMARY KEY(discord_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_s_account_accounts_discord_id
@@ -41,15 +41,15 @@ CREATE TABLE IF NOT EXISTS s_account_googlesheets (
 	googlesheets_id uuid DEFAULT uuid_generate_v4(),
 	spreadsheet_id VARCHAR(200) NOT NULL UNIQUE,
 	sheet_id VARCHAR(200) NOT NULL UNIQUE,
-	account_id uuid,
+	user_id VARCHAR(20),
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),
 
 	PRIMARY KEY(googlesheets_id),
 	CONSTRAINT fk_account
-		FOREIGN KEY(account_id)
-			REFERENCES s_account_accounts(account_id) ON DELETE SET NULL
+		FOREIGN KEY(user_id)
+			REFERENCES s_account_accounts(user_id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS s_account_exchanges (
@@ -57,13 +57,13 @@ CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	exchange exchange,
 	api_key VARCHAR(200),
 	secret_key VARCHAR(200),
-	account_id uuid,
+	user_id VARCHAR(20),
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),
 
 	PRIMARY KEY(exchange_id),
 	CONSTRAINT fk_account
-		FOREIGN KEY(account_id)
-			REFERENCES s_account_accounts(account_id) ON DELETE SET NULL
+		FOREIGN KEY(user_id)
+			REFERENCES s_account_accounts(user_id) ON DELETE SET NULL
 );

@@ -25,23 +25,23 @@ func TestReadAccounts(t *testing.T) {
 	})
 
 	var (
+		userID      = "some-user-id"
 		username    = "satoshi"
 		password    = "unbreakable"
 		email       = "test@email.co.uk"
-		discordID   = "kdjadkadjadsksf"
 		phoneNumber = "077123456763"
 
+		userID2      = "some-user-id-2"
 		username2    = "vitalik"
 		password2    = "biglargepassword"
 		email2       = "test+2@email.co.uk"
-		discordID2   = "dkajdakdjakda"
 		phoneNumber2 = "077123422763"
 	)
 
 	// Insert test data to datastore.
 	_, err := db.Exec(
-		ctx, `INSERT INTO s_account_accounts (username,password,email,discord_id,phone_number) values ($1,$2,$3,$4,$5)`,
-		username, password, email, discordID, phoneNumber,
+		ctx, `INSERT INTO s_account_accounts (user_id, username, password, email, phone_number) values ($1,$2,$3,$4,$5)`,
+		userID, username, password, email, phoneNumber,
 	)
 	require.NoError(t, err, "Failed to write test data to database")
 
@@ -55,13 +55,13 @@ func TestReadAccounts(t *testing.T) {
 	assert.Equal(t, username, account.Username)
 	assert.Equal(t, password, account.Password)
 	assert.Equal(t, email, account.Email)
-	assert.Equal(t, discordID, account.DiscordID)
+	assert.Equal(t, userID, account.UserID)
 	assert.Equal(t, phoneNumber, account.PhoneNumber)
 
 	// Insert more test data.
 	_, err = db.Exec(
-		ctx, `INSERT INTO s_account_accounts (username,password,email,discord_id,phone_number) values ($1,$2,$3,$4,$5)`,
-		username2, password2, email2, discordID2, phoneNumber2,
+		ctx, `INSERT INTO s_account_accounts (user_id, username, password, email, phone_number) values ($1,$2,$3,$4,$5)`,
+		userID2, username2, password2, email2, phoneNumber2,
 	)
 	require.NoError(t, err, "Failed to write test data to database")
 
@@ -87,23 +87,23 @@ func TestReadAccountByUsername(t *testing.T) {
 	})
 
 	var (
+		userID      = "some-user-id"
 		username    = "satoshi"
 		password    = "unbreakable"
 		email       = "test@email.co.uk"
-		discordID   = "kdjadkadjadsksf"
 		phoneNumber = "077123456763"
 
+		userID2      = "some-user-id-2"
 		username2    = "vitalik"
 		password2    = "biglargepassword"
 		email2       = "test+2@email.co.uk"
-		discordID2   = "dkajdakdjakda"
 		phoneNumber2 = "077123422763"
 	)
 
 	// Insert test data to datastore.
 	_, err := db.Exec(
-		ctx, `INSERT INTO s_account_accounts (username,password,email,discord_id,phone_number) values ($1,$2,$3,$4,$5)`,
-		username, password, email, discordID, phoneNumber,
+		ctx, `INSERT INTO s_account_accounts (user_id, username,password,email,phone_number) values ($1,$2,$3,$4,$5)`,
+		userID, username, password, email, phoneNumber,
 	)
 	require.NoError(t, err, "Failed to write test data to database")
 
@@ -112,26 +112,26 @@ func TestReadAccountByUsername(t *testing.T) {
 	require.NoError(t, err, "Failed to read previously wrote test data")
 
 	// Run assertions.
+	assert.Equal(t, userID, account.UserID)
 	assert.Equal(t, username, account.Username)
 	assert.Equal(t, password, account.Password)
 	assert.Equal(t, email, account.Email)
-	assert.Equal(t, discordID, account.DiscordID)
 	assert.Equal(t, phoneNumber, account.PhoneNumber)
 
 	// Insert more test data.
 	_, err = db.Exec(
-		ctx, `INSERT INTO s_account_accounts (username,password,email,discord_id,phone_number) values ($1,$2,$3,$4,$5)`,
-		username2, password2, email2, discordID2, phoneNumber2,
+		ctx, `INSERT INTO s_account_accounts (user_id, username,password,email,phone_number) values ($1,$2,$3,$4,$5)`,
+		userID2, username2, password2, email2, phoneNumber2,
 	)
 	require.NoError(t, err, "Failed to write test data to database")
 
 	account, err = ReadAccountByUsername(ctx, username2)
 	require.NoError(t, err, "Failed to read previously wrote test data")
 
+	assert.Equal(t, userID2, account.UserID)
 	assert.Equal(t, username2, account.Username)
 	assert.Equal(t, password2, account.Password)
 	assert.Equal(t, email2, account.Email)
-	assert.Equal(t, discordID2, account.DiscordID)
 	assert.Equal(t, phoneNumber2, account.PhoneNumber)
 
 }
@@ -147,10 +147,10 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	var (
+		userID          = "some-user-id"
 		username        = "haskellcurry"
 		password        = "mockingbird"
 		email           = "haskellcurry@functional.co.uk"
-		discordID       = "discordid_i484294"
 		phoneNumber     = "07865482902"
 		isAdmin         = false
 		isFuturesMember = false
@@ -158,10 +158,10 @@ func TestCreateAccount(t *testing.T) {
 
 	// Create an account.
 	err := CreateAccount(ctx, &domain.Account{
+		UserID:      userID,
 		Username:    username,
 		Password:    password,
 		Email:       email,
-		DiscordID:   discordID,
 		PhoneNumber: phoneNumber,
 		IsAdmin:     isAdmin,
 	})
@@ -173,10 +173,10 @@ func TestCreateAccount(t *testing.T) {
 	require.NoError(t, err, "Failed to read account back out")
 
 	// Run assertions.
+	assert.Equal(t, userID, account.UserID)
 	assert.Equal(t, username, account.Username)
 	assert.Equal(t, password, account.Password)
 	assert.Equal(t, email, account.Email)
-	assert.Equal(t, discordID, account.DiscordID)
 	assert.Equal(t, phoneNumber, account.PhoneNumber)
 	assert.Equal(t, isAdmin, account.IsAdmin)
 	assert.Equal(t, isFuturesMember, account.IsFuturesMember)
