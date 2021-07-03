@@ -39,9 +39,9 @@ func handleRegisterAccountCommand(s *discordgo.Session, m *discordgo.MessageCrea
 	slog.Debug(ctx, "Received %s command, args: %v", registerAccountCommandID, tokens)
 
 	// TODO: validation
-	username, password := tokens[0], tokens[1]
+	username, password := tokens[1], tokens[2]
 
-	conn, err := grpc.DialContext(ctx, "s_account")
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
 	if err != nil {
 		slog.Error(ctx, "Failed to reach s_account grpc: %v", err)
 		return
@@ -54,14 +54,18 @@ func handleRegisterAccountCommand(s *discordgo.Session, m *discordgo.MessageCrea
 		Username: username,
 		Password: password,
 	})); err != nil {
-		slog.Error(ctx, "Failed to create new account", map[string]string{
+		slog.Error(ctx, "Failed to create new account: %v", err, map[string]string{
 			"user_id":  m.Author.ID,
 			"username": username,
 		})
+		s.ChannelMessageSend(
+			m.ChannelID,
+			fmt.Sprintf(":disappointed: Sorry, I failed to create an account with username: `%s`, maybe you already created one?", username),
+		)
 		return
 	}
 
 	slog.Info(ctx, "Created new account: %s: %s", m.Author.Username, m.Author.ID)
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: I have registered your account with username: %s", username))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: I have registered your account with username: `%s`", username))
 }

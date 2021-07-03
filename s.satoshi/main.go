@@ -17,7 +17,7 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 
 	// Initialize the binance client.
-	binanceclient.Init()
+	binanceclient.Init(ctx)
 
 	satoshi := satoshi.New(true)
 
