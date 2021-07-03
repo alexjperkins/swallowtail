@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-package discordproto;
-
 option go_package = "./;discordproto";
 
 service discord {

@@ -1,7 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+DROP TABLE IF EXISTS s_discord_touches;
+
 CREATE TABLE IF NOT EXISTS s_discord_touches (
-	touches_id uuid DEFAULT uuid_generate_v4(),
+	touch_id uuid DEFAULT uuid_generate_v4(),
 	idempotency_key VARCHAR(255) NOT NULL UNIQUE,
 	updated TIME NOT NULL DEFAULT now(),
 	sender_id VARCHAR(255) NOT NULL

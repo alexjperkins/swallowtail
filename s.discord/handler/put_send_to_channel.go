@@ -12,8 +12,8 @@ import (
 	discordproto "swallowtail/s.discord/proto"
 )
 
-// PUTSendToChannel gPRC handler for sending messages to a given channel via discord.
-func (s *DiscordService) PUTSendToChannel(
+// SendMsgToChannel gRPC handler for sending messages to a given channel via discord.
+func (s *DiscordService) SendMsgToChannel(
 	ctx context.Context, in *discordproto.SendMsgToChannelRequest,
 ) (*discordproto.SendMsgToChannelResponse, error) {
 

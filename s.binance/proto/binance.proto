@@ -2,8 +2,6 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-package binanceproto;
-
 option go_package = "./;binanceproto";
 
 service binance {

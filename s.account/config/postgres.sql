@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 DO $$ 
 BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pager') THEN
-		CREATE TYPE pager AS ENUM ('DISCORD', 'EMAIL', 'SMS', 'PHONE', 'UNKNOWN');
+		CREATE TYPE pager AS ENUM ('DISCORD', 'EMAIL', 'SMS', 'PHONE');
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'exchange') THEN
@@ -16,13 +16,13 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	-- use the discord id associate to the user here
 	user_id VARCHAR(20) NOT NULL UNIQUE,
 	username VARCHAR(50) NOT NULL UNIQUE,
-	password VARCHAR(50) NOT NULL,
+	password VARCHAR(64) NOT NULL,
 
 	email VARCHAR(50),
 	phone_number VARCHAR(20),
 
-	high_priority_pager pager NOT NULL DEFAULT 'UNKNOWN',
-	low_priority_pager pager NOT NULL DEFAULT 'UNKNOWN',
+	high_priority_pager pager NOT NULL DEFAULT 'DISCORD',
+	low_priority_pager pager NOT NULL DEFAULT 'DISCORD',
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),
@@ -31,11 +31,8 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	is_admin BOOLEAN DEFAULT FALSE,
 	is_futures_member BOOLEAN DEFAULT FALSE,
 
-	PRIMARY KEY(discord_id)
+	PRIMARY KEY(user_id)
 );
-
-CREATE INDEX IF NOT EXISTS idx_s_account_accounts_discord_id
-ON s_account_accounts(discord_id);
 
 CREATE TABLE IF NOT EXISTS s_account_googlesheets (
 	googlesheets_id uuid DEFAULT uuid_generate_v4(),

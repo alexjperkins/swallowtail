@@ -9,15 +9,13 @@ import (
 
 func getIdentifierFromAccount(account *domain.Account, pagerType string) (string, error) {
 	errParams := map[string]string{
-		"account_id": account.AccountID,
+		"user_id": account.UserID,
 	}
 
 	switch pagerType {
 	case accountproto.PagerType_DISCORD.String():
-		if account.DiscordID == "" {
-			return "", terrors.PreconditionFailed("account-discord-id-missing", "Cannot page account via discord; discord id not set", errParams)
-		}
-		return account.DiscordID, nil
+		return account.UserID, nil
+
 	case accountproto.PagerType_EMAIL.String():
 		if account.Email == "" {
 			return "", terrors.PreconditionFailed("account-email-missing", "Cannot page account via email; email not set", errParams)

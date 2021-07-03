@@ -69,13 +69,14 @@ func (d *discordClient) SendPrivateMessage(ctx context.Context, message, userID 
 		// If not active; we simply send to the testing channel.
 		return d.Send(ctx, discordTestingChannel, message)
 	}
-	ch, err := d.session.UserChannelCreate(message)
+	slog.Info(ctx, "user-id: %s", userID)
+	ch, err := d.session.UserChannelCreate(userID)
 	if err != nil {
 		return terrors.Augment(err, "Failed to create private channel", map[string]string{
 			"discord_user_id": userID,
 		})
 	}
-	return d.Send(ctx, ch.ID, message)
+	return d.Send(ctx, message, ch.ID)
 }
 
 func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate)) {

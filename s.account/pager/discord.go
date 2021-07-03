@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/monzo/terrors"
+	"google.golang.org/grpc"
+
+	"swallowtail/libraries/util"
 	accountproto "swallowtail/s.account/proto"
 	discordproto "swallowtail/s.discord/proto"
-
-	"github.com/monzo/terrors"
-
-	"google.golang.org/grpc"
 )
 
 type discordPager struct{}
@@ -20,22 +20,27 @@ func init() {
 	register(accountproto.PagerType_DISCORD.String(), &discordPager{})
 }
 
-func (d *discordPager) Page(ctx context.Context, channelID, msg string) error {
+func (d *discordPager) Page(ctx context.Context, userID, msg string) error {
 	now := time.Now()
 
-	conn, err := grpc.DialContext(ctx, "s_discord")
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-discord:8000", grpc.WithInsecure())
 	if err != nil {
 		return terrors.Augment(err, "Failed to reach s.discord via rpc", nil)
 	}
 	defer conn.Close()
 
 	client := discordproto.NewDiscordClient(conn)
-	client.SendMsgToChannel(ctx, &discordproto.SendMsgToChannelRequest{
-		ChannelId: channelID,
-		Content:   msg,
-		SenderId:  "system:s.account:pager",
+	if _, err = (client.SendMsgToPrivateChannel(ctx, &discordproto.SendMsgToPrivateChannelRequest{
+		UserId:   userID,
+		Content:  msg,
+		SenderId: "system:s.account:pager",
 		// Idempotent on channel, message & the hour of the day.
-		IdempotencyKey: fmt.Sprintf("%s-%s-%s", channelID, hash(msg), strconv.Itoa(now.Hour())),
-	})
+		IdempotencyKey: fmt.Sprintf("%s-%s-%s", userID, util.Sha256Hash(msg), strconv.Itoa(now.Hour())),
+	})); err != nil {
+		return terrors.Augment(err, "Failed to send msg to discord channel", map[string]string{
+			"channel_id": userID,
+		})
+	}
+
 	return nil
 }

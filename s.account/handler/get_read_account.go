@@ -9,7 +9,7 @@ import (
 	"github.com/monzo/terrors"
 )
 
-func (a *AccountService) handleGETReadAccount(
+func (a *AccountService) ReadAccount(
 	ctx context.Context, in *accountproto.ReadAccountRequest,
 ) (*accountproto.ReadAccountResponse, error) {
 	errParams := map[string]string{

@@ -9,7 +9,8 @@ import (
 	"github.com/monzo/terrors"
 )
 
-func handleGETListAccounts(
+// ListAccounts ...
+func ListAccounts(
 	ctx context.Context, in *accountproto.ListAccountsRequest,
 ) (*accountproto.ListAccountsResponse, error) {
 	accounts, err := dao.ReadAccounts(ctx)

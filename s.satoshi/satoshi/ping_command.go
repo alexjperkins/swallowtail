@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	pingCommandID = "pingCommand"
-
+	pingCommandID     = "pingCommand"
 	pingCommandPrefix = "!ping"
 )
 

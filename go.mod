@@ -18,7 +18,7 @@ require (
 	github.com/dghubble/oauth1 v0.7.0
 	github.com/dghubble/sling v1.3.0 // indirect
 	github.com/fatih/color v1.10.0
-	github.com/georgysavva/scany v0.2.8 // indirect
+	github.com/georgysavva/scany v0.2.9 // indirect
 	github.com/go-pg/pg/v10 v10.10.0
 	github.com/go-pg/pg/v9 v9.1.6 // indirect
 	github.com/go-pg/urlstruct v0.4.0 // indirect
@@ -74,12 +74,12 @@ require (
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/oauth2 v0.0.0-20210622215436-a8dc77f794b6 // indirect
-	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/api v0.49.0 // indirect
-	google.golang.org/genproto v0.0.0-20210624195500-8bfb893ecb84 // indirect
-	google.golang.org/grpc v1.38.0 // indirect
-	google.golang.org/protobuf v1.27.0 // indirect
+	google.golang.org/genproto v0.0.0-20210701191553-46259e63a0a9 // indirect
+	google.golang.org/grpc v1.39.0 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	mellium.im/sasl v0.2.1 // indirect

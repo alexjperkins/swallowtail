@@ -2,8 +2,6 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-package accountproto;
-
 option go_package = "./;accountproto";
 
 service account {
@@ -28,7 +26,6 @@ enum PagerType {
     PHONE = 1;
     SMS = 2;
     EMAIL = 3;
-    UNKNOWN = 4;
 }
 
 enum PagerPriority {

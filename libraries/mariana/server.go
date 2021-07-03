@@ -8,6 +8,7 @@ import (
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -18,10 +19,12 @@ const (
 type Server interface {
 	Run(ctx context.Context)
 	Grpc() *grpc.Server
+	Register()
 }
 
 func Init(service string) Server {
 	s := grpc.NewServer()
+	reflection.Register(s)
 	return &server{
 		s:           s,
 		ServiceName: service,
@@ -63,6 +66,11 @@ func (s *server) Run(ctx context.Context) {
 // Grpc returns the underlying gRPC server.
 func (s *server) Grpc() *grpc.Server {
 	return s.s
+}
+
+// Register registers the service via grpc reflection.
+func (s *server) Register() {
+	reflection.Register(s.s)
 }
 
 func formatAddr(serviceName, port string) string {

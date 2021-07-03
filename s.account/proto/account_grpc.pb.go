@@ -34,7 +34,7 @@ func NewAccountClient(cc grpc.ClientConnInterface) AccountClient {
 
 func (c *accountClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
 	out := new(ListAccountsResponse)
-	err := c.cc.Invoke(ctx, "/accountproto.account/ListAccounts", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account/ListAccounts", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (c *accountClient) ListAccounts(ctx context.Context, in *ListAccountsReques
 
 func (c *accountClient) ReadAccount(ctx context.Context, in *ReadAccountRequest, opts ...grpc.CallOption) (*ReadAccountResponse, error) {
 	out := new(ReadAccountResponse)
-	err := c.cc.Invoke(ctx, "/accountproto.account/ReadAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account/ReadAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (c *accountClient) ReadAccount(ctx context.Context, in *ReadAccountRequest,
 
 func (c *accountClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
 	out := new(CreateAccountResponse)
-	err := c.cc.Invoke(ctx, "/accountproto.account/CreateAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account/CreateAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (c *accountClient) CreateAccount(ctx context.Context, in *CreateAccountRequ
 
 func (c *accountClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error) {
 	out := new(UpdateAccountResponse)
-	err := c.cc.Invoke(ctx, "/accountproto.account/UpdateAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account/UpdateAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (c *accountClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequ
 
 func (c *accountClient) PageAccount(ctx context.Context, in *PageAccountRequest, opts ...grpc.CallOption) (*PageAccountResponse, error) {
 	out := new(PageAccountResponse)
-	err := c.cc.Invoke(ctx, "/accountproto.account/PageAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/account/PageAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func _Account_ListAccounts_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/accountproto.account/ListAccounts",
+		FullMethod: "/account/ListAccounts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).ListAccounts(ctx, req.(*ListAccountsRequest))
@@ -142,7 +142,7 @@ func _Account_ReadAccount_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/accountproto.account/ReadAccount",
+		FullMethod: "/account/ReadAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).ReadAccount(ctx, req.(*ReadAccountRequest))
@@ -160,7 +160,7 @@ func _Account_CreateAccount_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/accountproto.account/CreateAccount",
+		FullMethod: "/account/CreateAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).CreateAccount(ctx, req.(*CreateAccountRequest))
@@ -178,7 +178,7 @@ func _Account_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/accountproto.account/UpdateAccount",
+		FullMethod: "/account/UpdateAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).UpdateAccount(ctx, req.(*UpdateAccountRequest))
@@ -196,7 +196,7 @@ func _Account_PageAccount_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/accountproto.account/PageAccount",
+		FullMethod: "/account/PageAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).PageAccount(ctx, req.(*PageAccountRequest))
@@ -205,7 +205,7 @@ func _Account_PageAccount_Handler(srv interface{}, ctx context.Context, dec func
 }
 
 var _Account_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "accountproto.account",
+	ServiceName: "account",
 	HandlerType: (*AccountServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
