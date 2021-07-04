@@ -24,11 +24,13 @@ func (s *AccountService) UpdateAccount(
 	}
 
 	mutation := marshaling.UpdateAccountProtoToDomain(in)
-
 	account, err := dao.UpdateAccount(ctx, mutation)
+
 	switch {
 	case terrors.Is(err, terrors.ErrNotFound):
 		return nil, terrors.Augment(err, "Failed to update account; account with that user id doesn't exist", errParams)
+	case err != nil:
+		return nil, terrors.Augment(err, "Failed to update account", errParams)
 	}
 
 	errParams["updated"] = account.Updated.String()
