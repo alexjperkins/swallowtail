@@ -29,16 +29,23 @@ func (d *discordPager) Page(ctx context.Context, userID, msg string) error {
 	}
 	defer conn.Close()
 
+	hashedContent, err := util.Sha256Hash(msg)
+	if err != nil {
+		return terrors.Augment(err, "Failed to page account; error hashing message content", map[string]string{
+			"user_id": userID,
+		})
+	}
+
 	client := discordproto.NewDiscordClient(conn)
 	if _, err = (client.SendMsgToPrivateChannel(ctx, &discordproto.SendMsgToPrivateChannelRequest{
 		UserId:   userID,
 		Content:  msg,
 		SenderId: "system:s.account:pager",
 		// Idempotent on channel, message & the hour of the day.
-		IdempotencyKey: fmt.Sprintf("%s-%s-%s", userID, util.Sha256Hash(msg), strconv.Itoa(now.Hour())),
+		IdempotencyKey: fmt.Sprintf("%s-%s-%s", userID, hashedContent, strconv.Itoa(now.Hour())),
 	})); err != nil {
 		return terrors.Augment(err, "Failed to send msg to discord channel", map[string]string{
-			"channel_id": userID,
+			"user_id": userID,
 		})
 	}
 

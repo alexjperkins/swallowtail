@@ -20,16 +20,21 @@ func (a *AccountService) CreateAccount(
 		"username": in.Username,
 	}
 
+	asymmetricPassword, err := util.Sha256Hash(in.Password)
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to create an account; error hashing password", errParams)
+	}
+
 	account := &domain.Account{
 		UserID:            in.UserId,
 		Username:          in.Username,
-		Password:          util.Sha256Hash(in.Password),
+		Password:          asymmetricPassword,
 		Email:             in.Email,
 		HighPriorityPager: in.HighPriorityPager.String(),
 		LowPriorityPager:  in.LowPriorityPager.String(),
 	}
 
-	account, err := dao.ReadAccountByUserID(ctx, in.UserId)
+	account, err = dao.ReadAccountByUserID(ctx, in.UserId)
 	switch {
 	case terrors.Is(err, terrors.ErrNotFound):
 		// This is fine; we don't already have an account - so let's create one.
