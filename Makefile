@@ -21,13 +21,12 @@ googlesheets:
 	docker-compose -f local.yml up --build  swallowtail.s.googlesheets
 
 discord:
-	cd s.discord &&  sudo make docker &&  cd .. && \
+	cd s.discord &&  sudo -E make docker &&  cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.discord
 
 account:
 	cd s.account &&  sudo make docker &&  cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.account
-
 
 test:
 	go test ./... -short

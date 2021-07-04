@@ -17,7 +17,6 @@ type ListAllAssetPairsResponse struct {
 }
 
 type ExecuteSpotTradeRequest struct{}
-
 type ExecuteSpotTradeResponse struct{}
 
 // PingRequest data transfer object for ping request.
@@ -25,3 +24,9 @@ type PingRequest struct{}
 
 // PingResponse data transfer object for ping response.
 type PingResponse struct{}
+
+type ReadSpotAccountRequest struct{}
+type ReadSpotAccountResponse struct{}
+
+type ReadPerptualFuturesAccountRequest struct{}
+type ReadPerptualFuturesAccountResponse struct{}

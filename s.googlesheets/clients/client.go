@@ -41,6 +41,7 @@ func New(ctx context.Context) (*googlesheetsClient, error) {
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to create sheets client", nil)
 	}
+
 	return &googlesheetsClient{
 		s: srv,
 	}, nil

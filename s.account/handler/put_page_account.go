@@ -10,14 +10,14 @@ import (
 	accountproto "swallowtail/s.account/proto"
 )
 
-func (s *AccountService) PUTPageAccount(
+func (s *AccountService) PageAccount(
 	ctx context.Context, in *accountproto.PageAccountRequest,
 ) (*accountproto.PageAccountResponse, error) {
 	errParams := map[string]string{
-		"account_id": in.Id,
+		"account_id": in.UserId,
 	}
 
-	account, err := dao.ReadAccountByID(ctx, in.Id)
+	account, err := dao.ReadAccountByUserID(ctx, in.UserId)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to read account", errParams)
 	}

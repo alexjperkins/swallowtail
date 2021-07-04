@@ -8,6 +8,7 @@ import (
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -15,13 +16,16 @@ const (
 	defaultServicePort = "8000"
 )
 
+// Server defines the interface for our base server setup.
 type Server interface {
 	Run(ctx context.Context)
 	Grpc() *grpc.Server
 }
 
+// Init inits our base server.
 func Init(service string) Server {
 	s := grpc.NewServer()
+	reflection.Register(s)
 	return &server{
 		s:           s,
 		ServiceName: service,
@@ -36,6 +40,7 @@ type server struct {
 	s *grpc.Server
 }
 
+// Run runs our base server.
 func (s *server) Run(ctx context.Context) {
 	hostname, err := os.Hostname()
 	if err != nil {

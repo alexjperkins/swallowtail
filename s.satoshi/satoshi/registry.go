@@ -37,6 +37,16 @@ type SatoshiConsumerMessage struct {
 	IsActive bool
 }
 
+// TODO: Refactor; such that we can capture a description & a usage.
+type CommandHandler func(s *discordgo.Session, m *discordgo.MessageCreate)
+
+type Command struct {
+	Handle      CommandHandler
+	Description string
+	Usage       string
+	Grouping    string
+}
+
 // SatoshiCommand type definition of what a command is; alias for a discord handler.
 type SatoshiCommand func(s *discordgo.Session, m *discordgo.MessageCreate)
 

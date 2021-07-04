@@ -32,7 +32,7 @@ func NewDiscordClient(cc grpc.ClientConnInterface) DiscordClient {
 
 func (c *discordClient) SendMsgToChannel(ctx context.Context, in *SendMsgToChannelRequest, opts ...grpc.CallOption) (*SendMsgToChannelResponse, error) {
 	out := new(SendMsgToChannelResponse)
-	err := c.cc.Invoke(ctx, "/discordproto.discord/SendMsgToChannel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/discord/SendMsgToChannel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (c *discordClient) SendMsgToChannel(ctx context.Context, in *SendMsgToChann
 
 func (c *discordClient) SendMsgToPrivateChannel(ctx context.Context, in *SendMsgToPrivateChannelRequest, opts ...grpc.CallOption) (*SendMsgPrivateToChannelResponse, error) {
 	out := new(SendMsgPrivateToChannelResponse)
-	err := c.cc.Invoke(ctx, "/discordproto.discord/SendMsgToPrivateChannel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/discord/SendMsgToPrivateChannel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *discordClient) SendMsgToPrivateChannel(ctx context.Context, in *SendMsg
 
 func (c *discordClient) Subscribe(ctx context.Context, in *SuscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error) {
 	out := new(SubscribeResponse)
-	err := c.cc.Invoke(ctx, "/discordproto.discord/Subscribe", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/discord/Subscribe", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func _Discord_SendMsgToChannel_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/discordproto.discord/SendMsgToChannel",
+		FullMethod: "/discord/SendMsgToChannel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DiscordServer).SendMsgToChannel(ctx, req.(*SendMsgToChannelRequest))
@@ -114,7 +114,7 @@ func _Discord_SendMsgToPrivateChannel_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/discordproto.discord/SendMsgToPrivateChannel",
+		FullMethod: "/discord/SendMsgToPrivateChannel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DiscordServer).SendMsgToPrivateChannel(ctx, req.(*SendMsgToPrivateChannelRequest))
@@ -132,7 +132,7 @@ func _Discord_Subscribe_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/discordproto.discord/Subscribe",
+		FullMethod: "/discord/Subscribe",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DiscordServer).Subscribe(ctx, req.(*SuscribeRequest))
@@ -141,7 +141,7 @@ func _Discord_Subscribe_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 var _Discord_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "discordproto.discord",
+	ServiceName: "discord",
 	HandlerType: (*DiscordServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

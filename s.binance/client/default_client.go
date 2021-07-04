@@ -38,6 +38,14 @@ func (d *defaultClient) ExecuteSpotTrade(ctx context.Context, trade *domain.Trad
 	return nil
 }
 
+func (d *defaultClient) ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error) {
+	return nil, nil
+}
+
+func (d *defaultClient) ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error) {
+	return nil, nil
+}
+
 func (d *defaultClient) Ping(ctx context.Context) error {
 	url := fmt.Sprintf("%s/%s", binanceAPIUrl, "ping")
 	rspBody := &PingRequest{}

@@ -12,7 +12,8 @@ import (
 	"github.com/monzo/terrors"
 )
 
-func (b *BinanceService) handlePUTSpotTrade(
+// SpotTrade ...
+func (b *BinanceService) SpotTrade(
 	ctx context.Context, in *binanceproto.SpotTradeRequest,
 ) (*binanceproto.SpotTradeResponse, error) {
 	errParams := map[string]string{

@@ -17,8 +17,11 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BinanceClient interface {
+	ListAllAssetPairs(ctx context.Context, in *ListAllAssetPairsRequest, opts ...grpc.CallOption) (*ListAllAssetPairsResponse, error)
 	SpotTrade(ctx context.Context, in *SpotTradeRequest, opts ...grpc.CallOption) (*SpotTradeResponse, error)
 	PerpetualFutureTrade(ctx context.Context, in *PerpetualFutureTradeRequest, opts ...grpc.CallOption) (*PerpetualFutureTradeResponse, error)
+	ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest, opts ...grpc.CallOption) (*ReadSpotAccountResponse, error)
+	ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerpetualFuturesAccountRequest, opts ...grpc.CallOption) (*ReadPerpetualFuturesAccountResponse, error)
 }
 
 type binanceClient struct {
@@ -29,9 +32,18 @@ func NewBinanceClient(cc grpc.ClientConnInterface) BinanceClient {
 	return &binanceClient{cc}
 }
 
+func (c *binanceClient) ListAllAssetPairs(ctx context.Context, in *ListAllAssetPairsRequest, opts ...grpc.CallOption) (*ListAllAssetPairsResponse, error) {
+	out := new(ListAllAssetPairsResponse)
+	err := c.cc.Invoke(ctx, "/binance/ListAllAssetPairs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *binanceClient) SpotTrade(ctx context.Context, in *SpotTradeRequest, opts ...grpc.CallOption) (*SpotTradeResponse, error) {
 	out := new(SpotTradeResponse)
-	err := c.cc.Invoke(ctx, "/binanceproto.binance/SpotTrade", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/binance/SpotTrade", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +52,25 @@ func (c *binanceClient) SpotTrade(ctx context.Context, in *SpotTradeRequest, opt
 
 func (c *binanceClient) PerpetualFutureTrade(ctx context.Context, in *PerpetualFutureTradeRequest, opts ...grpc.CallOption) (*PerpetualFutureTradeResponse, error) {
 	out := new(PerpetualFutureTradeResponse)
-	err := c.cc.Invoke(ctx, "/binanceproto.binance/PerpetualFutureTrade", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/binance/PerpetualFutureTrade", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *binanceClient) ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest, opts ...grpc.CallOption) (*ReadSpotAccountResponse, error) {
+	out := new(ReadSpotAccountResponse)
+	err := c.cc.Invoke(ctx, "/binance/ReadSpotAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerpetualFuturesAccountRequest, opts ...grpc.CallOption) (*ReadPerpetualFuturesAccountResponse, error) {
+	out := new(ReadPerpetualFuturesAccountResponse)
+	err := c.cc.Invoke(ctx, "/binance/ReadPerpetualFuturesAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +81,11 @@ func (c *binanceClient) PerpetualFutureTrade(ctx context.Context, in *PerpetualF
 // All implementations must embed UnimplementedBinanceServer
 // for forward compatibility
 type BinanceServer interface {
+	ListAllAssetPairs(context.Context, *ListAllAssetPairsRequest) (*ListAllAssetPairsResponse, error)
 	SpotTrade(context.Context, *SpotTradeRequest) (*SpotTradeResponse, error)
 	PerpetualFutureTrade(context.Context, *PerpetualFutureTradeRequest) (*PerpetualFutureTradeResponse, error)
+	ReadSpotAccount(context.Context, *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error)
+	ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest) (*ReadPerpetualFuturesAccountResponse, error)
 	mustEmbedUnimplementedBinanceServer()
 }
 
@@ -60,16 +93,43 @@ type BinanceServer interface {
 type UnimplementedBinanceServer struct {
 }
 
+func (*UnimplementedBinanceServer) ListAllAssetPairs(context.Context, *ListAllAssetPairsRequest) (*ListAllAssetPairsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAllAssetPairs not implemented")
+}
 func (*UnimplementedBinanceServer) SpotTrade(context.Context, *SpotTradeRequest) (*SpotTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SpotTrade not implemented")
 }
 func (*UnimplementedBinanceServer) PerpetualFutureTrade(context.Context, *PerpetualFutureTradeRequest) (*PerpetualFutureTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PerpetualFutureTrade not implemented")
 }
+func (*UnimplementedBinanceServer) ReadSpotAccount(context.Context, *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadSpotAccount not implemented")
+}
+func (*UnimplementedBinanceServer) ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest) (*ReadPerpetualFuturesAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadPerpetualFuturesAccount not implemented")
+}
 func (*UnimplementedBinanceServer) mustEmbedUnimplementedBinanceServer() {}
 
 func RegisterBinanceServer(s *grpc.Server, srv BinanceServer) {
 	s.RegisterService(&_Binance_serviceDesc, srv)
+}
+
+func _Binance_ListAllAssetPairs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAllAssetPairsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BinanceServer).ListAllAssetPairs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/binance/ListAllAssetPairs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BinanceServer).ListAllAssetPairs(ctx, req.(*ListAllAssetPairsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Binance_SpotTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -82,7 +142,7 @@ func _Binance_SpotTrade_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/binanceproto.binance/SpotTrade",
+		FullMethod: "/binance/SpotTrade",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BinanceServer).SpotTrade(ctx, req.(*SpotTradeRequest))
@@ -100,7 +160,7 @@ func _Binance_PerpetualFutureTrade_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/binanceproto.binance/PerpetualFutureTrade",
+		FullMethod: "/binance/PerpetualFutureTrade",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BinanceServer).PerpetualFutureTrade(ctx, req.(*PerpetualFutureTradeRequest))
@@ -108,10 +168,50 @@ func _Binance_PerpetualFutureTrade_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Binance_ReadSpotAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadSpotAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BinanceServer).ReadSpotAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/binance/ReadSpotAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BinanceServer).ReadSpotAccount(ctx, req.(*ReadSpotAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Binance_ReadPerpetualFuturesAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadPerpetualFuturesAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BinanceServer).ReadPerpetualFuturesAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/binance/ReadPerpetualFuturesAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BinanceServer).ReadPerpetualFuturesAccount(ctx, req.(*ReadPerpetualFuturesAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Binance_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "binanceproto.binance",
+	ServiceName: "binance",
 	HandlerType: (*BinanceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListAllAssetPairs",
+			Handler:    _Binance_ListAllAssetPairs_Handler,
+		},
 		{
 			MethodName: "SpotTrade",
 			Handler:    _Binance_SpotTrade_Handler,
@@ -119,6 +219,14 @@ var _Binance_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PerpetualFutureTrade",
 			Handler:    _Binance_PerpetualFutureTrade_Handler,
+		},
+		{
+			MethodName: "ReadSpotAccount",
+			Handler:    _Binance_ReadSpotAccount_Handler,
+		},
+		{
+			MethodName: "ReadPerpetualFuturesAccount",
+			Handler:    _Binance_ReadPerpetualFuturesAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

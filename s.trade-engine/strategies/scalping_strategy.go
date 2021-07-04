@@ -2,7 +2,7 @@ package strategies
 
 import (
 	"context"
-	"swallowtail/s.binance-consumer/indicators"
+	"swallowtail/s.trade-engine/indicators"
 	"sync"
 
 	"github.com/monzo/slog"

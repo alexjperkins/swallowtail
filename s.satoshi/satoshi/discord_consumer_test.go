@@ -132,6 +132,29 @@ func TestContainsTicker(t *testing.T) {
 			content:         "contains regular styled ticker with newline \n btc and a few 5.9 \n sol",
 			doesTickerExist: true,
 		},
+		{
+			name: "contains_ticker_and_stablecoin",
+			content: `
+			rego [￼rego]: BTCUSD - 1D - SWING LONG IDEA - BIG SIZE STRATEGY
+
+			Since Bitcoin is at the bottom of our range, and funding has provided a negative rate
+			for more than a few days now, it is time for me to build a swing long.
+
+			We've already added our first position size of 15% at 33,700.
+			Depending on the situation, we can expect to see lower. In this case, I want to add. 
+
+			The point of this position is to hold it over a long period of time.
+			Going underwater/sideways does not matter if funding is negative.
+			With a clear invalidation, holding this position for a long period of time will pay
+			us as long as our rate remains negative.
+
+			I am looking to add at points of interest: 32,800, 31,600, and 30,000.
+			I am currently not interested in longing higher. If the conditions change we will add accordingly.
+
+			Here is my chart for reference:
+			`,
+			doesTickerExist: true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
