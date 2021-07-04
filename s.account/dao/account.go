@@ -94,7 +94,7 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 		highPriorityPager = accountproto.PagerType_DISCORD.String()
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	if _, err := (db.Exec(
 		ctx, sql,
 		account.Username, account.Password, account.Email, account.UserID, account.PhoneNumber,

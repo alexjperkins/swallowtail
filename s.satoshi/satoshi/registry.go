@@ -44,6 +44,7 @@ type Command struct {
 	Handle      CommandHandler
 	Description string
 	Usage       string
+	Grouping    string
 }
 
 // SatoshiCommand type definition of what a command is; alias for a discord handler.

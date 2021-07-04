@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"swallowtail/s.binance-consumer/domain"
-	"swallowtail/s.binance-consumer/strategies"
+	"swallowtail/s.trade-engine/strategies"
 
 	"github.com/monzo/slog"
 )

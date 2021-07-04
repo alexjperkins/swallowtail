@@ -5,6 +5,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./;accountproto";
 
 service account {
+  /// --- Accounts --- ///
   rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {
   }
 
@@ -19,6 +20,17 @@ service account {
 
   rpc PageAccount (PageAccountRequest) returns (PageAccountResponse) {
   }
+
+  /// --- Exchanges --- ///
+  rpc AddExchange (AddExchangeRequest) returns (AddExchangeResponse) {
+  }
+
+  rpc ListExchanges (ListExchangesRequest) returns (ListExchangesResponse) {
+  }
+
+  rpc ReadExchange (ReadExchangeRequest) returns (ReadExchangeResponse) {
+  }
+
 }
 
 enum PagerType {
@@ -91,4 +103,44 @@ message PageAccountRequest {
   PagerPriority priority = 3;
 
 }
+
 message PageAccountResponse {}
+
+enum ExchangeType {
+  BINANCE = 0;
+  FTX = 1;
+}
+
+message Exchange {
+  string user_id = 1;
+  ExchangeType exchange = 2;
+  string api_key = 3;
+  string secret_key = 4;
+  bool is_active = 5;
+  string exchange_id = 6;
+}
+
+message AddExchangeRequest {
+  Exchange exchange = 1;
+}
+
+message AddExchangeResponse {
+  Exchange exchange = 1;
+}
+
+message ListExchangesRequest {
+  string user_id = 1;
+  bool active_only = 2;
+}
+
+message ListExchangesResponse {
+  repeated Exchange exchanges = 1;
+}
+
+message ReadExchangeRequest {
+  string exchange_id = 1;
+}
+
+message ReadExchangeResponse{
+  Exchange exchange = 1;
+}

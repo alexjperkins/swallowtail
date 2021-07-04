@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
+	"github.com/monzo/terrors"
 	"google.golang.org/grpc"
 )
 
@@ -32,7 +33,10 @@ func handleRegisterAccountCommand(s *discordgo.Session, m *discordgo.MessageCrea
 
 	tokens := strings.Split(m.Content, " ")
 	if len(tokens) != 3 {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: Hi, incorrect usage.\nExample: `!register <username> <password>`"))
+		s.ChannelMessageSend(
+			m.ChannelID, fmt.Sprintf(
+				":wave: Hi, incorrect usage.\n\nExample: `!register <username> <password>`\nPlease note the password is hashed with a salt. It's not stored."),
+		)
 		return
 	}
 
@@ -49,18 +53,25 @@ func handleRegisterAccountCommand(s *discordgo.Session, m *discordgo.MessageCrea
 	defer conn.Close()
 
 	client := accountproto.NewAccountClient(conn)
-	if _, err := (client.CreateAccount(ctx, &accountproto.CreateAccountRequest{
+	_, err = client.CreateAccount(ctx, &accountproto.CreateAccountRequest{
 		UserId:   m.Author.ID,
 		Username: username,
 		Password: password,
-	})); err != nil {
+	})
+	switch {
+	case terrors.Is(err, terrors.ErrPreconditionFailed, "account-already-exists"):
+		s.ChannelMessageSend(
+			m.ChannelID,
+			":wave: Hi, I've already got an account registered for you.  You're all good!",
+		)
+	case err != nil:
 		slog.Error(ctx, "Failed to create new account: %v", err, map[string]string{
 			"user_id":  m.Author.ID,
 			"username": username,
 		})
 		s.ChannelMessageSend(
 			m.ChannelID,
-			fmt.Sprintf(":disappointed: Sorry, I failed to create an account with username: `%s`, maybe you already created one?", username),
+			fmt.Sprintf(":disappointed: Sorry, I failed to create an account with username: `%s`, please ping @ajperkins to investigate. Thanks", username),
 		)
 		return
 	}

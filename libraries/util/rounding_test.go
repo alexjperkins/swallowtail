@@ -22,22 +22,22 @@ func TestFormatPrice(t *testing.T) {
 		{
 			name:           "integer",
 			input:          "999",
-			expectedOutput: "999.00",
+			expectedOutput: "999.000",
 		},
 		{
 			name:           "float",
 			input:          "999.99",
-			expectedOutput: "999.99",
+			expectedOutput: "999.990",
 		},
 		{
 			name:           "bitcoin",
 			input:          "58765.437",
-			expectedOutput: "58765.44",
+			expectedOutput: "58765.437",
 		},
 		{
 			name:           "bitcoin-round",
 			input:          "58700",
-			expectedOutput: "58700.00",
+			expectedOutput: "58700.000",
 		},
 		{
 			name:           "float-under-one",
@@ -76,7 +76,7 @@ func TestFormatPriceAsString(t *testing.T) {
 		{
 			name:           "above-one",
 			input:          10.7649,
-			expectedOutput: "10.76",
+			expectedOutput: "10.765",
 		},
 		{
 			name:           "under-one",

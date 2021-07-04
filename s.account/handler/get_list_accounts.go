@@ -9,7 +9,7 @@ import (
 	"github.com/monzo/terrors"
 )
 
-// ListAccounts ...
+// ListAccounts returns a list of all given accounts.
 func ListAccounts(
 	ctx context.Context, in *accountproto.ListAccountsRequest,
 ) (*accountproto.ListAccountsResponse, error) {

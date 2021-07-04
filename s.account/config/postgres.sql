@@ -12,6 +12,8 @@ BEGIN
 END
 $$;
 
+DROP TABLE IF EXISTS s_account_accounts CASCADE;
+
 CREATE TABLE IF NOT EXISTS s_account_accounts (
 	-- use the discord id associate to the user here
 	user_id VARCHAR(20) NOT NULL UNIQUE,
@@ -58,6 +60,8 @@ CREATE TABLE IF NOT EXISTS s_account_exchanges (
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),
+
+	is_active BOOLEAN DEFAULT FALSE,
 
 	PRIMARY KEY(exchange_id),
 	CONSTRAINT fk_account

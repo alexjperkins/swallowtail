@@ -17,11 +17,16 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountClient interface {
+	/// --- Accounts --- ///
 	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	ReadAccount(ctx context.Context, in *ReadAccountRequest, opts ...grpc.CallOption) (*ReadAccountResponse, error)
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
 	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error)
 	PageAccount(ctx context.Context, in *PageAccountRequest, opts ...grpc.CallOption) (*PageAccountResponse, error)
+	/// --- Exchanges --- ///
+	AddExchange(ctx context.Context, in *AddExchangeRequest, opts ...grpc.CallOption) (*AddExchangeResponse, error)
+	ListExchanges(ctx context.Context, in *ListExchangesRequest, opts ...grpc.CallOption) (*ListExchangesResponse, error)
+	ReadExchange(ctx context.Context, in *ReadExchangeRequest, opts ...grpc.CallOption) (*ReadExchangeResponse, error)
 }
 
 type accountClient struct {
@@ -77,15 +82,47 @@ func (c *accountClient) PageAccount(ctx context.Context, in *PageAccountRequest,
 	return out, nil
 }
 
+func (c *accountClient) AddExchange(ctx context.Context, in *AddExchangeRequest, opts ...grpc.CallOption) (*AddExchangeResponse, error) {
+	out := new(AddExchangeResponse)
+	err := c.cc.Invoke(ctx, "/account/AddExchange", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountClient) ListExchanges(ctx context.Context, in *ListExchangesRequest, opts ...grpc.CallOption) (*ListExchangesResponse, error) {
+	out := new(ListExchangesResponse)
+	err := c.cc.Invoke(ctx, "/account/ListExchanges", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountClient) ReadExchange(ctx context.Context, in *ReadExchangeRequest, opts ...grpc.CallOption) (*ReadExchangeResponse, error) {
+	out := new(ReadExchangeResponse)
+	err := c.cc.Invoke(ctx, "/account/ReadExchange", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServer is the server API for Account service.
 // All implementations must embed UnimplementedAccountServer
 // for forward compatibility
 type AccountServer interface {
+	/// --- Accounts --- ///
 	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
 	ReadAccount(context.Context, *ReadAccountRequest) (*ReadAccountResponse, error)
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
 	UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error)
 	PageAccount(context.Context, *PageAccountRequest) (*PageAccountResponse, error)
+	/// --- Exchanges --- ///
+	AddExchange(context.Context, *AddExchangeRequest) (*AddExchangeResponse, error)
+	ListExchanges(context.Context, *ListExchangesRequest) (*ListExchangesResponse, error)
+	ReadExchange(context.Context, *ReadExchangeRequest) (*ReadExchangeResponse, error)
 	mustEmbedUnimplementedAccountServer()
 }
 
@@ -107,6 +144,15 @@ func (*UnimplementedAccountServer) UpdateAccount(context.Context, *UpdateAccount
 }
 func (*UnimplementedAccountServer) PageAccount(context.Context, *PageAccountRequest) (*PageAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PageAccount not implemented")
+}
+func (*UnimplementedAccountServer) AddExchange(context.Context, *AddExchangeRequest) (*AddExchangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddExchange not implemented")
+}
+func (*UnimplementedAccountServer) ListExchanges(context.Context, *ListExchangesRequest) (*ListExchangesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListExchanges not implemented")
+}
+func (*UnimplementedAccountServer) ReadExchange(context.Context, *ReadExchangeRequest) (*ReadExchangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadExchange not implemented")
 }
 func (*UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
 
@@ -204,6 +250,60 @@ func _Account_PageAccount_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Account_AddExchange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddExchangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).AddExchange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/account/AddExchange",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).AddExchange(ctx, req.(*AddExchangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Account_ListExchanges_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListExchangesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).ListExchanges(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/account/ListExchanges",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).ListExchanges(ctx, req.(*ListExchangesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Account_ReadExchange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadExchangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).ReadExchange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/account/ReadExchange",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).ReadExchange(ctx, req.(*ReadExchangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Account_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "account",
 	HandlerType: (*AccountServer)(nil),
@@ -227,6 +327,18 @@ var _Account_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PageAccount",
 			Handler:    _Account_PageAccount_Handler,
+		},
+		{
+			MethodName: "AddExchange",
+			Handler:    _Account_AddExchange_Handler,
+		},
+		{
+			MethodName: "ListExchanges",
+			Handler:    _Account_ListExchanges_Handler,
+		},
+		{
+			MethodName: "ReadExchange",
+			Handler:    _Account_ReadExchange_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

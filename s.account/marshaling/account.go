@@ -18,3 +18,15 @@ func AccountDomainToProto(account *domain.Account) *accountproto.Account {
 		LastUpdated:     timestamppb.New(account.Updated),
 	}
 }
+
+// UpdateAccountProtoToDomain marshals a `UpdateAccountRequest` proto message to the domain.
+func UpdateAccountProtoToDomain(in *accountproto.UpdateAccountRequest) *domain.Account {
+	return &domain.Account{
+		UserID:            in.UserId,
+		Username:          in.Username,
+		Email:             in.Email,
+		PhoneNumber:       in.PhoneNumber,
+		HighPriorityPager: in.HighPriorityPager.String(),
+		LowPriorityPager:  in.LowPriorityPager.String(),
+	}
+}

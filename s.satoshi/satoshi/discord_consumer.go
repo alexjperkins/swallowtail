@@ -214,15 +214,26 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 // containsTicker checks if the contain contains a ticker that is traded on Binance
 // it assumes that the content passed with be normalized to lowercase.
 func containsTicker(content string) bool {
-	tokens := strings.Fields(content)
+	tokens := strings.Fields(strings.ToLower(content))
+	fmt.Println(tokens)
 	for _, token := range tokens {
 		switch {
 		case
 			token == "usd",
-			token == "usdc",
-			token == "usdt":
+			token == "usdt",
+			token == "usdc":
 			// If we match against some stablecoin inadvertly; then we can skip.
 			continue
+		case
+			strings.Contains(token, "usd"),
+			strings.Contains(token, "usdc"),
+			strings.Contains(token, "usdt"):
+			// But if a token contains a stable coins, then lets assume it's of the form BTCUSDT.
+			// We might pick up typos and similar here, but that's fine for now.
+
+			fmt.Println(token)
+
+			return true
 		case strings.Contains(token, "/"):
 			// Some mods format their trades as `BTC/USDT`.
 			childContent := strings.ReplaceAll(token, "/", " ")

@@ -9,6 +9,7 @@ import (
 	"github.com/monzo/terrors"
 )
 
+// ReadAccount reads an account via the user ID, which is the discord ID.
 func (a *AccountService) ReadAccount(
 	ctx context.Context, in *accountproto.ReadAccountRequest,
 ) (*accountproto.ReadAccountResponse, error) {
