@@ -36,6 +36,7 @@ func ReadExchangesByUserID(ctx context.Context, userID string) ([]*domain.Exchan
 		sql = `
 		SELECT * FROM s_account_exchanges
 		WHERE user_id=$1
+		ORDER BY exchange
 		`
 		exchanges []*domain.Exchange
 	)

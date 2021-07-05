@@ -76,16 +76,14 @@ func (dc DiscordConsumer) IsActive() bool {
 }
 
 func formatContent(ctx context.Context, username, timestamp, content string) string {
-	var strTs string
 	ts, err := time.Parse(time.RFC3339, timestamp)
 	switch {
 	case err != nil:
 		slog.Warn(ctx, "Failed to parse timestamp; setting as original: %s, err: %v", timestamp, err)
-		strTs = timestamp
 	default:
-		strTs = ts.Truncate(time.Minute).String()
+		timestamp = ts.Truncate(time.Minute).String()
 	}
-	return fmt.Sprintf("Mod: %s:\nTimestamp:[%v]\nContent: %s", username, strTs, content)
+	return fmt.Sprintf("%s[%v]:\n```%s```", username, timestamp, content)
 }
 
 func handleModMessages(

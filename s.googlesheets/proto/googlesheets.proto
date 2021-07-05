@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "./;googlesheetsproto";
+
+service googlesheets {
+    rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {
+    }
+}
+
+message RegisterNewPortfolioSheetRequest {}
+message RegisterNewPortfolioSheetResponse {}

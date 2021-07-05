@@ -36,21 +36,6 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	PRIMARY KEY(user_id)
 );
 
-CREATE TABLE IF NOT EXISTS s_account_googlesheets (
-	googlesheets_id uuid DEFAULT uuid_generate_v4(),
-	spreadsheet_id VARCHAR(200) NOT NULL UNIQUE,
-	sheet_id VARCHAR(200) NOT NULL UNIQUE,
-	user_id VARCHAR(20),
-
-	created TIME NOT NULL DEFAULT now(),
-	updated TIME NOT NULL DEFAULT now(),
-
-	PRIMARY KEY(googlesheets_id),
-	CONSTRAINT fk_account
-		FOREIGN KEY(user_id)
-			REFERENCES s_account_accounts(user_id) ON DELETE SET NULL
-);
-
 CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	exchange_id uuid DEFAULT uuid_generate_v4(),
 	exchange exchange,
