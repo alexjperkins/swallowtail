@@ -99,7 +99,21 @@ func handleModMessages(
 			slog.Error(ctx, "Failed to get latest mod message: %v", err)
 			return
 		}
+		msgs := []*SatoshiConsumerMessage{}
 		for i, pc := range parsedContent {
+			// First lets check if the content is part of any 1-10k challenge.
+			if !contains1To10kChallenge(strings.ToLower(pc.Content)) {
+				slog.Debug(ctx, "1-10k challenge message received: %s", pc.Content)
+				msg := &SatoshiConsumerMessage{
+					ConsumerID:       discordConsumerID,
+					DiscordChannelID: discordproto.DiscordSatoshiGeneralChannel,
+					Message:          warning("1-10k challenge update from Astekz", pc.Content),
+					Created:          time.Now(),
+					IsActive:         isActive,
+				}
+				msgs = append(msgs, msg)
+			}
+
 			// We want to reduce the noise here; we only care if the content contains a Ticker.
 			if !containsTicker(strings.ToLower(pc.Content)) {
 				slog.Debug(ctx, "Received mod message without ticker: %s", pc.Content)
@@ -116,11 +130,17 @@ func handleModMessages(
 					"total":   fmt.Sprintf("%v", len(parsedContent)),
 				},
 			}
+			msgs = append(msgs, msg)
+		}
+
+		// Lets publish our messages.
+		for _, msg := range msgs {
 			select {
 			case c <- msg:
 			default:
 				slog.Warn(ctx, "Failed to publish satoshi mods msg; blocked channel")
 			}
+
 		}
 	}
 }
@@ -209,11 +229,36 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	return msgList, nil
 }
 
+func contains1To10kChallenge(content string) bool {
+	var (
+		contains1k     bool
+		contains10k    bool
+		containsAstekz bool
+	)
+
+	tokens := strings.Fields(content)
+	for _, token := range tokens {
+		token := strings.ToLower(token)
+		if strings.Contains(token, "1k") {
+			contains1k = true
+		}
+
+		if strings.Contains(token, "10k") {
+			contains10k = true
+		}
+
+		if strings.Contains(token, "astekz") {
+			containsAstekz = true
+		}
+	}
+
+	return contains1k && contains10k && containsAstekz
+}
+
 // containsTicker checks if the contain contains a ticker that is traded on Binance
 // it assumes that the content passed with be normalized to lowercase.
 func containsTicker(content string) bool {
 	tokens := strings.Fields(strings.ToLower(content))
-	fmt.Println(tokens)
 	for _, token := range tokens {
 		switch {
 		case
@@ -245,4 +290,9 @@ func containsTicker(content string) bool {
 		}
 	}
 	return false
+}
+
+// Formats a message for a standardized warning.
+func warning(greeting, content string) string {
+	return fmt.Sprintf(":rotating_light: %s :rotating_light:\n```%s```", greeting, content)
 }

@@ -96,6 +96,50 @@ func TestHandleSwingMessages(t *testing.T) {
 	}
 }
 
+func TestContains1To10kChallenge(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name                       string
+		content                    string
+		doesContain1To10kChallenge bool
+	}{
+		{
+			name: "does-contain-challenge",
+			content: `
+			---NEW---
+			Astekz [￼astekz]: 1k - 10k spot challenge
+
+			1105 spent on DOT at 17.1 with a stop of 16.4`,
+			doesContain1To10kChallenge: true,
+		},
+		{
+			name: "contains-but-not-astekz",
+			content: `
+			---NEW---
+			rego [￼rego]: 1k - 10k spot challenge
+
+			1105 spent on DOT at 17.1 with a stop of 16.4`,
+			doesContain1To10kChallenge: false,
+		},
+		{
+			name: "from-astekz-but-not-challenge",
+			content: `
+			Astekz [:nazar_amulet:astekz]: lets just close dot here guys, like next to nothing loss, i think it goes to 16.4. 
+			`,
+			doesContain1To10kChallenge: false,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			didContain1To10kChallenge := contains1To10kChallenge(tt.content)
+			assert.Equal(t, tt.doesContain1To10kChallenge, didContain1To10kChallenge)
+		})
+	}
+}
+
 func TestContainsTicker(t *testing.T) {
 	// Set our map of binance asset pairs to something we can test against.
 	originalBinanceAssetPairs := binanceAssetPairs
@@ -159,6 +203,8 @@ func TestContainsTicker(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			res := containsTicker(tt.content)
 			assert.Equal(t, tt.doesTickerExist, res)
 		})
