@@ -102,7 +102,7 @@ func handleModMessages(
 		msgs := []*SatoshiConsumerMessage{}
 		for i, pc := range parsedContent {
 			// First lets check if the content is part of any 1-10k challenge.
-			if !contains1To10kChallenge(strings.ToLower(pc.Content)) {
+			if contains1To10kChallenge(strings.ToLower(pc.Content)) {
 				slog.Debug(ctx, "1-10k challenge message received: %s", pc.Content)
 				msg := &SatoshiConsumerMessage{
 					ConsumerID:       discordConsumerID,
