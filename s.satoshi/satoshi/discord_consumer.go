@@ -102,7 +102,7 @@ func handleModMessages(
 		msgs := []*SatoshiConsumerMessage{}
 		for i, pc := range parsedContent {
 			// First lets check if the content is part of any 1-10k challenge.
-			if contains1To10kChallenge(strings.ToLower(pc.Content)) {
+			if contains1To10kChallenge(m.Author.Username, strings.ToLower(pc.Content)) {
 				slog.Debug(ctx, "1-10k challenge message received: %s", pc.Content)
 				msg := &SatoshiConsumerMessage{
 					ConsumerID:       discordConsumerID,
@@ -229,15 +229,23 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	return msgList, nil
 }
 
-func contains1To10kChallenge(content string) bool {
+func contains1To10kChallenge(modUsername string, content string) bool {
 	var (
 		contains1k     bool
 		contains10k    bool
 		containsAstekz bool
 	)
 
+	if strings.Contains(strings.ToLower(modUsername), "astekz") {
+		containsAstekz = true
+	}
+
 	tokens := strings.Fields(content)
 	for _, token := range tokens {
+		if contains1k && contains10k && containsAstekz {
+			return true
+		}
+
 		token := strings.ToLower(token)
 		if strings.Contains(token, "1k") {
 			contains1k = true
@@ -245,10 +253,6 @@ func contains1To10kChallenge(content string) bool {
 
 		if strings.Contains(token, "10k") {
 			contains10k = true
-		}
-
-		if strings.Contains(token, "astekz") {
-			containsAstekz = true
 		}
 	}
 
