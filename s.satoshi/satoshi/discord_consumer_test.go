@@ -101,10 +101,12 @@ func TestContains1To10kChallenge(t *testing.T) {
 	tests := []struct {
 		name                       string
 		content                    string
+		modUsername                string
 		doesContain1To10kChallenge bool
 	}{
 		{
-			name: "does-contain-challenge",
+			name:        "does-contain-challenge",
+			modUsername: "Astekz",
 			content: `
 			---NEW---
 			Astekz [￼astekz]: 1k - 10k spot challenge
@@ -134,7 +136,7 @@ func TestContains1To10kChallenge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			didContain1To10kChallenge := contains1To10kChallenge(tt.content)
+			didContain1To10kChallenge := contains1To10kChallenge(tt.modUsername, tt.content)
 			assert.Equal(t, tt.doesContain1To10kChallenge, didContain1To10kChallenge)
 		})
 	}
