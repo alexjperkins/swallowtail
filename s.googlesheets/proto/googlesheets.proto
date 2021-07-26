@@ -3,9 +3,27 @@ syntax = "proto3";
 option go_package = "./;googlesheetsproto";
 
 service googlesheets {
-    rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {
-    }
+    rpc CreatePortfolioSheet (CreatePortfolioSheetRequest) returns (CreatePortfolioSheetResponse) {}
+
+    rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {}
 }
 
-message RegisterNewPortfolioSheetRequest {}
+message CreatePortfolioSheetRequest {
+    string user_id = 1;
+    string email = 2;
+    bool shouldShare = 3;
+    bool active = 4;
+    bool should_pager_on_error = 5;
+    bool should_pager_on_target = 6;
+}
+
+message CreatePortfolioSheetResponse {
+    string URL = 1;
+}
+
+message RegisterNewPortfolioSheetRequest {
+    string user_id = 1;
+    string googlesheets_url = 2;
+}
+
 message RegisterNewPortfolioSheetResponse {}

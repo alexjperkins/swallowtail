@@ -17,6 +17,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GooglesheetsClient interface {
+	CreatePortfolioSheet(ctx context.Context, in *CreatePortfolioSheetRequest, opts ...grpc.CallOption) (*CreatePortfolioSheetResponse, error)
 	RegisterNewPortfolioSheet(ctx context.Context, in *RegisterNewPortfolioSheetRequest, opts ...grpc.CallOption) (*RegisterNewPortfolioSheetResponse, error)
 }
 
@@ -26,6 +27,15 @@ type googlesheetsClient struct {
 
 func NewGooglesheetsClient(cc grpc.ClientConnInterface) GooglesheetsClient {
 	return &googlesheetsClient{cc}
+}
+
+func (c *googlesheetsClient) CreatePortfolioSheet(ctx context.Context, in *CreatePortfolioSheetRequest, opts ...grpc.CallOption) (*CreatePortfolioSheetResponse, error) {
+	out := new(CreatePortfolioSheetResponse)
+	err := c.cc.Invoke(ctx, "/googlesheets/CreatePortfolioSheet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *googlesheetsClient) RegisterNewPortfolioSheet(ctx context.Context, in *RegisterNewPortfolioSheetRequest, opts ...grpc.CallOption) (*RegisterNewPortfolioSheetResponse, error) {
@@ -41,6 +51,7 @@ func (c *googlesheetsClient) RegisterNewPortfolioSheet(ctx context.Context, in *
 // All implementations must embed UnimplementedGooglesheetsServer
 // for forward compatibility
 type GooglesheetsServer interface {
+	CreatePortfolioSheet(context.Context, *CreatePortfolioSheetRequest) (*CreatePortfolioSheetResponse, error)
 	RegisterNewPortfolioSheet(context.Context, *RegisterNewPortfolioSheetRequest) (*RegisterNewPortfolioSheetResponse, error)
 	mustEmbedUnimplementedGooglesheetsServer()
 }
@@ -49,6 +60,9 @@ type GooglesheetsServer interface {
 type UnimplementedGooglesheetsServer struct {
 }
 
+func (*UnimplementedGooglesheetsServer) CreatePortfolioSheet(context.Context, *CreatePortfolioSheetRequest) (*CreatePortfolioSheetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePortfolioSheet not implemented")
+}
 func (*UnimplementedGooglesheetsServer) RegisterNewPortfolioSheet(context.Context, *RegisterNewPortfolioSheetRequest) (*RegisterNewPortfolioSheetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterNewPortfolioSheet not implemented")
 }
@@ -56,6 +70,24 @@ func (*UnimplementedGooglesheetsServer) mustEmbedUnimplementedGooglesheetsServer
 
 func RegisterGooglesheetsServer(s *grpc.Server, srv GooglesheetsServer) {
 	s.RegisterService(&_Googlesheets_serviceDesc, srv)
+}
+
+func _Googlesheets_CreatePortfolioSheet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePortfolioSheetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GooglesheetsServer).CreatePortfolioSheet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/googlesheets/CreatePortfolioSheet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GooglesheetsServer).CreatePortfolioSheet(ctx, req.(*CreatePortfolioSheetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Googlesheets_RegisterNewPortfolioSheet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -80,6 +112,10 @@ var _Googlesheets_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "googlesheets",
 	HandlerType: (*GooglesheetsServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreatePortfolioSheet",
+			Handler:    _Googlesheets_CreatePortfolioSheet_Handler,
+		},
 		{
 			MethodName: "RegisterNewPortfolioSheet",
 			Handler:    _Googlesheets_RegisterNewPortfolioSheet_Handler,

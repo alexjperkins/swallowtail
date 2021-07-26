@@ -9,9 +9,12 @@ import (
 	"github.com/monzo/terrors"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/sheets/v4"
+
+	"swallowtail/s.googlesheets/templates"
 )
 
 var (
+	client               *googlesheetsClient
 	defaultConfigPath    = "/home/alexjperkins/repos/swallowtail/s.googlesheets/clients/credentials.json"
 	defaultTokenFilePath = "./token.json"
 )
@@ -20,31 +23,34 @@ type GooglesheetsClient interface {
 	Ping(ctx context.Context) bool
 	Values(sheetID string, rowsRange string) ([][]interface{}, error)
 	UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error
+	CreateSheet(ctx context.Context, sheetType templates.SheetType) (string, error)
 }
 
 type googlesheetsClient struct {
 	s *sheets.Service
 }
 
-// New creates a new google sheets client for interacting with googlesheets.
-func New(ctx context.Context) (*googlesheetsClient, error) {
+// Init sets a new google sheets client for interacting with googlesheets.
+func Init(ctx context.Context) error {
 	b, err := ioutil.ReadFile(defaultConfigPath)
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to load googlesheets credentials", nil)
+		return terrors.Augment(err, "Failed to load googlesheets credentials", nil)
 	}
 	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to load config", nil)
+		return terrors.Augment(err, "Failed to load config", nil)
 	}
-	client := getClient(config)
-	srv, err := sheets.New(client)
+	c := getClient(config)
+	srv, err := sheets.New(c)
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to create sheets client", nil)
+		return terrors.Augment(err, "Failed to create sheets client", nil)
 	}
 
-	return &googlesheetsClient{
+	client = &googlesheetsClient{
 		s: srv,
-	}, nil
+	}
+
+	return nil
 }
 
 func (g *googlesheetsClient) Ping(ctx context.Context) bool {
@@ -66,8 +72,6 @@ func (g *googlesheetsClient) Values(sheetID string, rowsRange string) ([][]inter
 }
 
 func (g *googlesheetsClient) UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error {
-	context.Background()
-
 	v := &sheets.ValueRange{
 		Range:  rowsRange,
 		Values: values,
@@ -82,6 +86,37 @@ func (g *googlesheetsClient) UpdateRows(ctx context.Context, sheetID, rowsRange 
 		})
 	}
 	return nil
+}
+
+func (g *googlesheetsClient) CreateSheet(ctx context.Context, sheetType templates.SheetType) (string, error) {
+	// Create the initial spreadsheet.
+	call := g.s.Spreadsheets.Create(&sheets.Spreadsheet{})
+	call = call.Context(ctx)
+	s, err := call.Do()
+	if err != nil {
+		return "", terrors.Augment(err, "Failed to create a googlesheet", nil)
+	}
+
+	template, err := templates.GetTemplateByType(sheetType)
+	switch {
+	case terrors.Is(err, "template-does-not-exist"):
+		// Nothing more to do here
+		return s.SpreadsheetUrl, nil
+	}
+
+	if err := g.UpdateRows(ctx, s.SpreadsheetId, template.RowRange(), template.Values()); err != nil {
+		return "", terrors.Augment(err, "Failed to update rows for template", map[string]string{
+			"template": template.ID().String(),
+		})
+	}
+
+	return s.SpreadsheetUrl, nil
+}
+
+// CreateSheet ...
+func CreateSheet(ctx context.Context, sheetType templates.SheetType) (string, error) {
+	// TODO: metrics & opnetracing.
+	return client.CreateSheet(ctx, sheetType)
 }
 
 func isValidHTTPStatusCode(c int) bool {
