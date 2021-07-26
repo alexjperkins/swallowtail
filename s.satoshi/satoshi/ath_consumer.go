@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	coingecko "swallowtail/s.coingecko/clients"
+	coingecko "swallowtail/s.coingecko/client"
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.satoshi/coins"
 

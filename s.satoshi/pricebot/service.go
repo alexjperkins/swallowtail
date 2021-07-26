@@ -3,7 +3,7 @@ package pricebot
 import (
 	"context"
 	"sort"
-	coingecko "swallowtail/s.coingecko/clients"
+	coingecko "swallowtail/s.coingecko/client"
 	"sync"
 
 	"github.com/monzo/slog"
