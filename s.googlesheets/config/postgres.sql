@@ -1,10 +1,20 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+DO $$ 
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'googlesheet_type') THEN
+		CREATE TYPE pager AS ENUM ('PORTFOLIO', 'PLAIN');
+	END IF;
+END
+$$;
+
 CREATE TABLE IF NOT EXISTS s_googlehseets_sheet (
-	googlesheets_id uuid DEFAULT uuid_generate_v4();
+	googlesheet_id uuid DEFAULT uuid_generate_v4();
 
 	spreadsheet_id VARCHAR(32) NOT NULL,
-	sheets_id VARCHAR(32) NOT NULL UNIQUE,
+	sheet_id VARCHAR(32) NOT NULL UNIQUE,
+
+	sheet_type googlesheet_type NOT NULL DEFAULT 'PLAIN',
 
 	user_id VARCHAR(20) NOT NULL,
 	with_pager_on_error BOOLEAN DEFAULT FALSE,
@@ -12,6 +22,8 @@ CREATE TABLE IF NOT EXISTS s_googlehseets_sheet (
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),
+
+	active BOOLEAN DEFAULT TRUE,
 
 	PRIMARY KEY(internal_id)
 );
