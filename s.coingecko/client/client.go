@@ -1,4 +1,4 @@
-package clients
+package client
 
 import (
 	"context"
@@ -13,6 +13,11 @@ import (
 	coingecko "github.com/superoo7/go-gecko/v3"
 )
 
+var (
+	client CoinGeckoClient
+)
+
+// OLD
 var (
 	CoingeckoClientID = "coingecko-client-id"
 	coingeckoClient   CoinGeckoClient
@@ -31,7 +36,6 @@ var (
 	}
 )
 
-// TODO: fix to a singleton here.
 type CoinGeckoClient interface {
 	// Ping checks the connectivity of the client, returns bool if we can reach the coingecko API.
 	Ping(ctx context.Context) bool
@@ -50,6 +54,38 @@ type CoinGeckoClient interface {
 	GetATHFromID(ctx context.Context, id string) (float64, error)
 }
 
+func Init(ctx context.Context) error {
+	client = &cgClient{}
+	// TODO: ping
+	return nil
+}
+
+// GetAllCoinIDs ...
+func GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCoinItem, error) {
+	return nil, nil
+}
+
+// GetCurrentPriceFromSymbol ...
+func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
+	return 0, nil
+}
+
+// GetCurrentPriceFromID ...
+func GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
+	return 0, nil
+}
+
+// GetATHFromSymbol ...
+func GetATHFromSymbol(ctx context.Context, symbol string) (float64, error) {
+	return 0, nil
+}
+
+// GetATHFromID
+func GetATHFromID(ctx context.Context, id string) (float64, error) {
+	return 0, nil
+}
+
+// OLD
 type CoingeckoListCoinItem struct {
 	Name   string
 	Symbol string
