@@ -14,21 +14,18 @@ service coingecko {
 
     rpc GetATHBySymbol (GetATHBySymbolRequest) returns (GetATHBySymbolResponse) {
     }
-
-    rpc ListCoinIDs (ListCoinIDsRequest) returns (ListCoinIDsResponse) {
-    }
 }
 
 message CoinMetadata {
 }
 
 message GetAssetLatestPriceByIDRequest {
-    string coingecko_id = 1;
+    string coingecko_coin_id = 1;
     string asset_pair = 2;
 }
 
 message GetAssetLatestPriceByIDResponse {
-    string coingecko_id = 1;
+    string coingecko_coin_id = 1;
     string asset_symbol = 2;
     float latest_price = 3;
 }
@@ -39,7 +36,7 @@ message GetAssetLatestPriceBySymbolRequest {
 }
 
 message GetAssetLatestPriceBySymbolResponse{
-    string coingecko_id = 1;
+    string coingecko_coin_id = 1;
     string asset_symbol = 2;
     float latest_price = 3;
 }
@@ -50,25 +47,18 @@ message GetATHBySymbolRequest {
 }
 
 message GetATHBySymbolResponse{
-    string coingecko_id = 1;
+    string coingecko_coin_id = 1;
     string asset_symbol = 2;
     float all_time_high_price = 3;
 }
 
 message GetATHByIDRequest {
-    string coingecko_id = 1;
+    string coingecko_coin_id = 1;
     string asset_pair = 2;
 }
 
 message GetATHByIDResponse{
-    string coingecko_id = 1;
+    string coingecko_coin_id = 1;
     string asset_symbol = 2;
     float all_time_high_price = 3;
-}
-
-message ListCoinIDsRequest {
-}
-
-message ListCoinIDsResponse {
-    repeated CoinMetadata coins = 1;
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"swallowtail/libraries/mariana"
-	"swallowtail/s.bybt/client"
-	"swallowtail/s.bybt/handler"
-	bybtproto "swallowtail/s.bybt/proto"
+	"swallowtail/s.market-data/handler"
+	marketdataproto "swallowtail/s.market-data/proto"
+	"swallowtail/s.web3/client"
 )
 
 const (
@@ -24,6 +24,6 @@ func main() {
 
 	// Init Mariana Server
 	srv := mariana.Init(svcName)
-	bybtproto.RegisterBybtServer(srv.Grpc(), &handler.ByBtService{})
+	marketdataproto.RegisterMarketdataServer(srv.Grpc(), &handler.MarketDataService{})
 	srv.Run(ctx)
 }

@@ -21,7 +21,6 @@ type CoingeckoClient interface {
 	GetAssetLatestPriceBySymbol(ctx context.Context, in *GetAssetLatestPriceBySymbolRequest, opts ...grpc.CallOption) (*GetAssetLatestPriceBySymbolResponse, error)
 	GetATHByID(ctx context.Context, in *GetATHByIDRequest, opts ...grpc.CallOption) (*GetATHByIDResponse, error)
 	GetATHBySymbol(ctx context.Context, in *GetATHBySymbolRequest, opts ...grpc.CallOption) (*GetATHBySymbolResponse, error)
-	ListCoinIDs(ctx context.Context, in *ListCoinIDsRequest, opts ...grpc.CallOption) (*ListCoinIDsResponse, error)
 }
 
 type coingeckoClient struct {
@@ -68,15 +67,6 @@ func (c *coingeckoClient) GetATHBySymbol(ctx context.Context, in *GetATHBySymbol
 	return out, nil
 }
 
-func (c *coingeckoClient) ListCoinIDs(ctx context.Context, in *ListCoinIDsRequest, opts ...grpc.CallOption) (*ListCoinIDsResponse, error) {
-	out := new(ListCoinIDsResponse)
-	err := c.cc.Invoke(ctx, "/coingecko/ListCoinIDs", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // CoingeckoServer is the server API for Coingecko service.
 // All implementations must embed UnimplementedCoingeckoServer
 // for forward compatibility
@@ -85,7 +75,6 @@ type CoingeckoServer interface {
 	GetAssetLatestPriceBySymbol(context.Context, *GetAssetLatestPriceBySymbolRequest) (*GetAssetLatestPriceBySymbolResponse, error)
 	GetATHByID(context.Context, *GetATHByIDRequest) (*GetATHByIDResponse, error)
 	GetATHBySymbol(context.Context, *GetATHBySymbolRequest) (*GetATHBySymbolResponse, error)
-	ListCoinIDs(context.Context, *ListCoinIDsRequest) (*ListCoinIDsResponse, error)
 	mustEmbedUnimplementedCoingeckoServer()
 }
 
@@ -104,9 +93,6 @@ func (*UnimplementedCoingeckoServer) GetATHByID(context.Context, *GetATHByIDRequ
 }
 func (*UnimplementedCoingeckoServer) GetATHBySymbol(context.Context, *GetATHBySymbolRequest) (*GetATHBySymbolResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetATHBySymbol not implemented")
-}
-func (*UnimplementedCoingeckoServer) ListCoinIDs(context.Context, *ListCoinIDsRequest) (*ListCoinIDsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListCoinIDs not implemented")
 }
 func (*UnimplementedCoingeckoServer) mustEmbedUnimplementedCoingeckoServer() {}
 
@@ -186,24 +172,6 @@ func _Coingecko_GetATHBySymbol_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Coingecko_ListCoinIDs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListCoinIDsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CoingeckoServer).ListCoinIDs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/coingecko/ListCoinIDs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoingeckoServer).ListCoinIDs(ctx, req.(*ListCoinIDsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Coingecko_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "coingecko",
 	HandlerType: (*CoingeckoServer)(nil),
@@ -223,10 +191,6 @@ var _Coingecko_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetATHBySymbol",
 			Handler:    _Coingecko_GetATHBySymbol_Handler,
-		},
-		{
-			MethodName: "ListCoinIDs",
-			Handler:    _Coingecko_ListCoinIDs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

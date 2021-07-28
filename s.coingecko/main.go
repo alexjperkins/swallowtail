@@ -20,7 +20,6 @@ func main() {
 
 	if err := client.Init(ctx); err != nil {
 		panic(err)
-
 	}
 
 	// Init Mariana Server

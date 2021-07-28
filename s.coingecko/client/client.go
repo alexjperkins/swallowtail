@@ -10,6 +10,7 @@ import (
 
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+	"github.com/opentracing/opentracing-go"
 	coingecko "github.com/superoo7/go-gecko/v3"
 )
 
@@ -20,7 +21,7 @@ var (
 // OLD
 var (
 	CoingeckoClientID = "coingecko-client-id"
-	coingeckoClient   CoinGeckoClient
+	c                 CoinGeckoClient
 
 	defaultCoinGeckoClientTimeout = time.Second * 30
 
@@ -30,15 +31,13 @@ var (
 	symbolMu            sync.RWMutex
 
 	once sync.Once
-
-	blacklist = map[string]bool{
-		"universe-token": true,
-	}
 )
 
+// CoinGeckoClient ...
 type CoinGeckoClient interface {
 	// Ping checks the connectivity of the client, returns bool if we can reach the coingecko API.
-	Ping(ctx context.Context) bool
+	Ping(ctx context.Context) error
+	// TODO: Remove
 	// GetAllCoinIDs retrieves a list of all the coingecko coins; includes the symbol (ticker) & the coingecko ID for
 	// reverse lookup.
 	GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCoinItem, error)
@@ -52,45 +51,65 @@ type CoinGeckoClient interface {
 	GetATHFromSymbol(ctx context.Context, symbol string) (float64, error)
 	// GetATHFromID retrieves the current ATH value from coingecko for the passed coingecko id.
 	GetATHFromID(ctx context.Context, id string) (float64, error)
+	// RefreshCoins refreshes the internal cache of coin ids from coingecko.
+	RefreshCoins(ctx context.Context)
 }
 
 func Init(ctx context.Context) error {
-	client = &cgClient{}
-	// TODO: ping
-	return nil
-}
+	// Create new cache.
+	ttl := ttlcache.New(30 * time.Second)
 
-// GetAllCoinIDs ...
-func GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCoinItem, error) {
-	return nil, nil
+	// Create new http client.
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	c := &coingeckoClient{
+		c:   coingecko.NewClient(httpClient),
+		ttl: ttl,
+	}
+
+	// Check connection is established.
+	if err := c.Ping(ctx); err != nil {
+		return err
+	}
+
+	// Kick off the refresh loop.
+	go c.RefreshCoins(ctx)
+
+	client = c
+	return nil
 }
 
 // GetCurrentPriceFromSymbol ...
 func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
-	return 0, nil
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko")
+	defer span.Finish()
+	return client.GetCurrentPriceFromSymbol(ctx, symbol, assetPair)
 }
 
 // GetCurrentPriceFromID ...
 func GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
-	return 0, nil
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko")
+	defer span.Finish()
+	return client.GetCurrentPriceFromID(ctx, id, assetPair)
 }
 
 // GetATHFromSymbol ...
 func GetATHFromSymbol(ctx context.Context, symbol string) (float64, error) {
-	return 0, nil
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get ath price from coingecko")
+	defer span.Finish()
+	return client.GetATHFromSymbol(ctx, symbol)
 }
 
 // GetATHFromID
 func GetATHFromID(ctx context.Context, id string) (float64, error) {
-	return 0, nil
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get ath price from coingecko")
+	defer span.Finish()
+	return client.GetATHFromID(ctx, id)
 }
 
 // OLD
-type CoingeckoListCoinItem struct {
-	Name   string
-	Symbol string
-	ID     string
-}
 
 func init() {
 	ctx := context.Background()
@@ -119,27 +138,28 @@ func New(ctx context.Context) CoinGeckoClient {
 			Timeout: defaultCoinGeckoClientTimeout,
 		}
 		ttl := ttlcache.New(defaultPriceTTL)
-		cgc := &coinGeckoClient{
+		cgc := &cgClient{
 			c:   coingecko.NewClient(httpClient),
 			ttl: ttl,
 		}
-		if ok := cgc.Ping(ctx); !ok {
+		if err := cgc.Ping(ctx); err != nil {
+
 			slog.Error(context.TODO(), "Failed to connect coingecko client")
 			panic("Failed to connect coingecko client")
 		} else {
 			slog.Info(context.TODO(), "Created coingecko client")
 		}
-		coingeckoClient = cgc
+		c = cgc
 	})
-	return coingeckoClient
+	return c
 }
 
-type coinGeckoClient struct {
+type cgClient struct {
 	c   *coingecko.Client
 	ttl *ttlcache.TTLCache
 }
 
-func (cgc *coinGeckoClient) GetATHFromID(ctx context.Context, id string) (float64, error) {
+func (cgc *cgClient) GetATHFromID(ctx context.Context, id string) (float64, error) {
 	coinID, err := cgc.c.CoinsID(strings.ToLower(id), true, false, true, false, false, false)
 	if err != nil {
 		return 0.0, err
@@ -148,7 +168,7 @@ func (cgc *coinGeckoClient) GetATHFromID(ctx context.Context, id string) (float6
 	return coinID.MarketData.ATH["usd"], nil
 }
 
-func (cgc *coinGeckoClient) GetATHFromSymbol(ctx context.Context, symbol string) (float64, error) {
+func (cgc *cgClient) GetATHFromSymbol(ctx context.Context, symbol string) (float64, error) {
 	id, err := getIDFromSymbol(symbol)
 	if err != nil {
 		return 0.0, err
@@ -156,7 +176,7 @@ func (cgc *coinGeckoClient) GetATHFromSymbol(ctx context.Context, symbol string)
 	return cgc.GetATHFromID(ctx, id)
 }
 
-func (cgc *coinGeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
+func (cgc *cgClient) GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
 	p, hasExpired := cgc.ttl.Get(id)
 	if p == nil || hasExpired {
 		ssp, err := cgc.c.SimpleSinglePrice(strings.ToLower(id), strings.ToLower(assetPair))
@@ -184,7 +204,7 @@ func (cgc *coinGeckoClient) GetCurrentPriceFromID(ctx context.Context, id, asset
 	return pf, nil
 }
 
-func (cgc *coinGeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
+func (cgc *cgClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
 	id, err := getIDFromSymbol(symbol)
 	if err != nil {
 		return 0.0, err
@@ -192,7 +212,7 @@ func (cgc *coinGeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbo
 	return cgc.GetCurrentPriceFromID(ctx, id, assetPair)
 }
 
-func (cgc *coinGeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCoinItem, error) {
+func (cgc *cgClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCoinItem, error) {
 	l, err := cgc.c.CoinsList()
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retreive coins list", nil)
@@ -208,12 +228,14 @@ func (cgc *coinGeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoList
 	return coins, nil
 }
 
-func (cgc *coinGeckoClient) Ping(ctx context.Context) bool {
+func (cgc *cgClient) RefreshTokens(ctx context.Context) {}
+
+func (cgc *cgClient) Ping(ctx context.Context) error {
 	_, err := cgc.c.Ping()
 	if err != nil {
 		slog.Error(ctx, "Failed to connect to coingecko: %v", err)
 	}
-	return err == nil
+	return err
 }
 
 func getIDFromSymbol(symbol string) (string, error) {

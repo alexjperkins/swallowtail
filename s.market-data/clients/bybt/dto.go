@@ -1,4 +1,4 @@
-package client
+package bybt
 
 type GetExchangeFundingRatesByAssetRequest struct {
 	Asset string `json:"asset"`
