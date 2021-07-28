@@ -5,15 +5,15 @@ import (
 
 	"github.com/monzo/terrors"
 
-	"swallowtail/s.bybt/client"
-	"swallowtail/s.bybt/marshaling"
-	bybtproto "swallowtail/s.bybt/proto"
+	"swallowtail/s.market-data/clients/bybt"
+	"swallowtail/s.market-data/marshaling"
+	marketdataproto "swallowtail/s.market-data/proto"
 )
 
 // GetExchangeFundingRates ...
-func (s *ByBtService) GetExchangeFundingRates(
-	ctx context.Context, in *bybtproto.GetExchangeFundingRatesRequest,
-) (*bybtproto.GetExchangeFundingRatesResponse, error) {
+func (s *MarketDataService) GetExchangeFundingRates(
+	ctx context.Context, in *marketdataproto.GetExchangeFundingRatesRequest,
+) (*marketdataproto.GetExchangeFundingRatesResponse, error) {
 	switch {
 	case in.Asset == "":
 		return nil, terrors.PreconditionFailed("empty-asset", "Cannot get funding rates for null asset", nil)
@@ -23,7 +23,7 @@ func (s *ByBtService) GetExchangeFundingRates(
 		"asset": in.GetAsset(),
 	}
 
-	rsp, err := client.GetExchangeFundingRatesByAsset(ctx, &client.GetExchangeFundingRatesByAssetRequest{
+	rsp, err := bybt.GetExchangeFundingRatesByAsset(ctx, &bybt.GetExchangeFundingRatesByAssetRequest{
 		Asset: in.Asset,
 	})
 	if err != nil {

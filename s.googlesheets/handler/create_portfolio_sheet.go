@@ -5,7 +5,7 @@ import (
 
 	"github.com/monzo/terrors"
 
-	"swallowtail/s.googlesheets/clients"
+	"swallowtail/s.googlesheets/client"
 	"swallowtail/s.googlesheets/dao"
 	"swallowtail/s.googlesheets/marshaling"
 	googlesheetsproto "swallowtail/s.googlesheets/proto"
@@ -28,7 +28,7 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 	}
 
 	// Create our portfolio sheet.
-	url, err := clients.CreateSheet(ctx, templates.PortfolioSheetType)
+	url, err := client.CreateSheet(ctx, templates.PortfolioSheetType)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to create googlesheet", errParams)
 	}
