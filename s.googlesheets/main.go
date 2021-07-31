@@ -6,6 +6,7 @@ import (
 	"swallowtail/s.googlesheets/client"
 	"swallowtail/s.googlesheets/handler"
 	googlesheetsproto "swallowtail/s.googlesheets/proto"
+	"swallowtail/s.googlesheets/sync"
 )
 
 var (
@@ -21,7 +22,13 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	// Init googlesheets client.
 	if err := client.Init(ctx); err != nil {
+		panic(err)
+	}
+
+	// Init syncer.
+	if err := sync.Init(ctx); err != nil {
 		panic(err)
 	}
 

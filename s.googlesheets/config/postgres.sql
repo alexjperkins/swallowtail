@@ -25,5 +25,5 @@ CREATE TABLE IF NOT EXISTS s_googlehseets_sheet (
 
 	active BOOLEAN DEFAULT TRUE,
 
-	PRIMARY KEY(internal_id)
+	PRIMARY KEY(googlesheet_id)
 );

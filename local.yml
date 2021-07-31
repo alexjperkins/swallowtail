@@ -89,3 +89,11 @@ services:
       - .envs/postgres.env
     depends_on:
       - postgres
+
+  swallowtail.coingecko:
+    hostname: swallowtail-s-coingecko
+    image: swallowtail.s.coingecko
+    ports:
+      - "8006:8006"
+    depends_on:
+      - postgres

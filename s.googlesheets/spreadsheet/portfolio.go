@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"swallowtail/s.googlesheets/clients"
+	"swallowtail/s.googlesheets/client"
 	"swallowtail/s.googlesheets/domain"
-	"swallowtail/s.googlesheets/owner"
 
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
@@ -19,39 +18,22 @@ const (
 	defaultPortfolioTradeHistoryRange = "Q8:W100"
 )
 
-func New(id string, sheetIDs []string, client clients.GooglesheetsClient, owner *owner.GooglesheetOwner) *GoogleSheetPortfolio {
-	return &GoogleSheetPortfolio{
-		Owner:    owner,
-		SheetIDs: sheetIDs,
-		id:       id,
-		c:        client,
-	}
-}
+type Portfolio struct{}
 
-type GoogleSheetPortfolio struct {
-	Owner    *owner.GooglesheetOwner
-	SheetIDs []string
-	c        clients.GooglesheetsClient
-	id       string
-}
+func (gsp *Portfolio) Rows(ctx context.Context, sheetID string) ([]*domain.PortfolioRow, error) {
+	r := formatRowsRange(sheetID)
+	rows := []*domain.PortfolioRow{}
 
-func (gsp *GoogleSheetPortfolio) ID() string {
-	return gsp.id
-}
-
-func (gsp *GoogleSheetPortfolio) Rows(ctx context.Context, sheetID string) ([]*domain.PortfolioRow, error) {
-	fs := formatRowsRange(sheetID)
-	vs, err := gsp.c.Values(gsp.ID(), fs)
+	vs, err := client.Values(ctx, sheetID, r)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retreive sheet values", map[string]string{
-			"sheet_id":   gsp.ID(),
-			"owner_name": gsp.Owner.Name,
+			"sheet_id": sheetID,
 		})
 	}
-	rows := []*domain.PortfolioRow{}
 	if vs == nil {
 		return rows, nil
 	}
+
 	for i, v := range vs {
 		if len(v) == 0 {
 			continue
@@ -60,61 +42,47 @@ func (gsp *GoogleSheetPortfolio) Rows(ctx context.Context, sheetID string) ([]*d
 		r, err := gsp.parseRow(ctx, i, v)
 		if err != nil {
 			return nil, terrors.Augment(err, "Failed to parse row", map[string]string{
-				"sheet_id":   gsp.ID(),
-				"owner_name": gsp.Owner.Name,
+				"sheet_id": sheetID,
 			})
 		}
 		rows = append(rows, r)
 	}
-	slog.Info(ctx, "All rows parsed", map[string]string{
-		"sheet_id":    sheetID,
-		"owner_name":  gsp.Owner.Name,
-		"number_rows": strconv.Itoa(len(rows)),
-	})
 	return gsp.validateRows(rows)
 }
 
-func (gsp *GoogleSheetPortfolio) Metadata(ctx context.Context) (*domain.PortfolioMetadata, error) {
-	sheetID := gsp.SheetIDs[0]
+func (gsp *Portfolio) Metadata(ctx context.Context, sheetID string) (*domain.PortfolioMetadata, error) {
 	r := formatMetadataRange(sheetID)
-	slog.Info(ctx, "Fetching metadata.", map[string]string{
-		"owner_name": gsp.Owner.Name,
-		"row_range":  r,
-	})
-	vs, err := gsp.c.Values(gsp.ID(), r)
+
+	vs, err := client.Values(ctx, sheetID, r)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retrieve sheet pnl metadata", map[string]string{
-			"sheet_id":   gsp.ID(),
-			"owner_name": gsp.Owner.Name,
-			"range":      r,
+			"sheet_id": sheetID,
+			"range":    r,
 		})
 	}
 	if vs == nil {
 		return &domain.PortfolioMetadata{}, nil
 	}
+
 	return gsp.parseMetadata(ctx, vs)
 }
 
-func (gsp *GoogleSheetPortfolio) TradeHistory(ctx context.Context) ([]*domain.HistoricalTradeRow, error) {
-	sheetID := gsp.SheetIDs[0]
+func (gsp *Portfolio) TradeHistory(ctx context.Context, sheetID string) ([]*domain.HistoricalTradeRow, error) {
 	r := formatTradeHistoryRange(sheetID)
-	vs, err := gsp.c.Values(gsp.ID(), r)
+	rows := []*domain.HistoricalTradeRow{}
 
-	slog.Info(ctx, "Fetching trade history.", map[string]string{
-		"owner_name": gsp.Owner.Name,
-		"row_range":  r,
-	})
+	vs, err := client.Values(ctx, sheetID, r)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retrieve sheet trade history", map[string]string{
-			"sheet_id":   gsp.ID(),
-			"owner_name": gsp.Owner.Name,
-			"range":      r,
+			"sheet_id": sheetID,
+			"range":    r,
 		})
+
 	}
-	rows := []*domain.HistoricalTradeRow{}
 	if vs == nil {
 		return rows, nil
 	}
+
 	for i, v := range vs {
 		if len(v) == 0 {
 			continue
@@ -122,8 +90,7 @@ func (gsp *GoogleSheetPortfolio) TradeHistory(ctx context.Context) ([]*domain.Hi
 		r, err := gsp.parseTradeHistoryRow(ctx, i, v)
 		if err != nil {
 			return nil, terrors.Augment(err, "Failed to parse historical trade row", map[string]string{
-				"sheet_id":   gsp.ID(),
-				"owner_name": gsp.Owner.Name,
+				"sheet_id": sheetID,
 			})
 		}
 		rows = append(rows, r)
@@ -131,7 +98,7 @@ func (gsp *GoogleSheetPortfolio) TradeHistory(ctx context.Context) ([]*domain.Hi
 	return rows, nil
 }
 
-func (*GoogleSheetPortfolio) parseRow(ctx context.Context, index int, rawRow []interface{}) (*domain.PortfolioRow, error) {
+func (*Portfolio) parseRow(ctx context.Context, index int, rawRow []interface{}) (*domain.PortfolioRow, error) {
 	row := &domain.PortfolioRow{
 		Index: index,
 	}
@@ -188,7 +155,7 @@ func (*GoogleSheetPortfolio) parseRow(ctx context.Context, index int, rawRow []i
 	return row, nil
 }
 
-func (*GoogleSheetPortfolio) parseMetadata(ctx context.Context, rawMetadata [][]interface{}) (*domain.PortfolioMetadata, error) {
+func (*Portfolio) parseMetadata(ctx context.Context, rawMetadata [][]interface{}) (*domain.PortfolioMetadata, error) {
 	metadata := &domain.PortfolioMetadata{}
 	e := reflect.ValueOf(metadata).Elem()
 
@@ -238,7 +205,7 @@ func (*GoogleSheetPortfolio) parseMetadata(ctx context.Context, rawMetadata [][]
 	return metadata, nil
 }
 
-func (GoogleSheetPortfolio) parseTradeHistoryRow(ctx context.Context, index int, values []interface{}) (*domain.HistoricalTradeRow, error) {
+func (Portfolio) parseTradeHistoryRow(ctx context.Context, index int, values []interface{}) (*domain.HistoricalTradeRow, error) {
 	row := &domain.HistoricalTradeRow{
 		Index: index,
 	}
@@ -295,30 +262,28 @@ func (GoogleSheetPortfolio) parseTradeHistoryRow(ctx context.Context, index int,
 	return row, nil
 }
 
-func (gsp *GoogleSheetPortfolio) UpdateRow(ctx context.Context, sheetID string, row *domain.PortfolioRow) error {
-	// TODO move sheetID and rangeRow to the spreadsheet itself.
+func (gsp *Portfolio) UpdateRow(ctx context.Context, sheetID string, row *domain.PortfolioRow) error {
 	rows := []*domain.PortfolioRow{row}
 	return gsp.UpdateRows(ctx, sheetID, rows)
 }
 
-func (gsp *GoogleSheetPortfolio) UpdateRows(ctx context.Context, sheetID string, rows []*domain.PortfolioRow) error {
+func (gsp *Portfolio) UpdateRows(ctx context.Context, sheetID string, rows []*domain.PortfolioRow) error {
 	r := formatRowsRange(sheetID)
-	slog.Info(ctx, "Updating googlesheets range for portfolio rows: %s", r)
 
 	values := [][]interface{}{}
 	for _, row := range rows {
 		values = append(values, row.ToArray())
 	}
-	err := gsp.c.UpdateRows(ctx, gsp.ID(), r, values)
-	if err != nil {
+
+	if err := client.UpdateRows(ctx, sheetID, r, values); err != nil {
 		return terrors.Augment(err, "Failed to update portfolio rows", nil)
 	}
 	return nil
 }
 
-func (gsp *GoogleSheetPortfolio) UpdateMetadata(ctx context.Context, sheetID string, metadata *domain.PortfolioMetadata) error {
+func (gsp *Portfolio) UpdateMetadata(ctx context.Context, sheetID string, metadata *domain.PortfolioMetadata) error {
 	r := formatMetadataRange(sheetID)
-	slog.Info(ctx, "Updating googlesheets range for metadata: %s", r)
+
 	values := [][]interface{}{
 		{
 			metadata.TotalPNL,
@@ -327,25 +292,29 @@ func (gsp *GoogleSheetPortfolio) UpdateMetadata(ctx context.Context, sheetID str
 			metadata.TotalWorth,
 		},
 	}
-	err := gsp.c.UpdateRows(ctx, gsp.ID(), r, values)
-	if err != nil {
+
+	if err := client.UpdateRows(ctx, sheetID, r, values); err != nil {
 		return terrors.Augment(err, "Failed to update metadata", nil)
 	}
 	return nil
 }
 
-func (gsp *GoogleSheetPortfolio) UpdateTradeHistory(ctx context.Context, sheetID string, rows []*domain.HistoricalTradeRow) error {
+func (gsp *Portfolio) UpdateTradeHistory(ctx context.Context, sheetID string, rows []*domain.HistoricalTradeRow) error {
 	r := formatTradeHistoryRange(sheetID)
-	slog.Info(ctx, "Updating googlesheets range for trade history: %s", r)
 
 	values := [][]interface{}{}
 	for _, row := range rows {
 		values = append(values, row.ToArray())
 	}
+
+	if err := client.UpdateRows(ctx, sheetID, r, values); err != nil {
+		return terrors.Augment(err, "Failed to update trade history", nil)
+	}
+
 	return nil
 }
 
-func (gsp *GoogleSheetPortfolio) validateRows(rows []*domain.PortfolioRow) ([]*domain.PortfolioRow, error) {
+func (gsp *Portfolio) validateRows(rows []*domain.PortfolioRow) ([]*domain.PortfolioRow, error) {
 	return rows, nil
 }
 

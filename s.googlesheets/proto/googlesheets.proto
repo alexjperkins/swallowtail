@@ -8,6 +8,11 @@ service googlesheets {
     rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {}
 }
 
+enum SheetType {
+    PLAIN = 0;
+    PORTFOLIO = 1;
+}
+
 message CreatePortfolioSheetRequest {
     string user_id = 1;
     string email = 2;
