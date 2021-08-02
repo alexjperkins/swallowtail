@@ -4,6 +4,7 @@ import (
 	"context"
 	"swallowtail/libraries/mariana"
 	"swallowtail/s.googlesheets/client"
+	"swallowtail/s.googlesheets/dao"
 	"swallowtail/s.googlesheets/handler"
 	googlesheetsproto "swallowtail/s.googlesheets/proto"
 )
@@ -21,9 +22,17 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	if err := client.Init(ctx); err != nil {
-		panic(err)
+	if err := dao.Init(ctx, svcName); err != nil {
 	}
+
+	// Init googlesheets client.
+	if err := client.Init(ctx); err != nil {
+	}
+
+	// Init syncer.
+	//if err := sync.Init(ctx); err != nil {
+	//	panic(err)
+	//}
 
 	// Init Mariana Server
 	srv := mariana.Init(svcName)

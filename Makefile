@@ -20,6 +20,9 @@ satoshi:
 googlesheets:
 	docker-compose -f local.yml up --build  swallowtail.s.googlesheets
 
+coingecko:
+	docker-compose -f local.yml up --build  swallowtail.s.coingecko
+
 discord:
 	cd s.discord &&  sudo -E make docker &&  cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.discord

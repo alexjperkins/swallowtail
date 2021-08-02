@@ -10,16 +10,8 @@ var (
 	intDatatype     = "int"
 )
 
-type GoogleSpreadsheet struct {
-	// The ID of the spreadsheet itself
-	ID string
-	// The list of self contained sheet IDs
-	SheetIDs []GoogleSheet
-}
-
-type GoogleSheet interface {
-	ID() string
-	CreateNew(sheetName string) error
+type GoogleSpreadsheet interface {
+	CreateNew(sheetName string) (string, error)
 	Rows(context.Context, string, string) []interface{}
 	ParseRow(context.Context, []interface{})
 	UpdateRow(context.Context, interface{})

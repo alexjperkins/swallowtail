@@ -1,4 +1,4 @@
-# Service: s.googlesheets
+# service: s.googlesheets
 
 This service handles all functionality with regards to googlesheets.
 Currently is only provides syncing functionality to a googlesheet for a portfolio.

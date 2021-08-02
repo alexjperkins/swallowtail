@@ -35,7 +35,7 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 
 	// Lets persist the googlesheets now that we've created one. This will allow us to sync later.
 	sheet := marshaling.CreatePortfolioProtoToDomain(in)
-	if err := dao.CreateGooglesheet(ctx, sheet); err != nil {
+	if err := dao.RegisterGooglesheet(ctx, sheet); err != nil {
 		return nil, terrors.Augment(err, "Failed to create googlesheet", errParams)
 	}
 

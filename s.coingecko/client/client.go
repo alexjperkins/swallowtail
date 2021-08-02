@@ -65,8 +65,9 @@ func Init(ctx context.Context) error {
 	}
 
 	c := &coingeckoClient{
-		c:   coingecko.NewClient(httpClient),
-		ttl: ttl,
+		c:     coingecko.NewClient(httpClient),
+		ttl:   ttl,
+		coins: map[string]string{},
 	}
 
 	// Check connection is established.
@@ -83,8 +84,7 @@ func Init(ctx context.Context) error {
 
 // GetCurrentPriceFromSymbol ...
 func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko")
-	defer span.Finish()
+	slog.Info(ctx, "HERE ext")
 	return client.GetCurrentPriceFromSymbol(ctx, symbol, assetPair)
 }
 
@@ -228,7 +228,7 @@ func (cgc *cgClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCoinIte
 	return coins, nil
 }
 
-func (cgc *cgClient) RefreshTokens(ctx context.Context) {}
+func (cgc *cgClient) RefreshCoins(ctx context.Context) {}
 
 func (cgc *cgClient) Ping(ctx context.Context) error {
 	_, err := cgc.c.Ping()

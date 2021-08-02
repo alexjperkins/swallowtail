@@ -3,178 +3,219 @@ package sync
 import (
 	"context"
 	"fmt"
-	"math"
 	"math/rand"
-	"sort"
-	"strconv"
-	"strings"
-	"swallowtail/s.googlesheets/domain"
-	"swallowtail/s.googlesheets/spreadsheet"
 	"sync"
 	"time"
 
+	"google.golang.org/grpc"
+
+	"github.com/hashicorp/go-multierror"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	accountproto "swallowtail/s.account/proto"
+	"swallowtail/s.googlesheets/dao"
+	"swallowtail/s.googlesheets/domain"
+	"swallowtail/s.googlesheets/spreadsheet"
+	"swallowtail/s.googlesheets/templates"
 )
 
 var (
 	defaultMaxJitterRange = 30.0
 	defaultJitterUnit     = time.Second
-
-	pagerMultipleAmountDelta = 0.02
-	defaultPagerGif          = "https://tenor.com/view/cynical-pepe-cynical-p-pepe-the-frog-frog-cynical-gif-14037546"
-
-	validAssetPairs = map[string]bool{
-		"USDT": true,
-		"USD":  true,
-		"BTC":  true,
-		"ETH":  true,
-		"GBP":  true,
-	}
-	validAssetPairMtx sync.RWMutex
 )
 
-type ExchangeClient interface {
-	GetPrice(ctx context.Context, symbol, assetPair string) (float64, error)
-	Ping(ctx context.Context) bool
+func init() {
+	register("portfolio-syncer", &PortfolioSyncer{
+		Spreadsheet: &spreadsheet.Portfolio{},
+	})
 }
 
-func NewGoogleSheetsPorfolioSyncer(
-	googleSpreadsheet *spreadsheet.GoogleSheetPortfolio,
-	exchangeClient ExchangeClient,
-	interval time.Duration,
-	done chan struct{},
-	withJitter bool,
-) *GoogleSheetsPortfolioSyncer {
-	return &GoogleSheetsPortfolioSyncer{
-		Spreadsheet:           googleSpreadsheet,
-		ec:                    exchangeClient,
-		interval:              interval,
-		done:                  done,
-		withJitter:            withJitter,
-		increaseAmountsPagers: []float64{2.0, 5.0, 10.0},
-	}
-}
-
-// GoogleSheetsPortfolioSyncer
-type GoogleSheetsPortfolioSyncer struct {
-	Spreadsheet *spreadsheet.GoogleSheetPortfolio
-	ec          ExchangeClient
-	interval    time.Duration
-	done        chan struct{}
-	withJitter  bool
+// GoogleSheetsPortfolioSyncer ...
+type PortfolioSyncer struct {
+	// internal spreadsheet specifically for the portfolio syncer.
+	Spreadsheet *spreadsheet.Portfolio
 	// The entry price increase for which warrants a pager.
-	increaseAmountsPagers []float64
+	IncreaseAmountsPagers []float64
+	Sheets                []*domain.Googlesheet
+	sheetsMu              sync.RWMutex
 }
 
-func (p *GoogleSheetsPortfolioSyncer) Start(ctx context.Context) {
-	for i, sheetID := range p.Spreadsheet.SheetIDs {
-		slog.Info(ctx, "Starting portfolio sync: [%v] %s %s", i, p.Spreadsheet.Owner.Name, sheetID)
-		go p.sync(ctx, sheetID)
+// Sync ...
+func (p *PortfolioSyncer) Sync(ctx context.Context) error {
+	sheets, err := dao.ListSheetsByType(ctx, templates.PortfolioSheetType)
+	if err != nil {
+		return terrors.Augment(err, "Failed to read sheets by type", map[string]string{
+			"sheet_type": templates.PortfolioSheetType.String(),
+		})
 	}
+	for _, sheet := range sheets {
+		sheet := sheet
+		go p.sync(ctx, sheet.UserID, sheet.SheetID)
+	}
+	return nil
 }
 
-func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) {
-	// Basic cache that stores TTL to stop owners being pinged too often.
-	t := time.NewTicker(p.interval)
-	defer slog.Info(ctx, "Closing down google sheets price syncer", nil)
+// Refresh ...
+func (p *PortfolioSyncer) Refresh(ctx context.Context) error {
+	// Initial load from our persistence storage.
+	var err error
+	for i := 0; i < 5; i++ {
+		e := p.refresh(ctx)
+		if e == nil {
+			break
+		}
+		multierror.Append(err, e)
+		time.Sleep(30 * time.Second)
+	}
 
-	// Add jitter
+	// We've tried 5 times on start & we cannot load from dao; let's fail.
+	if err != nil {
+		return terrors.Augment(err, "Failed to perform inital loading of sheets data; with 5 retries", nil)
+	}
+
+	go func() {
+		// Ideally this should be a consumer of async events; but we don't yet have that infra structure in place.
+		t := time.NewTicker(1 * time.Minute)
+		for {
+			select {
+			case <-t.C:
+				// Best effort
+				p.refresh(ctx)
+			case <-ctx.Done():
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (p *PortfolioSyncer) refresh(ctx context.Context) error {
+	ss, err := dao.ListSheetsByType(ctx, templates.PortfolioSheetType)
+	if err != nil {
+		return terrors.Augment(err, "Failed to refresh portfolio syncer internal list of sheets", nil)
+	}
+	if len(ss) == len(p.Sheets) {
+		// Since we can't mutate, if the lenght of the lists are the same, then we know we don't have
+		// any changes & we don't have to take a lock.
+		return nil
+	}
+
+	p.sheetsMu.Lock()
+	defer p.sheetsMu.Unlock()
+	p.Sheets = ss
+	return nil
+}
+
+func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
+	// Add jitter; this prevents us trying to sync everything at once.
+	// our exchange client is cached; so we don't need to really worry about rate limiting.
 	rand.Seed(time.Now().UnixNano())
-	if p.withJitter {
-		sleepFor := time.Duration(rand.Float64()*defaultMaxJitterRange) * defaultJitterUnit
-		slog.Info(ctx, "Adding jitter; sleeping for %v", sleepFor)
-		time.Sleep(sleepFor)
-	}
+	sleepFor := time.Duration(rand.Float64()*defaultMaxJitterRange) * defaultJitterUnit
+	time.Sleep(sleepFor)
 
+	t := time.NewTicker(1 * time.Minute)
 	for {
 		select {
 		case <-t.C:
-			wg := sync.WaitGroup{}
+			// s.account client
+			ac, aCloser, err := accountClient(ctx)
+			if err != nil {
+				slog.Error(ctx, "Failed to connect to s.account: %v", err)
+				continue
+			}
+			defer aCloser()
+
+			// Fetch rows
 			rows, err := p.Spreadsheet.Rows(ctx, sheetID)
 			if err != nil {
-				slog.Error(ctx, "Failed to retrieve values", map[string]string{
-					"spreadsheet_id": p.Spreadsheet.ID(),
-					"error":          err.Error(),
-				})
-				invalidRowsMsg := fmt.Sprintf("Failed to parse rows, please check: %v", err.Error())
-				err := p.Spreadsheet.Owner.Page(ctx, formatPagerMsg(p.Spreadsheet.Owner.Name, "", invalidRowsMsg, 0))
-				if err != nil {
-					slog.Info(ctx, "Failed to page user", map[string]string{
-						"user_id":       p.Spreadsheet.Owner.Name,
-						"error_message": err.Error(),
-					})
+				if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
+					Content:  fmt.Sprintf("Failed to parse rows, please check: %v", err.Error()),
+					UserId:   userID,
+					Priority: accountproto.PagerPriority_LOW,
+				})); err != nil {
+					slog.Error(ctx, "Failed to page account: %v", err)
 				}
 				continue
 			}
+
+			// Fetch latest prices from our exchange.
+			wg := sync.WaitGroup{}
 			for i, row := range rows {
 				i, row := i, row
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
 
-					validAssetPair, ok := isValidAssetPairOrConvert(row.AssetPair)
+					assetPair, ok := isValidAssetPairOrConvert(row.AssetPair)
 					if !ok {
-						invalidAssetMsg := fmt.Sprintf("Invalid asset pair: %s", row.AssetPair)
-						err := p.Spreadsheet.Owner.Page(ctx, formatPagerMsg(p.Spreadsheet.Owner.Name, row.Ticker, invalidAssetMsg, row.Index))
-						if err != nil {
-							slog.Info(ctx, "Failed to page user", map[string]string{
-								"user_id":       p.Spreadsheet.Owner.Name,
-								"error_message": err.Error(),
-							})
+						// Page user; we don't have a valid asset pair.
+						if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
+							UserId:   userID,
+							Content:  fmt.Sprintf("invalid asset pair: %s", row.AssetPair),
+							Priority: accountproto.PagerPriority_LOW,
+						})); err != nil {
+							slog.Error(ctx, "Failed to page account: %v", err)
 						}
 						return
 					}
 
-					row.CurrentPrice, err = p.ec.GetPrice(ctx, row.Ticker, validAssetPair)
+					// Fetch latest price.
+					rsp, err := getLatestPriceBySymbol(ctx, row.Ticker, assetPair)
+					if err != nil {
+						slog.Error(ctx, "Failed to get latest price by symbol: %v", err)
+					}
+
+					latestPrice := rsp.LatestPrice
+
 					switch {
 					case
-						terrors.Is(err, terrors.ErrInternalService),
 						terrors.Is(err, terrors.ErrRateLimited),
 						terrors.Is(err, terrors.ErrTimeout):
-						slog.Warn(ctx, "Failed to get price for: %s with error: %v", row.Ticker, err.Error())
+						// This is fine; we can retry on the next attempt.
 						return
-					case err != nil:
-						slog.Warn(ctx, "Failed to get current price", map[string]string{
-							"ticker": row.Ticker,
-						})
-						err := p.Spreadsheet.Owner.Page(ctx, formatPagerMsg(p.Spreadsheet.Owner.Name, row.Ticker, "", row.Index))
-						if err != nil {
-							slog.Info(ctx, "Failed to page user", map[string]string{
-								"user_id":       p.Spreadsheet.Owner.Name,
-								"error_message": err.Error(),
-							})
-						}
 
+					case err != nil:
+						// We failed lets page the user.
+						if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
+							UserId:  userID,
+							Content: fmt.Sprintf("failed to retrieve price for asset with ticker: %s, please check that it is correct.", row.Ticker),
+						})); err != nil {
+							slog.Warn(ctx, "Failed to page account: %v", err)
+						}
+						return
 					}
-					slog.Info(ctx, fmt.Sprintf("Current Price [%s]: %v", row.Ticker, row.CurrentPrice))
-					// Update all row values now that price has been updated.
+
+					row.CurrentPrice = float64(latestPrice)
+
+					// Refresh our row with our latest current price & reset our list.
 					row.Refresh()
 					rows[i] = row
 				}()
 			}
 			wg.Wait()
 
+			// Upate all rows with our latest price.
 			err = p.Spreadsheet.UpdateRows(ctx, sheetID, rows)
 			if err != nil {
 				slog.Info(ctx, "Failed to upload googlesheet row", map[string]string{
-					"owner":          p.Spreadsheet.Owner.Name,
-					"spreadsheet_id": p.Spreadsheet.ID(),
-					"sheet_id":       sheetID,
+					"user_id":  userID,
+					"sheet_id": sheetID,
 				})
 				continue
 			}
 
+			// Calculate & update historical PNL
 			var historicalPNL float64
-			h, err := p.Spreadsheet.TradeHistory(ctx)
-			if err != nil {
+			h, err := p.Spreadsheet.TradeHistory(ctx, sheetID)
+			switch {
+			case err != nil:
 				slog.Info(ctx, "Failed to read historical data", map[string]string{
-					"owner":          p.Spreadsheet.Owner.Name,
-					"spreadsheet_id": p.Spreadsheet.ID(),
-					"sheet_id":       sheetID,
-					"error_msg":      err.Error(),
+					"user_id":   userID,
+					"sheet_id":  sheetID,
+					"error_msg": err.Error(),
 				})
-			} else {
+			default:
 				historicalPNL = calculateHistoricalPNL(h)
 				if err := p.Spreadsheet.UpdateTradeHistory(ctx, sheetID, h); err != nil {
 					// Best effort
@@ -182,19 +223,23 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 				}
 			}
 
-			m, err := p.Spreadsheet.Metadata(ctx)
+			// Update metadata
+			m, err := p.Spreadsheet.Metadata(ctx, sheetID)
 			if err != nil {
-				slog.Info(ctx, "Failed to read googlesheet metadata", map[string]string{
-					"owner":          p.Spreadsheet.Owner.Name,
-					"spreadsheet_id": p.Spreadsheet.ID(),
-					"sheet_id":       sheetID,
-				})
-				p.Spreadsheet.Owner.Page(ctx, ":wave: Yo champ! I couldn't parse your metadata in your portfolio tracker; please can you check, thanks.")
+				if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
+					Content: "Apologies, I wasn't able to parse the metadata in your portfolio tracker; please check it's correct",
+					UserId:  userID,
+				})); err != nil {
+					slog.Error(ctx, "Failed to parse account: %v", err)
+				}
+				// We can't go any further; lets skip.
 				continue
 			}
 
+			// Calculate our total worth
 			m.TotalPNL = calculateTotalPNL(rows) + historicalPNL
-			m.TotalWorth, err = calculateTotalWorth(ctx, rows, m.AssetPair, p.ec)
+
+			m.TotalWorth, err = calculateTotalWorth(ctx, rows, m.AssetPair)
 			if err != nil {
 				slog.Error(ctx, "Failed to update googlesheet metadata", map[string]string{
 					"error_msg": err.Error(),
@@ -204,130 +249,26 @@ func (p *GoogleSheetsPortfolioSyncer) sync(ctx context.Context, sheetID string) 
 			err = p.Spreadsheet.UpdateMetadata(ctx, sheetID, m)
 			if err != nil {
 				slog.Info(ctx, "Failed to update googlesheet metadata", map[string]string{
-					"owner":          p.Spreadsheet.Owner.Name,
-					"spreadsheet_id": p.Spreadsheet.ID(),
-					"sheet_id":       sheetID,
+					"user_id":  userID,
+					"sheet_id": sheetID,
 				})
 				continue
 			}
 			slog.Info(ctx, "Updated googlesheet metadata", map[string]string{
-				"owner":          p.Spreadsheet.Owner.Name,
-				"spreadsheet_id": p.Spreadsheet.ID(),
-				"sheet_id":       sheetID,
+				"user_id":  userID,
+				"sheet_id": sheetID,
 			})
-
-			// Best effort
-			// pagerOnIncrease(ctx, p.Spreadsheet.Owner.Page, p.Spreadsheet.Owner.Name, rows, p.increaseAmountsPagers, pagerMultipleAmountDelta)
 
 		case <-ctx.Done():
 			return
-		case <-p.done:
-			return
 		}
 	}
 }
 
-func formatPagerMsg(name, ticker, errorMsg string, rowIndex int) string {
-	return fmt.Sprintf(
-		":wave: Hello there, %s\n```Failed to get price for row: `%v` with ticker `%s`\nError: %v\n```Please check it is correct.\n",
-		name, strconv.Itoa(rowIndex), ticker, errorMsg,
-	)
-}
-
-func calculateTotalPNL(rows []*domain.PortfolioRow) float64 {
-	var total float64
-	for _, row := range rows {
-		if row == nil {
-			continue
-		}
-		total += row.PNL
+func accountClient(ctx context.Context) (client accountproto.AccountClient, closer func() error, err error) {
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		return nil, nil, err
 	}
-	return total
-}
-
-func calculateTotalWorth(ctx context.Context, rows []*domain.PortfolioRow, assetPair string, exchangeClient ExchangeClient) (float64, error) {
-	var total float64
-
-	validAssetPair, ok := isValidAssetPairOrConvert(assetPair)
-	if !ok {
-		return 0.0, terrors.BadRequest("invalid-asset-pair", "Failed to convert asset pair; invalid", map[string]string{
-			"asset_pair": "assetPair",
-		})
-	}
-
-	for _, row := range rows {
-		validRowAssetPair, ok := isValidAssetPairOrConvert(row.AssetPair)
-		if !ok {
-			return 0.0, terrors.BadRequest("invalid-asset-pair", "Failed to convert asset pair; invalid", map[string]string{
-				"asset_pair": "assetPair",
-			})
-		}
-
-		if validRowAssetPair == validAssetPair {
-			total += row.CurrentValue
-			continue
-		}
-
-		slog.Trace(ctx, "Fetching conversion coeff. for %s [%s -> %s]", row.Ticker, row.AssetPair, assetPair)
-		coefficient, err := exchangeClient.GetPrice(ctx, validRowAssetPair, validAssetPair)
-		if err != nil {
-			return 0.0, terrors.Augment(err, "Failed to calculate total net worth", map[string]string{
-				"ticker":            row.Ticker,
-				"ticker_asset_pair": row.AssetPair,
-				"net_asset_pair":    assetPair,
-			})
-		}
-		total += row.CurrentValue * coefficient
-	}
-	return total, nil
-}
-
-func pagerOnIncrease(ctx context.Context, pager func(ctx context.Context, msg string) error, ownerName string, rows []*domain.PortfolioRow, multipleIncreases []float64, delta float64) {
-	sort.Float64s(multipleIncreases)
-	for _, row := range rows {
-		for _, increaseAmount := range multipleIncreases {
-			if within(row.AverageEntry, delta) {
-				msg := fmt.Sprintf(":wave: Hi %s, %s entry [%v] is close to a multiple target [%v].\nPlease consider taking out your initial investmentl.", ownerName, row.Ticker, row.AverageEntry, increaseAmount)
-				if err := pager(ctx, msg); err != nil {
-					slog.Error(ctx, "Failed to page %v on increase", ownerName)
-				}
-			}
-		}
-	}
-}
-
-// calculateHistoricalPNL iterates through all rows, refreshes them to recalculate the PNL
-// and returns the total.
-func calculateHistoricalPNL(rows []*domain.HistoricalTradeRow) float64 {
-	var total float64
-	for _, row := range rows {
-		row.Refresh()
-		total += row.PNL
-	}
-	return total
-}
-
-func isValidAssetPairOrConvert(assetPair string) (string, bool) {
-	validAssetPairMtx.RLock()
-	defer validAssetPairMtx.RUnlock()
-	_, ok := validAssetPairs[assetPair]
-	if !ok {
-		return "", false
-	}
-	if strings.ToLower(assetPair) == "usdt" {
-		return "usd", true
-	}
-	return assetPair, true
-}
-
-func within(value, delta float64) bool {
-	deltaValue := math.Abs(value - (value * delta))
-	l, r := value-deltaValue, value+deltaValue
-	if value < l {
-		return false
-	}
-	if value > r {
-		return false
-	}
-	return true
+	return accountproto.NewAccountClient(conn), conn.Close, nil
 }

@@ -43,6 +43,7 @@ func (c *coingeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCo
 }
 
 func (c *coingeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
+	slog.Info(ctx, "HERE int 1.")
 	id, err := c.getIDFromSymbol(symbol)
 	if err != nil {
 		return 0, err
@@ -78,6 +79,8 @@ func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPa
 			"id": id,
 		})
 	}
+
+	slog.Info(ctx, "HERE int.")
 
 	// It hasn't expired; lets return the price.
 	return price, nil
@@ -115,8 +118,6 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 	for {
 		select {
 		case <-t.C:
-			c.coinsMu.Lock()
-			defer c.coinsMu.Unlock()
 
 			var (
 				coins    []*CoingeckoListCoinItem
@@ -140,6 +141,7 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 				slog.Error(ctx, "Failed after 5 retries to retrieve coingecko coin ids: errors %v ", multiErr)
 			}
 
+			c.coinsMu.Lock()
 			for _, coin := range coins {
 				if _, ok := blacklist[strings.ToLower(coin.ID)]; ok {
 					slog.Info(ctx, "Skipping blacklisted coin: %s", coin.ID)
@@ -147,12 +149,14 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 				}
 				c.coins[coin.Symbol] = coin.ID
 			}
+			c.coinsMu.Unlock()
 
 			if len(c.coins) == 0 {
 				// We've retried 5 times; and the internal coins list is still empty, this means on start up we failed
 				// to retrieve our list of coin id's. This service doesn't work without them. We should panic.
 				panic("Failed to retreive set of coin id's from coingecko")
 			}
+
 		case <-ctx.Done():
 			slog.Info(ctx, "Coingecko refresh token context cancelled: %v", ctx.Err())
 			return

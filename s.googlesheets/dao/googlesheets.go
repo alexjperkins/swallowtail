@@ -9,8 +9,8 @@ import (
 	"github.com/monzo/terrors"
 )
 
-// Create creates a googlesheet.
-func CreateGooglesheet(ctx context.Context, gs *domain.Googlesheet) error {
+// Register registers a googlesheet to a given user.
+func RegisterGooglesheet(ctx context.Context, gs *domain.Googlesheet) error {
 	var (
 		sql = `
 		INSERT INTO s_googlesheets_sheet
