@@ -2,12 +2,31 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/monzo/slog"
 	"google.golang.org/grpc"
 
 	coingeckoproto "swallowtail/s.coingecko/proto"
 )
+
+func main() {
+	rsp, err := GetAssetLatestPriceByIDRequest{
+		AssetID:   "btc",
+		AssetPair: "usdt",
+	}.SendWithTimeout(context.Background(), 30*time.Second).Response()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(rsp.LatestPrice)
+}
+
+type GetAssetLatestPriceByIDRequest struct {
+	AssetID   string
+	AssetPair string
+}
 
 type GetAssetLatestPriceByIDFuture struct {
 	closer  func() error
@@ -17,8 +36,11 @@ type GetAssetLatestPriceByIDFuture struct {
 }
 
 func (a *GetAssetLatestPriceByIDFuture) Response() (*coingeckoproto.GetAssetLatestPriceByIDResponse, error) {
-	// What if this errors?
-	defer a.closer()
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "get_latest_asset_price_by_id", err)
+		}
+	}()
 
 	select {
 	case r := <-a.resultc:
@@ -30,11 +52,11 @@ func (a *GetAssetLatestPriceByIDFuture) Response() (*coingeckoproto.GetAssetLate
 	}
 }
 
-func Send(ctx context.Context, in *coingeckoproto.GetAssetLatestPriceByIDRequest) *GetAssetLatestPriceByIDFuture {
-	return SendWithTimeout(ctx, in, 10*time.Second)
+func (r GetAssetLatestPriceByIDRequest) Send(ctx context.Context) *GetAssetLatestPriceByIDFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func SendWithTimeout(ctx context.Context, in *coingeckoproto.GetAssetLatestPriceByIDRequest, timeout time.Duration) *GetAssetLatestPriceByIDFuture {
+func (r GetAssetLatestPriceByIDRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *GetAssetLatestPriceByIDFuture {
 	errc := make(chan error, 1)
 	resultc := make(chan *coingeckoproto.GetAssetLatestPriceByIDResponse, 1)
 
@@ -56,7 +78,10 @@ func SendWithTimeout(ctx context.Context, in *coingeckoproto.GetAssetLatestPrice
 			cancel()
 		}()
 
-		rsp, err := c.GetAssetLatestPriceByID(ctx, in)
+		rsp, err := c.GetAssetLatestPriceByID(ctx, &coingeckoproto.GetAssetLatestPriceByIDRequest{
+			CoingeckoCoinId: r.AssetID,
+			AssetPair:       r.AssetPair,
+		})
 		if err != nil {
 			errc <- err
 			return

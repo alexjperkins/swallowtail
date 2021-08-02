@@ -5,6 +5,7 @@ import (
 	"swallowtail/s.coingecko/client"
 	coingeckoproto "swallowtail/s.coingecko/proto"
 
+	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 )
 
@@ -23,6 +24,8 @@ func (s *CoingeckoService) GetAssetLatestPriceBySymbol(
 		"asset_pair":   in.AssetPair,
 		"asset_symbol": in.AssetSymbol,
 	}
+
+	slog.Info(ctx, "HERE")
 
 	allTimeHighPrice, err := client.GetCurrentPriceFromSymbol(ctx, in.GetAssetSymbol(), in.GetAssetPair())
 	if err != nil {

@@ -6,6 +6,8 @@ service googlesheets {
     rpc CreatePortfolioSheet (CreatePortfolioSheetRequest) returns (CreatePortfolioSheetResponse) {}
 
     rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {}
+
+    rpc TmpGetLatestPriceBySymbol (TmpGetLatestPriceBySymbolRequest) returns (TmpGetLatestPriceBySymbolResponse) {}
 }
 
 enum SheetType {
@@ -32,3 +34,12 @@ message RegisterNewPortfolioSheetRequest {
 }
 
 message RegisterNewPortfolioSheetResponse {}
+
+message TmpGetLatestPriceBySymbolRequest {
+    string asset_symbol = 1;
+    string asset_pair = 2;
+}
+
+message TmpGetLatestPriceBySymbolResponse {
+    float latest_price = 1;
+}

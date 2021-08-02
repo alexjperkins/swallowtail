@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	coingeckoproto "swallowtail/s.coingecko/proto"
 	"swallowtail/s.googlesheets/domain"
 
 	"github.com/monzo/terrors"
@@ -29,7 +28,7 @@ func calculateTotalPNL(rows []*domain.PortfolioRow) float64 {
 	return total
 }
 
-func calculateTotalWorth(ctx context.Context, rows []*domain.PortfolioRow, assetPair string, cc coingeckoproto.CoingeckoClient) (float64, error) {
+func calculateTotalWorth(ctx context.Context, rows []*domain.PortfolioRow, assetPair string) (float64, error) {
 	var total float64
 
 	validAssetPair, ok := isValidAssetPairOrConvert(assetPair)
@@ -52,10 +51,7 @@ func calculateTotalWorth(ctx context.Context, rows []*domain.PortfolioRow, asset
 			continue
 		}
 
-		rsp, err := cc.GetAssetLatestPriceBySymbol(ctx, &coingeckoproto.GetAssetLatestPriceBySymbolRequest{
-			AssetSymbol: validRowAssetPair,
-			AssetPair:   validAssetPair,
-		})
+		rsp, err := getLatestPriceBySymbol(ctx, validRowAssetPair, validAssetPair)
 		if err != nil {
 			return 0, terrors.Augment(err, "Failed to calculate total worth; error fetching conversion rates", map[string]string{
 				"base":    validRowAssetPair,

@@ -14,7 +14,6 @@ import (
 	"github.com/monzo/terrors"
 
 	accountproto "swallowtail/s.account/proto"
-	coingeckoproto "swallowtail/s.coingecko/proto"
 	"swallowtail/s.googlesheets/dao"
 	"swallowtail/s.googlesheets/domain"
 	"swallowtail/s.googlesheets/spreadsheet"
@@ -127,14 +126,6 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 			}
 			defer aCloser()
 
-			// s.coingecko client
-			cc, cCloser, err := coingeckoClient(ctx)
-			if err != nil {
-				slog.Error(ctx, "Failed to connect to s.coingecko: %v", err)
-				continue
-			}
-			defer cCloser()
-
 			// Fetch rows
 			rows, err := p.Spreadsheet.Rows(ctx, sheetID)
 			if err != nil {
@@ -170,10 +161,13 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 					}
 
 					// Fetch latest price.
-					rsp, err := cc.GetAssetLatestPriceBySymbol(ctx, &coingeckoproto.GetAssetLatestPriceBySymbolRequest{
-						AssetSymbol: row.Ticker,
-						AssetPair:   assetPair,
-					})
+					rsp, err := getLatestPriceBySymbol(ctx, row.Ticker, assetPair)
+					if err != nil {
+						slog.Error(ctx, "Failed to get latest price by symbol: %v", err)
+					}
+
+					latestPrice := rsp.LatestPrice
+
 					switch {
 					case
 						terrors.Is(err, terrors.ErrRateLimited),
@@ -192,7 +186,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 						return
 					}
 
-					row.CurrentPrice = float64(rsp.LatestPrice)
+					row.CurrentPrice = float64(latestPrice)
 
 					// Refresh our row with our latest current price & reset our list.
 					row.Refresh()
@@ -245,7 +239,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 			// Calculate our total worth
 			m.TotalPNL = calculateTotalPNL(rows) + historicalPNL
 
-			m.TotalWorth, err = calculateTotalWorth(ctx, rows, m.AssetPair, cc)
+			m.TotalWorth, err = calculateTotalWorth(ctx, rows, m.AssetPair)
 			if err != nil {
 				slog.Error(ctx, "Failed to update googlesheet metadata", map[string]string{
 					"error_msg": err.Error(),
@@ -277,12 +271,4 @@ func accountClient(ctx context.Context) (client accountproto.AccountClient, clos
 		return nil, nil, err
 	}
 	return accountproto.NewAccountClient(conn), conn.Close, nil
-}
-
-func coingeckoClient(ctx context.Context) (client coingeckoproto.CoingeckoClient, closer func() error, err error) {
-	conn, err := grpc.DialContext(ctx, "swallowtail-s-coingecko:8000", grpc.WithInsecure())
-	if err != nil {
-		return nil, nil, err
-	}
-	return coingeckoproto.NewCoingeckoClient(conn), conn.Close, nil
 }

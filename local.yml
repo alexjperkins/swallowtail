@@ -79,6 +79,8 @@ services:
     image: swallowtail.s.googlesheets
     ports:
       - "8004:8000"
+    depends_on:
+      - postgres
 
   swallowtail.s.binance:
     hostname: swallowtail-s-binance
@@ -90,10 +92,10 @@ services:
     depends_on:
       - postgres
 
-  swallowtail.coingecko:
+  swallowtail.s.coingecko:
     hostname: swallowtail-s-coingecko
     image: swallowtail.s.coingecko
     ports:
-      - "8006:8006"
+      - "8006:8000"
     depends_on:
       - postgres
