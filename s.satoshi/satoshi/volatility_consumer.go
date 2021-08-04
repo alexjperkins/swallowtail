@@ -29,9 +29,28 @@ const (
 )
 
 var (
-	defaultVolatilitySymbols = []string{}
-	volatilitySetMtx         sync.RWMutex
-	lowVolatilitySet         = map[string]bool{
+	defaultVolatilitySymbols = []string{
+		"BTC",
+		"ETH",
+		"LINK",
+		"SOL",
+		"SRM",
+		"RAY",
+		"COPE",
+		"AAVE",
+		"COMP",
+		"RSR",
+		"BNB",
+		"SAND",
+		"ENJ",
+		"FTT",
+		"LTC",
+		"RUNE",
+		"XRP",
+		"UNI",
+	}
+	volatilitySetMtx sync.RWMutex
+	lowVolatilitySet = map[string]bool{
 		"BTC": true,
 	}
 	highVolatilitySet = map[string]bool{
