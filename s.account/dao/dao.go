@@ -25,6 +25,10 @@ func Init(ctx context.Context, serviceName string) error {
 		})
 	}
 	db = psql
+	if db == nil {
+		panic("nil db")
+	}
+
 	slog.Debug(ctx, "Dao initialized", map[string]string{
 		"service_name": serviceName,
 	})

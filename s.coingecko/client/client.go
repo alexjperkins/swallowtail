@@ -84,7 +84,6 @@ func Init(ctx context.Context) error {
 
 // GetCurrentPriceFromSymbol ...
 func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
-	slog.Info(ctx, "HERE ext")
 	return client.GetCurrentPriceFromSymbol(ctx, symbol, assetPair)
 }
 

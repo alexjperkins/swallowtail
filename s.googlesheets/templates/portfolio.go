@@ -11,7 +11,7 @@ func (p portfolioTemplate) ID() SheetType {
 }
 
 func (p portfolioTemplate) RowRange() string {
-	return "A2:"
+	return "A2:X7"
 }
 
 func (p portfolioTemplate) Values() [][]interface{} {
@@ -19,6 +19,8 @@ func (p portfolioTemplate) Values() [][]interface{} {
 		{"", "", "Total PNL"},
 		{"", "", "Total Worth"},
 		{"", "", "Asset Pair", "USDT", "", "", "", "", "", "", "", "", "", "", "", "", "Historical"},
+		{},
+		{},
 		{"Date Bought", "Size", "Coin", "Asset Pair", "Avg. Entry", "Bought", "Amount", "Current Price", "Current Value", "PNL Value", "PNL %", "Target (Optional)", "Location", "Staked", "Notes", "", "Coin", "Asset Pair", "Bought For", "Sold", "Sold %", "PNL Value", "Notes"},
 	}
 }

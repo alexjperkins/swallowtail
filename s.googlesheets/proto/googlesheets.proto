@@ -20,10 +20,9 @@ enum SheetType {
 message CreatePortfolioSheetRequest {
     string user_id = 1;
     string email = 2;
-    bool shouldShare = 3;
-    bool active = 4;
-    bool should_pager_on_error = 5;
-    bool should_pager_on_target = 6;
+    bool active = 3;
+    bool should_pager_on_error = 4;
+    bool should_pager_on_target = 5;
 }
 
 message CreatePortfolioSheetResponse {

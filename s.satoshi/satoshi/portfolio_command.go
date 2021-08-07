@@ -16,11 +16,12 @@ const (
 	portfolioCommandID     = "porfolio-command"
 	portfolioCommandPrefix = "!portfolio"
 	portfolioCommandUsage  = `
-	Usage: !portfolio <operation>
-	Example !portfolio create
+	Usage: !portfolio <operation> <args>
+	Example !portfolio create alexperkins.crypto@gmail.com
 
 	Operations:
-	1: create: creates a new portfolio in googlesheets.
+	1: create: creates a new portfolio in googlesheets: args [email_address].
+	2: list: list all your googlesheets: args [].
 	`
 )
 
@@ -42,11 +43,18 @@ func portfolioCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	switch strings.ToLower(tokens[1]) {
 	case "create":
-		url, err := createPortfolioSheet(m.Author.ID)
+		if len(tokens) < 3 {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@:%s, bad args! Usage: %s>", m.Author.ID, portfolioCommandUsage))
+			return
+		}
+
+		email := tokens[2]
+		url, err := createPortfolioSheet(m.Author.ID, email)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s>, I failed to create a portfolio sheet: %v", m.Author.ID, err))
 			return
 		}
+
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":rocket: <@%s>, Portfolio sheet created, here's the URL: %s", m.Author.ID, url))
 		return
 	case "list":
@@ -66,9 +74,10 @@ func portfolioCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func createPortfolioSheet(userID string) (string, error) {
+func createPortfolioSheet(userID, email string) (string, error) {
 	rsp, err := (&googlesheetsproto.CreatePortfolioSheetRequest{
 		UserId:              userID,
+		Email:               email,
 		Active:              true,
 		ShouldPagerOnError:  true,
 		ShouldPagerOnTarget: true,

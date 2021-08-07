@@ -2,107 +2,62 @@ package client
 
 import (
 	"context"
-	"encoding/json"
-	"time"
+	"io/ioutil"
 
 	"github.com/monzo/terrors"
 	"github.com/opentracing/opentracing-go"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/sheets/v4"
 
-	"swallowtail/libraries/util"
 	"swallowtail/s.googlesheets/templates"
 )
 
-var (
-	// TODO refactor
-	client      GooglesheetsClient
-	tok         *oauth2.Token
-	credentials *ClientCredentials
+const (
+	// ScopeSpreadsheets the scope we use for our spreadsheets
+	ScopeSpreadsheets = "https://www.googleapis.com/auth/spreadsheets"
+	ScopeDrive        = "https://www.googleapis.com/auth/drive"
 )
 
-type ClientCredentials struct {
-	Installed *Credentials `json:"installed"`
-}
-
-type Credentials struct {
-	ClientID            string   `json:"client_id"`
-	ProjectID           string   `json:"project_id"`
-	AuthURI             string   `json:"auth_id"`
-	TokenURI            string   `json:"token_uri"`
-	AuthProviderCertURL string   `json:"auth_provider_x509_cert_url"`
-	ClientSecret        string   `json:"client_secret"`
-	RedirectURLs        []string `json:"redirect_uris"`
-}
-
-func init() {
-	// Credentials
-	clientID := util.SetEnv("GOOGLESHEETS_CLIENT_ID")
-	projectID := util.SetEnv("GOOGLESHEETS_PROJECT_ID")
-	authURI := util.SetEnv("GOOGLESHEETS_AUTH_URI")
-	tokenURI := util.SetEnv("GOOGLESHEETS_TOKEN_URI")
-	authProviderCertURL := util.SetEnv("GOOGLESHEETS_AUTH_PROVIDER_CERT_URL")
-	clientSecret := util.SetEnv("GOOGLESHEETS_CLIENT_SECRET")
-	redirectURLA := util.SetEnv("GOOGLESHEETS_REDIRECT_URL_1")
-	redirectURLB := util.SetEnv("GOOGLESHEETS_REDIRECT_URL_2")
-
-	credentials = &ClientCredentials{
-		Installed: &Credentials{
-			ClientID:            clientID,
-			ProjectID:           projectID,
-			AuthURI:             authURI,
-			TokenURI:            tokenURI,
-			AuthProviderCertURL: authProviderCertURL,
-			ClientSecret:        clientSecret,
-			RedirectURLs:        []string{redirectURLA, redirectURLB},
-		},
-	}
-
-	// Token
-	accessToken := util.SetEnv("GOOGLESHEETS_ACCESS_TOKEN")
-	tokenType := util.SetEnv("GOOGLESHEETS_TOKEN_TYPE")
-	refreshToken := util.SetEnv("GOOGLESHEETS_REFRESH_TOKEN")
-	expiry := util.SetEnv("GOOGLESHEETS_EXPIRY")
-
-	t, _ := time.Parse(time.RFC3339, expiry)
-	tok = &oauth2.Token{
-		AccessToken:  accessToken,
-		TokenType:    tokenType,
-		RefreshToken: refreshToken,
-		Expiry:       t,
-	}
-}
+var (
+	client GooglesheetsClient
+)
 
 // GooglesheetsClient ...
 type GooglesheetsClient interface {
 	Ping(ctx context.Context) bool
 	Values(ctx context.Context, sheetID string, rowsRange string) ([][]interface{}, error)
 	UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error
-	CreateSheet(ctx context.Context, sheetType templates.SheetType) (string, error)
+	CreateSheet(ctx context.Context, sheetType templates.SheetType, emailAddress string) (*sheets.Spreadsheet, error)
 }
 
 // Init sets a new google sheets client for interacting with googlesheets.
 func Init(ctx context.Context) error {
-	b, err := json.Marshal(credentials)
+	jwtJSON, err := ioutil.ReadFile("/s.googlesheets/config/credentials.json")
 	if err != nil {
-		return terrors.Augment(err, "Failed to create credentials for googlesheets client", nil)
+		return terrors.Augment(err, "Failed to read credentials", nil)
 	}
 
-	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
+	cfg, err := google.JWTConfigFromJSON(jwtJSON, ScopeSpreadsheets, ScopeDrive)
 	if err != nil {
-		return terrors.Augment(err, "Failed to load config", nil)
+		return terrors.Augment(err, "Failed to create JWT config", nil)
 	}
 
-	c := config.Client(ctx, tok)
+	c := cfg.Client(ctx)
 
-	srv, err := sheets.New(c)
+	s, err := sheets.New(c)
 	if err != nil {
-		return terrors.Augment(err, "Failed to create sheets client", nil)
+		return terrors.Augment(err, "Failed to create google sheets client", nil)
+	}
+
+	d, err := drive.New(c)
+	if err != nil {
+		return terrors.Augment(err, "Failed to create google drive client", nil)
 	}
 
 	client = &googlesheetsClient{
-		s: srv,
+		s: s,
+		d: d,
 	}
 
 	return nil
@@ -123,9 +78,9 @@ func UpdateRows(ctx context.Context, sheetID string, rowsRange string, values []
 }
 
 // CreateSheet ...
-func CreateSheet(ctx context.Context, sheetType templates.SheetType) (string, error) {
+func CreateSheet(ctx context.Context, sheetType templates.SheetType, emailAddress string) (*sheets.Spreadsheet, error) {
 	// TODO: metrics & opnetracing.
-	return client.CreateSheet(ctx, sheetType)
+	return client.CreateSheet(ctx, sheetType, emailAddress)
 }
 
 func isValidHTTPStatusCode(c int) bool {
