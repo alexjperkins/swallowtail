@@ -22,6 +22,7 @@ func ReadAccounts(ctx context.Context) ([]*domain.Account, error) {
 	if err != nil {
 		return nil, terrors.Propagate(err)
 	}
+
 	return accounts, nil
 }
 

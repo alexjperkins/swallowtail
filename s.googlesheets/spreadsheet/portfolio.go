@@ -18,16 +18,19 @@ const (
 	defaultPortfolioTradeHistoryRange = "Q8:W100"
 )
 
+// Portfolio ...
 type Portfolio struct{}
 
-func (gsp *Portfolio) Rows(ctx context.Context, sheetID string) ([]*domain.PortfolioRow, error) {
+func (gsp *Portfolio) Rows(ctx context.Context, spreadsheetID, sheetID string) ([]*domain.PortfolioRow, error) {
 	r := formatRowsRange(sheetID)
 	rows := []*domain.PortfolioRow{}
 
-	vs, err := client.Values(ctx, sheetID, r)
+	vs, err := client.Values(ctx, spreadsheetID, r)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retreive sheet values", map[string]string{
-			"sheet_id": sheetID,
+			"sheet_id":       sheetID,
+			"spreadsheet_id": spreadsheetID,
+			"range":          r,
 		})
 	}
 	if vs == nil {
@@ -39,25 +42,28 @@ func (gsp *Portfolio) Rows(ctx context.Context, sheetID string) ([]*domain.Portf
 			continue
 		}
 
-		r, err := gsp.parseRow(ctx, i, v)
+		row, err := gsp.parseRow(ctx, i, v)
 		if err != nil {
 			return nil, terrors.Augment(err, "Failed to parse row", map[string]string{
-				"sheet_id": sheetID,
+				"sheet_id":       sheetID,
+				"range":          r,
+				"spreadsheet_id": spreadsheetID,
 			})
 		}
-		rows = append(rows, r)
+		rows = append(rows, row)
 	}
 	return gsp.validateRows(rows)
 }
 
-func (gsp *Portfolio) Metadata(ctx context.Context, sheetID string) (*domain.PortfolioMetadata, error) {
+func (gsp *Portfolio) Metadata(ctx context.Context, spreadsheetID, sheetID string) (*domain.PortfolioMetadata, error) {
 	r := formatMetadataRange(sheetID)
 
-	vs, err := client.Values(ctx, sheetID, r)
+	vs, err := client.Values(ctx, spreadsheetID, r)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retrieve sheet pnl metadata", map[string]string{
-			"sheet_id": sheetID,
-			"range":    r,
+			"sheet_id":       sheetID,
+			"range":          r,
+			"spreadsheet_id": spreadsheetID,
 		})
 	}
 	if vs == nil {
@@ -67,15 +73,17 @@ func (gsp *Portfolio) Metadata(ctx context.Context, sheetID string) (*domain.Por
 	return gsp.parseMetadata(ctx, vs)
 }
 
-func (gsp *Portfolio) TradeHistory(ctx context.Context, sheetID string) ([]*domain.HistoricalTradeRow, error) {
+func (gsp *Portfolio) TradeHistory(ctx context.Context, spreadsheetID, sheetID string) ([]*domain.HistoricalTradeRow, error) {
 	r := formatTradeHistoryRange(sheetID)
+
 	rows := []*domain.HistoricalTradeRow{}
 
-	vs, err := client.Values(ctx, sheetID, r)
+	vs, err := client.Values(ctx, spreadsheetID, r)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retrieve sheet trade history", map[string]string{
-			"sheet_id": sheetID,
-			"range":    r,
+			"sheet_id":       sheetID,
+			"range":          r,
+			"spreadsheet_id": spreadsheetID,
 		})
 
 	}
@@ -90,7 +98,8 @@ func (gsp *Portfolio) TradeHistory(ctx context.Context, sheetID string) ([]*doma
 		r, err := gsp.parseTradeHistoryRow(ctx, i, v)
 		if err != nil {
 			return nil, terrors.Augment(err, "Failed to parse historical trade row", map[string]string{
-				"sheet_id": sheetID,
+				"sheet_id":       sheetID,
+				"spreadsheet_id": spreadsheetID,
 			})
 		}
 		rows = append(rows, r)
@@ -172,10 +181,10 @@ func (*Portfolio) parseMetadata(ctx context.Context, rawMetadata [][]interface{}
 	for i, v := range rawMetadata {
 		// We must convert the interface type here to string; this makes our life easier when marshalling
 		// into the row struct.
-		v0 := v[0]
-		s, ok := v0.(string)
-		if !ok {
-			return nil, terrors.BadRequest("bad-type", "Failed to parse portfolio row", nil)
+		var s string
+		if len(v) == 1 {
+			v0 := v[0]
+			s, _ = v0.(string)
 		}
 
 		errParams := map[string]string{
@@ -262,12 +271,12 @@ func (Portfolio) parseTradeHistoryRow(ctx context.Context, index int, values []i
 	return row, nil
 }
 
-func (gsp *Portfolio) UpdateRow(ctx context.Context, sheetID string, row *domain.PortfolioRow) error {
+func (gsp *Portfolio) UpdateRow(ctx context.Context, spreadsheetID, sheetID string, row *domain.PortfolioRow) error {
 	rows := []*domain.PortfolioRow{row}
-	return gsp.UpdateRows(ctx, sheetID, rows)
+	return gsp.UpdateRows(ctx, spreadsheetID, sheetID, rows)
 }
 
-func (gsp *Portfolio) UpdateRows(ctx context.Context, sheetID string, rows []*domain.PortfolioRow) error {
+func (gsp *Portfolio) UpdateRows(ctx context.Context, spreadsheetID, sheetID string, rows []*domain.PortfolioRow) error {
 	r := formatRowsRange(sheetID)
 
 	values := [][]interface{}{}
@@ -275,13 +284,13 @@ func (gsp *Portfolio) UpdateRows(ctx context.Context, sheetID string, rows []*do
 		values = append(values, row.ToArray())
 	}
 
-	if err := client.UpdateRows(ctx, sheetID, r, values); err != nil {
+	if err := client.UpdateRows(ctx, spreadsheetID, r, values); err != nil {
 		return terrors.Augment(err, "Failed to update portfolio rows", nil)
 	}
 	return nil
 }
 
-func (gsp *Portfolio) UpdateMetadata(ctx context.Context, sheetID string, metadata *domain.PortfolioMetadata) error {
+func (gsp *Portfolio) UpdateMetadata(ctx context.Context, spreadsheetID, sheetID string, metadata *domain.PortfolioMetadata) error {
 	r := formatMetadataRange(sheetID)
 
 	values := [][]interface{}{
@@ -293,13 +302,13 @@ func (gsp *Portfolio) UpdateMetadata(ctx context.Context, sheetID string, metada
 		},
 	}
 
-	if err := client.UpdateRows(ctx, sheetID, r, values); err != nil {
+	if err := client.UpdateRows(ctx, spreadsheetID, r, values); err != nil {
 		return terrors.Augment(err, "Failed to update metadata", nil)
 	}
 	return nil
 }
 
-func (gsp *Portfolio) UpdateTradeHistory(ctx context.Context, sheetID string, rows []*domain.HistoricalTradeRow) error {
+func (gsp *Portfolio) UpdateTradeHistory(ctx context.Context, spreadsheetID, sheetID string, rows []*domain.HistoricalTradeRow) error {
 	r := formatTradeHistoryRange(sheetID)
 
 	values := [][]interface{}{}
@@ -307,7 +316,7 @@ func (gsp *Portfolio) UpdateTradeHistory(ctx context.Context, sheetID string, ro
 		values = append(values, row.ToArray())
 	}
 
-	if err := client.UpdateRows(ctx, sheetID, r, values); err != nil {
+	if err := client.UpdateRows(ctx, spreadsheetID, r, values); err != nil {
 		return terrors.Augment(err, "Failed to update trade history", nil)
 	}
 

@@ -14,17 +14,18 @@ func RegisterGooglesheet(ctx context.Context, gs *domain.Googlesheet) error {
 	var (
 		sql = `
 		INSERT INTO s_googlesheets_sheet
-		(spreadsheet_id, sheet_id, user_id, with_pager_on_error, with_pager_on_target, created, updated)
+		(spreadsheet_id, sheet_id, sheet_type, url, user_id, email, with_pager_on_error, with_pager_on_target, created, updated, active)
 		VALUES
-		($1, $2, $3, $4, $5, $6, $7)
+		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		`
 	)
 
 	now := time.Now().UTC()
 	if _, err := (db.Exec(
 		ctx, sql,
-		gs.SpreadsheetID, gs.SheetID, gs.UserID, gs.WithPagerOnError, gs.WithPagerOnTarget,
+		gs.SpreadsheetID, gs.SheetID, gs.SheetType, gs.URL, gs.UserID, gs.Email, gs.WithPagerOnError, gs.WithPagerOnTarget,
 		now, now,
+		gs.Active,
 	)); err != nil {
 		return terrors.Propagate(err)
 	}
@@ -63,10 +64,10 @@ func ListSheetsByUserID(ctx context.Context, userID string) ([]*domain.Googleshe
 		WHERE 
 			user_id=$1
 		`
-		sheets = []*domain.Googlesheet{}
+		sheets []*domain.Googlesheet
 	)
 
-	if err := db.Select(ctx, sheets, sql, userID); err != nil {
+	if err := db.Select(ctx, &sheets, sql, userID); err != nil {
 		return nil, terrors.Propagate(err)
 	}
 

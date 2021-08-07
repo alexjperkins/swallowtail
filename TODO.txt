@@ -1,9 +1,3 @@
-setup infra & tooling
-binance client to trade
-coinbase pro client
-coinbase pro cron - automated weekly buys
-ftx client
-ethereum client
-authentication
-portfolio
-trading strat
+1. gRPC errors
+2. pager issues / errors
+3. s.account ctx cancelled issues

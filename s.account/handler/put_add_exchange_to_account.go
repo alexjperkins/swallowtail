@@ -18,7 +18,10 @@ func (s *AccountService) AddExchange(
 		"user_id": in.Exchange.UserId,
 	}
 
-	exchange := marshaling.ExchangeProtoToDomain(in.Exchange)
+	exchange, err := marshaling.ExchangeProtoToDomain(in.Exchange)
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to marshal request", errParams)
+	}
 
 	if err := dao.AddExchange(ctx, exchange); err != nil {
 		return nil, terrors.Augment(err, "Failed to add exchange to account.", errParams)

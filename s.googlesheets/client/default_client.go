@@ -2,16 +2,20 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"swallowtail/s.googlesheets/templates"
 
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/sheets/v4"
 )
 
 type googlesheetsClient struct {
 	s *sheets.Service
+	// We need this to handle permissions; super annoying.
+	d *drive.Service
 }
 
 func (g *googlesheetsClient) Ping(ctx context.Context) bool {
@@ -41,7 +45,6 @@ func (g *googlesheetsClient) UpdateRows(ctx context.Context, sheetID, rowsRange 
 	req.ValueInputOption("RAW")
 
 	if _, err := req.Do(); err != nil {
-		slog.Error(ctx, err.Error())
 		return terrors.Augment(err, "Failed to update rows", map[string]string{
 			"row_range": rowsRange,
 		})
@@ -49,27 +52,57 @@ func (g *googlesheetsClient) UpdateRows(ctx context.Context, sheetID, rowsRange 
 	return nil
 }
 
-func (g *googlesheetsClient) CreateSheet(ctx context.Context, sheetType templates.SheetType) (string, error) {
-	// Create the initial spreadsheet.
-	call := g.s.Spreadsheets.Create(&sheets.Spreadsheet{})
-	call = call.Context(ctx)
-	s, err := call.Do()
-	if err != nil {
-		return "", terrors.Augment(err, "Failed to create a googlesheet", nil)
+func (g *googlesheetsClient) CreateSheet(ctx context.Context, sheetType templates.SheetType, emailAddress string) (*sheets.Spreadsheet, error) {
+	errParams := map[string]string{
+		"email_address": emailAddress,
 	}
 
+	// Create the initial spreadsheet.
+	scall := g.s.Spreadsheets.Create(&sheets.Spreadsheet{
+		Properties: &sheets.SpreadsheetProperties{
+			Title: fmt.Sprintf("Swallowtail Portfolio: %s", emailAddress),
+		},
+		Sheets: []*sheets.Sheet{
+			{
+				Properties: &sheets.SheetProperties{
+					Title: "SpotPortfolio",
+				},
+			},
+		},
+	})
+	scall = scall.Context(ctx)
+	s, err := scall.Do()
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to create a googlesheet", errParams)
+	}
+
+	slog.Info(ctx, "Created sheet: %s, meta", s.SpreadsheetUrl, s.DeveloperMetadata)
+
+	// Give permissions via the drive api
+	pcall := g.d.Permissions.Create(s.SpreadsheetId, &drive.Permission{
+		EmailAddress: emailAddress,
+		Role:         "writer",
+		Type:         "user",
+	})
+	pcall.Context(ctx)
+	if _, err := pcall.Do(); err != nil {
+		return nil, terrors.Augment(err, "Failed to create a googlesheet", errParams)
+	}
+
+	// Write template to the file.
 	template, err := templates.GetTemplateByType(sheetType)
 	switch {
 	case terrors.Is(err, "template-does-not-exist"):
 		// Nothing more to do here
-		return s.SpreadsheetUrl, nil
+		return s, nil
 	}
 
 	if err := g.UpdateRows(ctx, s.SpreadsheetId, template.RowRange(), template.Values()); err != nil {
-		return "", terrors.Augment(err, "Failed to update rows for template", map[string]string{
-			"template": template.ID().String(),
+		return nil, terrors.Augment(err, "Failed to update rows for template", map[string]string{
+			"email_address": emailAddress,
+			"template":      template.ID().String(),
 		})
 	}
 
-	return s.SpreadsheetUrl, nil
+	return s, nil
 }

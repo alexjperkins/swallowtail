@@ -79,8 +79,6 @@ func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPa
 		})
 	}
 
-	slog.Info(ctx, "HERE int.")
-
 	// It hasn't expired; lets return the price.
 	return price, nil
 }

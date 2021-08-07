@@ -28,6 +28,7 @@ var (
 func init() {
 	register("portfolio-syncer", &PortfolioSyncer{
 		Spreadsheet: &spreadsheet.Portfolio{},
+		change:      make(chan struct{}, 1),
 	})
 }
 
@@ -50,7 +51,7 @@ func (p *PortfolioSyncer) Sync(ctx context.Context) {
 		childCtx, cancel := context.WithCancel(ctx)
 		for _, sheet := range p.Sheets {
 			sheet := sheet
-			go p.sync(childCtx, sheet.UserID, sheet.SheetID)
+			go p.sync(childCtx, sheet.UserID, sheet.SpreadsheetID, sheet.SheetID)
 		}
 
 		select {
@@ -61,6 +62,7 @@ func (p *PortfolioSyncer) Sync(ctx context.Context) {
 			// Sleep to allow for a graceful shutdown of goroutines.
 			time.Sleep(10 * time.Second)
 		case <-ctx.Done():
+			cancel()
 			return
 		}
 	}
@@ -133,7 +135,7 @@ func (p *PortfolioSyncer) refresh(ctx context.Context) error {
 	return nil
 }
 
-func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
+func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheetID string) {
 	// Add jitter; this prevents us trying to sync everything at once.
 	// our exchange client is cached; so we don't need to really worry about rate limiting.
 	rand.Seed(time.Now().UnixNano())
@@ -153,7 +155,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 			defer aCloser()
 
 			// Fetch rows
-			rows, err := p.Spreadsheet.Rows(ctx, sheetID)
+			rows, err := p.Spreadsheet.Rows(ctx, spreadsheetID, sheetID)
 			if err != nil {
 				if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
 					Content:  fmt.Sprintf("Failed to parse rows, please check: %v", err.Error()),
@@ -222,7 +224,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 			wg.Wait()
 
 			// Upate all rows with our latest price.
-			err = p.Spreadsheet.UpdateRows(ctx, sheetID, rows)
+			err = p.Spreadsheet.UpdateRows(ctx, spreadsheetID, sheetID, rows)
 			if err != nil {
 				slog.Info(ctx, "Failed to upload googlesheet row", map[string]string{
 					"user_id":  userID,
@@ -233,7 +235,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 
 			// Calculate & update historical PNL
 			var historicalPNL float64
-			h, err := p.Spreadsheet.TradeHistory(ctx, sheetID)
+			h, err := p.Spreadsheet.TradeHistory(ctx, spreadsheetID, sheetID)
 			switch {
 			case err != nil:
 				slog.Info(ctx, "Failed to read historical data", map[string]string{
@@ -243,14 +245,14 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 				})
 			default:
 				historicalPNL = calculateHistoricalPNL(h)
-				if err := p.Spreadsheet.UpdateTradeHistory(ctx, sheetID, h); err != nil {
+				if err := p.Spreadsheet.UpdateTradeHistory(ctx, spreadsheetID, sheetID, h); err != nil {
 					// Best effort
 					slog.Info(ctx, "Failed to re-upload refreshed historical trades.")
 				}
 			}
 
 			// Update metadata
-			m, err := p.Spreadsheet.Metadata(ctx, sheetID)
+			m, err := p.Spreadsheet.Metadata(ctx, spreadsheetID, sheetID)
 			if err != nil {
 				if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
 					Content: "Apologies, I wasn't able to parse the metadata in your portfolio tracker; please check it's correct",
@@ -272,7 +274,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, sheetID string) {
 				})
 			}
 
-			err = p.Spreadsheet.UpdateMetadata(ctx, sheetID, m)
+			err = p.Spreadsheet.UpdateMetadata(ctx, spreadsheetID, sheetID, m)
 			if err != nil {
 				slog.Info(ctx, "Failed to update googlesheet metadata", map[string]string{
 					"user_id":  userID,
