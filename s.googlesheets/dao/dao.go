@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"swallowtail/libraries/sql"
@@ -25,6 +26,7 @@ func Init(ctx context.Context, serviceName string) error {
 		})
 	}
 	db = psql
+	fmt.Println(db)
 	slog.Debug(ctx, "Dao initialized", map[string]string{
 		"service_name": serviceName,
 	})

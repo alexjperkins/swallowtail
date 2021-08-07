@@ -13,7 +13,7 @@ import (
 	"github.com/monzo/terrors"
 )
 
-const Version = "v1.0.0"
+const Version = "1.0.0"
 
 func main() {
 	versionFlag := flag.Bool("version", false, "print version & exit")
@@ -23,7 +23,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	req, err := readGenRequest(os.Stdin)
+	_, err := readGenRequest(os.Stdin)
 	if err != nil {
 		errString := err.Error()
 		writeResponse(os.Stdout, &plugin.CodeGeneratorResponse{Error: &errString})
@@ -63,5 +63,5 @@ func writeResponse(w io.Writer, rsp *plugin.CodeGeneratorResponse) {
 }
 
 func generateOutputFiles(in *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, error) {
-	inputFiles, err := fi
+	return nil, nil
 }

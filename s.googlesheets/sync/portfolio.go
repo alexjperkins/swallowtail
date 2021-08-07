@@ -39,21 +39,31 @@ type PortfolioSyncer struct {
 	IncreaseAmountsPagers []float64
 	Sheets                []*domain.Googlesheet
 	sheetsMu              sync.RWMutex
+	change                chan struct{}
 }
 
 // Sync ...
-func (p *PortfolioSyncer) Sync(ctx context.Context) error {
-	sheets, err := dao.ListSheetsByType(ctx, templates.PortfolioSheetType)
-	if err != nil {
-		return terrors.Augment(err, "Failed to read sheets by type", map[string]string{
-			"sheet_type": templates.PortfolioSheetType.String(),
-		})
+func (p *PortfolioSyncer) Sync(ctx context.Context) {
+	for {
+		// This is slightly inefficient since we shutdown and resync all sheets once we get a change recieved
+		// but we do avoid having to maintain state in a concurrent environment.
+		childCtx, cancel := context.WithCancel(ctx)
+		for _, sheet := range p.Sheets {
+			sheet := sheet
+			go p.sync(childCtx, sheet.UserID, sheet.SheetID)
+		}
+
+		select {
+		case <-p.change:
+			slog.Debug(ctx, "Portfolio Syncer: change notifcation received")
+			cancel()
+
+			// Sleep to allow for a graceful shutdown of goroutines.
+			time.Sleep(10 * time.Second)
+		case <-ctx.Done():
+			return
+		}
 	}
-	for _, sheet := range sheets {
-		sheet := sheet
-		go p.sync(ctx, sheet.UserID, sheet.SheetID)
-	}
-	return nil
 }
 
 // Refresh ...
@@ -65,8 +75,11 @@ func (p *PortfolioSyncer) Refresh(ctx context.Context) error {
 		if e == nil {
 			break
 		}
+
+		slog.Debug(ctx, "%v) Initial refresh attempt error: %v", i, e)
+
 		multierror.Append(err, e)
-		time.Sleep(30 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 
 	// We've tried 5 times on start & we cannot load from dao; let's fail.
@@ -76,6 +89,7 @@ func (p *PortfolioSyncer) Refresh(ctx context.Context) error {
 
 	go func() {
 		// Ideally this should be a consumer of async events; but we don't yet have that infra structure in place.
+		// So we have to poll rather than push.
 		t := time.NewTicker(1 * time.Minute)
 		for {
 			select {
@@ -92,13 +106,25 @@ func (p *PortfolioSyncer) Refresh(ctx context.Context) error {
 
 func (p *PortfolioSyncer) refresh(ctx context.Context) error {
 	ss, err := dao.ListSheetsByType(ctx, templates.PortfolioSheetType)
-	if err != nil {
+	switch {
+	case terrors.Is(err, "not_found.no-googlesheets-registered-with-this-type"):
+		// No sheets
+		return nil
+	case err != nil:
 		return terrors.Augment(err, "Failed to refresh portfolio syncer internal list of sheets", nil)
 	}
+
 	if len(ss) == len(p.Sheets) {
-		// Since we can't mutate, if the lenght of the lists are the same, then we know we don't have
+		// Since we can't delete/mutate sheets, if the length of the lists are the same, then we know we don't have
 		// any changes & we don't have to take a lock.
 		return nil
+	}
+
+	select {
+	case p.change <- struct{}{}:
+	default:
+		// If we're blocked on sending; then we haven't yet refreshed on the last change.
+		// we can skip.
 	}
 
 	p.sheetsMu.Lock()

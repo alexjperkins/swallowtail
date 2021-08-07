@@ -38,12 +38,12 @@ func ListSheetsByType(ctx context.Context, sheetType templates.SheetType) ([]*do
 		sql = `
 		SELECT * FROM s_googlesheets_sheet
 		WHERE 
-			googlesheet_type=$1
+			sheet_type=$1
 		`
-		sheets = []*domain.Googlesheet{}
+		sheets []*domain.Googlesheet
 	)
 
-	if err := db.Select(ctx, sheets, sql, sheetType.String()); err != nil {
+	if err := db.Select(ctx, &sheets, sql, sheetType.String()); err != nil {
 		return nil, terrors.Propagate(err)
 	}
 
