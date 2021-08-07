@@ -7,6 +7,8 @@ service googlesheets {
 
     rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {}
 
+    rpc ListSheetsByUserID (ListSheetsByUserIDRequest) returns (ListSheetsByUserIDResponse) {}
+
     rpc TmpGetLatestPriceBySymbol (TmpGetLatestPriceBySymbolRequest) returns (TmpGetLatestPriceBySymbolResponse) {}
 }
 
@@ -34,6 +36,19 @@ message RegisterNewPortfolioSheetRequest {
 }
 
 message RegisterNewPortfolioSheetResponse {}
+
+message SheetResponse {
+    string url = 1;
+    string sheet_type = 2;
+}
+
+message ListSheetsByUserIDRequest {
+    string user_id = 1;
+}
+
+message ListSheetsByUserIDResponse {
+    repeated SheetResponse sheets = 1;
+}
 
 message TmpGetLatestPriceBySymbolRequest {
     string asset_symbol = 1;

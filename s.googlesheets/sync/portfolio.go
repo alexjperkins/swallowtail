@@ -28,6 +28,7 @@ var (
 func init() {
 	register("portfolio-syncer", &PortfolioSyncer{
 		Spreadsheet: &spreadsheet.Portfolio{},
+		change:      make(chan struct{}, 1),
 	})
 }
 
@@ -61,6 +62,7 @@ func (p *PortfolioSyncer) Sync(ctx context.Context) {
 			// Sleep to allow for a graceful shutdown of goroutines.
 			time.Sleep(10 * time.Second)
 		case <-ctx.Done():
+			cancel()
 			return
 		}
 	}

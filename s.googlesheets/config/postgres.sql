@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS s_googlesheets_sheet (
 	with_pager_on_error BOOLEAN DEFAULT FALSE,
 	with_pager_on_target BOOLEAN DEFAULT FALSE,
 
+	url VARCHAR(512) NOT NULL,
+
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),
 

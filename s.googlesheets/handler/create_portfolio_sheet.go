@@ -27,6 +27,15 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 		"user_id": in.UserId,
 	}
 
+	// Prevent user spam
+	sheets, err := dao.ListSheetsByUserID(ctx, in.GetUserId())
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to create portfolio sheet; couldn't check existing sheets for user", errParams)
+	}
+	if len(sheets) >= 5 {
+		return nil, terrors.PreconditionFailed("max-portfolio-sheets-reached", "User already has a maximum of 5 portfolio sheets", errParams)
+	}
+
 	// Create our portfolio sheet.
 	url, err := client.CreateSheet(ctx, templates.PortfolioSheetType)
 	if err != nil {

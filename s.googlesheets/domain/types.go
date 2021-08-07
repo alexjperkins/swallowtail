@@ -16,4 +16,5 @@ type Googlesheet struct {
 	Created           time.Time `pb:"created"`
 	Updated           time.Time `pb:"updated"`
 	Active            bool      `pb:"active"`
+	URL               string    `pb:"url"`
 }

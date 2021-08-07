@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion6
 type GooglesheetsClient interface {
 	CreatePortfolioSheet(ctx context.Context, in *CreatePortfolioSheetRequest, opts ...grpc.CallOption) (*CreatePortfolioSheetResponse, error)
 	RegisterNewPortfolioSheet(ctx context.Context, in *RegisterNewPortfolioSheetRequest, opts ...grpc.CallOption) (*RegisterNewPortfolioSheetResponse, error)
+	ListSheetsByUserID(ctx context.Context, in *ListSheetsByUserIDRequest, opts ...grpc.CallOption) (*ListSheetsByUserIDResponse, error)
 	TmpGetLatestPriceBySymbol(ctx context.Context, in *TmpGetLatestPriceBySymbolRequest, opts ...grpc.CallOption) (*TmpGetLatestPriceBySymbolResponse, error)
 }
 
@@ -48,6 +49,15 @@ func (c *googlesheetsClient) RegisterNewPortfolioSheet(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *googlesheetsClient) ListSheetsByUserID(ctx context.Context, in *ListSheetsByUserIDRequest, opts ...grpc.CallOption) (*ListSheetsByUserIDResponse, error) {
+	out := new(ListSheetsByUserIDResponse)
+	err := c.cc.Invoke(ctx, "/googlesheets/ListSheetsByUserID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *googlesheetsClient) TmpGetLatestPriceBySymbol(ctx context.Context, in *TmpGetLatestPriceBySymbolRequest, opts ...grpc.CallOption) (*TmpGetLatestPriceBySymbolResponse, error) {
 	out := new(TmpGetLatestPriceBySymbolResponse)
 	err := c.cc.Invoke(ctx, "/googlesheets/TmpGetLatestPriceBySymbol", in, out, opts...)
@@ -63,6 +73,7 @@ func (c *googlesheetsClient) TmpGetLatestPriceBySymbol(ctx context.Context, in *
 type GooglesheetsServer interface {
 	CreatePortfolioSheet(context.Context, *CreatePortfolioSheetRequest) (*CreatePortfolioSheetResponse, error)
 	RegisterNewPortfolioSheet(context.Context, *RegisterNewPortfolioSheetRequest) (*RegisterNewPortfolioSheetResponse, error)
+	ListSheetsByUserID(context.Context, *ListSheetsByUserIDRequest) (*ListSheetsByUserIDResponse, error)
 	TmpGetLatestPriceBySymbol(context.Context, *TmpGetLatestPriceBySymbolRequest) (*TmpGetLatestPriceBySymbolResponse, error)
 	mustEmbedUnimplementedGooglesheetsServer()
 }
@@ -76,6 +87,9 @@ func (*UnimplementedGooglesheetsServer) CreatePortfolioSheet(context.Context, *C
 }
 func (*UnimplementedGooglesheetsServer) RegisterNewPortfolioSheet(context.Context, *RegisterNewPortfolioSheetRequest) (*RegisterNewPortfolioSheetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterNewPortfolioSheet not implemented")
+}
+func (*UnimplementedGooglesheetsServer) ListSheetsByUserID(context.Context, *ListSheetsByUserIDRequest) (*ListSheetsByUserIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSheetsByUserID not implemented")
 }
 func (*UnimplementedGooglesheetsServer) TmpGetLatestPriceBySymbol(context.Context, *TmpGetLatestPriceBySymbolRequest) (*TmpGetLatestPriceBySymbolResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TmpGetLatestPriceBySymbol not implemented")
@@ -122,6 +136,24 @@ func _Googlesheets_RegisterNewPortfolioSheet_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Googlesheets_ListSheetsByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSheetsByUserIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GooglesheetsServer).ListSheetsByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/googlesheets/ListSheetsByUserID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GooglesheetsServer).ListSheetsByUserID(ctx, req.(*ListSheetsByUserIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Googlesheets_TmpGetLatestPriceBySymbol_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TmpGetLatestPriceBySymbolRequest)
 	if err := dec(in); err != nil {
@@ -151,6 +183,10 @@ var _Googlesheets_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterNewPortfolioSheet",
 			Handler:    _Googlesheets_RegisterNewPortfolioSheet_Handler,
+		},
+		{
+			MethodName: "ListSheetsByUserID",
+			Handler:    _Googlesheets_ListSheetsByUserID_Handler,
 		},
 		{
 			MethodName: "TmpGetLatestPriceBySymbol",
