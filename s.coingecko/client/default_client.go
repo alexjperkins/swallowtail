@@ -43,7 +43,6 @@ func (c *coingeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCo
 }
 
 func (c *coingeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
-	slog.Info(ctx, "HERE int 1.")
 	id, err := c.getIDFromSymbol(symbol)
 	if err != nil {
 		return 0, err

@@ -13,9 +13,9 @@ const (
 func (s SheetType) String() string {
 	switch s {
 	case PortfolioSheetType:
-		return "portfolio-sheet-type"
+		return "PORTFOLIO"
 	default:
-		return "unknown-sheet-type"
+		return "UNKNOWN"
 	}
 }
 
