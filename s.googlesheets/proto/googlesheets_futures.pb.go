@@ -142,3 +142,71 @@ func (r *ListSheetsByUserIDRequest) SendWithTimeout(ctx context.Context, timeout
 		resultc: resultc,
 	}
 }
+
+// --- RegisterNewPortfolioSheet --- //
+
+type RegisterNewPortfolioSheetFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *RegisterNewPortfolioSheetResponse
+	ctx     context.Context
+}
+
+func (a *RegisterNewPortfolioSheetFuture) Response() (*RegisterNewPortfolioSheetResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "register_new_porfolio_sheet", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *RegisterNewPortfolioSheetRequest) Send(ctx context.Context) *RegisterNewPortfolioSheetFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *RegisterNewPortfolioSheetRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *RegisterNewPortfolioSheetFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *RegisterNewPortfolioSheetResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-googlesheets:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &RegisterNewPortfolioSheetFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewGooglesheetsClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.RegisterNewPortfolioSheet(ctx, r)
+		if err != nil {
+			errc <- err
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &RegisterNewPortfolioSheetFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
