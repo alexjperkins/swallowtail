@@ -12,11 +12,7 @@ import (
 
 // EncryptWithAES encrypts the data with a passphrase using the AES cipher.
 func EncryptWithAES(d []byte, passphrase string) (string, error) {
-	hash, err := util.Sha256Hash(passphrase)
-	if err != nil {
-		return "", terrors.Augment(err, "Failed to encrypt with AES cipher; error hashing passphrase", nil)
-	}
-
+	hash := util.Sha256Hash(passphrase)
 	block, err := aes.NewCipher([]byte(hash))
 	if err != nil {
 		return "", terrors.Augment(err, "Failed to encrypt with AES cipher; failed to create cipher block", nil)
@@ -38,11 +34,7 @@ func EncryptWithAES(d []byte, passphrase string) (string, error) {
 
 // DecryptWithAES decrypts the data with a passphrase using the AES cipher.
 func DecryptWithAES(d []byte, passphrase string) (string, error) {
-	hash, err := util.Sha256Hash(passphrase)
-	if err != nil {
-		return "", terrors.Augment(err, "Failed to decrypt with AES cipher; error hashing passphrase", nil)
-	}
-
+	hash := util.Sha256Hash(passphrase)
 	key := []byte(hash)
 	block, err := aes.NewCipher(key)
 	if err != nil {

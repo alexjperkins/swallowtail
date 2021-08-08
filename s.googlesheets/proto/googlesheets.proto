@@ -31,7 +31,9 @@ message CreatePortfolioSheetResponse {
 
 message RegisterNewPortfolioSheetRequest {
     string user_id = 1;
-    string googlesheets_url = 2;
+    string spreadsheet_id = 2;
+    string sheet_name = 3;
+    string email = 4;
 }
 
 message RegisterNewPortfolioSheetResponse {}

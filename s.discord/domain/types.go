@@ -6,6 +6,6 @@ import "time"
 type Touch struct {
 	TouchID        string    `db:"touch_id"`
 	IdempotencyKey string    `db:"idempotency_key"`
-	Updated        time.Time `db:"timestamp"`
+	Updated        time.Time `db:"updated"`
 	SenderID       string    `db:"sender_id"`
 }

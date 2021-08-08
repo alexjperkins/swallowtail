@@ -8,6 +8,7 @@ import (
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.account/domain"
 	accountproto "swallowtail/s.account/proto"
 )
@@ -35,12 +36,12 @@ func ReadAccountByUserID(ctx context.Context, userID string) (*domain.Account, e
 
 	err := db.Select(ctx, &accounts, sql, userID)
 	if err != nil {
-		return nil, terrors.Propagate(err)
+		return nil, gerrors.Propagate(gerrors.ErrUnknown, err, nil)
 	}
 
 	switch len(accounts) {
 	case 0:
-		return nil, terrors.NotFound("account-not-found", "Failed to find account", nil)
+		return nil, gerrors.NotFound("account-not-found", nil)
 	case 1:
 		return accounts[0], nil
 	}

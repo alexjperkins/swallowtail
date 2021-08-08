@@ -6,6 +6,8 @@ import (
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 
+	"swallowtail/libraries/gerrors"
+	accountproto "swallowtail/s.account/proto"
 	"swallowtail/s.googlesheets/client"
 	"swallowtail/s.googlesheets/dao"
 	"swallowtail/s.googlesheets/marshaling"
@@ -29,7 +31,16 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 		"email_address": in.Email,
 	}
 
-	// TODO: Check the user first has an account registered.
+	// Check the user first has an account registered.
+	_, err := (&accountproto.ReadAccountRequest{
+		UserId: in.UserId,
+	}).Send(ctx).Response()
+	switch {
+	case gerrors.Is(err, gerrors.ErrNotFound, "account-not-found"):
+		return nil, gerrors.FailedPrecondition("account-not-registered: User cannot create portfolio without registered account", errParams)
+	case err != nil:
+		return nil, gerrors.Augment(err, "Failed to create portfolio", errParams)
+	}
 
 	// Prevent user spam
 	sheets, err := dao.ListSheetsByUserID(ctx, in.GetUserId())

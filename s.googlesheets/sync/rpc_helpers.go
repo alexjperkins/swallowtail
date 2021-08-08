@@ -2,27 +2,16 @@ package sync
 
 import (
 	"context"
-	coingeckoproto "swallowtail/s.coingecko/proto"
+	"fmt"
 	"time"
 
+	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	"swallowtail/libraries/gerrors"
+	accountproto "swallowtail/s.account/proto"
+	coingeckoproto "swallowtail/s.coingecko/proto"
 )
-
-func getlatestPriceByID(ctx context.Context, assetID, assetPair string) (*coingeckoproto.GetAssetLatestPriceByIDResponse, error) {
-	rsp, err := (&coingeckoproto.GetAssetLatestPriceByIDRequest{
-		CoingeckoCoinId: assetID,
-		AssetPair:       assetPair,
-	}).SendWithTimeout(ctx, 30*time.Second).Response()
-	if err != nil {
-		return nil, terrors.Augment(err, "Failed to get the latest price", map[string]string{
-			"asset_id":   assetID,
-			"asset_pair": assetPair,
-		})
-
-	}
-
-	return rsp, nil
-}
 
 func getLatestPriceBySymbol(ctx context.Context, symbol, assetPair string) (*coingeckoproto.GetAssetLatestPriceBySymbolResponse, error) {
 	rsp, err := (&coingeckoproto.GetAssetLatestPriceBySymbolRequest{
@@ -37,4 +26,19 @@ func getLatestPriceBySymbol(ctx context.Context, symbol, assetPair string) (*coi
 	}
 
 	return rsp, nil
+}
+
+func pageAccount(ctx context.Context, userID, msg, spreadsheetID string) error {
+	wrappedMsg := fmt.Sprintf("%s\n`spreadsheet url: %s`", msg, spreadsheetID)
+	if _, err := (&accountproto.PageAccountRequest{
+		UserId:   userID,
+		Content:  wrappedMsg,
+		Priority: accountproto.PagerPriority_HIGH,
+	}).Send(ctx).Response(); err != nil {
+		slog.Warn(ctx, "Failed to send: %v to %v", msg, userID)
+		return gerrors.Augment(err, "Failed to page account", map[string]string{
+			"user_id": userID,
+		})
+	}
+	return nil
 }

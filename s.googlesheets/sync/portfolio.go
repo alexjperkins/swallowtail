@@ -7,13 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 
-	accountproto "swallowtail/s.account/proto"
 	"swallowtail/s.googlesheets/dao"
 	"swallowtail/s.googlesheets/domain"
 	"swallowtail/s.googlesheets/spreadsheet"
@@ -146,23 +143,11 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 	for {
 		select {
 		case <-t.C:
-			// s.account client
-			ac, aCloser, err := accountClient(ctx)
-			if err != nil {
-				slog.Error(ctx, "Failed to connect to s.account: %v", err)
-				continue
-			}
-			defer aCloser()
-
 			// Fetch rows
 			rows, err := p.Spreadsheet.Rows(ctx, spreadsheetID, sheetID)
 			if err != nil {
-				if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
-					Content:  fmt.Sprintf("Failed to parse rows, please check: %v", err.Error()),
-					UserId:   userID,
-					Priority: accountproto.PagerPriority_LOW,
-				})); err != nil {
-					slog.Error(ctx, "Failed to page account: %v", err)
+				if gerr := pageAccount(ctx, userID, fmt.Sprintf("Failed to parse row: Error %v", err.Error()), spreadsheetID); gerr != nil {
+					slog.Error(ctx, "Failed to page account: %v", gerr)
 				}
 				continue
 			}
@@ -178,12 +163,8 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 					assetPair, ok := isValidAssetPairOrConvert(row.AssetPair)
 					if !ok {
 						// Page user; we don't have a valid asset pair.
-						if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
-							UserId:   userID,
-							Content:  fmt.Sprintf("invalid asset pair: %s", row.AssetPair),
-							Priority: accountproto.PagerPriority_LOW,
-						})); err != nil {
-							slog.Error(ctx, "Failed to page account: %v", err)
+						if gerr := pageAccount(ctx, userID, fmt.Sprintf("Invalid asset pair: row %v, asset pair: %s", row.Index, row.AssetPair), spreadsheetID); gerr != nil {
+							slog.Error(ctx, "Failed to page account: %v", gerr)
 						}
 						return
 					}
@@ -195,21 +176,16 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 					}
 
 					latestPrice := rsp.LatestPrice
-
 					switch {
 					case
 						terrors.Is(err, terrors.ErrRateLimited),
 						terrors.Is(err, terrors.ErrTimeout):
 						// This is fine; we can retry on the next attempt.
 						return
-
 					case err != nil:
 						// We failed lets page the user.
-						if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
-							UserId:  userID,
-							Content: fmt.Sprintf("failed to retrieve price for asset with ticker: %s, please check that it is correct.", row.Ticker),
-						})); err != nil {
-							slog.Warn(ctx, "Failed to page account: %v", err)
+						if gerr := pageAccount(ctx, userID, fmt.Sprintf("Failed to retrieve price for asset with ticker: %s row: %v", row.Ticker, row.Index), spreadsheetID); gerr != nil {
+							slog.Warn(ctx, "Failed to page account: %v", gerr)
 						}
 						return
 					}
@@ -247,18 +223,15 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 				historicalPNL = calculateHistoricalPNL(h)
 				if err := p.Spreadsheet.UpdateTradeHistory(ctx, spreadsheetID, sheetID, h); err != nil {
 					// Best effort
-					slog.Info(ctx, "Failed to re-upload refreshed historical trades.")
+					slog.Info(ctx, "Failed to re-upload refreshed historical trades: %v", err)
 				}
 			}
 
 			// Update metadata
 			m, err := p.Spreadsheet.Metadata(ctx, spreadsheetID, sheetID)
 			if err != nil {
-				if _, err := (ac.PageAccount(ctx, &accountproto.PageAccountRequest{
-					Content: "Apologies, I wasn't able to parse the metadata in your portfolio tracker; please check it's correct",
-					UserId:  userID,
-				})); err != nil {
-					slog.Error(ctx, "Failed to parse account: %v", err)
+				if gerr := pageAccount(ctx, userID, "Apologies, I wasn't able to parse the metadata in your portfolio tracker; please check it's correct", spreadsheetID); gerr != nil {
+					slog.Error(ctx, "Failed to parse account: %v", gerr)
 				}
 				// We can't go any further; lets skip.
 				continue
@@ -291,12 +264,4 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 			return
 		}
 	}
-}
-
-func accountClient(ctx context.Context) (client accountproto.AccountClient, closer func() error, err error) {
-	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
-	if err != nil {
-		return nil, nil, err
-	}
-	return accountproto.NewAccountClient(conn), conn.Close, nil
 }

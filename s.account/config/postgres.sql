@@ -12,8 +12,6 @@ BEGIN
 END
 $$;
 
-DROP TABLE IF EXISTS s_account_accounts CASCADE;
-
 CREATE TABLE IF NOT EXISTS s_account_accounts (
 	-- use the discord id associate to the user here
 	user_id VARCHAR(20) NOT NULL UNIQUE,
