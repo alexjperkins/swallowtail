@@ -16,8 +16,8 @@ func (p portfolioTemplate) RowRange() string {
 
 func (p portfolioTemplate) Values() [][]interface{} {
 	return [][]interface{}{
-		{"", "", "Total PNL"},
-		{"", "", "Total Worth"},
+		{"", "", "Total PNL", "0"},
+		{"", "", "Total Worth", "0"},
 		{"", "", "Asset Pair", "USDT", "", "", "", "", "", "", "", "", "", "", "", "", "Historical"},
 		{},
 		{},

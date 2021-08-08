@@ -8,8 +8,7 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-///  --- CreatePortfolioSheet --- ///
-
+// --- CreatePortfolioSheet --- //
 type CreatePortfolioSheetFuture struct {
 	closer  func() error
 	errc    chan error
@@ -42,10 +41,11 @@ func (r *CreatePortfolioSheetRequest) SendWithTimeout(ctx context.Context, timeo
 	errc := make(chan error, 1)
 	resultc := make(chan *CreatePortfolioSheetResponse, 1)
 
-	conn, err := grpc.DialContext(ctx, "swallowtail-s-coingecko:8000", grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-googlesheets:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
 		return &CreatePortfolioSheetFuture{
+			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
 			resultc: resultc,
@@ -56,10 +56,6 @@ func (r *CreatePortfolioSheetRequest) SendWithTimeout(ctx context.Context, timeo
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		defer func() {
-			cancel()
-		}()
-
 		rsp, err := c.CreatePortfolioSheet(ctx, r)
 		if err != nil {
 			errc <- err
@@ -69,25 +65,29 @@ func (r *CreatePortfolioSheetRequest) SendWithTimeout(ctx context.Context, timeo
 	}()
 
 	return &CreatePortfolioSheetFuture{
-		closer: conn.Close,
-		errc:   errc,
-		ctx:    ctx,
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
 	}
 }
 
-///  --- ListSheetsByUserID --- ///
+// --- ListSheetByUserID --- //
 
-type ListSheetsByUserIDFuture struct {
+type ListSheetByUserIDFuture struct {
 	closer  func() error
 	errc    chan error
 	resultc chan *ListSheetsByUserIDResponse
 	ctx     context.Context
 }
 
-func (a *ListSheetsByUserIDFuture) Response() (*ListSheetsByUserIDResponse, error) {
+func (a *ListSheetByUserIDFuture) Response() (*ListSheetsByUserIDResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "create_portfolio_sheet", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "list_sheet_user_id", err)
 		}
 	}()
 
@@ -101,18 +101,19 @@ func (a *ListSheetsByUserIDFuture) Response() (*ListSheetsByUserIDResponse, erro
 	}
 }
 
-func (r *ListSheetsByUserIDRequest) Send(ctx context.Context) *ListSheetsByUserIDFuture {
+func (r *ListSheetsByUserIDRequest) Send(ctx context.Context) *ListSheetByUserIDFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *ListSheetsByUserIDRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ListSheetsByUserIDFuture {
+func (r *ListSheetsByUserIDRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ListSheetByUserIDFuture {
 	errc := make(chan error, 1)
 	resultc := make(chan *ListSheetsByUserIDResponse, 1)
 
-	conn, err := grpc.DialContext(ctx, "swallowtail-s-coingecko:8000", grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-googlesheets:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
-		return &ListSheetsByUserIDFuture{
+		return &ListSheetByUserIDFuture{
+			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
 			resultc: resultc,
@@ -123,10 +124,6 @@ func (r *ListSheetsByUserIDRequest) SendWithTimeout(ctx context.Context, timeout
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		defer func() {
-			cancel()
-		}()
-
 		rsp, err := c.ListSheetsByUserID(ctx, r)
 		if err != nil {
 			errc <- err
@@ -135,9 +132,13 @@ func (r *ListSheetsByUserIDRequest) SendWithTimeout(ctx context.Context, timeout
 		resultc <- rsp
 	}()
 
-	return &ListSheetsByUserIDFuture{
-		closer: conn.Close,
-		errc:   errc,
-		ctx:    ctx,
+	return &ListSheetByUserIDFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
 	}
 }

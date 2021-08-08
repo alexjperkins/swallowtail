@@ -31,13 +31,7 @@ func (d *discordPager) Page(ctx context.Context, userID, msg string) error {
 
 	client := discordproto.NewDiscordClient(conn)
 
-	hashedContent, err := util.Sha256Hash(msg)
-	if err != nil {
-		return terrors.Augment(err, "Failed to page account; error hashing message content", map[string]string{
-			"user_id": userID,
-		})
-	}
-
+	hashedContent := util.Sha256Hash(msg)
 	if _, err = (client.SendMsgToPrivateChannel(ctx, &discordproto.SendMsgToPrivateChannelRequest{
 		UserId:   userID,
 		Content:  msg,

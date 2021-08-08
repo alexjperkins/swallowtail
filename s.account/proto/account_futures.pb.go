@@ -9,6 +9,7 @@ import (
 )
 
 // --- ReadAccount --- //
+
 type ReadAccountFuture struct {
 	closer  func() error
 	errc    chan error
@@ -45,6 +46,7 @@ func (r *ReadAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	if err != nil {
 		errc <- err
 		return &ReadAccountFuture{
+			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
 			resultc: resultc,
@@ -55,10 +57,6 @@ func (r *ReadAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		defer func() {
-			cancel()
-		}()
-
 		rsp, err := c.ReadAccount(ctx, r)
 		if err != nil {
 			errc <- err
@@ -68,8 +66,80 @@ func (r *ReadAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	}()
 
 	return &ReadAccountFuture{
-		closer: conn.Close,
-		errc:   errc,
-		ctx:    ctx,
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
+// --- Page Account --- //
+
+type PageAccountFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *PageAccountResponse
+	ctx     context.Context
+}
+
+func (a *PageAccountFuture) Response() (*PageAccountResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "page_account", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *PageAccountRequest) Send(ctx context.Context) *PageAccountFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *PageAccountRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *PageAccountFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *PageAccountResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &PageAccountFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewAccountClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.PageAccount(ctx, r)
+		if err != nil {
+			errc <- err
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &PageAccountFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
 	}
 }
