@@ -144,7 +144,7 @@ func (r *PageAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	}
 }
 
-// --- Page Account --- //
+// --- Add Exchange --- //
 
 type AddExchangeFuture struct {
 	closer  func() error
