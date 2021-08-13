@@ -44,7 +44,7 @@ func portfolioCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch strings.ToLower(tokens[1]) {
 	case "create":
 		if len(tokens) < 3 {
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@:%s, bad args! Usage: %s>", m.Author.ID, portfolioCommandUsage))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@:%s>, bad args! Usage: %s", m.Author.ID, portfolioCommandUsage))
 			return
 		}
 
@@ -71,6 +71,8 @@ func portfolioCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s>, here are your sheets\n\n%s", m.Author.ID, strings.Join(sheetsMsgArr, "\n")))
+	case "register":
+		// TODO
 	}
 }
 
@@ -97,4 +99,15 @@ func listPortfolioSheets(userID string) ([]*googlesheetsproto.SheetResponse, err
 		return nil, err
 	}
 	return rsp.Sheets, nil
+}
+
+func registerPortfolioSheet(userID, spreadsheetID, sheetName string) error {
+	if _, err := (&googlesheetsproto.RegisterNewPortfolioSheetRequest{
+		UserId:        userID,
+		SpreadsheetId: spreadsheetID,
+		SheetName:     sheetName,
+	}).Send(context.Background()).Response(); err != nil {
+		return err
+	}
+	return nil
 }
