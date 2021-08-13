@@ -87,6 +87,12 @@ var (
 			Bio:            "Similar to Kaleo, great alt coin trader, she also shares solid algos",
 			Twitter:        "https://twitter.com/ShardiB2",
 		},
+		"Pentosh1": {
+			Id:             "1138993163706753029",
+			Name:           "Pentosh1",
+			DiscordChannel: discordproto.DiscordSatoshiTradersChannel,
+			Twitter:        "https://twitter.com/Pentosh1",
+		},
 
 		/// --- Twitter Channels --- ///
 
