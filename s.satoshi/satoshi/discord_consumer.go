@@ -102,12 +102,23 @@ func handleModMessages(
 		msgs := []*SatoshiConsumerMessage{}
 		for i, pc := range parsedContent {
 			// First lets check if the content is part of any 1-10k challenge.
-			if contains1To10kChallenge(m.Author.Username, strings.ToLower(pc.Content)) {
-				slog.Debug(ctx, "1-10k challenge message received: %s", pc.Content)
+			switch {
+			case containsAstekz1To10kChallenge(m.Author.Username, strings.ToLower(pc.Content)):
+				slog.Debug(ctx, "Astekz 1-10k challenge message received: %s", pc.Content)
 				msg := &SatoshiConsumerMessage{
 					ConsumerID:       discordConsumerID,
 					DiscordChannelID: discordproto.DiscordSatoshiGeneralChannel,
 					Message:          warning("1-10k challenge update from Astekz", pc.Content),
+					Created:          time.Now(),
+					IsActive:         isActive,
+				}
+				msgs = append(msgs, msg)
+			case containsRego1To10kChallenge(m.Author.Username, strings.ToLower(pc.Content)):
+				slog.Debug(ctx, "Rego 1-10k challenge message received: %s", pc.Content)
+				msg := &SatoshiConsumerMessage{
+					ConsumerID:       discordConsumerID,
+					DiscordChannelID: discordproto.DiscordSatoshiFuturesChannel,
+					Message:          warning("1-10k challenge update from Rego", pc.Content),
 					Created:          time.Now(),
 					IsActive:         isActive,
 				}
@@ -229,7 +240,7 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	return msgList, nil
 }
 
-func contains1To10kChallenge(modUsername string, content string) bool {
+func containsAstekz1To10kChallenge(modUsername string, content string) bool {
 	var (
 		contains1k     bool
 		contains10k    bool
@@ -257,6 +268,36 @@ func contains1To10kChallenge(modUsername string, content string) bool {
 	}
 
 	return contains1k && contains10k && containsAstekz
+}
+
+func containsRego1To10kChallenge(modUsername, content string) bool {
+	var (
+		contains1k   bool
+		contains10k  bool
+		containsRego bool
+	)
+
+	if strings.Contains(strings.ToLower(modUsername), "rego") {
+		containsRego = true
+	}
+
+	tokens := strings.Fields(content)
+	for _, token := range tokens {
+		if contains1k && contains10k && containsRego {
+			return true
+		}
+
+		token := strings.ToLower(token)
+		if strings.Contains(token, "1k") {
+			contains1k = true
+		}
+
+		if strings.Contains(token, "10k") {
+			contains10k = true
+		}
+	}
+
+	return containsRego && contains1k && contains10k
 }
 
 // containsTicker checks if the contain contains a ticker that is traded on Binance
