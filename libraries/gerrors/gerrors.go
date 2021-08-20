@@ -109,6 +109,11 @@ func FailedPrecondition(msg string, params map[string]string) error {
 	return New(ErrFailedPrecondition, msg, params)
 }
 
+// BadParam ...
+func BadParam(msg string, params map[string]string) error {
+	return New(ErrBadParam, msg, params)
+}
+
 // Unauthenticated ...
 func Unauthenticated(msg string, params map[string]string) error {
 	return New(ErrUnauthenticated, msg, params)

@@ -11,6 +11,7 @@ import (
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.googlesheets/dao"
 	"swallowtail/s.googlesheets/domain"
 	"swallowtail/s.googlesheets/spreadsheet"
@@ -171,15 +172,9 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 
 					// Fetch latest price.
 					rsp, err := getLatestPriceBySymbol(ctx, row.Ticker, assetPair)
-					if err != nil {
-						slog.Error(ctx, "Failed to get latest price by symbol: %v", err)
-					}
-
-					latestPrice := rsp.LatestPrice
 					switch {
 					case
-						terrors.Is(err, terrors.ErrRateLimited),
-						terrors.Is(err, terrors.ErrTimeout):
+						gerrors.Is(err, gerrors.ErrDeadlineExceeded):
 						// This is fine; we can retry on the next attempt.
 						return
 					case err != nil:
@@ -190,7 +185,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 						return
 					}
 
-					row.CurrentPrice = float64(latestPrice)
+					row.CurrentPrice = float64(rsp.GetLatestPrice())
 
 					// Refresh our row with our latest current price & reset our list.
 					row.Refresh()

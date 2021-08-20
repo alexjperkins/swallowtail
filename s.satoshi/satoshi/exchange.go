@@ -24,6 +24,7 @@ const (
 
 	Exchanges:
 	1. binance
+	2. ftx
 	`
 )
 

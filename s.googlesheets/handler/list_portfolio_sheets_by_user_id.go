@@ -2,10 +2,9 @@ package handler
 
 import (
 	"context"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.googlesheets/dao"
 	googlesheetsproto "swallowtail/s.googlesheets/proto"
-
-	"github.com/monzo/terrors"
 )
 
 // ListSheetsByUserID ...
@@ -14,7 +13,7 @@ func (s *GooglesheetsService) ListSheetsByUserID(
 ) (*googlesheetsproto.ListSheetsByUserIDResponse, error) {
 	switch {
 	case in.UserId == "":
-		return nil, terrors.PreconditionFailed("missing_param.user_id", "Missing param: user_id", nil)
+		return nil, gerrors.FailedPrecondition("missing_param.user_id", nil)
 	}
 
 	errParams := map[string]string{
@@ -23,7 +22,7 @@ func (s *GooglesheetsService) ListSheetsByUserID(
 
 	sheets, err := dao.ListSheetsByUserID(ctx, in.UserId)
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to list sheets by user id", errParams)
+		return nil, gerrors.Augment(err, "Failed to list sheets by user id", errParams)
 	}
 
 	protoSheets := []*googlesheetsproto.SheetResponse{}
@@ -31,6 +30,8 @@ func (s *GooglesheetsService) ListSheetsByUserID(
 		protoSheets = append(protoSheets, &googlesheetsproto.SheetResponse{
 			Url:       sheet.URL,
 			SheetType: sheet.SheetType,
+			SheetName: sheet.SheetID,
+			SheetId:   sheet.GooglesheetID,
 		})
 	}
 

@@ -8,8 +8,6 @@ service googlesheets {
     rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {}
 
     rpc ListSheetsByUserID (ListSheetsByUserIDRequest) returns (ListSheetsByUserIDResponse) {}
-
-    rpc TmpGetLatestPriceBySymbol (TmpGetLatestPriceBySymbolRequest) returns (TmpGetLatestPriceBySymbolResponse) {}
 }
 
 enum SheetType {
@@ -31,7 +29,7 @@ message CreatePortfolioSheetResponse {
 
 message RegisterNewPortfolioSheetRequest {
     string user_id = 1;
-    string spreadsheet_id = 2;
+    string url = 2;
     string sheet_name = 3;
     string email = 4;
 }
@@ -41,6 +39,8 @@ message RegisterNewPortfolioSheetResponse {}
 message SheetResponse {
     string url = 1;
     string sheet_type = 2;
+    string sheet_name = 3;
+    string sheet_id = 4;
 }
 
 message ListSheetsByUserIDRequest {
@@ -49,13 +49,4 @@ message ListSheetsByUserIDRequest {
 
 message ListSheetsByUserIDResponse {
     repeated SheetResponse sheets = 1;
-}
-
-message TmpGetLatestPriceBySymbolRequest {
-    string asset_symbol = 1;
-    string asset_pair = 2;
-}
-
-message TmpGetLatestPriceBySymbolResponse {
-    float latest_price = 1;
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/monzo/slog"
-	"github.com/monzo/terrors"
 
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
@@ -21,9 +20,9 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 ) (*googlesheetsproto.CreatePortfolioSheetResponse, error) {
 	switch {
 	case in.UserId == "":
-		return nil, terrors.PreconditionFailed("missing-param.user-id", "Failed to create googlesheet; missing user id", nil)
+		return nil, gerrors.BadParam("missing_param.user_id", nil)
 	case in.Email == "":
-		return nil, terrors.BadRequest("missing-param.email", "Failed to create googlesheet; cannot share with no email", nil)
+		return nil, gerrors.BadParam("missing_param.email", nil)
 	}
 
 	errParams := map[string]string{
@@ -36,8 +35,8 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 		UserId: in.UserId,
 	}).Send(ctx).Response()
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "account-not-found"):
-		return nil, gerrors.FailedPrecondition("account-not-registered: User cannot create portfolio without registered account", errParams)
+	case gerrors.Is(err, gerrors.ErrNotFound, "account_not_found"):
+		return nil, gerrors.FailedPrecondition("account_not_registered: User cannot create portfolio without registered account", errParams)
 	case err != nil:
 		return nil, gerrors.Augment(err, "Failed to create portfolio", errParams)
 	}
@@ -45,19 +44,20 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 	// Prevent user spam
 	sheets, err := dao.ListSheetsByUserID(ctx, in.GetUserId())
 	switch {
-	case terrors.Is(err, "not_found.no-googlesheets-registered-for-user"):
+	case gerrors.Is(err, gerrors.ErrNotFound, "not_found.no_googlesheets_registered_for_user"):
 		// This is fine.
 	case err != nil:
-		return nil, terrors.Augment(err, "Failed to create portfolio sheet; couldn't check existing sheets for user", errParams)
+		return nil, gerrors.Augment(err, "Failed to create portfolio sheet; couldn't check existing sheets for user", errParams)
 	}
+
 	if len(sheets) >= 5 {
-		return nil, terrors.PreconditionFailed("max-portfolio-sheets-reached", "User already has a maximum of 5 portfolio sheets", errParams)
+		return nil, gerrors.FailedPrecondition("max_portfolio_sheets_reached", errParams)
 	}
 
 	// Create our portfolio sheet.
 	ss, err := client.CreateSheet(ctx, templates.PortfolioSheetType, in.GetEmail())
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to create googlesheet", errParams)
+		return nil, gerrors.Augment(err, "Failed to create googlesheet", errParams)
 	}
 
 	slog.Info(ctx, "Created sheet: %s, %s", in.Email, ss.SpreadsheetUrl)
@@ -68,7 +68,7 @@ func (s *GooglesheetsService) CreatePortfolioSheet(
 	slog.Warn(nil, "%+v", sheet)
 
 	if err := dao.RegisterGooglesheet(ctx, sheet); err != nil {
-		return nil, terrors.Augment(err, "Failed to create googlesheet", errParams)
+		return nil, gerrors.Augment(err, "Failed to create googlesheet", errParams)
 	}
 
 	return &googlesheetsproto.CreatePortfolioSheetResponse{

@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	// ScopeSpreadsheets the scope we use for our spreadsheets
+	// ScopeSpreadsheets the scope we use for our spreadsheets.
 	ScopeSpreadsheets = "https://www.googleapis.com/auth/spreadsheets"
-	ScopeDrive        = "https://www.googleapis.com/auth/drive"
+
+	// ScopeDrive is the scope we use for google drive.
+	ScopeDrive = "https://www.googleapis.com/auth/drive"
 )
 
 var (
@@ -29,6 +31,7 @@ type GooglesheetsClient interface {
 	Values(ctx context.Context, sheetID string, rowsRange string) ([][]interface{}, error)
 	UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error
 	CreateSheet(ctx context.Context, sheetType templates.SheetType, emailAddress string) (*sheets.Spreadsheet, error)
+	RegisterSheet(ctx context.Context, speadsheetID, emailAddress string) error
 }
 
 // Init sets a new google sheets client for interacting with googlesheets.
@@ -79,8 +82,17 @@ func UpdateRows(ctx context.Context, sheetID string, rowsRange string, values []
 
 // CreateSheet ...
 func CreateSheet(ctx context.Context, sheetType templates.SheetType, emailAddress string) (*sheets.Spreadsheet, error) {
-	// TODO: metrics & opnetracing.
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Create new googlesheets spreadsheet")
+	defer span.Finish()
 	return client.CreateSheet(ctx, sheetType, emailAddress)
+}
+
+// RegisterSheet simply gives the client access to the given spreadsheet.
+func RegisterSheet(ctx context.Context, spreadsheetID, emailAddress string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Register googlesheets spreadsheet")
+	defer span.Finish()
+	return client.RegisterSheet(ctx, spreadsheetID, emailAddress)
+
 }
 
 func isValidHTTPStatusCode(c int) bool {
