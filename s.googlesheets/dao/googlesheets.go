@@ -74,7 +74,9 @@ func ListSheetsByUserID(ctx context.Context, userID string) ([]*domain.Googleshe
 
 	switch len(sheets) {
 	case 0:
-		return nil, gerrors.NotFound("no-googlesheets-registered-for-user", nil)
+		return nil, gerrors.NotFound("not_found.no_googlesheets_registered_for_user", map[string]string{
+			"user_id": userID,
+		})
 	default:
 		return sheets, nil
 	}

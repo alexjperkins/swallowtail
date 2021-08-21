@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/util"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
@@ -48,7 +49,13 @@ func (c *Command) Exec(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	// Check Usage
+	// Check Privacy.
+	if c.Private && m.GuildID != "" {
+		_, err := s.ChannelMessageSend(m.ChannelID, formatNonPublicMsg(m.Author.ID))
+		return gerrors.Augment(err, "failed_to_page_user.private", nil)
+	}
+
+	// Check Usage.
 	if len(tokens) > 0 && strings.ToLower(tokens[0]) == "help" {
 		_, err := s.ChannelMessageSend(m.ChannelID, formatUsageMsg(m.Author.ID, c.Usage))
 		return gerrors.Augment(err, "failed_to_page_user.help", nil)
@@ -58,12 +65,6 @@ func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Sessio
 	if len(tokens) < c.MinimumNumberOfArgs {
 		_, err := s.ChannelMessageSend(m.ChannelID, formatUsageMsg(m.Author.ID, c.Usage))
 		return gerrors.Augment(err, "failed_to_page_user.bad_params", nil)
-	}
-
-	// Check if command should be in DMs
-	if c.Private && m.GuildID != "" {
-		_, err := s.ChannelMessageSend(m.ChannelID, formatNonPublicMsg(m.Author.ID))
-		return gerrors.Augment(err, "failed_to_page_user.private", nil)
 	}
 
 	// If we have no args; then we must not have any subcommand; so let's try the parent command default.
@@ -97,11 +98,11 @@ func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Sessio
 }
 
 func formatUsageMsg(userID, usage string) string {
-	return fmt.Sprintf(":wave: <@%s> Usage: %s", userID, usage)
+	return fmt.Sprintf(":wave: <@%s> %s", userID, util.WrapAsCodeBlock(usage))
 }
 
 func formatNonPublicMsg(userID string) string {
-	return fmt.Sprintf(":wave: <@%s>, Please DM satoshi this command instead. Thanks", userID)
+	return fmt.Sprintf(":wave: <@%s>, Please DM satoshi this command instead, the response may contain sensitive information. Thanks", userID)
 }
 
 func formatFailureMsg(userID, failureMsg string, err error) string {
