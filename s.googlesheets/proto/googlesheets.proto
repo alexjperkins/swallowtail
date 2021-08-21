@@ -8,6 +8,8 @@ service googlesheets {
     rpc RegisterNewPortfolioSheet (RegisterNewPortfolioSheetRequest) returns (RegisterNewPortfolioSheetResponse) {}
 
     rpc ListSheetsByUserID (ListSheetsByUserIDRequest) returns (ListSheetsByUserIDResponse) {}
+
+    rpc DeleteSheetBySheetID (DeleteSheetBySheetIDRequest) returns (DeleteSheetBySheetIDResponse) {}
 }
 
 enum SheetType {
@@ -34,13 +36,15 @@ message RegisterNewPortfolioSheetRequest {
     string email = 4;
 }
 
-message RegisterNewPortfolioSheetResponse {}
+message RegisterNewPortfolioSheetResponse {
+    string service_account_email = 1;
+}
 
 message SheetResponse {
     string url = 1;
     string sheet_type = 2;
     string sheet_name = 3;
-    string sheet_id = 4;
+    string googlesheet_id = 4;
 }
 
 message ListSheetsByUserIDRequest {
@@ -50,3 +54,10 @@ message ListSheetsByUserIDRequest {
 message ListSheetsByUserIDResponse {
     repeated SheetResponse sheets = 1;
 }
+
+message DeleteSheetBySheetIDRequest {
+    string googlesheet_id = 1;
+    string user_id = 2;
+}
+
+message DeleteSheetBySheetIDResponse {}

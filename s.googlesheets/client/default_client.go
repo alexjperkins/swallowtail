@@ -16,7 +16,8 @@ import (
 type googlesheetsClient struct {
 	s *sheets.Service
 	// We need this to handle permissions; super annoying.
-	d *drive.Service
+	d                   *drive.Service
+	serviceAccountEmail string
 }
 
 func (g *googlesheetsClient) Ping(ctx context.Context) bool {
@@ -110,25 +111,25 @@ func (g *googlesheetsClient) CreateSheet(ctx context.Context, sheetType template
 	return s, nil
 }
 
-func (g *googlesheetsClient) RegisterSheet(ctx context.Context, spreadsheetID, emailAddress string) error {
+func (g *googlesheetsClient) RegisterSheet(ctx context.Context, spreadsheetID string) (string, error) {
 	errParams := map[string]string{
-		"spreadsheet_id": spreadsheetID,
-		"email_address":  emailAddress,
+		"spreadsheet_id":        spreadsheetID,
+		"service_account_email": g.serviceAccountEmail,
 	}
 
-	// Give permissions via the drive api.
+	// Give permissions to passed email via the drive api.
 	givePermissions := g.d.Permissions.Create(spreadsheetID, &drive.Permission{
-		EmailAddress: emailAddress,
+		EmailAddress: g.serviceAccountEmail,
 		Role:         "writer",
 		Type:         "user",
 	})
 	givePermissions.Context(ctx)
 
 	if _, err := givePermissions.Do(); err != nil {
-		return gerrors.Augment(err, "Failed to create a googlesheet", errParams)
+		return "", gerrors.Augment(err, "Failed to create a googlesheet", errParams)
 	}
 
-	slog.Info(ctx, "Gave %s %s permissions", emailAddress, spreadsheetID)
+	slog.Info(ctx, "Gave %s permissions to service account")
 
-	return nil
+	return g.serviceAccountEmail, nil
 }

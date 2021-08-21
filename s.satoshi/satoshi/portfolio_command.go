@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	googlesheetsproto "swallowtail/s.googlesheets/proto"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
+
+	googlesheetsproto "swallowtail/s.googlesheets/proto"
 )
 
 const (
@@ -17,11 +17,13 @@ const (
 	portfolioCommandPrefix = "!portfolio"
 	portfolioCommandUsage  = `
 	Usage: !portfolio <operation> <args>
-	Example !portfolio create alexperkins.crypto@gmail.com
+	Example: !portfolio create alexperkins.crypto@gmail.com
 
 	Operations:
-	1: create: creates a new portfolio in googlesheets: args [email_address].
-	2: list: list all your googlesheets: args [].
+	1. create: creates a new portfolio in googlesheets: args [email_address].
+	2. list: list all your googlesheets: args [].
+	3. register: register a previously created sheet: args [googlesheet_url, sheet_name, email_address]
+	4. delete: deletes a googlesheet by googlesheet id, you can find this by the "list" command: args [googlesheet_id]
 	`
 )
 
@@ -72,7 +74,34 @@ func portfolioCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s>, here are your sheets\n\n%s", m.Author.ID, strings.Join(sheetsMsgArr, "\n")))
 	case "register":
-		// TODO
+		if len(tokens) < 5 {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@:%s>, bad args! Usage: %s", m.Author.ID, portfolioCommandUsage))
+		}
+
+		url, sheetName, email := tokens[2], tokens[3], tokens[4]
+		shareEmail, err := registerPortfolioSheet(m.Author.ID, url, sheetName, email)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(
+				":wave: <@:%s>, Failed to register sheet! Please check that the url is correct", m.Author.ID,
+			))
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(
+			":rocket: <@:%s>, Googlesheet registered! Please share the sheet with this email to allow satoshi access to sync: %s", m.Author.ID, shareEmail,
+		))
+
+	case "delete":
+		if len(tokens) < 3 {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@:%s>, bad args! Usage: %s", m.Author.ID, portfolioCommandUsage))
+		}
+
+		sheetID := tokens[2]
+		if err := deletePortfolioSheet(sheetID, m.Author.ID); err != nil {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(
+				":wave: <@:%s>, Failed to delete sheet! Please check that the id is correct and the sheet exists", m.Author.ID,
+			))
+		}
 	}
 }
 
@@ -101,11 +130,24 @@ func listPortfolioSheets(userID string) ([]*googlesheetsproto.SheetResponse, err
 	return rsp.Sheets, nil
 }
 
-func registerPortfolioSheet(userID, spreadsheetID, sheetName string) error {
-	if _, err := (&googlesheetsproto.RegisterNewPortfolioSheetRequest{
+func registerPortfolioSheet(userID, url, sheetName, email string) (string, error) {
+	rsp, err := (&googlesheetsproto.RegisterNewPortfolioSheetRequest{
+		UserId:    userID,
+		Url:       url,
+		SheetName: sheetName,
+		Email:     email,
+	}).Send(context.Background()).Response()
+	if err != nil {
+		return "", err
+	}
+
+	return rsp.GetServiceAccountEmail(), nil
+}
+
+func deletePortfolioSheet(googlesheetID, userID string) error {
+	if _, err := (&googlesheetsproto.DeleteSheetBySheetIDRequest{
+		GooglesheetId: googlesheetID,
 		UserId:        userID,
-		SpreadsheetId: spreadsheetID,
-		SheetName:     sheetName,
 	}).Send(context.Background()).Response(); err != nil {
 		return err
 	}

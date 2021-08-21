@@ -15,6 +15,7 @@ type Command struct {
 	MinimumNumberOfArgs int
 	Usage               string
 	exec                func(tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error
+	SubCommands         map[string]*Command
 }
 
 // Exec ...

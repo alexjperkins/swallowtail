@@ -36,7 +36,7 @@ func ReadAccountByUserID(ctx context.Context, userID string) (*domain.Account, e
 
 	err := db.Select(ctx, &accounts, sql, userID)
 	if err != nil {
-		return nil, gerrors.Propagate(gerrors.ErrUnknown, err, nil)
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	switch len(accounts) {

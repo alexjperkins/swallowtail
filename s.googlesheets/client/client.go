@@ -19,6 +19,9 @@ const (
 
 	// ScopeDrive is the scope we use for google drive.
 	ScopeDrive = "https://www.googleapis.com/auth/drive"
+
+	// The email for the production service account.
+	serviceAccountEmail = "swallowtail-10@stone-timing-307620.iam.gserviceaccount.com"
 )
 
 var (
@@ -31,7 +34,7 @@ type GooglesheetsClient interface {
 	Values(ctx context.Context, sheetID string, rowsRange string) ([][]interface{}, error)
 	UpdateRows(ctx context.Context, sheetID, rowsRange string, values [][]interface{}) error
 	CreateSheet(ctx context.Context, sheetType templates.SheetType, emailAddress string) (*sheets.Spreadsheet, error)
-	RegisterSheet(ctx context.Context, speadsheetID, emailAddress string) error
+	RegisterSheet(ctx context.Context, speadsheetID string) (string, error)
 }
 
 // Init sets a new google sheets client for interacting with googlesheets.
@@ -59,8 +62,9 @@ func Init(ctx context.Context) error {
 	}
 
 	client = &googlesheetsClient{
-		s: s,
-		d: d,
+		s:                   s,
+		d:                   d,
+		serviceAccountEmail: serviceAccountEmail,
 	}
 
 	return nil
@@ -88,10 +92,10 @@ func CreateSheet(ctx context.Context, sheetType templates.SheetType, emailAddres
 }
 
 // RegisterSheet simply gives the client access to the given spreadsheet.
-func RegisterSheet(ctx context.Context, spreadsheetID, emailAddress string) error {
+func RegisterSheet(ctx context.Context, spreadsheetID string) (string, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Register googlesheets spreadsheet")
 	defer span.Finish()
-	return client.RegisterSheet(ctx, spreadsheetID, emailAddress)
+	return client.RegisterSheet(ctx, spreadsheetID)
 
 }
 

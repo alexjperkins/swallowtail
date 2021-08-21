@@ -13,7 +13,7 @@ import (
 )
 
 // Propagate converts a basic error into a gerror.
-func Propagate(code codes.Code, err error, params map[string]string) error {
+func Propagate(err error, code codes.Code, params map[string]string) error {
 	return New(code, err.Error(), params)
 }
 

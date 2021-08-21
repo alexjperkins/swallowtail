@@ -21,17 +21,20 @@ func (s *GooglesheetsService) ListSheetsByUserID(
 	}
 
 	sheets, err := dao.ListSheetsByUserID(ctx, in.UserId)
-	if err != nil {
+	switch {
+	case gerrors.Is(err, gerrors.ErrNotFound, "no-googlesheets-registered-for-user"):
+		// continue
+	case err != nil:
 		return nil, gerrors.Augment(err, "Failed to list sheets by user id", errParams)
 	}
 
 	protoSheets := []*googlesheetsproto.SheetResponse{}
 	for _, sheet := range sheets {
 		protoSheets = append(protoSheets, &googlesheetsproto.SheetResponse{
-			Url:       sheet.URL,
-			SheetType: sheet.SheetType,
-			SheetName: sheet.SheetID,
-			SheetId:   sheet.GooglesheetID,
+			Url:           sheet.URL,
+			SheetType:     sheet.SheetType,
+			SheetName:     sheet.SheetID,
+			GooglesheetId: sheet.GooglesheetID,
 		})
 	}
 

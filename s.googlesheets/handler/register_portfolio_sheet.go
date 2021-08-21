@@ -4,6 +4,7 @@ import (
 	"context"
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
+	"swallowtail/s.googlesheets/client"
 	"swallowtail/s.googlesheets/dao"
 	"swallowtail/s.googlesheets/domain"
 	googlesheetsproto "swallowtail/s.googlesheets/proto"
@@ -51,14 +52,19 @@ func (s *GooglesheetsService) RegisterNewPortfolioSheet(
 	// already reached the limit.
 	sheets, err := dao.ListSheetsByUserID(ctx, in.UserId)
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "not_found.no-googlesheets-registered-for-user"):
+	case gerrors.Is(err, gerrors.ErrNotFound, "no-googlesheets-registered-for-user"):
 		// This is fine.
 	case err != nil:
 		return nil, gerrors.Augment(err, "Failed to create portfolio sheet; couldn't check existing sheets for user", errParams)
 	}
 
-	if len(sheets) >= 15 {
+	if len(sheets) >= 5 {
 		return nil, gerrors.FailedPrecondition("maximum_sheets_reached_for_user", errParams)
+	}
+
+	shareEmail, err := client.RegisterSheet(ctx, spreadsheetID)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_register_googlesheet", errParams)
 	}
 
 	if err := (dao.RegisterGooglesheet(ctx, &domain.Googlesheet{
@@ -75,5 +81,7 @@ func (s *GooglesheetsService) RegisterNewPortfolioSheet(
 		return nil, gerrors.Augment(err, "failed_to_register_googlesheet", errParams)
 	}
 
-	return &googlesheetsproto.RegisterNewPortfolioSheetResponse{}, nil
+	return &googlesheetsproto.RegisterNewPortfolioSheetResponse{
+		ServiceAccountEmail: shareEmail,
+	}, nil
 }
