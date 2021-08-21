@@ -9,13 +9,17 @@ import (
 )
 
 const (
-	pingCommandID = "ping"
+	pingCommandID    = "ping"
+	pingCommandUsage = `
+	Usage: !ping
+	Description: command to check if satoshi bot is live.
+	`
 )
 
 func init() {
 	register(pingCommandID, &Command{
 		ID:      pingCommandID,
-		Usage:   `!ping`,
+		Usage:   pingCommandUsage,
 		Handler: pingCommand,
 	})
 }

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	portfolioCommandID    = "porfolio"
+	portfolioCommandID    = "portfolio"
 	portfolioCommandUsage = `
 	Usage: !portfolio <subcommand> <args>
 	Example: !portfolio create alexperkins.crypto@gmail.com

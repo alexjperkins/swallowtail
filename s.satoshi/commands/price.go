@@ -14,9 +14,11 @@ import (
 const (
 	priceCommandID    = "price"
 	priceCommandUsage = `
-	Usage: !price [symbols... | all ]
+	Usage: !price <[symbols... | all ]>
+	Example: !price BTC ETH LINK
+	Description: price command fetches the latest price from coingecko for the symbols provided.
 
-	SubCommand:
+	SubCommands:
 	1. all: returns the price of all coins that are registered as default to satoshi.
 	`
 )
@@ -46,7 +48,7 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	symbols := tokens[1:]
+	symbols := tokens
 	pricesMsg := priceBotSvc.GetPricesAsFormattedString(ctx, symbols, false)
 
 	// Best Effort.

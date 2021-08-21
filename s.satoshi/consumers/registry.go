@@ -18,15 +18,9 @@ func register(id string, consumer Consumer) {
 	registry[id] = consumer
 }
 
-// List lists all consumers registered to satoshi.
-func List() []Consumer {
+// Registry returns the registry of all consumers registered to satoshi.
+func Registry() map[string]Consumer {
 	mu.RLock()
 	defer mu.RUnlock()
-
-	commands := []Consumer{}
-	for _, c := range registry {
-		commands = append(commands, c)
-	}
-
-	return commands
+	return registry
 }
