@@ -1,4 +1,4 @@
-package satoshi
+package consumers
 
 import (
 	"os"

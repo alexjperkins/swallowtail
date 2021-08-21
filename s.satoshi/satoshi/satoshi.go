@@ -3,10 +3,13 @@ package satoshi
 import (
 	"context"
 	"fmt"
-	"swallowtail/libraries/util"
-	discord "swallowtail/s.discord/client"
 
 	"github.com/monzo/slog"
+
+	"swallowtail/libraries/util"
+	discord "swallowtail/s.discord/client"
+	"swallowtail/s.satoshi/commands"
+	"swallowtail/s.satoshi/consumers"
 )
 
 var (
@@ -24,15 +27,15 @@ type Satoshi interface {
 
 func New(withJitter bool) Satoshi {
 	dc := discord.New(SatoshiBotID, satoshiToken, true)
-	for id, command := range commandRegistry {
+	for id, command := range commands.List() {
 		slog.Info(context.TODO(), "Registering command %s to %s", id, SatoshiBotID)
-		dc.AddHandler(command)
+		dc.AddHandler(command.Exec)
 	}
 	return &satoshi{
 		dc:             dc,
 		withJitter:     withJitter,
-		consumers:      consumerRegistry,
-		consumerStream: make(chan *SatoshiConsumerMessage, 32),
+		consumers:      consumers.Registry(),
+		consumerStream: make(chan *consumers.ConsumerMessage, 32),
 		done:           make(chan struct{}, 1),
 	}
 }
@@ -40,8 +43,8 @@ func New(withJitter bool) Satoshi {
 type satoshi struct {
 	dc             discord.DiscordClient
 	withJitter     bool
-	consumers      map[string]SatoshiConsumer
-	consumerStream chan *SatoshiConsumerMessage
+	consumers      map[string]consumers.Consumer
+	consumerStream chan *consumers.ConsumerMessage
 	done           chan struct{}
 }
 

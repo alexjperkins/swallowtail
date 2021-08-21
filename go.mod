@@ -80,7 +80,7 @@ require (
 	golang.org/x/sys v0.0.0-20210820121016-41cdb8703e55 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.54.0 // indirect
-	google.golang.org/genproto v0.0.0-20210820002220-43fce44e7af1 // indirect
+	google.golang.org/genproto v0.0.0-20210821163610-241b8fcbd6c8 // indirect
 	google.golang.org/grpc v1.40.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect

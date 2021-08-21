@@ -16,9 +16,10 @@ const (
 	accountCommandID = "account"
 	accountUsage     = `
 	Usage: !account <subcommand>
+	Description: command for managing satoshi account
 
 	SubCommands:
-	1. register
+	1. register: registers a new account to satoshi
 	`
 )
 

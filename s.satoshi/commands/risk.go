@@ -10,12 +10,18 @@ import (
 )
 
 const (
-	riskCommandID = "risk"
+	riskCommandID    = "risk"
+	riskCommandUsage = `
+	Usage: !risk <entry> <stop loss> <account size> <percentage of account>
+	Example: !risk 41000 40000 1000 0.05
+	Description: a risk calculator; determine how many contracts to buy / sell
+	`
 )
 
 func init() {
 	register(riskCommandID, &Command{
 		ID:                  riskCommandID,
+		Usage:               riskCommandUsage,
 		MinimumNumberOfArgs: 4,
 		Handler:             riskCalculator,
 	})

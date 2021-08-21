@@ -30,11 +30,11 @@ type Command struct {
 type CommandHandler func(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error
 
 // Exec executes the given command; recursing down the command tree if a subcommand is detected.
-func (c *Command) Exec(s *discordgo.Session, m *discordgo.MessageCreate) error {
+func (c *Command) Exec(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Check Prefix
 	prefix := fmt.Sprintf("%s%s", commandIdentifier, c.ID)
 	if !strings.HasPrefix(m.Content, prefix) {
-		return nil
+		return
 	}
 
 	ctx := context.Background()
@@ -42,7 +42,9 @@ func (c *Command) Exec(s *discordgo.Session, m *discordgo.MessageCreate) error {
 
 	slog.Trace(ctx, "Received command: %s with args: %v", c.ID, tokens[1:])
 
-	return c.exec(ctx, tokens[1:], s, m)
+	if err := c.exec(ctx, tokens[1:], s, m); err != nil {
+		slog.Info(ctx, "Parent command %s, failed with error: %v", c.ID, err)
+	}
 }
 
 func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
