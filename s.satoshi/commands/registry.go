@@ -18,7 +18,7 @@ func register(id string, command *Command) {
 	registry[id] = command
 }
 
-// List lists all commands registered to satoshi
+// List lists all commands registered to satoshi.
 func List() []*Command {
 	mu.RLock()
 	defer mu.RUnlock()

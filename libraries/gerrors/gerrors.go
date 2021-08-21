@@ -43,7 +43,6 @@ func Augment(err error, msg string, params map[string]string) error {
 	if !ok {
 		return terrors.Augment(err, "Failed to augment gerror", nil)
 	}
-
 	details := map[string]string{}
 	for k, v := range params {
 		details[k] = v
@@ -117,4 +116,8 @@ func BadParam(msg string, params map[string]string) error {
 // Unauthenticated ...
 func Unauthenticated(msg string, params map[string]string) error {
 	return New(ErrUnauthenticated, msg, params)
+}
+
+func Unimplemented(msg string, params map[string]string) error {
+	return New(ErrUnimplemented, msg, params)
 }

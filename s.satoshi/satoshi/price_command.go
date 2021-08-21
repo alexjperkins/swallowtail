@@ -48,7 +48,7 @@ func priceCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	)
 	// Handle the case for all; set channel to PriceBot channel if true.
 	if strings.ToLower(tokens[1]) == "all" {
-		symbols = coins.GetCoinSymbols()
+		symbols = coins.List()
 		channelID = discordproto.DiscordSatoshiPriceBotChannel
 		withGreeting = true
 	}
