@@ -2,21 +2,24 @@ package commands
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	"time"
 
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.satoshi/coins"
 	"swallowtail/s.satoshi/pricebot"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/monzo/slog"
 )
 
 const (
-	priceCommandID       = "price-comamnd"
-	priceCommandPrefix   = "!price"
-	priceCommandUsageMsg = ":wave: <@%s>: `Usage: !price [symbols... | all ]`\nExamples:\n`!price BTC ETH LTC`\n`!price all\n`"
+	priceCommandID     = "price-comamnd"
+	priceCommandPrefix = "!price"
+	priceCommandUsage  = `
+	Usage: !price [symbols... | all ]
+
+	SubCommand:
+	1. all: returns the price of all coins that are registered as default to satoshi.
+	`
 )
 
 var (
@@ -24,37 +27,45 @@ var (
 )
 
 func init() {
-	register(priceCommandID, &Command{})
+	register(priceCommandID, &Command{
+		ID:      priceCommandID,
+		Prefix:  priceCommandPrefix,
+		Usage:   priceCommandUsage,
+		Handler: priceCommand,
+		SubCommands: map[string]*SubCommand{
+			"all": {
+				ID:                  "all-price-command",
+				MinimumNumberOfArgs: 0,
+				Usage:               `!price all`,
+				Handler:             allPriceCommand,
+			},
+		},
+	})
 	priceBotSvc = pricebot.NewService(context.Background())
 }
 
-func priceCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Check if we're parsing the correct command
-	if !strings.HasPrefix(m.Content, priceCommandPrefix) {
-		return
-	}
+func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 
-	tokens := strings.Split(m.Content, " ")
-	if len(tokens) < 2 {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(priceCommandUsageMsg, m.Author.ID))
-		return
-	}
-	slog.Info(context.TODO(), "Received %s command, args: %v", priceCommandPrefix, tokens)
+	symbols := tokens[1:]
+	pricesMsg := priceBotSvc.GetPricesAsFormattedString(ctx, symbols, false)
 
-	var (
-		symbols      []string
-		channelID    = m.ChannelID
-		withGreeting bool
-	)
-	// Handle the case for all; set channel to PriceBot channel if true.
-	if strings.ToLower(tokens[1]) == "all" {
-		symbols = coins.List()
-		channelID = discordproto.DiscordSatoshiPriceBotChannel
-		withGreeting = true
-	}
-	symbols = tokens[1:]
-
-	pricesMsg := priceBotSvc.GetPricesAsFormattedString(nil, symbols, withGreeting)
 	// Best Effort.
-	s.ChannelMessageSend(channelID, pricesMsg)
+	s.ChannelMessageSend(m.ChannelID, pricesMsg)
+
+	return nil
+}
+
+func allPriceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	symbols := coins.List()
+	pricesMsg := priceBotSvc.GetPricesAsFormattedString(ctx, symbols, true)
+
+	// Best Effort
+	s.ChannelMessageSend(discordproto.DiscordSatoshiPriceBotChannel, pricesMsg)
+
+	return nil
 }
