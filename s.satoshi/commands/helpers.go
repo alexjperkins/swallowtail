@@ -2,7 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
 	accountproto "swallowtail/s.account/proto"
 
@@ -45,4 +47,15 @@ func contains(needle string, haystack []string) bool {
 		}
 	}
 	return false
+}
+
+func safeTokenParse(tokens []string, index int) (string, error) {
+	if index >= len(tokens) {
+		return "", gerrors.FailedPrecondition("failed_safe_token_parse", map[string]string{
+			"index":      strconv.Itoa(index),
+			"len_tokens": strconv.Itoa(len(tokens)),
+		})
+	}
+
+	return tokens[index], nil
 }

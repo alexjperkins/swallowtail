@@ -4,56 +4,47 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
+	"swallowtail/libraries/gerrors"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/monzo/slog"
 )
 
 const (
-	riskCommandID     = "risk-command"
-	riskCommandPrefix = "!risk"
+	riskCommandID = "risk"
 )
 
 func init() {
-	register(riskCommandID, &Command{})
+	register(riskCommandID, &Command{
+		ID:                  riskCommandID,
+		MinimumNumberOfArgs: 4,
+		Handler:             riskCalculator,
+	})
 }
 
-func riskCalculator(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if !strings.HasPrefix(m.Content, riskCommandPrefix) {
-		return
-	}
-
-	tokens := strings.Split(m.Content, " ")
-	if len(tokens) != 5 {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, `!risk usage: <entry> <stop loss> <account size> <percentage eg 0.05>`", m.Author.Username))
-		return
-	}
-	slog.Info(context.TODO(), "Received %s command, args: %v", riskCommandPrefix, tokens)
-
-	entry, err := strconv.ParseFloat(tokens[1], 64)
+func riskCalculator(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	entry, err := strconv.ParseFloat(tokens[0], 64)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse entry: %v into a float, please check.", m.Author.Username, tokens[1]))
-		return
+		return gerrors.Augment(err, "bad_param.failed_to_parse.entry", nil)
 	}
-	stopLoss, err := strconv.ParseFloat(tokens[2], 64)
+	stopLoss, err := strconv.ParseFloat(tokens[1], 64)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse stop loss: %v into a float, please check.", m.Author.Username, tokens[2]))
-		return
+		return gerrors.Augment(err, "bad_param.failed_to_parse.stop_loss", nil)
 	}
-	accountSize, err := strconv.ParseFloat(tokens[3], 64)
+	accountSize, err := strconv.ParseFloat(tokens[2], 64)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse accountSize: %v into a float, please check.", m.Author.Username, tokens[3]))
-		return
+		return gerrors.Augment(err, "bad_param.failed_to_parse.account_size", nil)
 	}
-	percentage, err := strconv.ParseFloat(tokens[4], 64)
+	percentage, err := strconv.ParseFloat(tokens[3], 64)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse percentage: %v into a float, please check.", m.Author.Username, tokens[4]))
-		return
+		return gerrors.Augment(err, "bad_param.failed_to_parse.percentage", nil)
 	}
 
 	contracts := calculateRisk(entry, stopLoss, accountSize, percentage)
 
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, you need to buy **%.2f** contracts for %v%% risk.", m.Author.Username, contracts, percentage*100))
-	return
+	return nil
 }

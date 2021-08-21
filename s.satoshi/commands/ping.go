@@ -9,14 +9,12 @@ import (
 )
 
 const (
-	pingCommandID     = "pingCommand"
-	pingCommandPrefix = "!ping"
+	pingCommandID = "ping"
 )
 
 func init() {
 	register(pingCommandID, &Command{
 		ID:      pingCommandID,
-		Prefix:  pingCommandPrefix,
 		Usage:   `!ping`,
 		Handler: pingCommand,
 	})

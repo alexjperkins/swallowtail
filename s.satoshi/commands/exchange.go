@@ -16,9 +16,8 @@ import (
 )
 
 const (
-	exchangeCommandID     = "exchange-command"
-	exchangeCommandPrefix = "!exchange"
-	exchangeUsage         = `
+	exchangeCommandID = "exchange"
+	exchangeUsage     = `
 	Usage: !exchange <subcommand>
 
 	Subcommands:
@@ -30,20 +29,21 @@ const (
 func init() {
 	register(exchangeCommandID, &Command{
 		ID:                  exchangeCommandID,
-		Prefix:              exchangeCommandPrefix,
 		Private:             true,
 		MinimumNumberOfArgs: 1,
 		Usage:               exchangeUsage,
 		Handler:             exchangeCommand,
-		SubCommands: map[string]*SubCommand{
+		SubCommands: map[string]*Command{
 			"register": {
-				ID:                  "register-exchange-command",
+				ID:                  "exchange-register",
+				Private:             true,
 				MinimumNumberOfArgs: 3,
 				Usage:               `Usage: !exchange register <exchange> <api-key> <secret-key>`,
 				Handler:             registerExchangeCommand,
 			},
 			"list": {
-				ID:                  "list-exchange-command",
+				ID:                  "exchange-list",
+				Private:             true,
 				MinimumNumberOfArgs: 0,
 				Usage:               `Usage: !exchange list`,
 				Handler:             listExchangeCommand,
@@ -53,7 +53,7 @@ func init() {
 }
 
 func exchangeCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	return nil
+	return gerrors.Unimplemented("parent_command_unimplemented.exchange", nil)
 }
 
 func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {

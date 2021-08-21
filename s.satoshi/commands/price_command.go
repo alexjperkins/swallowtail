@@ -12,9 +12,8 @@ import (
 )
 
 const (
-	priceCommandID     = "price-comamnd"
-	priceCommandPrefix = "!price"
-	priceCommandUsage  = `
+	priceCommandID    = "price"
+	priceCommandUsage = `
 	Usage: !price [symbols... | all ]
 
 	SubCommand:
@@ -29,12 +28,11 @@ var (
 func init() {
 	register(priceCommandID, &Command{
 		ID:      priceCommandID,
-		Prefix:  priceCommandPrefix,
 		Usage:   priceCommandUsage,
 		Handler: priceCommand,
-		SubCommands: map[string]*SubCommand{
+		SubCommands: map[string]*Command{
 			"all": {
-				ID:                  "all-price-command",
+				ID:                  "price-all",
 				MinimumNumberOfArgs: 0,
 				Usage:               `!price all`,
 				Handler:             allPriceCommand,
