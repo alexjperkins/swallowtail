@@ -94,6 +94,7 @@ func (ht *HistoricalTradeRow) ToArray() []interface{} {
 	if v.IsZero() {
 		return []interface{}{}
 	}
+
 	e := v.Elem()
 	n := e.NumField()
 	for i := 1; i < n; i++ {

@@ -96,7 +96,7 @@ func TestHandleSwingMessages(t *testing.T) {
 	}
 }
 
-func TestContains1To10kChallenge(t *testing.T) {
+func TestContainsAstekz1To10kChallenge(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name                       string
@@ -124,11 +124,22 @@ func TestContains1To10kChallenge(t *testing.T) {
 			doesContain1To10kChallenge: false,
 		},
 		{
-			name: "from-astekz-but-not-challenge",
+			name:        "from-astekz-but-not-challenge",
+			modUsername: "Astekz",
 			content: `
 			Astekz [:nazar_amulet:astekz]: lets just close dot here guys, like next to nothing loss, i think it goes to 16.4. 
 			`,
 			doesContain1To10kChallenge: false,
+		},
+		{
+			name:        "another-example",
+			modUsername: "Astekz",
+			content: `
+			Astekz [:moneybag:1k-10k]: 1k -10k spot call risky but i like it
+
+			1500 spent on shib at 0.008050
+			`,
+			doesContain1To10kChallenge: true,
 		},
 	}
 	for _, tt := range tests {
@@ -136,7 +147,7 @@ func TestContains1To10kChallenge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			didContain1To10kChallenge := contains1To10kChallenge(tt.modUsername, tt.content)
+			didContain1To10kChallenge := containsAstekz1To10kChallenge(tt.modUsername, tt.content)
 			assert.Equal(t, tt.doesContain1To10kChallenge, didContain1To10kChallenge)
 		})
 	}

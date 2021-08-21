@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/monzo/slog"
-	"github.com/monzo/terrors"
 
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
@@ -19,7 +18,7 @@ func getLatestPriceBySymbol(ctx context.Context, symbol, assetPair string) (*coi
 		AssetPair:   assetPair,
 	}).SendWithTimeout(ctx, 30*time.Second).Response()
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to get the latest price by symbol", map[string]string{
+		return nil, gerrors.Augment(err, "fetch_latest_price_failed", map[string]string{
 			"asset_symbol": symbol,
 			"asset_pair":   assetPair,
 		})

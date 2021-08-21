@@ -36,7 +36,7 @@ type TwitterUserMetaData struct {
 
 func init() {
 	registerSatoshiConsumer(twitterConsumerID, TwitterConsumer{
-		Active: false,
+		Active: true,
 	})
 }
 

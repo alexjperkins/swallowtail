@@ -13,4 +13,5 @@ const (
 	ErrPermissionDenied   = codes.PermissionDenied
 	ErrCanceled           = codes.Canceled
 	ErrDeadlineExceeded   = codes.DeadlineExceeded
+	ErrBadParam           = codes.InvalidArgument
 )

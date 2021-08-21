@@ -16,8 +16,6 @@ type Syncer interface {
 }
 
 func Init(ctx context.Context) error {
-	mu.RLock()
-	defer mu.RLock()
 	var err error
 	for id, syncer := range registry {
 		e := syncer.Refresh(ctx)
@@ -26,7 +24,6 @@ func Init(ctx context.Context) error {
 		}
 
 		slog.Debug(ctx, "Syncer: %s initialized", id)
-
 		go syncer.Sync(ctx)
 	}
 

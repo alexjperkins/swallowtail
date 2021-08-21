@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.googlesheets/domain"
 	"swallowtail/s.googlesheets/templates"
 	"time"
@@ -73,8 +74,24 @@ func ListSheetsByUserID(ctx context.Context, userID string) ([]*domain.Googleshe
 
 	switch len(sheets) {
 	case 0:
-		return nil, terrors.NotFound("no-googlesheets-registered-for-user", "No googlesheets found for user", nil)
+		return nil, gerrors.NotFound("no-googlesheets-registered-for-user", nil)
 	default:
 		return sheets, nil
 	}
+}
+
+// DeleteSheetBySheetID ...
+func DeleteSheetBySheetID(ctx context.Context, userID, googlesheetID string) error {
+	var (
+		sql = `
+		DELETE FROM s_googlesheets_sheet
+		WHERE user_id=$1
+		AND googlesheet_id=$2
+		`
+	)
+	if _, err := db.Exec(ctx, sql, userID, googlesheetID); err != nil {
+		return gerrors.Propagate(err, gerrors.ErrNotFound, nil)
+	}
+
+	return nil
 }

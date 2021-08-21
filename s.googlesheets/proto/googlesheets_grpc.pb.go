@@ -20,7 +20,7 @@ type GooglesheetsClient interface {
 	CreatePortfolioSheet(ctx context.Context, in *CreatePortfolioSheetRequest, opts ...grpc.CallOption) (*CreatePortfolioSheetResponse, error)
 	RegisterNewPortfolioSheet(ctx context.Context, in *RegisterNewPortfolioSheetRequest, opts ...grpc.CallOption) (*RegisterNewPortfolioSheetResponse, error)
 	ListSheetsByUserID(ctx context.Context, in *ListSheetsByUserIDRequest, opts ...grpc.CallOption) (*ListSheetsByUserIDResponse, error)
-	TmpGetLatestPriceBySymbol(ctx context.Context, in *TmpGetLatestPriceBySymbolRequest, opts ...grpc.CallOption) (*TmpGetLatestPriceBySymbolResponse, error)
+	DeleteSheetBySheetID(ctx context.Context, in *DeleteSheetBySheetIDRequest, opts ...grpc.CallOption) (*DeleteSheetBySheetIDResponse, error)
 }
 
 type googlesheetsClient struct {
@@ -58,9 +58,9 @@ func (c *googlesheetsClient) ListSheetsByUserID(ctx context.Context, in *ListShe
 	return out, nil
 }
 
-func (c *googlesheetsClient) TmpGetLatestPriceBySymbol(ctx context.Context, in *TmpGetLatestPriceBySymbolRequest, opts ...grpc.CallOption) (*TmpGetLatestPriceBySymbolResponse, error) {
-	out := new(TmpGetLatestPriceBySymbolResponse)
-	err := c.cc.Invoke(ctx, "/googlesheets/TmpGetLatestPriceBySymbol", in, out, opts...)
+func (c *googlesheetsClient) DeleteSheetBySheetID(ctx context.Context, in *DeleteSheetBySheetIDRequest, opts ...grpc.CallOption) (*DeleteSheetBySheetIDResponse, error) {
+	out := new(DeleteSheetBySheetIDResponse)
+	err := c.cc.Invoke(ctx, "/googlesheets/DeleteSheetBySheetID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ type GooglesheetsServer interface {
 	CreatePortfolioSheet(context.Context, *CreatePortfolioSheetRequest) (*CreatePortfolioSheetResponse, error)
 	RegisterNewPortfolioSheet(context.Context, *RegisterNewPortfolioSheetRequest) (*RegisterNewPortfolioSheetResponse, error)
 	ListSheetsByUserID(context.Context, *ListSheetsByUserIDRequest) (*ListSheetsByUserIDResponse, error)
-	TmpGetLatestPriceBySymbol(context.Context, *TmpGetLatestPriceBySymbolRequest) (*TmpGetLatestPriceBySymbolResponse, error)
+	DeleteSheetBySheetID(context.Context, *DeleteSheetBySheetIDRequest) (*DeleteSheetBySheetIDResponse, error)
 	mustEmbedUnimplementedGooglesheetsServer()
 }
 
@@ -91,8 +91,8 @@ func (*UnimplementedGooglesheetsServer) RegisterNewPortfolioSheet(context.Contex
 func (*UnimplementedGooglesheetsServer) ListSheetsByUserID(context.Context, *ListSheetsByUserIDRequest) (*ListSheetsByUserIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSheetsByUserID not implemented")
 }
-func (*UnimplementedGooglesheetsServer) TmpGetLatestPriceBySymbol(context.Context, *TmpGetLatestPriceBySymbolRequest) (*TmpGetLatestPriceBySymbolResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TmpGetLatestPriceBySymbol not implemented")
+func (*UnimplementedGooglesheetsServer) DeleteSheetBySheetID(context.Context, *DeleteSheetBySheetIDRequest) (*DeleteSheetBySheetIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteSheetBySheetID not implemented")
 }
 func (*UnimplementedGooglesheetsServer) mustEmbedUnimplementedGooglesheetsServer() {}
 
@@ -154,20 +154,20 @@ func _Googlesheets_ListSheetsByUserID_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Googlesheets_TmpGetLatestPriceBySymbol_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TmpGetLatestPriceBySymbolRequest)
+func _Googlesheets_DeleteSheetBySheetID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSheetBySheetIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GooglesheetsServer).TmpGetLatestPriceBySymbol(ctx, in)
+		return srv.(GooglesheetsServer).DeleteSheetBySheetID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/googlesheets/TmpGetLatestPriceBySymbol",
+		FullMethod: "/googlesheets/DeleteSheetBySheetID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GooglesheetsServer).TmpGetLatestPriceBySymbol(ctx, req.(*TmpGetLatestPriceBySymbolRequest))
+		return srv.(GooglesheetsServer).DeleteSheetBySheetID(ctx, req.(*DeleteSheetBySheetIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -189,8 +189,8 @@ var _Googlesheets_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Googlesheets_ListSheetsByUserID_Handler,
 		},
 		{
-			MethodName: "TmpGetLatestPriceBySymbol",
-			Handler:    _Googlesheets_TmpGetLatestPriceBySymbol_Handler,
+			MethodName: "DeleteSheetBySheetID",
+			Handler:    _Googlesheets_DeleteSheetBySheetID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
