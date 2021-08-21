@@ -1,4 +1,4 @@
-package satoshi
+package consumers
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func init() {
 		priceBotSymbols = coins.List()
 		sort.Strings(priceBotSymbols)
 	})
-	registerSatoshiConsumer(PriceBotConsumerID, PriceBotConsumer{
+	register(PriceBotConsumerID, PriceBotConsumer{
 		Active: true,
 	})
 }
@@ -36,7 +36,7 @@ type PriceBotConsumer struct {
 	Active bool
 }
 
-func (p PriceBotConsumer) Receiver(ctx context.Context, c chan *SatoshiConsumerMessage, d chan struct{}, _ bool) {
+func (p PriceBotConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage, d chan struct{}, _ bool) {
 	svc := pricebot.NewService(ctx)
 	t := time.NewTicker(defaultTickInterval)
 	defer slog.Warn(ctx, "Consumer [%s] stopping", PriceBotConsumerID)
@@ -44,7 +44,7 @@ func (p PriceBotConsumer) Receiver(ctx context.Context, c chan *SatoshiConsumerM
 		select {
 		case <-t.C:
 			priceMsg := svc.GetPricesAsFormattedString(ctx, priceBotSymbols, true)
-			msg := &SatoshiConsumerMessage{
+			msg := &ConsumerMessage{
 				ConsumerID:       PriceBotConsumerID,
 				DiscordChannelID: discordproto.DiscordSatoshiPriceBotChannel,
 				Message:          priceMsg,

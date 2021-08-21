@@ -49,8 +49,8 @@ var (
 	coinSymbolsMtx sync.RWMutex
 )
 
-// GetCoinSymbols gets all coin symbols for satoshi.
-func GetCoinSymbols() []string {
+// List gets all coin symbols for satoshi.
+func List() []string {
 	coinSymbolsMtx.RLock()
 	defer coinSymbolsMtx.RUnlock()
 	coins := []string{}

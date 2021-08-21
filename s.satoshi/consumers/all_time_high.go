@@ -1,4 +1,4 @@
-package satoshi
+package consumers
 
 import (
 	"context"
@@ -31,7 +31,7 @@ var (
 )
 
 func init() {
-	registerSatoshiConsumer(athConsumerID, ATHConsumer{
+	register(athConsumerID, ATHConsumer{
 		Active: true,
 	})
 	defaultATHSymbols = coins.List()
@@ -42,7 +42,7 @@ type ATHConsumer struct {
 	Active bool
 }
 
-func (a ATHConsumer) Receiver(ctx context.Context, c chan *SatoshiConsumerMessage, d chan struct{}, withJitter bool) {
+func (a ATHConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage, d chan struct{}, withJitter bool) {
 	cli := coingecko.New(ctx)
 
 	// TODO: Move to tombstones; https://blog.labix.org/2011/10/09/death-of-goroutines-under-control
@@ -95,12 +95,12 @@ func (a ATHConsumer) IsActive() bool {
 	return a.Active
 }
 
-func publishATHMsg(c chan<- *SatoshiConsumerMessage, msg, symbol string, currentPrice, currentATH float64) {
+func publishATHMsg(c chan<- *ConsumerMessage, msg, symbol string, currentPrice, currentATH float64) {
 	created := time.Now()
 	// Idempotent on the current price & current all the time & valid for an hour.
 	idempotencyKey := fmt.Sprintf("%v-%v-%v", currentPrice, currentATH, created.Hour())
 	select {
-	case c <- &SatoshiConsumerMessage{
+	case c <- &ConsumerMessage{
 		ConsumerID:       athConsumerID,
 		Message:          msg,
 		DiscordChannelID: discordproto.DiscordSatoshiAlertsChannel,

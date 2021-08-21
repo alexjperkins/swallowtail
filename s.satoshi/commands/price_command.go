@@ -1,4 +1,4 @@
-package satoshi
+package commands
 
 import (
 	"context"
@@ -24,7 +24,7 @@ var (
 )
 
 func init() {
-	registerSatoshiCommand(priceCommandID, priceCommand)
+	register(priceCommandID, &Command{})
 	priceBotSvc = pricebot.NewService(context.Background())
 }
 

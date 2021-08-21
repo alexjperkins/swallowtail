@@ -1,4 +1,4 @@
-package satoshi
+package consumers
 
 import (
 	"context"
@@ -65,7 +65,7 @@ type priceAction struct {
 
 func init() {
 	defaultVolatilitySymbols = coins.List()
-	registerSatoshiConsumer(volatilityConsumerID, VolatilityConumser{
+	register(volatilityConsumerID, VolatilityConumser{
 		Active: false,
 	})
 }
@@ -74,7 +74,7 @@ type VolatilityConumser struct {
 	Active bool
 }
 
-func (v VolatilityConumser) Receiver(ctx context.Context, c chan *SatoshiConsumerMessage, d chan struct{}, withJitter bool) {
+func (v VolatilityConumser) Receiver(ctx context.Context, c chan *ConsumerMessage, d chan struct{}, withJitter bool) {
 	cli := coingecko.New(ctx)
 	for _, symbol := range defaultVolatilitySymbols {
 		symbol := symbol
@@ -124,7 +124,7 @@ func (v VolatilityConumser) IsActive() bool {
 	return v.Active
 }
 
-func publishVolatilityMsg(c chan *SatoshiConsumerMessage, symbol string, pa priceAction, difference float64, increasing, isActive bool) {
+func publishVolatilityMsg(c chan *ConsumerMessage, symbol string, pa priceAction, difference float64, increasing, isActive bool) {
 	direction := "MOON"
 	incOrDecr := "INCREASE"
 	if !increasing {
@@ -142,7 +142,7 @@ func publishVolatilityMsg(c chan *SatoshiConsumerMessage, symbol string, pa pric
 		pa.curr,
 	)
 	select {
-	case c <- &SatoshiConsumerMessage{
+	case c <- &ConsumerMessage{
 		ConsumerID:       volatilityConsumerID,
 		DiscordChannelID: discordproto.DiscordSatoshiAlertsChannel,
 		Message:          msg,
@@ -168,4 +168,11 @@ func getVolatilityDelta(symbol string) float64 {
 		return lowVolatilityDelta
 	}
 	return midVolatilityDelta
+}
+
+func abs(v float64) float64 {
+	if v < 0 {
+		return -v
+	}
+	return v
 }
