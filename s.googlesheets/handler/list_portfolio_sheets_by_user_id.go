@@ -22,7 +22,7 @@ func (s *GooglesheetsService) ListSheetsByUserID(
 
 	sheets, err := dao.ListSheetsByUserID(ctx, in.UserId)
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "no-googlesheets-registered-for-user"):
+	case gerrors.Is(err, gerrors.ErrNotFound, "not_found.no_googlesheets_registered_for_user"):
 		// continue
 	case err != nil:
 		return nil, gerrors.Augment(err, "Failed to list sheets by user id", errParams)
