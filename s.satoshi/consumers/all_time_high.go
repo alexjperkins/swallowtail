@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	coingecko "swallowtail/s.coingecko/client"
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.satoshi/coins"
 
@@ -26,8 +25,7 @@ const (
 )
 
 var (
-	defaultATHSymbols  []string
-	athCoingeckoClient *coingecko.CoinGeckoClient
+	defaultATHSymbols []string
 )
 
 func init() {
@@ -43,9 +41,6 @@ type ATHConsumer struct {
 }
 
 func (a ATHConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage, d chan struct{}, withJitter bool) {
-	cli := coingecko.New(ctx)
-
-	// TODO: Move to tombstones; https://blog.labix.org/2011/10/09/death-of-goroutines-under-control
 	for _, symbol := range defaultATHSymbols {
 		symbol := symbol
 		go func() {
@@ -58,7 +53,7 @@ func (a ATHConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage, d ch
 				currentPrice float64
 				currentATH   float64
 			)
-			currentATH, err := cli.GetATHFromSymbol(ctx, symbol)
+			currentATH, err := getAssetLatestPrice(ctx, symbol, "usd")
 			if err != nil {
 				// Best effort
 				slog.Error(ctx, "Failed to fetch ATH for %s; %v", symbol, err)
