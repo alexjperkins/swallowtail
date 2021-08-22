@@ -111,7 +111,7 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 	t := time.NewTicker(100 * time.Millisecond)
 	// Refresh loop that will get called every 24 hours.
 
-	var firstRefresh bool
+	var isFirstRefresh = true
 	for {
 		select {
 		case <-t.C:
@@ -159,8 +159,8 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 			return
 		}
 
-		if firstRefresh {
-			firstRefresh = false
+		if isFirstRefresh {
+			isFirstRefresh = false
 			t.Reset(24 * time.Hour)
 		}
 	}
