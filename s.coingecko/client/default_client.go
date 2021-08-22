@@ -54,7 +54,7 @@ func (c *coingeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol,
 
 func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
 	// First check the cache, if price exists for id, then check if it has expired.
-	value, hasExpired := c.cache.Get(id)
+	value, hasExpired, _ := c.cache.Get(id)
 	if value == nil || hasExpired {
 		// Get the latest price.
 		ssp, err := c.cli.SimpleSinglePrice(strings.ToLower(id), strings.ToLower(assetPair))
