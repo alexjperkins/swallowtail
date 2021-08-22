@@ -1,4 +1,4 @@
-version: "3"
+version: "3.9"
 
 volumes:
   swallowtail_zookeeper_data: {}
@@ -22,6 +22,8 @@ services:
       - POSTGRES_DB=swallowtail
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
+    profiles:
+      - backend
 
   postgres_test:
     build:
@@ -51,6 +53,8 @@ services:
       - .envs/postgres.env
     depends_on:
       - postgres
+    profiles:
+      - backend
 
   swallowtail.s.discord:
     hostname: swallowtail-s-discord
@@ -62,6 +66,8 @@ services:
       - .envs/discord.env
     depends_on:
       - postgres
+    profiles:
+      - backend
 
   swallowtail.s.satoshi:
     hostname: swallowtail-s-satoshi
@@ -73,6 +79,8 @@ services:
       - .envs/discord.env
       - .envs/binance.env
       - .envs/twitter.env
+    profiles:
+      - backend
 
   swallowtail.s.googlesheets:
     hostname: swallowtail-s-googlesheets
@@ -83,6 +91,8 @@ services:
       - .envs/postgres.env
     depends_on:
       - postgres
+    profiles:
+      - backend
 
   swallowtail.s.binance:
     hostname: swallowtail-s-binance
@@ -93,6 +103,8 @@ services:
       - .envs/postgres.env
     depends_on:
       - postgres
+    profiles:
+      - backend
 
   swallowtail.s.coingecko:
     hostname: swallowtail-s-coingecko
@@ -101,3 +113,5 @@ services:
       - "8006:8000"
     depends_on:
       - postgres
+    profiles:
+      - backend

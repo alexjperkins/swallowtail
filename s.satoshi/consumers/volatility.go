@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	coingecko "swallowtail/s.coingecko/client"
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.satoshi/coins"
-	"sync"
 	"time"
 
 	"github.com/monzo/slog"
@@ -15,8 +13,7 @@ import (
 
 const (
 	volatilityConsumerID = "volatility-consumer"
-
-	volatilityInterval = time.Duration(3 * time.Minute)
+	volatilityInterval   = time.Duration(3 * time.Minute)
 
 	// Jitter defaults
 	volatilityJitterMax      = 3
@@ -29,28 +26,8 @@ const (
 )
 
 var (
-	defaultVolatilitySymbols = []string{
-		"BTC",
-		"ETH",
-		"LINK",
-		"SOL",
-		"SRM",
-		"RAY",
-		"COPE",
-		"AAVE",
-		"COMP",
-		"RSR",
-		"BNB",
-		"SAND",
-		"ENJ",
-		"FTT",
-		"LTC",
-		"RUNE",
-		"XRP",
-		"UNI",
-	}
-	volatilitySetMtx sync.RWMutex
-	lowVolatilitySet = map[string]bool{
+	defaultVolatilitySymbols []string
+	lowVolatilitySet         = map[string]bool{
 		"BTC": true,
 	}
 	highVolatilitySet = map[string]bool{
@@ -75,7 +52,6 @@ type VolatilityConumser struct {
 }
 
 func (v VolatilityConumser) Receiver(ctx context.Context, c chan *ConsumerMessage, d chan struct{}, withJitter bool) {
-	cli := coingecko.New(ctx)
 	for _, symbol := range defaultVolatilitySymbols {
 		symbol := symbol
 		go func() {
@@ -91,8 +67,9 @@ func (v VolatilityConumser) Receiver(ctx context.Context, c chan *ConsumerMessag
 			for {
 				select {
 				case <-t.C:
-					curr, err := cli.GetCurrentPriceFromSymbol(ctx, symbol, "usd")
+					curr, err := getAssetLatestPrice(ctx, symbol, "usd")
 					if err != nil {
+						// Best effort
 						slog.Error(ctx, "Failed to get current price: %v", err)
 						continue
 					}

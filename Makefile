@@ -2,7 +2,8 @@
 default: build
 	docker-compose -f local.yml up --build
 
-backend: build account discord
+backend:
+	docker-compose -f local.yml --profile backend up --build
 
 build:
 	find . -type d -name s.\* -exec bash -c 'cd {} && sudo make docker' \;

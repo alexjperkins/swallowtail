@@ -52,7 +52,7 @@ func (s *GooglesheetsService) RegisterNewPortfolioSheet(
 	// already reached the limit.
 	sheets, err := dao.ListSheetsByUserID(ctx, in.UserId)
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "no-googlesheets-registered-for-user"):
+	case gerrors.Is(err, gerrors.ErrNotFound, "not_found.no_googlesheets_registered_for_user"):
 		// This is fine.
 	case err != nil:
 		return nil, gerrors.Augment(err, "Failed to create portfolio sheet; couldn't check existing sheets for user", errParams)

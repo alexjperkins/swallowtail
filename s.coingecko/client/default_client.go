@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"strings"
-	"swallowtail/libraries/ttlcache"
 	"sync"
 	"time"
 
@@ -11,15 +10,18 @@ import (
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 	coingecko "github.com/superoo7/go-gecko/v3"
+
+	"swallowtail/s.coingecko/cache"
 )
 
 type coingeckoClient struct {
-	c       *coingecko.Client
-	ttl     *ttlcache.TTLCache
+	cli     *coingecko.Client
+	cache   cache.CoingeckoCache
 	coins   map[string]string
 	coinsMu sync.RWMutex
 }
 
+// CoingeckoListCoinItem ...
 type CoingeckoListCoinItem struct {
 	Name   string
 	Symbol string
@@ -27,7 +29,7 @@ type CoingeckoListCoinItem struct {
 }
 
 func (c *coingeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCoinItem, error) {
-	l, err := c.c.CoinsList()
+	l, err := c.cli.CoinsList()
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retreive coins list", nil)
 	}
@@ -52,10 +54,10 @@ func (c *coingeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol,
 
 func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
 	// First check the cache, if price exists for id, then check if it has expired.
-	value, hasExpired := c.ttl.Get(id)
+	value, hasExpired, _ := c.cache.Get(id)
 	if value == nil || hasExpired {
 		// Get the latest price.
-		ssp, err := c.c.SimpleSinglePrice(strings.ToLower(id), strings.ToLower(assetPair))
+		ssp, err := c.cli.SimpleSinglePrice(strings.ToLower(id), strings.ToLower(assetPair))
 		if err != nil {
 			return 0, terrors.Augment(err, "Failed to retreive current price", map[string]string{
 				"coingecko_id": id,
@@ -65,7 +67,7 @@ func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPa
 
 		// Update cache with latest price.
 		price := float64(ssp.MarketPrice)
-		c.ttl.Set(id, price)
+		c.cache.Set(id, price)
 
 		slog.Trace(ctx, "Updated coingecko price cache for [%s].", id)
 		return price, nil
@@ -92,7 +94,7 @@ func (c *coingeckoClient) GetATHFromSymbol(ctx context.Context, symbol string) (
 }
 
 func (c *coingeckoClient) GetATHFromID(ctx context.Context, id string) (float64, error) {
-	coinID, err := c.c.CoinsID(strings.ToLower(id), true, false, true, false, false, false)
+	coinID, err := c.cli.CoinsID(strings.ToLower(id), true, false, true, false, false, false)
 	if err != nil {
 		return 0, err
 	}
@@ -101,21 +103,19 @@ func (c *coingeckoClient) GetATHFromID(ctx context.Context, id string) (float64,
 }
 
 func (c *coingeckoClient) Ping(ctx context.Context) error {
-	if _, err := c.c.Ping(); err != nil {
+	if _, err := c.cli.Ping(); err != nil {
 		return terrors.Augment(err, "Failed to establish connection to coingecko", nil)
 	}
 	return nil
 }
 
 func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
+	// Refresh loop that will get called every 24 hours; except the initial iteration.
 	t := time.NewTicker(100 * time.Millisecond)
-	// Refresh loop that will get called every 24 hours.
-
-	var firstRefresh bool
+	var isFirstRefresh = true
 	for {
 		select {
 		case <-t.C:
-
 			var (
 				coins    []*CoingeckoListCoinItem
 				multiErr error
@@ -129,7 +129,6 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 					time.Sleep(30 * time.Second)
 					continue
 				}
-
 				coins = cs
 				break
 			}
@@ -159,8 +158,8 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 			return
 		}
 
-		if firstRefresh {
-			firstRefresh = false
+		if isFirstRefresh {
+			isFirstRefresh = false
 			t.Reset(24 * time.Hour)
 		}
 	}
