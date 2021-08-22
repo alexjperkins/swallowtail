@@ -49,8 +49,8 @@ func Init(ctx context.Context) error {
 
 	c := &coingeckoClient{
 		cli: coingecko.NewClient(httpClient),
-		cache: cache.InMemoryCache{
-			TTLCache: ttl,
+		cache: &cache.InMemoryCache{
+			ttl: ttl,
 		},
 		coins: map[string]string{},
 	}
