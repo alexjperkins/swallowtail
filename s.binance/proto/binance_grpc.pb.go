@@ -22,6 +22,7 @@ type BinanceClient interface {
 	PerpetualFutureTrade(ctx context.Context, in *PerpetualFutureTradeRequest, opts ...grpc.CallOption) (*PerpetualFutureTradeResponse, error)
 	ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest, opts ...grpc.CallOption) (*ReadSpotAccountResponse, error)
 	ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerpetualFuturesAccountRequest, opts ...grpc.CallOption) (*ReadPerpetualFuturesAccountResponse, error)
+	VerifyCredentials(ctx context.Context, in *VerifyCredentialsRequest, opts ...grpc.CallOption) (*VerifyCredentialsResponse, error)
 }
 
 type binanceClient struct {
@@ -77,6 +78,15 @@ func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, in *Rea
 	return out, nil
 }
 
+func (c *binanceClient) VerifyCredentials(ctx context.Context, in *VerifyCredentialsRequest, opts ...grpc.CallOption) (*VerifyCredentialsResponse, error) {
+	out := new(VerifyCredentialsResponse)
+	err := c.cc.Invoke(ctx, "/binance/VerifyCredentials", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BinanceServer is the server API for Binance service.
 // All implementations must embed UnimplementedBinanceServer
 // for forward compatibility
@@ -86,6 +96,7 @@ type BinanceServer interface {
 	PerpetualFutureTrade(context.Context, *PerpetualFutureTradeRequest) (*PerpetualFutureTradeResponse, error)
 	ReadSpotAccount(context.Context, *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error)
 	ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest) (*ReadPerpetualFuturesAccountResponse, error)
+	VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error)
 	mustEmbedUnimplementedBinanceServer()
 }
 
@@ -107,6 +118,9 @@ func (*UnimplementedBinanceServer) ReadSpotAccount(context.Context, *ReadSpotAcc
 }
 func (*UnimplementedBinanceServer) ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest) (*ReadPerpetualFuturesAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadPerpetualFuturesAccount not implemented")
+}
+func (*UnimplementedBinanceServer) VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyCredentials not implemented")
 }
 func (*UnimplementedBinanceServer) mustEmbedUnimplementedBinanceServer() {}
 
@@ -204,6 +218,24 @@ func _Binance_ReadPerpetualFuturesAccount_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Binance_VerifyCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyCredentialsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BinanceServer).VerifyCredentials(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/binance/VerifyCredentials",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BinanceServer).VerifyCredentials(ctx, req.(*VerifyCredentialsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Binance_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "binance",
 	HandlerType: (*BinanceServer)(nil),
@@ -227,6 +259,10 @@ var _Binance_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadPerpetualFuturesAccount",
 			Handler:    _Binance_ReadPerpetualFuturesAccount_Handler,
+		},
+		{
+			MethodName: "VerifyCredentials",
+			Handler:    _Binance_VerifyCredentials_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

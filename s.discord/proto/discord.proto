@@ -5,7 +5,7 @@ option go_package = "./;discordproto";
 service discord {
   rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse);
 
-  rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgPrivateToChannelResponse);
+  rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgToPrivateChannelResponse);
 
   rpc Subscribe (SuscribeRequest) returns (SubscribeResponse);
 }
@@ -28,7 +28,7 @@ message SendMsgToPrivateChannelRequest {
   bool force = 5;
 }
 
-message SendMsgPrivateToChannelResponse{}
+message SendMsgToPrivateChannelResponse{}
 
 message SuscribeRequest {
   string subscriber_id = 1;

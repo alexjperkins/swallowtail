@@ -5,20 +5,17 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./;binanceproto";
 
 service binance {
-    rpc ListAllAssetPairs (ListAllAssetPairsRequest) returns (ListAllAssetPairsResponse) {
-    }
+    rpc ListAllAssetPairs (ListAllAssetPairsRequest) returns (ListAllAssetPairsResponse) {}
 
-    rpc SpotTrade (SpotTradeRequest) returns (SpotTradeResponse) {
-    }
+    rpc SpotTrade (SpotTradeRequest) returns (SpotTradeResponse) {}
 
-    rpc PerpetualFutureTrade (PerpetualFutureTradeRequest) returns (PerpetualFutureTradeResponse) {
-    }
+    rpc PerpetualFutureTrade (PerpetualFutureTradeRequest) returns (PerpetualFutureTradeResponse) {}
 
-    rpc ReadSpotAccount (ReadSpotAccountRequest) returns (ReadSpotAccountResponse) {
-    }
+    rpc ReadSpotAccount (ReadSpotAccountRequest) returns (ReadSpotAccountResponse) {}
 
-    rpc ReadPerpetualFuturesAccount (ReadPerpetualFuturesAccountRequest) returns (ReadPerpetualFuturesAccountResponse) {
-    }
+    rpc ReadPerpetualFuturesAccount (ReadPerpetualFuturesAccountRequest) returns (ReadPerpetualFuturesAccountResponse) {} 
+
+    rpc VerifyCredentials (VerifyCredentialsRequest) returns (VerifyCredentialsResponse) {}
 }
 
 message AssetPair {
@@ -89,4 +86,25 @@ message ReadPerpetualFuturesAccountRequest {
 }
 
 message ReadPerpetualFuturesAccountResponse {
+}
+
+message Credentials {
+    string api_key = 1;
+    string secret_key = 2;
+}
+
+message VerifyCredentialsRequest {
+    Credentials credentials = 1;
+    string user_id = 2;
+}
+
+message VerifyCredentialsResponse {
+    bool success = 1;
+    bool read_enabled = 2;
+    bool futures_enabled = 3;
+    bool withdraw_enabled = 4;
+    bool spot_enabled = 5;
+    bool options_enabled = 6;
+    bool ip_restrictions = 7;
+    string reason = 8;
 }

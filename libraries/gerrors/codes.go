@@ -14,4 +14,5 @@ const (
 	ErrCanceled           = codes.Canceled
 	ErrDeadlineExceeded   = codes.DeadlineExceeded
 	ErrBadParam           = codes.InvalidArgument
+	ErrRateLimited        = codes.ResourceExhausted
 )

@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.account/domain"
 	"time"
 
@@ -30,23 +31,24 @@ func ReadExchangeByExchangeID(ctx context.Context, exchangeID string) (*domain.E
 	return exchanges[0], nil
 }
 
-// ReadExchangesByUserID ...
-func ReadExchangesByUserID(ctx context.Context, userID string) ([]*domain.Exchange, error) {
+// ListExchangesByUserID ...
+func ListExchangesByUserID(ctx context.Context, userID string, isActive bool) ([]*domain.Exchange, error) {
 	var (
 		sql = `
 		SELECT * FROM s_account_exchanges
 		WHERE user_id=$1
+		AND is_active=$2
 		ORDER BY exchange
 		`
 		exchanges []*domain.Exchange
 	)
 
-	if err := db.Select(ctx, exchanges, sql, userID); err != nil {
-		return nil, terrors.Propagate(err)
+	if err := db.Select(ctx, exchanges, sql, userID, isActive); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	if len(exchanges) == 0 {
-		return nil, terrors.NotFound("exchanges-not-found", "Not exchanges found for this user id", nil)
+		return nil, gerrors.NotFound("exchanges_not_found_for_user_id", nil)
 	}
 
 	return exchanges, nil

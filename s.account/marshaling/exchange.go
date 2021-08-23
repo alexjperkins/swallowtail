@@ -23,10 +23,9 @@ func ExchangeProtoToDomain(in *accountproto.Exchange) (*domain.Exchange, error) 
 	}
 
 	return &domain.Exchange{
-		Exchange:  in.Exchange.String(),
+		Exchange:  in.ExchangeType.String(),
 		APIKey:    encryptedAPIKey,
 		SecretKey: encryptedSecretKey,
-		UserID:    in.UserId,
 		IsActive:  in.IsActive,
 	}, nil
 }
@@ -50,12 +49,11 @@ func ExchangeDomainToProto(in *domain.Exchange) (*accountproto.Exchange, error) 
 	}
 
 	return &accountproto.Exchange{
-		ExchangeId: in.ExchangeID,
-		UserId:     in.UserID,
-		ApiKey:     util.MaskKey(decryptedAPIKey, 4),
-		SecretKey:  util.MaskKey(decryptedSecretKey, 4),
-		Exchange:   exchangeType,
-		IsActive:   in.IsActive,
+		ExchangeId:   in.ExchangeID,
+		ApiKey:       util.MaskKey(decryptedAPIKey, 4),
+		SecretKey:    util.MaskKey(decryptedSecretKey, 4),
+		ExchangeType: exchangeType,
+		IsActive:     in.IsActive,
 	}, nil
 }
 
