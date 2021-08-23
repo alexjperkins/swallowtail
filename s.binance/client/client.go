@@ -2,59 +2,54 @@ package client
 
 import (
 	"context"
-	"swallowtail/libraries/util"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.binance/domain"
-	"sync"
 
 	"github.com/opentracing/opentracing-go"
 )
 
 const (
+	// Base URL
 	binanceAPIUrl = "https://api.binance.com/api/v3"
+
+	// Backup URLs
+	binanceAPIUrl1 = "https://api1.binance.com/api/v3"
+	binanceAPIUrl2 = "https://api2.binance.com/api/v3"
+	binanceAPIUrl3 = "https://api3.binance.com/api/v3"
 )
 
 var (
 	client BinanceClient
-	mu     sync.Mutex
 )
 
 type BinanceClient interface {
 	// ListAllAssetPairs makes a call to Binance to retrieve all the futures tradable asset pairs.
 	ListAllAssetPairs(context.Context) (*ListAllAssetPairsResponse, error)
+
 	// ExecuteSpotTrade attempts to execute a spot trade on Binance.
 	ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error
+
 	// Ping serves as a healthcheck to the Binance API.
 	Ping(context.Context) error
+
 	// ReadSpotAccount reads from the users spot account.
 	ReadSpotAccount(context.Context, *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error)
+
 	// ReadPerpetualFuturesAccount reads from the users perpetual futures account.
 	ReadPerpetualFuturesAccount(context.Context, *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error)
+
+	// VerifyCredentials verifies the given credentials of the users.
+	VerifyCredentials(context.Context, *Credentials) (*VerifyCredentialsResponse, error)
 }
 
 func Init(ctx context.Context) error {
-	apiKey := util.SetEnv("BINANCE_API_KEY")
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	if client != nil {
-		return nil
-	}
-	c, err := NewDefaultClient(ctx, apiKey)
+	c, err := NewDefaultClient(ctx)
 	if err != nil {
 		// Panic since if we can't connect to Binance then this service is as good as dead.
-		return err
+		return gerrors.Augment(err, "failed.binance_client_initialization", nil)
 	}
 	client = c
 	return nil
-}
-
-// UseMock sets the binance service to use a mock Binance client; should strictly
-// be used for development purposes.
-func UseMock() {
-	mu.Lock()
-	defer mu.Unlock()
-	client = &mockClient{}
 }
 
 // ListAllAssetPairs forwards the response of the binance client; it also adds opentracing span to the
@@ -83,6 +78,13 @@ func ReadSpotAccount(ctx context.Context, req *ReadSpotAccountRequest) (*ReadSpo
 // ReadPerpetualFuturesAccount ...
 func ReadPerpetualFuturesAccount(ctx context.Context, req *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Read from binance perpetual futures account")
+	defer span.Finish()
+	return nil, nil
+}
+
+// VerifyCredentials ...
+func VerifyCredentials(ctx context.Context, credentials *Credentials) (*VerifyCredentialsResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Verify credentials for user")
 	defer span.Finish()
 	return nil, nil
 }

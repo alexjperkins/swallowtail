@@ -1,5 +1,18 @@
 package client
 
+// Credentials
+type Credentials struct {
+	APIKey    string
+	SecretKey string
+}
+
+// AsHeaders helper function that converts the underlying credentials struct to headers format for the Binance API.
+func (c *Credentials) AsHeaders() map[string]string {
+	return map[string]string{
+		"X-MBX-APIKEY": c.APIKey,
+	}
+}
+
 // BinanceAssetItem defines the asset item.
 type BinanceAssetItem struct {
 	Symbol            string `json:"symbol"`
@@ -26,7 +39,27 @@ type PingRequest struct{}
 type PingResponse struct{}
 
 type ReadSpotAccountRequest struct{}
+
 type ReadSpotAccountResponse struct{}
 
 type ReadPerptualFuturesAccountRequest struct{}
+
 type ReadPerptualFuturesAccountResponse struct{}
+
+type VerifyCredentialsRequest struct {
+	Credentials *Credentials
+}
+
+type VerifyCredentialsResponse struct {
+	IPRestrict                     bool `json:"ipRestrict"`
+	CreateTime                     int  `json:"createTime"`
+	EnableWithdrawals              bool `json:"enableWithdrawals"`
+	EnableInternalTransfer         bool `json:"enableInternalTransfer"`
+	PermitsUniversalTransfer       bool `json:"permitsUniversalTransfer"`
+	EnableVanillaOptions           bool `json:"enableVanillaOptions"`
+	EnableReading                  bool `json:"enableReading"`
+	EnableFutures                  bool `json:"enableFutures"`
+	EnableMargin                   bool `json:"enableMargin"`
+	EnableSpotAndMarginTrading     bool `json:"enableSpotAndMarginTrading"`
+	TradingAuthorityExpirationTime int  `json:"tradingAuthorityExpirationTime"`
+}

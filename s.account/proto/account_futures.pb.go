@@ -8,6 +8,74 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
+// --- Create Account --- //
+
+type CreateAccountFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *CreateAccountResponse
+	ctx     context.Context
+}
+
+func (a *CreateAccountFuture) Response() (*CreateAccountResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "create_account", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *CreateAccountRequest) Send(ctx context.Context) *CreateAccountFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *CreateAccountRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *CreateAccountFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *CreateAccountResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &CreateAccountFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewAccountClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.CreateAccount(ctx, r)
+		if err != nil {
+			errc <- err
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &CreateAccountFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
 // --- Read Account --- //
 
 type ReadAccountFuture struct {
@@ -202,74 +270,6 @@ func (r *AddExchangeRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	}()
 
 	return &AddExchangeFuture{
-		ctx: ctx,
-		closer: func() error {
-			cancel()
-			return conn.Close()
-		},
-		errc:    errc,
-		resultc: resultc,
-	}
-}
-
-// --- Create Account --- //
-
-type CreateAccountFuture struct {
-	closer  func() error
-	errc    chan error
-	resultc chan *CreateAccountResponse
-	ctx     context.Context
-}
-
-func (a *CreateAccountFuture) Response() (*CreateAccountResponse, error) {
-	defer func() {
-		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "create_account", err)
-		}
-	}()
-
-	select {
-	case r := <-a.resultc:
-		return r, nil
-	case <-a.ctx.Done():
-		return nil, a.ctx.Err()
-	case err := <-a.errc:
-		return nil, err
-	}
-}
-
-func (r *CreateAccountRequest) Send(ctx context.Context) *CreateAccountFuture {
-	return r.SendWithTimeout(ctx, 10*time.Second)
-}
-
-func (r *CreateAccountRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *CreateAccountFuture {
-	errc := make(chan error, 1)
-	resultc := make(chan *CreateAccountResponse, 1)
-
-	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
-	if err != nil {
-		errc <- err
-		return &CreateAccountFuture{
-			ctx:     ctx,
-			errc:    errc,
-			closer:  conn.Close,
-			resultc: resultc,
-		}
-	}
-	c := NewAccountClient(conn)
-
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-
-	go func() {
-		rsp, err := c.CreateAccount(ctx, r)
-		if err != nil {
-			errc <- err
-			return
-		}
-		resultc <- rsp
-	}()
-
-	return &CreateAccountFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DiscordClient interface {
 	SendMsgToChannel(ctx context.Context, in *SendMsgToChannelRequest, opts ...grpc.CallOption) (*SendMsgToChannelResponse, error)
-	SendMsgToPrivateChannel(ctx context.Context, in *SendMsgToPrivateChannelRequest, opts ...grpc.CallOption) (*SendMsgPrivateToChannelResponse, error)
+	SendMsgToPrivateChannel(ctx context.Context, in *SendMsgToPrivateChannelRequest, opts ...grpc.CallOption) (*SendMsgToPrivateChannelResponse, error)
 	Subscribe(ctx context.Context, in *SuscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error)
 }
 
@@ -39,8 +39,8 @@ func (c *discordClient) SendMsgToChannel(ctx context.Context, in *SendMsgToChann
 	return out, nil
 }
 
-func (c *discordClient) SendMsgToPrivateChannel(ctx context.Context, in *SendMsgToPrivateChannelRequest, opts ...grpc.CallOption) (*SendMsgPrivateToChannelResponse, error) {
-	out := new(SendMsgPrivateToChannelResponse)
+func (c *discordClient) SendMsgToPrivateChannel(ctx context.Context, in *SendMsgToPrivateChannelRequest, opts ...grpc.CallOption) (*SendMsgToPrivateChannelResponse, error) {
+	out := new(SendMsgToPrivateChannelResponse)
 	err := c.cc.Invoke(ctx, "/discord/SendMsgToPrivateChannel", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (c *discordClient) Subscribe(ctx context.Context, in *SuscribeRequest, opts
 // for forward compatibility
 type DiscordServer interface {
 	SendMsgToChannel(context.Context, *SendMsgToChannelRequest) (*SendMsgToChannelResponse, error)
-	SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgPrivateToChannelResponse, error)
+	SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgToPrivateChannelResponse, error)
 	Subscribe(context.Context, *SuscribeRequest) (*SubscribeResponse, error)
 	mustEmbedUnimplementedDiscordServer()
 }
@@ -74,7 +74,7 @@ type UnimplementedDiscordServer struct {
 func (*UnimplementedDiscordServer) SendMsgToChannel(context.Context, *SendMsgToChannelRequest) (*SendMsgToChannelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMsgToChannel not implemented")
 }
-func (*UnimplementedDiscordServer) SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgPrivateToChannelResponse, error) {
+func (*UnimplementedDiscordServer) SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgToPrivateChannelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMsgToPrivateChannel not implemented")
 }
 func (*UnimplementedDiscordServer) Subscribe(context.Context, *SuscribeRequest) (*SubscribeResponse, error) {

@@ -2,6 +2,7 @@ package coingeckoproto
 
 import (
 	context "context"
+	"swallowtail/libraries/gerrors"
 	"time"
 
 	"github.com/monzo/slog"
@@ -43,7 +44,7 @@ func (r *GetAssetLatestPriceBySymbolRequest) SendWithTimeout(ctx context.Context
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-coingecko:8000", grpc.WithInsecure())
 	if err != nil {
-		errc <- err
+		errc <- gerrors.Augment(err, "swallowtail_s-coingecko_connection_failed", nil)
 		return &GetAssetLatestPriceBySymbolFuture{
 			ctx:     ctx,
 			errc:    errc,
@@ -58,7 +59,7 @@ func (r *GetAssetLatestPriceBySymbolRequest) SendWithTimeout(ctx context.Context
 	go func() {
 		rsp, err := c.GetAssetLatestPriceBySymbol(ctx, r)
 		if err != nil {
-			errc <- err
+			errc <- gerrors.Augment(err, "failed_get_latest_asset_price_by_id_grpc_call", nil)
 			return
 		}
 		resultc <- rsp

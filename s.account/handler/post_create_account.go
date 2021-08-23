@@ -33,7 +33,7 @@ func (a *AccountService) CreateAccount(
 
 	account, err := dao.ReadAccountByUserID(ctx, in.UserId)
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "account-not-found"):
+	case gerrors.Is(err, gerrors.ErrNotFound, "account_not_found"):
 		// This is fine; we don't already have an account - so let's create one.
 	case err != nil:
 		return nil, gerrors.Augment(err, "Failed to read account by user id; couldn't check if account already exists", errParams)

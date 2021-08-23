@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.account/dao"
 	"swallowtail/s.account/marshaling"
 	accountproto "swallowtail/s.account/proto"
@@ -20,9 +21,11 @@ func (s *AccountService) ListExchanges(
 		"user_id": in.UserId,
 	}
 
-	exchanges, err := dao.ReadExchangesByUserID(ctx, in.UserId)
-	if err != nil {
-		return nil, terrors.Augment(err, "Failed to read exchanges by user id", errParams)
+	exchanges, err := dao.ListExchangesByUserID(ctx, in.UserId, in.GetActiveOnly())
+	switch {
+	case gerrors.Is(err, gerrors.ErrNotFound, "exchanges_not_found_for_user_id"):
+	case err != nil:
+		return nil, gerrors.Augment(err, "failed_to_read_exchanges_by_user_id", errParams)
 	}
 
 	protos, err := marshaling.ExchangeDomainToProtos(exchanges)

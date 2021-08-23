@@ -5,6 +5,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./;accountproto";
 
 service account {
+
   /// --- Accounts --- ///
   rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {
   }
@@ -112,20 +113,22 @@ enum ExchangeType {
 }
 
 message Exchange {
-  string user_id = 1;
-  ExchangeType exchange = 2;
-  string api_key = 3;
-  string secret_key = 4;
-  bool is_active = 5;
-  string exchange_id = 6;
+  ExchangeType exchange_type = 1;
+  string api_key = 2;
+  string secret_key = 3;
+  bool is_active = 4;
+  string exchange_id = 5;
 }
 
 message AddExchangeRequest {
   Exchange exchange = 1;
+  string user_id = 2;
 }
 
 message AddExchangeResponse {
-  Exchange exchange = 1;
+    Exchange exchange = 1;
+    bool verified = 2;
+    string reason = 3;
 }
 
 message ListExchangesRequest {
