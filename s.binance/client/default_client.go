@@ -55,7 +55,7 @@ func (c *defaultClient) Ping(ctx context.Context) error {
 }
 
 func (c *defaultClient) VerifyCredentials(ctx context.Context, credentials *Credentials) (*VerifyCredentialsResponse, error) {
-	endpoint := fmt.Sprintf("%s/sapi/v1/account/apiRestrictions")
+	endpoint := fmt.Sprintf("%s/sapi/v1/account/apiRestrictions", binanceAPIUrl)
 	rspBody := &VerifyCredentialsResponse{}
 	if err := c.c.DoWithEphemeralHeaders(ctx, http.MethodGet, endpoint, nil, rspBody, credentials.AsHeaders()); err != nil {
 		return nil, gerrors.Augment(err, "client_request_failed.verify_credentials", map[string]string{
