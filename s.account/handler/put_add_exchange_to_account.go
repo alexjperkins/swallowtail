@@ -36,7 +36,7 @@ func (s *AccountService) AddExchange(
 	// Confirm the requester first has an account with us.
 	_, err := dao.ReadAccountByUserID(ctx, in.UserId)
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "account-not-found"):
+	case gerrors.Is(err, gerrors.ErrNotFound, "account_not_found"):
 		return nil, gerrors.FailedPrecondition("cannot_add_exchange_information_before_account_created", errParams)
 	case err != nil:
 		return nil, gerrors.Augment(err, "add_exchange_request_failed.failed_to_read_account_by_user_id", errParams)

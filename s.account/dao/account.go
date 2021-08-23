@@ -41,7 +41,7 @@ func ReadAccountByUserID(ctx context.Context, userID string) (*domain.Account, e
 
 	switch len(accounts) {
 	case 0:
-		return nil, gerrors.NotFound("account-not-found", nil)
+		return nil, gerrors.NotFound("account_not_found", nil)
 	case 1:
 		return accounts[0], nil
 	}

@@ -12,16 +12,21 @@ import (
 func (a *AccountService) ReadAccount(
 	ctx context.Context, in *accountproto.ReadAccountRequest,
 ) (*accountproto.ReadAccountResponse, error) {
+	switch {
+	case in.UserId == "":
+		return nil, gerrors.BadParam("missing_param.user_id", nil)
+	}
+
 	errParams := map[string]string{
 		"user_id": in.UserId,
 	}
 
 	account, err := dao.ReadAccountByUserID(ctx, in.UserId)
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "account-not-found"):
-		return nil, gerrors.Augment(err, "This user doesn't have an existing account", errParams)
+	case gerrors.Is(err, gerrors.ErrNotFound, "account_not_found"):
+		return nil, gerrors.Augment(err, "failed_to_read_account.account_not_exist", errParams)
 	case err != nil:
-		return nil, gerrors.Augment(err, "Failed to read account", errParams)
+		return nil, gerrors.Augment(err, "failed_to_read_account", errParams)
 	}
 
 	return &accountproto.ReadAccountResponse{
