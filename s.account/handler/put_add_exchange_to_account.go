@@ -3,12 +3,12 @@ package handler
 import (
 	"context"
 	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/util"
 	"swallowtail/s.account/dao"
 	"swallowtail/s.account/marshaling"
 	accountproto "swallowtail/s.account/proto"
 
 	"github.com/monzo/slog"
-	"github.com/monzo/terrors"
 )
 
 // AddExchange ...
@@ -52,29 +52,34 @@ func (s *AccountService) AddExchange(
 		return nil, gerrors.FailedPrecondition("add_exchange_request_failed.maximum_regsitered_active_exchanges_reached", errParams)
 	}
 
-	exchange, err := marshaling.ExchangeProtoToDomain(in.Exchange)
-	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal request", errParams)
-	}
-
 	// Verify the credentials actually work before storing them in persistent storage.
-	verified, reason, err := validateExchangeCredentials(ctx, exchange)
+	verified, reason, err := validateExchangeCredentials(ctx, in.UserId, in.Exchange)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_request.exchange_validation", errParams)
 	}
 
 	if !verified {
+		slog.Info(ctx, "Failed to verify users exchange credentials for %s: %s", in.Exchange.ExchangeType, in.UserId)
 		return &accountproto.AddExchangeResponse{
 			Verified: false,
 			Reason:   reason,
 		}, nil
 	}
 
-	if err := dao.AddExchange(ctx, exchange); err != nil {
-		return nil, terrors.Augment(err, "Failed to add exchange to account.", errParams)
+	exchange, err := marshaling.ExchangeProtoToDomain(in.UserId, in.Exchange)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_marshal_request", errParams)
 	}
 
-	slog.Info(ctx, "Added new exchange to account", errParams)
+	if err := dao.AddExchange(ctx, exchange); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_add_exchange_to_account.", errParams)
+	}
+
+	slog.Info(ctx, "Added new exchange to account, with verifiedc credentials", errParams)
+
+	// Mask keys before returning.
+	in.Exchange.ApiKey = util.MaskKey(in.Exchange.ApiKey, 4)
+	in.Exchange.SecretKey = util.MaskKey(in.Exchange.SecretKey, 4)
 
 	return &accountproto.AddExchangeResponse{
 		Exchange: in.Exchange,

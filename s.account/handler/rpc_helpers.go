@@ -2,29 +2,46 @@ package handler
 
 import (
 	"context"
-	"strings"
 	"swallowtail/libraries/gerrors"
-	"swallowtail/s.account/domain"
+	accountproto "swallowtail/s.account/proto"
+	binanceproto "swallowtail/s.binance/proto"
+	"time"
+
+	"github.com/monzo/slog"
 )
 
-func validateExchangeCredentials(ctx context.Context, exchange *domain.Exchange) (bool, string, error) {
+func validateExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
 	errParams := map[string]string{
-		"exchange_type": exchange.Exchange,
+		"exchange_type": exchange.ExchangeType.String(),
 	}
-	switch strings.ToLower(exchange.Exchange) {
-	case "binance":
-		return validateBinanceExchangeCredentials(ctx, exchange)
-	case "ftx":
-		return validateFTXExchangeCredentials(ctx, exchange)
+
+	switch exchange.ExchangeType.String() {
+	case accountproto.ExchangeType_BINANCE.String():
+		return validateBinanceExchangeCredentials(ctx, userID, exchange)
+	case accountproto.ExchangeType_FTX.String():
+		return validateFTXExchangeCredentials(ctx, userID, exchange)
 	default:
-		return false, "", gerrors.FailedPrecondition("invalid_exchangge", errParams)
+		return false, "", gerrors.FailedPrecondition("failed_to_validate_credentials.invalid_exchange", errParams)
 	}
 }
 
-func validateBinanceExchangeCredentials(ctx context.Context, exchange *domain.Exchange) (bool, string, error) {
-	return false, "", nil
+func validateBinanceExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
+	slog.Warn(ctx, "Creds: %v", exchange)
+
+	rsp, err := (&binanceproto.VerifyCredentialsRequest{
+		UserId: userID,
+		Credentials: &binanceproto.Credentials{
+			ApiKey:    exchange.ApiKey,
+			SecretKey: exchange.SecretKey,
+		},
+	}).SendWithTimeout(ctx, 30*time.Second).Response()
+	if err != nil {
+		return false, "", gerrors.Augment(err, "failed_to_validate_binance_credentials", nil)
+	}
+
+	return rsp.Success, rsp.Reason, nil
 }
 
-func validateFTXExchangeCredentials(ctx context.Context, exchange *domain.Exchange) (bool, string, error) {
+func validateFTXExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
 	return false, "", nil
 }

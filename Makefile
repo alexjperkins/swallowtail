@@ -3,6 +3,12 @@ default: build
 	docker-compose -f local.yml up --build
 
 backend:
+	cd s.satoshi &&  sudo make docker &&  cd .. && \
+	cd s.googlesheets &&  sudo make docker &&  cd .. && \
+	cd s.binance &&  sudo make docker &&  cd .. && \
+	cd s.account &&  sudo make docker &&  cd .. && \
+	cd s.discord &&  sudo make docker &&  cd .. && \
+	cd s.coingecko &&  sudo make docker &&  cd .. && \
 	docker-compose -f local.yml --profile backend up --build
 
 build:
@@ -33,6 +39,10 @@ discord:
 account:
 	cd s.account &&  sudo make docker &&  cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.account
+
+binance:
+	cd s.binance &&  sudo make docker &&  cd .. && \
+	docker-compose -f local.yml up --build swallowtail.s.binance
 
 test:
 	go test ./... -short

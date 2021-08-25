@@ -15,7 +15,7 @@ import (
 // SendMsgToPrivateChannel ...
 func (s *DiscordService) SendMsgToPrivateChannel(
 	ctx context.Context, in *discordproto.SendMsgToPrivateChannelRequest,
-) (*discordproto.SendMsgPrivateToChannelResponse, error) {
+) (*discordproto.SendMsgToPrivateChannelResponse, error) {
 	errParams := map[string]string{
 		"idempotency_key": in.IdempotencyKey,
 		"user_id":         in.UserId,
@@ -29,7 +29,7 @@ func (s *DiscordService) SendMsgToPrivateChannel(
 	}
 	switch {
 	case exists && !in.Force:
-		return &discordproto.SendMsgPrivateToChannelResponse{}, nil
+		return &discordproto.SendMsgToPrivateChannelResponse{}, nil
 	}
 
 	// Send message via discord.
@@ -61,5 +61,5 @@ func (s *DiscordService) SendMsgToPrivateChannel(
 		}
 	}
 
-	return &discordproto.SendMsgPrivateToChannelResponse{}, nil
+	return &discordproto.SendMsgToPrivateChannelResponse{}, nil
 }

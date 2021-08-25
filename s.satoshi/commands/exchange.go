@@ -38,7 +38,7 @@ func init() {
 				ID:                  "exchange-register",
 				Private:             true,
 				MinimumNumberOfArgs: 3,
-				Usage:               `Usage: !exchange register <exchange> <api-key> <secret-key>`,
+				Usage:               `Usage: !exchange register binance <api-key> <secret-key>`,
 				Handler:             registerExchangeCommand,
 			},
 			"list": {
@@ -86,12 +86,12 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 	}
 
 	if _, err := (&accountproto.AddExchangeRequest{
+		UserId: m.Author.ID,
 		Exchange: &accountproto.Exchange{
-			UserId:    m.Author.ID,
-			Exchange:  exchangeType,
-			ApiKey:    apiKey,
-			SecretKey: secretKey,
-			IsActive:  true,
+			ExchangeType: exchangeType,
+			ApiKey:       apiKey,
+			SecretKey:    secretKey,
+			IsActive:     true,
 		},
 	}).Send(ctx).Response(); err != nil {
 		s.ChannelMessageSend(
@@ -101,12 +101,12 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 		return gerrors.Augment(err, "failed_to_send_to_discord_failure", nil)
 	}
 
-	s.ChannelMessageSend(
+	_, err := s.ChannelMessageSend(
 		m.ChannelID,
-		fmt.Sprintf(":wave: Thanks! I've now added the exchange to your account. \n To see all exchanges registered use the command: `!exchange-list`"),
+		fmt.Sprintf(":wave: Thanks! I've now added the exchange to your account. \n\n To see all exchanges registered use the command: ```!exchange list```"),
 	)
 
-	return nil
+	return err
 }
 
 func listExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
@@ -126,13 +126,21 @@ func listExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Sess
 		ActiveOnly: true,
 	})
 
-	exchanges := rsp.Exchanges
+	exchanges := rsp.GetExchanges()
+	if exchanges == nil {
+		_, err := s.ChannelMessageSend(
+			m.ChannelID,
+			fmt.Sprintf(":wave: Sorry, you don't have any exchanges registered I'm afraid."),
+		)
+		return err
+	}
+
 	exchangesMsg := formatExchangesToMsg(exchanges, m)
 
-	s.ChannelMessageSend(
+	_, err = s.ChannelMessageSend(
 		m.ChannelID,
 		fmt.Sprintf(":wave: Here's the exchange details registered to your account, all keys are masked\n\n%s", exchangesMsg),
 	)
 
-	return nil
+	return err
 }

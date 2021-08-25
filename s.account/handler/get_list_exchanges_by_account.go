@@ -6,15 +6,13 @@ import (
 	"swallowtail/s.account/dao"
 	"swallowtail/s.account/marshaling"
 	accountproto "swallowtail/s.account/proto"
-
-	"github.com/monzo/terrors"
 )
 
 func (s *AccountService) ListExchanges(
 	ctx context.Context, in *accountproto.ListExchangesRequest,
 ) (*accountproto.ListExchangesResponse, error) {
 	if in.UserId == "" {
-		return nil, terrors.PreconditionFailed("missing-param.user_id", "Cannot list exchanges; missing user id", nil)
+		return nil, gerrors.FailedPrecondition("missing-param.user_id", nil)
 	}
 
 	errParams := map[string]string{
@@ -24,13 +22,14 @@ func (s *AccountService) ListExchanges(
 	exchanges, err := dao.ListExchangesByUserID(ctx, in.UserId, in.GetActiveOnly())
 	switch {
 	case gerrors.Is(err, gerrors.ErrNotFound, "exchanges_not_found_for_user_id"):
+		return nil, gerrors.Augment(err, "failed_to_list_exchanges_by_user_id", errParams)
 	case err != nil:
 		return nil, gerrors.Augment(err, "failed_to_read_exchanges_by_user_id", errParams)
 	}
 
 	protos, err := marshaling.ExchangeDomainToProtos(exchanges)
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to list exchanges; at least one  exchange has an unsupported exchange type", errParams)
+		return nil, gerrors.Augment(err, "failed_to_list_exchanges.at_least_one_exchange_has_an_unsupported_exchange_type", errParams)
 	}
 
 	return &accountproto.ListExchangesResponse{

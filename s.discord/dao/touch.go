@@ -39,7 +39,7 @@ func Update(ctx context.Context, mutation *domain.Touch) (*domain.Touch, error) 
 	var (
 		sql = `
 		UPDATE s_discord_touches
-		SET idempotency_key=$1, udpated=$2, sender_id=$3`
+		SET idempotency_key=$1, updated=$2, sender_id=$3`
 	)
 
 	if mutation.IdempotencyKey == "" {

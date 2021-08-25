@@ -19,8 +19,13 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Init Dao
+	// Init Dao.
 	if err := dao.Init(ctx, svcName); err != nil {
+		panic(err)
+	}
+
+	// Init client.
+	if err := client.Init(ctx); err != nil {
 		panic(err)
 	}
 

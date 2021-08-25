@@ -4,19 +4,22 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
-	"swallowtail/libraries/util"
 
 	"github.com/monzo/terrors"
+
+	"swallowtail/libraries/gerrors"
 )
 
 // EncryptWithAES encrypts the data with a passphrase using the AES cipher.
-func EncryptWithAES(d []byte, passphrase string) (string, error) {
-	hash := util.Sha256Hash(passphrase)
-	block, err := aes.NewCipher([]byte(hash))
+func EncryptWithAES(dest []byte, passphrase string) (string, error) {
+	hashed := sha256.Sum256([]byte(passphrase))
+
+	block, err := aes.NewCipher(hashed[:])
 	if err != nil {
 		return "", terrors.Augment(err, "Failed to encrypt with AES cipher; failed to create cipher block", nil)
-
 	}
 
 	gcm, err := cipher.NewGCM(block)
@@ -29,14 +32,18 @@ func EncryptWithAES(d []byte, passphrase string) (string, error) {
 		return "", terrors.Augment(err, "Failed to encrypt with AES cipher; failed to create nonce", nil)
 	}
 
-	return string(gcm.Seal(nonce, nonce, d, nil)), nil
+	return hex.EncodeToString(gcm.Seal(nonce, nonce, dest, nil)), nil
 }
 
 // DecryptWithAES decrypts the data with a passphrase using the AES cipher.
-func DecryptWithAES(d []byte, passphrase string) (string, error) {
-	hash := util.Sha256Hash(passphrase)
-	key := []byte(hash)
-	block, err := aes.NewCipher(key)
+func DecryptWithAES(encryptedText string, passphrase string) (string, error) {
+	d, err := hex.DecodeString(encryptedText)
+	if err != nil {
+		return "", gerrors.Augment(err, "aes_decryption_failed", nil)
+	}
+	hashed := sha256.Sum256([]byte(passphrase))
+
+	block, err := aes.NewCipher(hashed[:])
 	if err != nil {
 		return "", terrors.Augment(err, "Failed to decrypt with AES cipher; failed to create cipher block", nil)
 	}

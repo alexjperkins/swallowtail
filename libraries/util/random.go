@@ -6,14 +6,14 @@ import (
 )
 
 const (
-	AlphaNumbmeric Charset = iota
+	AlphaNumeric Charset = iota
 )
 
 type Charset int
 
 func (c Charset) String() string {
 	switch c {
-	case AlphaNumbmeric:
+	case AlphaNumeric:
 		return "abcdefghijklmnopqrstuvwxyz0123456789"
 	}
 	return ""

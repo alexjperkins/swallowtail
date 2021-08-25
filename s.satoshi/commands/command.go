@@ -22,6 +22,7 @@ type Command struct {
 	// Non-inclusive of the prefix.
 	MinimumNumberOfArgs int
 	Usage               string
+	Helps               string
 	FailureMsg          string
 	Handler             CommandHandler
 	SubCommands         map[string]*Command
