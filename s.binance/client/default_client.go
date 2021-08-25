@@ -87,9 +87,7 @@ func (c *binanceClient) doWithSignature(ctx context.Context, method, endpoint, q
 		return gerrors.Augment(err, "failed_do_request.signature_failure", errParams)
 	}
 
-	fmt.Println("Signed Request", signedRequest)
 	formattedEndpoint := fmt.Sprintf("%s?%s", endpoint, signedRequest)
-	fmt.Println("Formatted Endpoint", formattedEndpoint)
 
 	return c.http.DoWithEphemeralHeaders(ctx, method, formattedEndpoint, reqBody, rspBody, credentials.AsHeaders())
 }
