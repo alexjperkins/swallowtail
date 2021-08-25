@@ -3,11 +3,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 DO $$ 
 BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'trade_type') THEN
-		CREATE TYPE pager AS ENUM ('SPOT', 'PERPETUALS', 'FUTURES_QUARTERLY');
+		CREATE TYPE trade_type AS ENUM ('SPOT', 'PERPETUALS', 'FUTURES_QUARTERLY');
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'trade_side') THEN
-		CREATE TYPE pager AS ENUM ('BUY', 'SELL');
+		CREATE TYPE trade_side AS ENUM ('BUY', 'SELL');
 	END IF;
 END
 $$;
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS s_binance_trades (
 
 	
 	side trade_side NOT NULL,
-	type  trade_type NOT NULL;
+	type trade_type NOT NULL,
 	asset_pair VARCHAR(15) NOT NULL,
 	amount VARCHAR(15) NOT NULL,
 	value VARCHAR(15) NOT NULL,

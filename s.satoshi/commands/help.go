@@ -26,6 +26,8 @@ const (
 	Some commands & subcommands also require "args", these are values given to satoshi
 	as part of the command or subcommand.
 
+	NOTE: "<...>" means you need to replace with the argument value, don't include the brackets.
+
 	To see what args are required for subcommands, call help as an argument.
 	See notion for more detail.
 

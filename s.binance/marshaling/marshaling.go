@@ -30,24 +30,22 @@ func VerifyRequestDTOToProto(in *client.VerifyCredentialsResponse) *binanceproto
 }
 
 func isSuccess(rsp *client.VerifyCredentialsResponse) (bool, string) {
-	var (
-		sb strings.Builder
-	)
+	reasons := []string{}
 	if !rsp.EnableReading {
-		sb.WriteString("please enabled ability to read account; ")
+		reasons = append(reasons, "please enabled ability to read account")
 	}
 	if !rsp.EnableFutures {
-		sb.WriteString("please enable futures access; ")
+		reasons = append(reasons, "please enable futures access")
 	}
-	if !rsp.EnableWithdrawals {
-		sb.WriteString("withdrawals enabled, pleaes turn off; ")
+	if rsp.EnableWithdrawals {
+		reasons = append(reasons, "withdrawals enabled, please turn off")
 	}
 	if !rsp.IPRestrict {
-		sb.WriteString("no ip restrictions, please consider adding; ")
+		reasons = append(reasons, "no ip restrictions, please consider adding")
 	}
 	if !rsp.EnableSpotAndMarginTrading {
-		sb.WriteString("please enable spot access")
+		reasons = append(reasons, "please enable spot access")
 	}
 
-	return rsp.EnableReading && rsp.EnableFutures && rsp.EnableSpotAndMarginTrading, sb.String()
+	return rsp.EnableReading && rsp.EnableFutures && rsp.EnableSpotAndMarginTrading, strings.Join(reasons, ",")
 }

@@ -3,19 +3,25 @@ package client
 import (
 	"context"
 	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/transport"
 	"swallowtail/s.binance/domain"
+	"time"
 
 	"github.com/opentracing/opentracing-go"
 )
 
 const (
-	// Base URL
-	binanceAPIUrl = "https://api.binance.com/api/v3"
-
-	// Backup URLs
+	// Base URL(s)
+	binanceAPIUrl  = "https://api.binance.com/api/v3"
 	binanceAPIUrl1 = "https://api1.binance.com/api/v3"
 	binanceAPIUrl2 = "https://api2.binance.com/api/v3"
 	binanceAPIUrl3 = "https://api3.binance.com/api/v3"
+
+	// Base SPOT URL(s)
+	binanceSpotURL  = "https://api.binance.com/sapi/v1"
+	binanceSpotURL1 = "https://api1.binance.com/sapi/v1"
+	binanceSpotURL2 = "https://api2.binance.com/sapi/v1"
+	binanceSpotURL3 = "https://api3.binance.com/sapi/v1"
 )
 
 var (
@@ -42,12 +48,17 @@ type BinanceClient interface {
 	VerifyCredentials(context.Context, *Credentials) (*VerifyCredentialsResponse, error)
 }
 
+// Init initializes the default binance client for this service.
 func Init(ctx context.Context) error {
-	c, err := NewDefaultClient(ctx)
-	if err != nil {
+	c := &binanceClient{
+		http: transport.NewHTTPClient(30 * time.Second),
+	}
+
+	if err := c.Ping(ctx); err != nil {
 		// Panic since if we can't connect to Binance then this service is as good as dead.
 		return gerrors.Augment(err, "failed.binance_client_initialization", nil)
 	}
+
 	client = c
 	return nil
 }
@@ -86,5 +97,5 @@ func ReadPerpetualFuturesAccount(ctx context.Context, req *ReadPerptualFuturesAc
 func VerifyCredentials(ctx context.Context, credentials *Credentials) (*VerifyCredentialsResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Verify credentials for user")
 	defer span.Finish()
-	return nil, nil
+	return client.VerifyCredentials(ctx, credentials)
 }

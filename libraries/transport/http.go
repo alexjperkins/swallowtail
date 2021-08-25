@@ -20,7 +20,7 @@ type HttpClient interface {
 	DoWithEphemeralHeaders(ctx context.Context, method, endpoint string, reqBody, rspBody interface{}, headers map[string]string) error
 }
 
-func NewHTTPClient(ctx context.Context, timeout time.Duration) HttpClient {
+func NewHTTPClient(timeout time.Duration) HttpClient {
 	return &httpClient{
 		c: &http.Client{
 			Timeout: timeout,
@@ -120,8 +120,8 @@ func (h *httpClient) doRawRequest(ctx context.Context, method, url string, body 
 		return nil, err
 	}
 
-	if err := validateStatusCode(rsp, errParams); err != nil {
-		return nil, err
+	if err := validateStatusCode(rsp); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_execute_request.status_code", errParams)
 	}
 
 	return rsp, err
@@ -132,7 +132,7 @@ func (h *httpClient) authorize(req *http.Request, key, value string) {
 
 }
 
-func validateStatusCode(rsp *http.Response, errParams map[string]string) error {
+func validateStatusCode(rsp *http.Response) error {
 	if rsp.StatusCode >= 200 && rsp.StatusCode < 300 {
 		return nil
 	}
@@ -152,5 +152,7 @@ func validateStatusCode(rsp *http.Response, errParams map[string]string) error {
 		})
 	}
 
-	return gerrors.New(code, msg, errParams)
+	return gerrors.New(code, msg, map[string]string{
+		"status_code": strconv.Itoa(rsp.StatusCode),
+	})
 }

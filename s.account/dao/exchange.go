@@ -43,7 +43,7 @@ func ListExchangesByUserID(ctx context.Context, userID string, isActive bool) ([
 		exchanges []*domain.Exchange
 	)
 
-	if err := db.Select(ctx, exchanges, sql, userID, isActive); err != nil {
+	if err := db.Select(ctx, &exchanges, sql, userID, isActive); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
@@ -59,16 +59,17 @@ func AddExchange(ctx context.Context, exchange *domain.Exchange) error {
 	var (
 		sql = `
 		INSERT INTO s_account_exchanges
-		(exchange, api_key, secret_key, user_id, created, updated)
-		VALUES($1, $2, $3, $4, $5, $6)
+		(exchange, api_key, secret_key, user_id, created, updated, is_active)
+		VALUES($1, $2, $3, $4, $5, $6, $7)
 		`
 	)
 
 	now := time.Now().UTC()
 	if _, err := (db.Exec(
 		ctx, sql,
-		exchange.Exchange, exchange.APIKey, exchange.SecretKey, exchange.UserID,
+		exchange.ExchangeType, exchange.APIKey, exchange.SecretKey, exchange.UserID,
 		now, now,
+		exchange.IsActive,
 	)); err != nil {
 		return terrors.Propagate(err)
 	}
@@ -121,7 +122,7 @@ func UpdateExchange(ctx context.Context, mutation *domain.Exchange) (*domain.Exc
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		exchange.Exchange, exchange.APIKey, exchange.SecretKey, exchange.Updated,
+		exchange.ExchangeType, exchange.APIKey, exchange.SecretKey, exchange.Updated,
 	)); err != nil {
 		return nil, terrors.Propagate(err)
 	}

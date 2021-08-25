@@ -1,59 +1,33 @@
 package marshaling
 
 import (
+	"github.com/monzo/terrors"
+
 	"swallowtail/libraries/encryption"
 	"swallowtail/libraries/util"
 	"swallowtail/s.account/domain"
 	accountproto "swallowtail/s.account/proto"
-
-	"github.com/monzo/terrors"
 )
 
 // ExchangeProtoToDomain marshals the respective proto to the domain.
-func ExchangeProtoToDomain(in *accountproto.Exchange) (*domain.Exchange, error) {
+func ExchangeProtoToDomain(userID string, exchange *accountproto.Exchange) (*domain.Exchange, error) {
 	// TODO: we need a proper passphrase here.
-	encryptedAPIKey, err := encryption.EncryptWithAES([]byte(in.ApiKey), "passphrase")
+	encryptedAPIKey, err := encryption.EncryptWithAES([]byte(exchange.ApiKey), "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal proto to domain; encryption of api key failed", nil)
+		return nil, terrors.Augment(err, "Failed to marshal proto to domaexchange; encryption of api key failed", nil)
 	}
 
-	encryptedSecretKey, err := encryption.EncryptWithAES([]byte(in.SecretKey), "passphrase")
+	encryptedSecretKey, err := encryption.EncryptWithAES([]byte(exchange.SecretKey), "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal proto to domain; encryption of api key failed", nil)
+		return nil, terrors.Augment(err, "Failed to marshal proto to domaexchange; encryption of api key failed", nil)
 	}
 
 	return &domain.Exchange{
-		Exchange:  in.ExchangeType.String(),
-		APIKey:    encryptedAPIKey,
-		SecretKey: encryptedSecretKey,
-		IsActive:  in.IsActive,
-	}, nil
-}
-
-// ExchangeDomainToProto marshals an exchange domain to the respective proto.
-// All keys are masked by default.
-func ExchangeDomainToProto(in *domain.Exchange) (*accountproto.Exchange, error) {
-	exchangeType, err := convertExchangeTypeToProto(in.Exchange)
-	if err != nil {
-		return nil, err
-	}
-
-	decryptedAPIKey, err := encryption.DecryptWithAES([]byte(in.APIKey), "passphrase")
-	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
-	}
-
-	decryptedSecretKey, err := encryption.DecryptWithAES([]byte(in.SecretKey), "passphrase")
-	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
-	}
-
-	return &accountproto.Exchange{
-		ExchangeId:   in.ExchangeID,
-		ApiKey:       util.MaskKey(decryptedAPIKey, 4),
-		SecretKey:    util.MaskKey(decryptedSecretKey, 4),
-		ExchangeType: exchangeType,
-		IsActive:     in.IsActive,
+		ExchangeType: exchange.ExchangeType.String(),
+		APIKey:       encryptedAPIKey,
+		SecretKey:    encryptedSecretKey,
+		IsActive:     exchange.IsActive,
+		UserID:       userID,
 	}, nil
 }
 
@@ -69,6 +43,33 @@ func ExchangeDomainToProtos(ins []*domain.Exchange) ([]*accountproto.Exchange, e
 		protos = append(protos, proto)
 	}
 	return protos, nil
+}
+
+// ExchangeDomainToProto marshals an exchange domain to the respective proto.
+// All keys are masked by default.
+func ExchangeDomainToProto(in *domain.Exchange) (*accountproto.Exchange, error) {
+	exchangeType, err := convertExchangeTypeToProto(in.ExchangeType)
+	if err != nil {
+		return nil, err
+	}
+
+	decryptedAPIKey, err := encryption.DecryptWithAES(in.APIKey, "passphrase")
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+	}
+
+	decryptedSecretKey, err := encryption.DecryptWithAES(in.SecretKey, "passphrase")
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+	}
+
+	return &accountproto.Exchange{
+		ExchangeId:   in.ExchangeID,
+		ApiKey:       util.MaskKey(decryptedAPIKey, 4),
+		SecretKey:    util.MaskKey(decryptedSecretKey, 4),
+		ExchangeType: exchangeType,
+		IsActive:     in.IsActive,
+	}, nil
 }
 
 func convertExchangeTypeToProto(t string) (accountproto.ExchangeType, error) {

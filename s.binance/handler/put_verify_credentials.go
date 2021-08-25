@@ -30,8 +30,11 @@ func (s *BinanceService) VerifyCredentials(
 
 	rsp, err := client.VerifyCredentials(ctx, dtoCredentials)
 	if err != nil {
+		slog.Error(ctx, "%+v: %v", rsp, err)
 		return nil, gerrors.Augment(err, "failed_to_verify_credentials", nil)
 	}
+
+	slog.Warn(ctx, "%+v: %v", rsp, err)
 
 	proto := marshaling.VerifyRequestDTOToProto(rsp)
 
