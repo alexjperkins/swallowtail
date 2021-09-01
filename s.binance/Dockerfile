@@ -1,6 +1,6 @@
 ### --- Service --- ###
 FROM alpine:latest
-MAINTAINER alexperkins.crypto@gmail.com
+MAINTAINER alexperkins.dev@gmail.com
 ADD swallowtail.s.binance /
 ADD ./config /s.binance/config
 EXPOSE 8080

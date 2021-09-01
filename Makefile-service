@@ -8,7 +8,7 @@ repo-base-dir ?= $(shell git rev-parse --show-toplevel)
 define DOCKERFILE_CONTENTS
 ### --- Service --- ###
 FROM alpine:latest
-MAINTAINER alexperkins.crypto@gmail.com
+MAINTAINER alexperkins.dev@gmail.com
 ADD $(fq-binary) /
 ADD ./config /$(binary)/config
 EXPOSE 8080

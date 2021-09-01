@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"swallowtail/libraries/gerrors"
+	accountproto "swallowtail/s.account/proto"
 	"swallowtail/s.binance/client"
 	"swallowtail/s.binance/marshaling"
 	binanceproto "swallowtail/s.binance/proto"
@@ -10,6 +11,7 @@ import (
 	"github.com/monzo/slog"
 )
 
+// VerifyCredentials ...
 func (s *BinanceService) VerifyCredentials(
 	ctx context.Context, in *binanceproto.VerifyCredentialsRequest,
 ) (*binanceproto.VerifyCredentialsResponse, error) {
@@ -24,7 +26,18 @@ func (s *BinanceService) VerifyCredentials(
 		return nil, gerrors.BadParam("missing_param.credentials.secret_key", nil)
 	}
 
-	// TODO; check the user actually exists
+	errParams := map[string]string{
+		"user_id": in.UserId,
+	}
+
+	_, err := (&accountproto.ReadAccountRequest{
+		UserId: in.UserId,
+	}).Send(ctx).Response()
+	switch {
+	case gerrors.Is(err, gerrors.ErrNotFound, "failed_to_read_account.account_not_exist"):
+	case err != nil:
+		return nil, gerrors.Augment(err, "failed_to_verify_credentials.failed_to_read_accout", errParams)
+	}
 
 	dtoCredentials := marshaling.CredentialsProtoToDTO(in.Credentials)
 
@@ -33,8 +46,6 @@ func (s *BinanceService) VerifyCredentials(
 		slog.Error(ctx, "%+v: %v", rsp, err)
 		return nil, gerrors.Augment(err, "failed_to_verify_credentials", nil)
 	}
-
-	slog.Warn(ctx, "%+v: %v", rsp, err)
 
 	proto := marshaling.VerifyRequestDTOToProto(rsp)
 

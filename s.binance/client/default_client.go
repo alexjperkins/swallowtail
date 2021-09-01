@@ -20,30 +20,37 @@ type binanceClient struct {
 func (c *binanceClient) ListAllAssetPairs(ctx context.Context) (*ListAllAssetPairsResponse, error) {
 	url := fmt.Sprintf("%s/%s", binanceAPIUrl, "exchangeInfo")
 	rspBody := &ListAllAssetPairsResponse{}
+
 	if err := c.http.Do(ctx, http.MethodGet, url, nil, rspBody); err != nil {
 		return nil, terrors.Augment(err, "Failed to list all asset pairs", nil)
 	}
+
 	return rspBody, nil
 }
 
 func (c *binanceClient) ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error {
+	// TODO
 	return nil
 }
 
 func (c *binanceClient) ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error) {
+	// TODO
 	return nil, nil
 }
 
 func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error) {
+	// TODO
 	return nil, nil
 }
 
 func (c *binanceClient) Ping(ctx context.Context) error {
 	endpoint := fmt.Sprintf("%s/ping", binanceAPIUrl)
 	rspBody := &PingResponse{}
+
 	if err := c.http.Do(ctx, http.MethodGet, endpoint, nil, rspBody); err != nil {
 		return terrors.Augment(err, "Failed to connect to the Binance API.", nil)
 	}
+
 	return nil
 }
 
@@ -93,7 +100,7 @@ func (c *binanceClient) doWithSignature(ctx context.Context, method, endpoint, q
 }
 
 func (c *binanceClient) signRequest(secret, queryString string, reqBody interface{}) (string, error) {
-	// converts to unix time will millisecond precision.
+	// converts to unix nano time to that of millisecond precision; this is all that we need.
 	now := time.Now().UnixNano() / 1_000_000
 
 	// sign the request
