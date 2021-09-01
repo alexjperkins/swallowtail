@@ -114,8 +114,8 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	var (
 		sql = `
 		UPDATE s_account_accounts
-		SET username=$1, password=$2, email=$3, phone_number=$4, created=$5, updated=$6, high_priority_pager=$7, low_priority_pager=$8
-		WHERE user_id=$9`
+		SET username=$1, password=$2, email=$3, phone_number=$4, created=$5, updated=$6, high_priority_pager=$7, low_priority_pager=$8, is_futures_member=$9, is_admin=$10
+		WHERE user_id=$11`
 	)
 	if mutation.UserID == "" {
 		return nil, terrors.PreconditionFailed("mutation-without-id", "Account mutation requires at least the account ID", nil)
@@ -123,21 +123,19 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 
 	account, err := ReadAccountByUserID(ctx, mutation.UserID)
 	if err != nil {
-		return nil, terrors.Propagate(err)
+		return nil, err
 	}
 
 	if err := mergo.Merge(&account, mutation); err != nil {
-		return nil, terrors.BadRequest("mutation-merge-failure", "Failed to merge account mutation", map[string]string{
-			"upstream_err": err.Error(),
-		})
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	if _, err := (db.Exec(
 		ctx, sql,
 		account.Email, account.Password, account.Email, account.PhoneNumber, account.HighPriorityPager,
-		account.LowPriorityPager, account.UserID,
+		account.LowPriorityPager, account.IsFuturesMember, account.IsAdmin, account.UserID,
 	)); err != nil {
-		return nil, terrors.Propagate(err)
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 	return account, nil
 }

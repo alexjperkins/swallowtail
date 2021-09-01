@@ -92,6 +92,9 @@ message UpdateAccountRequest {
   string phone_number = 5;
   PagerType high_priority_pager = 6;
   PagerType low_priority_pager = 7;
+  bool is_admin = 9;
+  bool is_futures = 10; 
+  string actor_id = 11;
 }
 
 message UpdateAccountResponse {

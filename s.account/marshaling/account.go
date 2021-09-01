@@ -28,5 +28,7 @@ func UpdateAccountProtoToDomain(in *accountproto.UpdateAccountRequest) *domain.A
 		PhoneNumber:       in.PhoneNumber,
 		HighPriorityPager: in.HighPriorityPager.String(),
 		LowPriorityPager:  in.LowPriorityPager.String(),
+		IsFuturesMember:   in.IsFutures,
+		IsAdmin:           in.IsAdmin,
 	}
 }

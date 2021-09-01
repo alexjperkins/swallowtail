@@ -36,3 +36,12 @@ func getIdentifierFromAccount(account *domain.Account, pagerType string) (string
 	errParams["pager_type"] = pagerType
 	return "", terrors.PreconditionFailed("unknown-pager-type", "Cannot page account; unknown pager type", errParams)
 }
+
+func isValidActorID(actorID string) bool {
+	switch actorID {
+	case accountproto.ActorSystemPayments, accountproto.ActorManual:
+		return true
+	default:
+		return false
+	}
+}
