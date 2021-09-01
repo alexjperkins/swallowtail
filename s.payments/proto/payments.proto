@@ -3,4 +3,19 @@ syntax = "proto3";
 option go_package = "./;paymentsproto";
 
 service payments {
+    rpc RegisterPayment (RegisterPaymentRequest) returns (RegisterPaymentResponse) {
+    }
 }
+
+enum PaymentType {
+    FUTURES = 0;
+}
+
+message RegisterPaymentRequest{
+    string user_id = 1;
+    string transaction_id = 2;
+    float amount_in_usdt = 3;
+    string audit_note = 4;
+}
+
+message RegisterPaymentResponse {}

@@ -3,7 +3,10 @@
 package paymentsproto
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -14,6 +17,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentsClient interface {
+	RegisterPayment(ctx context.Context, in *RegisterPaymentRequest, opts ...grpc.CallOption) (*RegisterPaymentResponse, error)
 }
 
 type paymentsClient struct {
@@ -24,10 +28,20 @@ func NewPaymentsClient(cc grpc.ClientConnInterface) PaymentsClient {
 	return &paymentsClient{cc}
 }
 
+func (c *paymentsClient) RegisterPayment(ctx context.Context, in *RegisterPaymentRequest, opts ...grpc.CallOption) (*RegisterPaymentResponse, error) {
+	out := new(RegisterPaymentResponse)
+	err := c.cc.Invoke(ctx, "/payments/RegisterPayment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentsServer is the server API for Payments service.
 // All implementations must embed UnimplementedPaymentsServer
 // for forward compatibility
 type PaymentsServer interface {
+	RegisterPayment(context.Context, *RegisterPaymentRequest) (*RegisterPaymentResponse, error)
 	mustEmbedUnimplementedPaymentsServer()
 }
 
@@ -35,16 +49,42 @@ type PaymentsServer interface {
 type UnimplementedPaymentsServer struct {
 }
 
+func (*UnimplementedPaymentsServer) RegisterPayment(context.Context, *RegisterPaymentRequest) (*RegisterPaymentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterPayment not implemented")
+}
 func (*UnimplementedPaymentsServer) mustEmbedUnimplementedPaymentsServer() {}
 
 func RegisterPaymentsServer(s *grpc.Server, srv PaymentsServer) {
 	s.RegisterService(&_Payments_serviceDesc, srv)
 }
 
+func _Payments_RegisterPayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterPaymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentsServer).RegisterPayment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payments/RegisterPayment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentsServer).RegisterPayment(ctx, req.(*RegisterPaymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Payments_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "payments",
 	HandlerType: (*PaymentsServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "s.payments/proto/payments.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RegisterPayment",
+			Handler:    _Payments_RegisterPayment_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "s.payments/proto/payments.proto",
 }

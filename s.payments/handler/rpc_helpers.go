@@ -37,3 +37,17 @@ func readUserRoles(ctx context.Context, userID string) ([]*discordproto.Role, er
 
 	return rsp.GetRoles(), nil
 }
+
+func isUserRegistered(ctx context.Context, userID string) (bool, error) {
+	_, err := (&accountproto.ReadAccountRequest{
+		UserId: userID,
+	}).Send(ctx).Response()
+	switch {
+	case gerrors.Is(err, gerrors.ErrNotFound, "account_not_found"):
+		return false, nil
+	case err != nil:
+		return false, gerrors.Augment(err, "failed_to_check_if_user_register", nil)
+	}
+
+	return true, nil
+}
