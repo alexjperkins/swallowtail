@@ -144,6 +144,74 @@ func (r *ReadAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	}
 }
 
+// --- Update Account --- //
+
+type UpdateAccountFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *UpdateAccountResponse
+	ctx     context.Context
+}
+
+func (a *UpdateAccountFuture) Response() (*UpdateAccountResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "update_account", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *UpdateAccountRequest) Send(ctx context.Context) *UpdateAccountFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *UpdateAccountRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *UpdateAccountFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *UpdateAccountResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &UpdateAccountFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewAccountClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.UpdateAccount(ctx, r)
+		if err != nil {
+			errc <- err
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &UpdateAccountFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
 // --- Page Account --- //
 
 type PageAccountFuture struct {
