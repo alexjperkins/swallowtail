@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS s_discord_touches (
 );
 
 CREATE INDEX IF NOT EXISTS idx_s_discord_touches_idempotency_key
-ON s_discord_touches(idempotency_key);
+	ON s_discord_touches(idempotency_key);

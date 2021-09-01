@@ -113,3 +113,13 @@ services:
       - postgres
     profiles:
       - backend
+
+  swallowtail.s.payments:
+    hostname: swallowtail-s-payments
+    image: swallowtail.s.payments
+    ports:
+      - "8007:8000"
+    depends_on:
+      - postgres
+    profiles:
+      - backend

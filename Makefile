@@ -9,6 +9,7 @@ backend:
 	cd s.account &&  sudo make docker &&  cd .. && \
 	cd s.discord &&  sudo make docker &&  cd .. && \
 	cd s.coingecko &&  sudo make docker &&  cd .. && \
+	cd s.payments && sudo make docker && cd .. && \
 	docker-compose -f local.yml --profile backend up --build
 
 build:
@@ -43,6 +44,10 @@ account:
 binance:
 	cd s.binance &&  sudo make docker &&  cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.binance
+
+payments:
+	cd s.payments &&  sudo make docker &&  cd .. && \
+	docker-compose -f local.yml up --build swallowtail.s.payments
 
 test:
 	go test ./... -short
