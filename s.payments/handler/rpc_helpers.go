@@ -4,6 +4,7 @@ import (
 	"context"
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
+	discordproto "swallowtail/s.discord/proto"
 )
 
 // setUserAsFuturesMember
@@ -22,4 +23,17 @@ func setUserAsFuturesMember(ctx context.Context, userID string) error {
 	}
 
 	return nil
+}
+
+func readUserRoles(ctx context.Context, userID string) ([]*discordproto.Role, error) {
+	rsp, err := (&discordproto.ReadUserRolesRequest{
+		UserId: userID,
+	}).Send(ctx).Response()
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_user_discord_roles", map[string]string{
+			"user_id": userID,
+		})
+	}
+
+	return rsp.GetRoles(), nil
 }

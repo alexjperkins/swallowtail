@@ -9,3 +9,9 @@ type Touch struct {
 	Updated        time.Time `db:"updated"`
 	SenderID       string    `db:"sender_id"`
 }
+
+// Role ...
+type Role struct {
+	ID   string
+	Name string
+}
