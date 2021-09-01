@@ -11,6 +11,7 @@ import (
 // Sets the user as a futures member.
 func setUserAsFuturesMember(ctx context.Context, userID string) error {
 	_, err := (&accountproto.UpdateAccountRequest{
+		ActorId:   accountproto.ActorSystemPayments,
 		UserId:    userID,
 		IsFutures: true,
 	}).Send(ctx).Response()
