@@ -2,12 +2,13 @@ package client
 
 import (
 	"context"
-	"swallowtail/libraries/gerrors"
-	"swallowtail/libraries/transport"
-	"swallowtail/s.binance/domain"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+
+	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/transport"
+	"swallowtail/s.binance/domain"
 )
 
 const (

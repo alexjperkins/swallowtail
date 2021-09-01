@@ -21,7 +21,7 @@ const (
 	Usage: !exchange <subcommand>
 
 	Subcommands:
-	1. register
+	1. register <exchange> <api-key> <secret-key>
 	2. list
 	`
 )

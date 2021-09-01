@@ -39,8 +39,6 @@ services:
       - POSTGRES_USER=test
       - POSTGRES_PASSWORD=test
 
-  ### --- RPC Layer --- ###
-
   ### --- APIs --- ###
 
   ### --- Backend --- ###
