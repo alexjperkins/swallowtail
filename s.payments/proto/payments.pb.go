@@ -11,6 +11,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -24,20 +25,163 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
+type RegisterPaymentRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	UserId        string  `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	TransactionId string  `protobuf:"bytes,2,opt,name=transaction_id,json=transactionId,proto3" json:"transaction_id,omitempty"`
+	AmountInUsdt  float32 `protobuf:"fixed32,3,opt,name=amount_in_usdt,json=amountInUsdt,proto3" json:"amount_in_usdt,omitempty"`
+	AuditNote     string  `protobuf:"bytes,4,opt,name=audit_note,json=auditNote,proto3" json:"audit_note,omitempty"`
+}
+
+func (x *RegisterPaymentRequest) Reset() {
+	*x = RegisterPaymentRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_s_payments_proto_payments_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegisterPaymentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterPaymentRequest) ProtoMessage() {}
+
+func (x *RegisterPaymentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_s_payments_proto_payments_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterPaymentRequest.ProtoReflect.Descriptor instead.
+func (*RegisterPaymentRequest) Descriptor() ([]byte, []int) {
+	return file_s_payments_proto_payments_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *RegisterPaymentRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *RegisterPaymentRequest) GetTransactionId() string {
+	if x != nil {
+		return x.TransactionId
+	}
+	return ""
+}
+
+func (x *RegisterPaymentRequest) GetAmountInUsdt() float32 {
+	if x != nil {
+		return x.AmountInUsdt
+	}
+	return 0
+}
+
+func (x *RegisterPaymentRequest) GetAuditNote() string {
+	if x != nil {
+		return x.AuditNote
+	}
+	return ""
+}
+
+type RegisterPaymentResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *RegisterPaymentResponse) Reset() {
+	*x = RegisterPaymentResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_s_payments_proto_payments_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegisterPaymentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterPaymentResponse) ProtoMessage() {}
+
+func (x *RegisterPaymentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_s_payments_proto_payments_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterPaymentResponse.ProtoReflect.Descriptor instead.
+func (*RegisterPaymentResponse) Descriptor() ([]byte, []int) {
+	return file_s_payments_proto_payments_proto_rawDescGZIP(), []int{1}
+}
+
 var File_s_payments_proto_payments_proto protoreflect.FileDescriptor
 
 var file_s_payments_proto_payments_proto_rawDesc = []byte{
 	0x0a, 0x1f, 0x73, 0x2e, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x2f, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x32, 0x0a, 0x0a, 0x08, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x42, 0x12, 0x5a,
-	0x10, 0x2e, 0x2f, 0x3b, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x22, 0x9d, 0x01, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x50, 0x61,
+	0x79, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07,
+	0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75,
+	0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x74,
+	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x24, 0x0a, 0x0e,
+	0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x5f, 0x75, 0x73, 0x64, 0x74, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x02, 0x52, 0x0c, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x55, 0x73,
+	0x64, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x75, 0x64, 0x69, 0x74, 0x5f, 0x6e, 0x6f, 0x74, 0x65,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x61, 0x75, 0x64, 0x69, 0x74, 0x4e, 0x6f, 0x74,
+	0x65, 0x22, 0x19, 0x0a, 0x17, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x50, 0x61, 0x79,
+	0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x52, 0x0a, 0x08,
+	0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x46, 0x0a, 0x0f, 0x52, 0x65, 0x67, 0x69,
+	0x73, 0x74, 0x65, 0x72, 0x50, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x17, 0x2e, 0x52, 0x65,
+	0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x50, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x50,
+	0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x42, 0x12, 0x5a, 0x10, 0x2e, 0x2f, 0x3b, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_s_payments_proto_payments_proto_goTypes = []interface{}{}
+var (
+	file_s_payments_proto_payments_proto_rawDescOnce sync.Once
+	file_s_payments_proto_payments_proto_rawDescData = file_s_payments_proto_payments_proto_rawDesc
+)
+
+func file_s_payments_proto_payments_proto_rawDescGZIP() []byte {
+	file_s_payments_proto_payments_proto_rawDescOnce.Do(func() {
+		file_s_payments_proto_payments_proto_rawDescData = protoimpl.X.CompressGZIP(file_s_payments_proto_payments_proto_rawDescData)
+	})
+	return file_s_payments_proto_payments_proto_rawDescData
+}
+
+var file_s_payments_proto_payments_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_s_payments_proto_payments_proto_goTypes = []interface{}{
+	(*RegisterPaymentRequest)(nil),  // 0: RegisterPaymentRequest
+	(*RegisterPaymentResponse)(nil), // 1: RegisterPaymentResponse
+}
 var file_s_payments_proto_payments_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
+	0, // 0: payments.RegisterPayment:input_type -> RegisterPaymentRequest
+	1, // 1: payments.RegisterPayment:output_type -> RegisterPaymentResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -48,18 +192,45 @@ func file_s_payments_proto_payments_proto_init() {
 	if File_s_payments_proto_payments_proto != nil {
 		return
 	}
+	if !protoimpl.UnsafeEnabled {
+		file_s_payments_proto_payments_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RegisterPaymentRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_s_payments_proto_payments_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RegisterPaymentResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_s_payments_proto_payments_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_s_payments_proto_payments_proto_goTypes,
 		DependencyIndexes: file_s_payments_proto_payments_proto_depIdxs,
+		MessageInfos:      file_s_payments_proto_payments_proto_msgTypes,
 	}.Build()
 	File_s_payments_proto_payments_proto = out.File
 	file_s_payments_proto_payments_proto_rawDesc = nil

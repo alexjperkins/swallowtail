@@ -8,4 +8,5 @@ type Payment struct {
 	TransactionID string    `db:"transaction_id"`
 	Timestamp     time.Time `db:"timestamp"`
 	AmountInUSDT  float64   `db:"amount_in_usdt"`
+	AuditNote     string    `db:"audit_note"`
 }

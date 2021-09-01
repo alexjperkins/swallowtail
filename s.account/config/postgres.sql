@@ -50,4 +50,6 @@ CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	CONSTRAINT fk_account
 		FOREIGN KEY(user_id)
 			REFERENCES s_account_accounts(user_id) ON DELETE SET NULL
+	
+	UNIQUE(user_id, exchange)
 );
