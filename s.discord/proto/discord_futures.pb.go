@@ -143,3 +143,71 @@ func (r *SendMsgToPrivateChannelRequest) SendWithTimeout(ctx context.Context, ti
 		resultc: resultc,
 	}
 }
+
+// --- Read User Roles --- //
+
+type ReadUserRolesFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ReadUserRolesResponse
+	ctx     context.Context
+}
+
+func (a *ReadUserRolesFuture) Response() (*ReadUserRolesResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_user_roles", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ReadUserRolesRequest) Send(ctx context.Context) *ReadUserRolesFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ReadUserRolesRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadUserRolesFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ReadUserRolesResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-discord:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_discord_connection_failed", nil)
+		return &ReadUserRolesFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewDiscordClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ReadUserRoles(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_to_read_user_roles", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ReadUserRolesFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}

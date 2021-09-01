@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"swallowtail/libraries/util"
+	"swallowtail/s.discord/domain"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
@@ -47,9 +48,16 @@ func Init(ctx context.Context) error {
 
 // DiscordClient ...
 type DiscordClient interface {
+	// Send
 	Send(ctx context.Context, message, channelID string) error
+	// SendPrivateMessage
 	SendPrivateMessage(ctx context.Context, message, userID string) error
+	// AddHandler
 	AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate))
+	// ReadRole
+	ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error)
+
+	// TODO: Remove below
 	Close()
 	Ping(ctx context.Context) error
 }
@@ -66,4 +74,10 @@ func SendPrivateMessage(ctx context.Context, message, userID string) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Send discord message via private channel")
 	defer span.Finish()
 	return client.SendPrivateMessage(ctx, message, userID)
+}
+
+func ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Read user roles")
+	defer span.Finish()
+	return client.ReadRoles(ctx, userID)
 }

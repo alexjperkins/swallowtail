@@ -7,7 +7,7 @@ service discord {
 
   rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgToPrivateChannelResponse);
 
-  rpc Subscribe (SuscribeRequest) returns (SubscribeResponse);
+  rpc ReadUserRoles (ReadUserRolesRequest) returns (ReadUserRolesResponse);
 }
 
 message SendMsgToChannelRequest {
@@ -30,9 +30,14 @@ message SendMsgToPrivateChannelRequest {
 
 message SendMsgToPrivateChannelResponse{}
 
-message SuscribeRequest {
-  string subscriber_id = 1;
-  repeated string filter_id = 2;
+message Role {
+  string role_id = 1;
+  string role_name = 2;
 }
 
-message SubscribeResponse {}
+message ReadUserRolesRequest {
+  string user_id = 1;
+}
+message ReadUserRolesResponse {
+  repeated Role roles = 1;
+}

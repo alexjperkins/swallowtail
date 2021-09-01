@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion6
 type DiscordClient interface {
 	SendMsgToChannel(ctx context.Context, in *SendMsgToChannelRequest, opts ...grpc.CallOption) (*SendMsgToChannelResponse, error)
 	SendMsgToPrivateChannel(ctx context.Context, in *SendMsgToPrivateChannelRequest, opts ...grpc.CallOption) (*SendMsgToPrivateChannelResponse, error)
-	Subscribe(ctx context.Context, in *SuscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error)
+	ReadUserRoles(ctx context.Context, in *ReadUserRolesRequest, opts ...grpc.CallOption) (*ReadUserRolesResponse, error)
 }
 
 type discordClient struct {
@@ -48,9 +48,9 @@ func (c *discordClient) SendMsgToPrivateChannel(ctx context.Context, in *SendMsg
 	return out, nil
 }
 
-func (c *discordClient) Subscribe(ctx context.Context, in *SuscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error) {
-	out := new(SubscribeResponse)
-	err := c.cc.Invoke(ctx, "/discord/Subscribe", in, out, opts...)
+func (c *discordClient) ReadUserRoles(ctx context.Context, in *ReadUserRolesRequest, opts ...grpc.CallOption) (*ReadUserRolesResponse, error) {
+	out := new(ReadUserRolesResponse)
+	err := c.cc.Invoke(ctx, "/discord/ReadUserRoles", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *discordClient) Subscribe(ctx context.Context, in *SuscribeRequest, opts
 type DiscordServer interface {
 	SendMsgToChannel(context.Context, *SendMsgToChannelRequest) (*SendMsgToChannelResponse, error)
 	SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgToPrivateChannelResponse, error)
-	Subscribe(context.Context, *SuscribeRequest) (*SubscribeResponse, error)
+	ReadUserRoles(context.Context, *ReadUserRolesRequest) (*ReadUserRolesResponse, error)
 	mustEmbedUnimplementedDiscordServer()
 }
 
@@ -77,8 +77,8 @@ func (*UnimplementedDiscordServer) SendMsgToChannel(context.Context, *SendMsgToC
 func (*UnimplementedDiscordServer) SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgToPrivateChannelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMsgToPrivateChannel not implemented")
 }
-func (*UnimplementedDiscordServer) Subscribe(context.Context, *SuscribeRequest) (*SubscribeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+func (*UnimplementedDiscordServer) ReadUserRoles(context.Context, *ReadUserRolesRequest) (*ReadUserRolesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadUserRoles not implemented")
 }
 func (*UnimplementedDiscordServer) mustEmbedUnimplementedDiscordServer() {}
 
@@ -122,20 +122,20 @@ func _Discord_SendMsgToPrivateChannel_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Discord_Subscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SuscribeRequest)
+func _Discord_ReadUserRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadUserRolesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DiscordServer).Subscribe(ctx, in)
+		return srv.(DiscordServer).ReadUserRoles(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/discord/Subscribe",
+		FullMethod: "/discord/ReadUserRoles",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DiscordServer).Subscribe(ctx, req.(*SuscribeRequest))
+		return srv.(DiscordServer).ReadUserRoles(ctx, req.(*ReadUserRolesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -153,8 +153,8 @@ var _Discord_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Discord_SendMsgToPrivateChannel_Handler,
 		},
 		{
-			MethodName: "Subscribe",
-			Handler:    _Discord_Subscribe_Handler,
+			MethodName: "ReadUserRoles",
+			Handler:    _Discord_ReadUserRoles_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
