@@ -78,16 +78,16 @@ type ListAccountDepositsResponse struct {
 
 // Deposit ...
 type DepositRecord struct {
-	Coin          string    `json:"coin"`
-	Confirmations int64     `json:"confirmations"`
-	ConfirmedTime time.Time `json:"confirmedTime"`
-	Fee           int64     `json:"fee"`
 	ID            int64     `json:"id"`
-	SentTime      time.Time `json:"sentTime"`
-	Size          float64   `json:"size"`
-	Status        string    `json:"confirmed"`
-	Time          time.Time `json:"time"`
+	Coin          string    `json:"coin"`
 	TXID          string    `json:"txid"`
+	Size          float64   `json:"size"`
+	Fee           float64   `json:"fee"`
+	Status        string    `json:"status"`
+	Time          time.Time `json:"time"`
+	SentTime      time.Time `json:"sentTime"`
+	ConfirmedTime time.Time `json:"confirmedTime"`
+	Confirmations int64     `json:"confirmations"`
 }
 
 // VerifyCredentialsRequest ...

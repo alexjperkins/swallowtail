@@ -26,14 +26,14 @@ const (
 func init() {
 	register(accountCommandID, &Command{
 		ID:                  accountCommandID,
-		Private:             true,
+		IsPrivate:           true,
 		MinimumNumberOfArgs: 1,
 		Usage:               accountUsage,
 		Handler:             accountHandler,
 		SubCommands: map[string]*Command{
 			"register": {
 				ID:                  "register-account",
-				Private:             true,
+				IsPrivate:           true,
 				MinimumNumberOfArgs: 2,
 				Usage:               `!account register <email> <password>`,
 				Handler:             registerAccountHandler,

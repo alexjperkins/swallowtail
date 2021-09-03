@@ -53,8 +53,10 @@ message Account {
   string email = 2;
   bool is_futures_member = 3;
   bool is_admin = 4;
-  google.protobuf.Timestamp created = 7;
-  google.protobuf.Timestamp last_updated = 8;
+  string username = 5;
+  google.protobuf.Timestamp created = 6;
+  google.protobuf.Timestamp last_updated = 7;
+
 }
 
 message ListAccountsRequest{

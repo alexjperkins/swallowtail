@@ -6,6 +6,7 @@ import (
 	"strings"
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
+	discordproto "swallowtail/s.discord/proto"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
@@ -17,8 +18,11 @@ const (
 
 // Command ...
 type Command struct {
-	ID      string
-	Private bool
+	ID string
+	// IsPrivate dictates if the command must be run in a private channel.
+	IsPrivate     bool
+	IsFuturesOnly bool
+	IsAdminOnly   bool
 	// Non-inclusive of the prefix.
 	MinimumNumberOfArgs int
 	Usage               string
@@ -51,9 +55,21 @@ func (c *Command) Exec(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
 	// Check Privacy.
-	if c.Private && m.GuildID != "" {
+	if c.IsPrivate && m.GuildID != "" {
 		_, err := s.ChannelMessageSend(m.ChannelID, formatNonPublicMsg(m.Author.ID))
 		return gerrors.Augment(err, "failed_to_page_user.private", nil)
+	}
+
+	// Check if they are indeed an admin member if the command requires so.
+	if c.IsAdminOnly && !isAdmin(m.Member.Roles) {
+		_, err := s.ChannelMessageSend(m.ChannelID, formatNonAdminMsg(m.Author.ID))
+		return gerrors.Augment(err, "failed_to_page_user.non_admin", nil)
+	}
+
+	// Check if they are a indeed a futures member if the command requires so.
+	if c.IsFuturesOnly && !isFuturesMember(m.Member.Roles) {
+		_, err := s.ChannelMessageSend(m.ChannelID, formatNonFuturesMsg(m.Author.ID))
+		return gerrors.Augment(err, "failed_to_page_user.non_futures_member", nil)
 	}
 
 	// Check Usage.
@@ -102,6 +118,14 @@ func formatUsageMsg(userID, usage string) string {
 	return fmt.Sprintf(":wave: <@%s> %s", userID, util.WrapAsCodeBlock(usage))
 }
 
+func formatNonAdminMsg(userID string) string {
+	return fmt.Sprintf(":wave: <@%s>, apologies! But this command can only be run by admins :disappointed:", userID)
+}
+
+func formatNonFuturesMsg(userID string) string {
+	return fmt.Sprintf(":wave: <@%s>, apologies! But this command can only be run by futures members :grimacing: Ping @ajperkins if you want to know how to become one", userID)
+}
+
 func formatNonPublicMsg(userID string) string {
 	return fmt.Sprintf(":wave: <@%s>, Please DM satoshi this command instead, the response may contain sensitive information. Thanks", userID)
 }
@@ -111,6 +135,26 @@ func formatFailureMsg(userID, failureMsg string, err error) string {
 		":disappointed: Sorry <@%s>, I failed to execute that command.\n%s\n Error: %s\n.",
 		userID, failureMsg, err,
 	)
+}
+
+func isFuturesMember(roles []string) bool {
+	for _, role := range roles {
+		if role == discordproto.DiscordSatoshiFuturesRoleID {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isAdmin(roles []string) bool {
+	for _, role := range roles {
+		if role == discordproto.DiscordSatoshiAdminRoleID {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Placeholder

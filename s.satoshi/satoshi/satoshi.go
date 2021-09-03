@@ -27,10 +27,12 @@ type Satoshi interface {
 
 func New(withJitter bool) Satoshi {
 	dc := discord.New(SatoshiBotID, satoshiToken, true)
+
 	for id, command := range commands.List() {
 		slog.Info(context.TODO(), "Registering command %s to %s", id, SatoshiBotID)
 		dc.AddHandler(command.Exec)
 	}
+
 	return &satoshi{
 		dc:             dc,
 		withJitter:     withJitter,
@@ -77,10 +79,10 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 	for {
 		select {
 		case e := <-s.consumerStream:
-			slog.Info(ctx, "Received satoshi consumer event; %+v, isActive: %b", e, e.IsActive)
 			if !e.IsActive {
 				continue
 			}
+
 			if e.IsPrivate {
 				if len(e.ParticipentIDs) == 0 {
 					slog.Warn(

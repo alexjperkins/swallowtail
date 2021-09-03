@@ -30,8 +30,8 @@ func ReadPaymentByTransactionID(ctx context.Context, transactionID string) (*dom
 	}
 }
 
-// RegisterTransaction ...
-func RegisterTransaction(ctx context.Context, payment *domain.Payment) error {
+// RegisterPayment ...
+func RegisterPayment(ctx context.Context, payment *domain.Payment) error {
 	var (
 		sql = ` 
 		INSERT INTO s_payments_payments(

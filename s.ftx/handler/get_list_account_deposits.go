@@ -6,6 +6,8 @@ import (
 	"swallowtail/s.ftx/client"
 	"swallowtail/s.ftx/marshaling"
 	ftxproto "swallowtail/s.ftx/proto"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ListAccountDeposits ...
@@ -31,15 +33,39 @@ func (s *FTXService) ListAccountDeposits(
 		return nil, gerrors.Unauthenticated("failed_to_list_account_deposits.unauthorized_actor", errParams)
 	}
 
-	rsp, err := client.ListAccountDeposits(ctx, &client.ListAccountDepositsRequest{}, &client.PaginationFilter{
-		// We need millisecond resolution
-		Start: in.Start.Seconds / 1_000_000,
-		End:   in.Start.Seconds / 1_000_000,
-	})
+	pagination := buildPaginationFilter(in.Start, in.End)
+
+	rsp, err := client.ListAccountDeposits(ctx, &client.ListAccountDepositsRequest{}, pagination)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_list_account_deposits", errParams)
+	}
 
 	protoDeposits := marshaling.DepositsDTOToProto(rsp.Deposits)
 
 	return &ftxproto.ListAccountDepositsResponse{
 		Deposits: protoDeposits,
-	}, gerrors.Unimplemented("failed_to_list_account_deposits.unimplemented", nil)
+	}, nil
+}
+
+func buildPaginationFilter(startTime, endTime *timestamppb.Timestamp) *client.PaginationFilter {
+	if startTime == nil && endTime == nil {
+		return nil
+	}
+
+	if endTime == nil {
+		return &client.PaginationFilter{
+			Start: startTime.GetSeconds(),
+			End:   timestamppb.Now().Seconds,
+		}
+	}
+
+	if startTime == nil {
+		// It's non sensical to have an endtime but no starttime; just pass no pagination filter here rather than error.
+		return nil
+	}
+
+	return &client.PaginationFilter{
+		Start: startTime.GetSeconds(),
+		End:   endTime.GetSeconds(),
+	}
 }

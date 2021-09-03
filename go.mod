@@ -3,7 +3,7 @@ module swallowtail
 go 1.15
 
 require (
-	cloud.google.com/go v0.94.0 // indirect
+	cloud.google.com/go v0.94.1 // indirect
 	github.com/99designs/gqlgen v0.13.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
@@ -79,7 +79,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sys v0.0.0-20210903071746-97244b99971b // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/api v0.55.0 // indirect
+	google.golang.org/api v0.56.0 // indirect
 	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2 // indirect
 	google.golang.org/grpc v1.40.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect

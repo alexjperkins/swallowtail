@@ -27,8 +27,9 @@ func setUserAsFuturesMember(ctx context.Context, userID string) error {
 
 	// Set user as discord futures member.
 	if _, err := (&discordproto.UpdateUserRolesRequest{
-		ActorId: discordproto.DiscordRolesUpdateActorPaymentsSystem,
-		UserId:  userID,
+		ActorId:           discordproto.DiscordRolesUpdateActorPaymentsSystem,
+		UserId:            userID,
+		MergeWithExisting: true,
 		Roles: []*discordproto.Role{
 			{
 				RoleId:   discordproto.DiscordSatoshiFuturesRoleID,
@@ -57,18 +58,18 @@ func readUserRoles(ctx context.Context, userID string) ([]*discordproto.Role, er
 }
 
 // isUserRegistered checks if the userID has an account registered in `s.account`
-func isUserRegistered(ctx context.Context, userID string) (bool, error) {
-	_, err := (&accountproto.ReadAccountRequest{
+func isUserRegistered(ctx context.Context, userID string) (*accountproto.Account, error) {
+	rsp, err := (&accountproto.ReadAccountRequest{
 		UserId: userID,
 	}).Send(ctx).Response()
 	switch {
 	case gerrors.Is(err, gerrors.ErrNotFound, "account_not_found"):
-		return false, nil
+		return nil, nil
 	case err != nil:
-		return false, gerrors.Augment(err, "failed_to_check_if_user_register", nil)
+		return nil, gerrors.Augment(err, "failed_to_check_if_user_register", nil)
 	}
 
-	return true, nil
+	return rsp.Account, nil
 }
 
 // isMonthlyTransactionInDepositAccount checks if the txid exists in the deposit account.
