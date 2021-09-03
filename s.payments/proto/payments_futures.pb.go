@@ -42,9 +42,9 @@ func (r *RegisterPaymentRequest) SendWithTimeout(ctx context.Context, timeout ti
 	errc := make(chan error, 1)
 	resultc := make(chan *RegisterPaymentResponse, 1)
 
-	conn, err := grpc.DialContext(ctx, "swallowtail-s-payment:8000", grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-payments:8000", grpc.WithInsecure())
 	if err != nil {
-		errc <- gerrors.Augment(err, "swallowtail_s_payment_connection_failed", nil)
+		errc <- gerrors.Augment(err, "swallowtail_s_payments_connection_failed", nil)
 		return &RegisterPaymentFuture{
 			ctx:     ctx,
 			errc:    errc,

@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/imdario/mergo"
@@ -13,8 +14,8 @@ import (
 	accountproto "swallowtail/s.account/proto"
 )
 
-// ReadAccounts returns a list of all domain accounts from the underlying datastore.
-func ReadAccounts(ctx context.Context) ([]*domain.Account, error) {
+// ListAccounts returns a list of all domain accounts from the underlying datastore.
+func ListAccounts(ctx context.Context) ([]*domain.Account, error) {
 	var (
 		sql      = `SELECT * FROM s_account_accounts`
 		accounts []*domain.Account
@@ -114,8 +115,8 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	var (
 		sql = `
 		UPDATE s_account_accounts
-		SET username=$1, password=$2, email=$3, phone_number=$4, created=$5, updated=$6, high_priority_pager=$7, low_priority_pager=$8, is_futures_member=$9, is_admin=$10
-		WHERE user_id=$11`
+		SET username=$1, password=$2, email=$3, phone_number=$4, high_priority_pager=$5, low_priority_pager=$6, is_futures_member=$7, is_admin=$8, updated=$9
+		WHERE user_id=$10`
 	)
 	if mutation.UserID == "" {
 		return nil, terrors.PreconditionFailed("mutation-without-id", "Account mutation requires at least the account ID", nil)
@@ -126,14 +127,16 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 		return nil, err
 	}
 
-	if err := mergo.Merge(&account, mutation); err != nil {
-		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	fmt.Println("ACC: ", account, "MUT: ", mutation)
+
+	if err := mergo.MergeWithOverwrite(account, mutation); err != nil {
+		return nil, gerrors.Augment(gerrors.Propagate(err, gerrors.ErrUnknown, nil), "failed_to_merge_accounts", nil)
 	}
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		account.Email, account.Password, account.Email, account.PhoneNumber, account.HighPriorityPager,
-		account.LowPriorityPager, account.IsFuturesMember, account.IsAdmin, account.UserID,
+		account.Username, account.Password, account.Email, account.PhoneNumber, account.HighPriorityPager, account.LowPriorityPager, account.IsFuturesMember, account.IsAdmin, account.Updated,
+		account.UserID,
 	)); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}

@@ -15,6 +15,7 @@ func (s *FTXService) ListAccountDeposits(
 	ctx context.Context, in *ftxproto.ListAccountDepositsRequest,
 ) (*ftxproto.ListAccountDepositsResponse, error) {
 	switch {
+	// TODO: validate start and end times.
 	case in.ActorId == "":
 		return nil, gerrors.BadParam("missing_param.actor_id", nil)
 	}
@@ -47,25 +48,25 @@ func (s *FTXService) ListAccountDeposits(
 	}, nil
 }
 
-func buildPaginationFilter(startTime, endTime *timestamppb.Timestamp) *client.PaginationFilter {
-	if startTime == nil && endTime == nil {
+func buildPaginationFilter(startTime, endTime int64) *client.PaginationFilter {
+	if startTime == 0 && endTime == 0 {
 		return nil
 	}
 
-	if endTime == nil {
+	if endTime == 0 {
 		return &client.PaginationFilter{
-			Start: startTime.GetSeconds(),
+			Start: startTime,
 			End:   timestamppb.Now().Seconds,
 		}
 	}
 
-	if startTime == nil {
+	if startTime == 0 {
 		// It's non sensical to have an endtime but no starttime; just pass no pagination filter here rather than error.
 		return nil
 	}
 
 	return &client.PaginationFilter{
-		Start: startTime.GetSeconds(),
-		End:   endTime.GetSeconds(),
+		Start: startTime,
+		End:   endTime,
 	}
 }

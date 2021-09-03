@@ -25,20 +25,6 @@ services:
     profiles:
       - backend
 
-  postgres_test:
-    build:
-      context: .
-      dockerfile: ./infrastructure/postgres/Dockerfile
-    image: test.swallowtail.i.postgres
-    ports:
-      - "5433:5432"
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=swallowtail_test
-      - POSTGRES_USER=test
-      - POSTGRES_PASSWORD=test
-
   ### --- APIs --- ###
 
   ### --- Backend --- ###

@@ -77,7 +77,17 @@ func (s *PaymentsService) RegisterPayment(
 
 	now := time.Now().UTC()
 
+	// Set user as a futures member on s.account & in discord
+	if err := setUserAsFuturesMember(ctx, in.UserId); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_register_payment.failed_to_set_user_as_futures_member", errParams)
+	}
+
+	slog.Info(ctx, "User: %s, set as a futures member", in.UserId)
+
 	// Okay; everything is in check, we can now safely store the tx to our persistence layer.
+	//
+	// NOTE: We push to our persistence layer since all the above are idempotent. If we fail to store before
+	// setting the user as a futures maybe, then on retry we fail since the txid will already exist.
 	if err := dao.RegisterPayment(ctx, &domain.Payment{
 		UserID:        in.UserId,
 		TransactionID: in.TransactionId,
@@ -87,15 +97,7 @@ func (s *PaymentsService) RegisterPayment(
 	}); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_register_payment.persistence_layer", errParams)
 	}
-
-	slog.Info(ctx, "Payment registered for user: %s, setting as futures member", in.UserId)
-
-	// Set user as a futures member on s.account & in discord
-	if err := setUserAsFuturesMember(ctx, in.UserId); err != nil {
-		return nil, gerrors.Augment(err, "failed_to_register_payment.failed_to_set_user_as_futures_member", errParams)
-	}
-
-	slog.Info(ctx, "User: %s, set as a futures member", in.UserId)
+	slog.Info(ctx, "Payment registered for user: %s", in.UserId)
 
 	postToPulseChannel(ctx, in.UserId, account.Username, in.TransactionId, in.AuditNote, float64(in.AmountInUsdt), now)
 

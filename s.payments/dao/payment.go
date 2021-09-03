@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// ReadPaymentByTransactionID ...
 func ReadPaymentByTransactionID(ctx context.Context, transactionID string) (*domain.Payment, error) {
 	var (
 		sql = `
@@ -16,7 +17,7 @@ func ReadPaymentByTransactionID(ctx context.Context, transactionID string) (*dom
 		payments []*domain.Payment
 	)
 
-	if err := db.Select(ctx, &payments, sql); err != nil {
+	if err := db.Select(ctx, &payments, sql, transactionID); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
@@ -37,9 +38,9 @@ func RegisterPayment(ctx context.Context, payment *domain.Payment) error {
 		INSERT INTO s_payments_payments(
 			user_id, transaction_id, timestamp, amount_in_usdt, audit_note
 		)
-		VALUES
+		VALUES (
 			$1, $2, $3, $4, $5
-		`
+		)`
 	)
 
 	if _, err := (db.Exec(
@@ -64,7 +65,7 @@ func UserPaymentExistsSince(ctx context.Context, userID string, after time.Time)
 		payments []*domain.Payment
 	)
 
-	if err := db.Select(ctx, &payments, sql); err != nil {
+	if err := db.Select(ctx, &payments, sql, userID, after); err != nil {
 		return false, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 

@@ -49,14 +49,32 @@ func helpCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *
 	var sb strings.Builder
 	sb.WriteString("SATOSHI COMMANDS")
 	sb.WriteString(helpMessage)
-	for _, command := range commands {
+	for _, command := range commands[:len(commands)/2] {
 		sb.WriteString(fmt.Sprintf("\n%s%s", strings.ToTitle(command.ID), command.Usage))
 	}
 
-	s.ChannelMessageSend(
+	// TODO: this breaks if we're over 2000 chars
+	// This temp fix is super awkward; we want to improve it at some point.
+	_, err := s.ChannelMessageSend(
 		m.ChannelID,
 		util.WrapAsCodeBlock(sb.String()),
 	)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	sb.Reset()
+	for _, command := range commands[len(commands)/2:] {
+		sb.WriteString(fmt.Sprintf("\n%s%s", strings.ToTitle(command.ID), command.Usage))
+	}
+
+	_, err = s.ChannelMessageSend(
+		m.ChannelID,
+		util.WrapAsCodeBlock(sb.String()),
+	)
+	if err != nil {
+		return err
+	}
+
+	return err
 }
