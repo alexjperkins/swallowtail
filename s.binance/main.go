@@ -24,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	// Init client.
+	// Init Binance client.
 	if err := client.Init(ctx); err != nil {
 		panic(err)
 	}
@@ -33,9 +33,4 @@ func main() {
 	srv := mariana.Init(svcName)
 	binanceproto.RegisterBinanceServer(srv.Grpc(), &handler.BinanceService{})
 	srv.Run(ctx)
-
-	// Init Binance client.
-	if err := client.Init(ctx); err != nil {
-		panic(err)
-	}
 }

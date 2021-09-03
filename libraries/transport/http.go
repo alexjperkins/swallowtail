@@ -128,7 +128,7 @@ func (h *httpClient) doRawRequest(ctx context.Context, method, url string, body 
 }
 
 func (h *httpClient) authorize(req *http.Request, key, value string) {
-	req.Header.Add(key, value)
+	req.Header.Set(key, value)
 
 }
 
@@ -145,7 +145,7 @@ func validateStatusCode(rsp *http.Response) error {
 	case 404:
 		code = gerrors.ErrNotFound
 	case 429:
-		code = gerrors.ErrUnauthenticated
+		code = gerrors.ErrRateLimited
 	default:
 		return gerrors.FailedPrecondition("bad_request", map[string]string{
 			"status_code": strconv.Itoa(rsp.StatusCode),
