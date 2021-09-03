@@ -24,16 +24,11 @@ func New(name, token string, isBot bool) DiscordClient {
 		}))
 	}
 
-	s.LogLevel = 0
-	s.Debug = true
-
 	// Open websocket session.
-	err = s.Open()
-	if err != nil {
+	if err = s.Open(); err != nil {
 		panic(err)
 	}
 
-	slog.Info(nil, "USER-AGENT: %s", s.UserAgent)
 	if !isActiveFlag {
 		slog.Warn(context.TODO(), "Discord client set to TESTING MODE.")
 	}
@@ -56,14 +51,17 @@ func (d *discordClient) Send(ctx context.Context, message, channelID string) err
 	var (
 		cID = channelID
 	)
+
 	if !d.isActive {
 		cID = discordTestingChannel
 
 	}
+
 	msg, err := d.session.ChannelMessageSend(cID, message)
 	if err != nil {
 		return err
 	}
+
 	slog.Info(ctx, "Message Posted to discord: %v", msg)
 	return nil
 }
@@ -89,7 +87,7 @@ func (d *discordClient) SendPrivateMessage(ctx context.Context, message, userID 
 func (d *discordClient) ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error) {
 	m, err := d.session.GuildMember(discordproto.DiscordSatoshiGuildID, userID)
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_read_roles", map[string]string{
+		return nil, gerrors.Augment(err, "failed_to_read_roles.failed_to_fetch_member", map[string]string{
 			"guild_id": discordproto.DiscordSatoshiGuildID,
 		})
 	}
@@ -109,6 +107,21 @@ func (d *discordClient) ReadRoles(ctx context.Context, userID string) ([]*domain
 	}
 
 	return roles, nil
+}
+
+func (d *discordClient) SetRoles(ctx context.Context, userID string, roles []*domain.Role) error {
+	roleIDs := []string{}
+	for _, role := range roles {
+		roleIDs = append(roleIDs, role.ID)
+	}
+
+	if err := d.session.GuildMemberEdit(discordproto.DiscordSatoshiGuildID, userID, roleIDs); err != nil {
+		return gerrors.Augment(err, "failed_to_set_roles", map[string]string{
+			"guild_id": discordproto.DiscordSatoshiGuildID,
+		})
+	}
+
+	return nil
 }
 
 func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate)) {

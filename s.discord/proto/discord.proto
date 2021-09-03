@@ -8,36 +8,50 @@ service discord {
   rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgToPrivateChannelResponse);
 
   rpc ReadUserRoles (ReadUserRolesRequest) returns (ReadUserRolesResponse);
+
+  rpc UpdateUserRoles (UpdateUserRolesRequest) returns (UpdateUserRolesResponse);
 }
 
 message SendMsgToChannelRequest {
-  string channel_id = 1;
-  string sender_id = 2;
-  string content = 3;
-  string idempotency_key = 4;
-  bool force = 5;
+    string channel_id = 1;
+    string sender_id = 2;
+    string content = 3;
+    string idempotency_key = 4;
+    bool force = 5;
 }
 
 message SendMsgToChannelResponse {}
 
 message SendMsgToPrivateChannelRequest {
-  string user_id = 1;
-  string sender_id = 2;
-  string content = 3;
-  string idempotency_key = 4;
-  bool force = 5;
+    string user_id = 1;
+    string sender_id = 2;
+    string content = 3;
+    string idempotency_key = 4;
+    bool force = 5;
 }
 
 message SendMsgToPrivateChannelResponse{}
 
 message Role {
-  string role_id = 1;
-  string role_name = 2;
+    string role_id = 1;
+    string role_name = 2;
 }
 
 message ReadUserRolesRequest {
-  string user_id = 1;
+    string user_id = 1;
 }
+
 message ReadUserRolesResponse {
-  repeated Role roles = 1;
+    repeated Role roles = 1;
+}
+
+message UpdateUserRolesRequest {
+    string user_id = 1;
+    repeated Role roles = 2;
+    bool merge_with_existing = 3;
+    string actor_id = 4;
+}
+
+message UpdateUserRolesResponse {
+    repeated Role roles = 1;
 }

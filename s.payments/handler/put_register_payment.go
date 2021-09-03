@@ -6,6 +6,8 @@ import (
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.payments/dao"
 	paymentsproto "swallowtail/s.payments/proto"
+
+	"github.com/monzo/slog"
 )
 
 // RegisterPayment ...
@@ -59,7 +61,24 @@ func (s *PaymentsService) RegisterPayment(
 		return nil, gerrors.FailedPrecondition("failed_to_register_payment.user_has_already_paid", errParams)
 	}
 
-	// TODO: validate txid regex.
-	// TODO: validate txid & the amount on FTX.
-	return nil, nil
+	// We check if the monthly amount has indeed been paid; we allow a discrepancy of 1 to allow for tx fees.
+	doesTxExist, err := isMonthlyTransactionInDepositAccount(ctx, in.TransactionId, float64(in.AmountInUsdt)-1)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_register_payment", errParams)
+	}
+
+	if !doesTxExist {
+		return nil, gerrors.FailedPrecondition("failed_to_register_payment.transaction_of_correct_amount_does_not_exist_in_deposit_account", errParams)
+	}
+
+	slog.Info(ctx, "Payment registered for user: %s, setting as futures member", in.UserId)
+
+	// Set user as a futures member on s.account & in discord
+	if err := setUserAsFuturesMember(ctx, in.UserId); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_register_payment.failed_to_set_user_as_futures_member", errParams)
+	}
+
+	slog.Info(ctx, "User: %s, set as a futures member", in.UserId)
+
+	return &paymentsproto.RegisterPaymentResponse{}, nil
 }
