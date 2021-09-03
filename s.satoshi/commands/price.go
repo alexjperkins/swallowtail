@@ -52,9 +52,8 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 	pricesMsg := priceBotSvc.GetPricesAsFormattedString(ctx, symbols, false)
 
 	// Best Effort.
-	s.ChannelMessageSend(m.ChannelID, pricesMsg)
-
-	return nil
+	_, err := s.ChannelMessageSend(m.ChannelID, pricesMsg)
+	return err
 }
 
 func allPriceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {

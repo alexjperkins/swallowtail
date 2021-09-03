@@ -42,92 +42,92 @@ enum PagerType {
 }
 
 enum PagerPriority {
-  HIGH = 0;
-  LOW = 1;
+    HIGH = 0;
+    LOW = 1;
 }
 
 // Only used for responses, we currently don't have mechanisms to remove sensitived data such
 // as keys or phones. This should only contain insensitive data.
 message Account {
-  string user_id = 1;
-  string email = 2;
-  bool is_futures_member = 3;
-  bool is_admin = 4;
-  string username = 5;
-  google.protobuf.Timestamp created = 6;
-  google.protobuf.Timestamp last_updated = 7;
-
+    string user_id = 1;
+    string email = 2;
+    bool is_futures_member = 3;
+    bool is_admin = 4;
+    string username = 5;
+    google.protobuf.Timestamp created = 6;
+    google.protobuf.Timestamp last_updated = 7;
 }
 
 message ListAccountsRequest{
+    bool is_futures_member = 1;
+    bool is_admin_member = 2;
 }
 
 message ListAccountsResponse {
-  repeated Account accounts = 1;
+    repeated Account accounts = 1;
 }
 
 message ReadAccountRequest {
-  string user_id = 1;
+    string user_id = 1;
 }
 
 message ReadAccountResponse {
-  Account account = 1;
+    Account account = 1;
 }
 
 message CreateAccountRequest {
-  string user_id = 4;
-  string username = 1;
-  string password = 2;
-  string email = 3;
-  string phone_number = 5;
-  PagerType high_priority_pager = 6;
-  PagerType low_priority_pager = 7;
+    string user_id = 4;
+    string username = 1;
+    string password = 2;
+    string email = 3;
+    string phone_number = 5;
+    PagerType high_priority_pager = 6;
+    PagerType low_priority_pager = 7;
 }
 
 message CreateAccountResponse {}
 
 message UpdateAccountRequest {
-  string user_id = 1;
-  string username = 2;
-  string password = 3;
-  string email = 4;
-  string phone_number = 5;
-  PagerType high_priority_pager = 6;
-  PagerType low_priority_pager = 7;
-  bool is_admin = 9;
-  bool is_futures = 10; 
-  string actor_id = 11;
+    string user_id = 1;
+    string username = 2;
+    string password = 3;
+    string email = 4;
+    string phone_number = 5;
+    PagerType high_priority_pager = 6;
+    PagerType low_priority_pager = 7;
+    bool is_admin = 9;
+    bool is_futures = 10; 
+    string actor_id = 11;
 }
 
 message UpdateAccountResponse {
-  Account account = 1;
+    Account account = 1;
 }
 
 message PageAccountRequest {
-  string user_id = 1;
-  string content = 2;
-  PagerPriority priority = 3;
-
+    string user_id = 1;
+    string content = 2;
+    PagerPriority priority = 3;
 }
 
 message PageAccountResponse {}
 
 enum ExchangeType {
-  BINANCE = 0;
-  FTX = 1;
+    BINANCE = 0;
+    FTX = 1;
 }
 
 message Exchange {
-  ExchangeType exchange_type = 1;
-  string api_key = 2;
-  string secret_key = 3;
-  bool is_active = 4;
-  string exchange_id = 5;
+    ExchangeType exchange_type = 1;
+    string api_key = 2;
+    string secret_key = 3;
+    bool is_active = 4;
+    string exchange_id = 5;
 }
 
 message AddExchangeRequest {
-  Exchange exchange = 1;
-  string user_id = 2;
+    Exchange exchange = 1;
+    string user_id = 2;
 }
 
 message AddExchangeResponse {
@@ -137,18 +137,18 @@ message AddExchangeResponse {
 }
 
 message ListExchangesRequest {
-  string user_id = 1;
-  bool active_only = 2;
+    string user_id = 1;
+    bool active_only = 2;
 }
 
 message ListExchangesResponse {
-  repeated Exchange exchanges = 1;
+    repeated Exchange exchanges = 1;
 }
 
 message ReadExchangeRequest {
-  string exchange_id = 1;
+    string exchange_id = 1;
 }
 
 message ReadExchangeResponse{
-  Exchange exchange = 1;
+    Exchange exchange = 1;
 }

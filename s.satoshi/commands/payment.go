@@ -2,10 +2,12 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"swallowtail/libraries/gerrors"
 	paymentsproto "swallowtail/s.payments/proto"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/monzo/slog"
 )
 
 const (
@@ -78,6 +80,7 @@ func registerPaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 		)
 		return err
 	case err != nil:
+		slog.Error(ctx, "Failed to process payment: %v", err.Error())
 		_, err := s.ChannelMessageSend(
 			m.ChannelID,
 			":disappointed: Hey, apologies! Looks like something broke. Please try again - if this keeps happening please ping @ajperkins to investigate",
@@ -85,5 +88,10 @@ func registerPaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 		return err
 	}
 
-	return nil
+	_, err = s.ChannelMessageSend(
+		m.ChannelID,
+		fmt.Sprintf(":wave: Payment successfully registered. Thank you <@%s>! :coin:", m.Author.ID),
+	)
+
+	return err
 }

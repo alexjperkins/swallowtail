@@ -10,8 +10,10 @@ service ftx {
 
 message ListAccountDepositsRequest {
     string actor_id = 1;
-    google.protobuf.Timestamp start = 2;
-    google.protobuf.Timestamp end = 3;
+    // Seconds in unix time
+    int64 start = 2;
+    // Seconds in unix time
+    int64 end = 3;
 }
 
 message ListAccountDepositsResponse {

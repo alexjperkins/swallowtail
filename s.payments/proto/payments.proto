@@ -3,8 +3,7 @@ syntax = "proto3";
 option go_package = "./;paymentsproto";
 
 service payments {
-    rpc RegisterPayment (RegisterPaymentRequest) returns (RegisterPaymentResponse) {
-    }
+    rpc RegisterPayment (RegisterPaymentRequest) returns (RegisterPaymentResponse) {}
 }
 
 enum PaymentType {

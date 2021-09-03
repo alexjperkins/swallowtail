@@ -6,9 +6,6 @@ import (
 	accountproto "swallowtail/s.account/proto"
 	discordproto "swallowtail/s.discord/proto"
 	ftxproto "swallowtail/s.ftx/proto"
-	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // setUserAsFuturesMember sets the user as a futures member.
@@ -75,12 +72,11 @@ func isUserRegistered(ctx context.Context, userID string) (*accountproto.Account
 // isMonthlyTransactionInDepositAccount checks if the txid exists in the deposit account.
 func isMonthlyTransactionInDepositAccount(ctx context.Context, transactionID string, minimumExpectedAmount float64) (bool, error) {
 	start := currentMonthStartTimestamp()
-	end := time.Now().UTC()
 
 	rsp, err := (&ftxproto.ListAccountDepositsRequest{
 		ActorId: ftxproto.FTXDepositAccountActorPaymentsSystem,
-		Start:   timestamppb.New(start),
-		End:     timestamppb.New(end),
+		// We require only second granularity.
+		Start: start.Unix(),
 	}).Send(ctx).Response()
 	if err != nil {
 		return false, gerrors.Augment(err, "failed_to_check_txid_in_deposit_account", map[string]string{

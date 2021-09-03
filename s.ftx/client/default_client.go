@@ -53,7 +53,7 @@ func (f *ftxClient) VerifyCredentials(ctx context.Context, req *VerifyCredential
 }
 
 func (f *ftxClient) do(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *Credentials) error {
-	url := buildURL(f.hostname, endpoint, pagination)
+	url := fmt.Sprintf("%s%s", f.hostname, buildEndpoint(endpoint, pagination))
 
 	var creds = credentials
 	if creds == nil {
@@ -65,28 +65,28 @@ func (f *ftxClient) do(ctx context.Context, method, endpoint string, req, rsp in
 
 func (f *ftxClient) signBeforeDo(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *Credentials) error {
 	ts := strconv.FormatInt(time.Now().UTC().Unix()*1000, 10)
-	url := buildURL(f.hostname, endpoint, pagination)
+	preparedEndpoint := buildEndpoint(endpoint, pagination)
 
 	reqBody, err := json.Marshal(req)
 	if err != nil {
 		return gerrors.Augment(err, "failed_to_sign_request.bad_request_body", nil)
 	}
 
-	signature, err := credentials.SignRequest(method, endpoint, ts, reqBody)
+	signature, err := credentials.SignRequest(method, preparedEndpoint, ts, reqBody)
 	if err != nil {
 		return gerrors.Augment(err, "failed_to_send_request.failed_to_sign_request", nil)
 	}
 
+	url := fmt.Sprintf("%s%s", f.hostname, preparedEndpoint)
+
 	return f.http.DoWithEphemeralHeaders(ctx, method, url, req, rsp, credentials.AsHeaders(signature, ts))
 }
 
-func buildURL(hostname, endpoint string, pagination *PaginationFilter) string {
-	base := fmt.Sprintf("%s%s", hostname, endpoint)
-
-	var url = base
+func buildEndpoint(base string, pagination *PaginationFilter) string {
+	var endpoint = base
 	if pagination != nil {
-		url = fmt.Sprintf("%s?%s", url, pagination.ToQueryString())
+		endpoint = fmt.Sprintf("%s?%s", endpoint, pagination.ToQueryString())
 	}
 
-	return url
+	return endpoint
 }

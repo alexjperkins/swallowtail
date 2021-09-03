@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	svcName = "s.account"
+	svcName = "s.payments"
 )
 
 func main() {

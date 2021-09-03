@@ -10,10 +10,10 @@ import (
 )
 
 // ListAccounts returns a list of all given accounts.
-func ListAccounts(
+func (s *AccountService) ListAccounts(
 	ctx context.Context, in *accountproto.ListAccountsRequest,
 ) (*accountproto.ListAccountsResponse, error) {
-	accounts, err := dao.ReadAccounts(ctx)
+	accounts, err := dao.ListAccounts(ctx)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to list accounts", nil)
 
