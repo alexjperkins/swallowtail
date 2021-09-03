@@ -40,6 +40,32 @@ func setUserAsFuturesMember(ctx context.Context, userID string) error {
 	return nil
 }
 
+// removeUserAsFuturesMember sets the user as a futures member.
+func removeUserAsFuturesMember(ctx context.Context, userID string) error {
+	// Remove user as a futures member internally.
+	_, err := (&accountproto.UpdateAccountRequest{
+		ActorId:   accountproto.ActorSystemPayments,
+		UserId:    userID,
+		IsFutures: false,
+	}).Send(ctx).Response()
+	if err != nil {
+		return gerrors.Augment(err, "failed_to_remove_user_as_futures_member", nil)
+	}
+
+	if _, err := (&discordproto.RemoveUserRoleRequest{
+		ActorId: discordproto.DiscordRolesUpdateActorPaymentsSystem,
+		UserId:  userID,
+		Role: &discordproto.Role{
+			RoleId:   discordproto.DiscordSatoshiFuturesRoleID,
+			RoleName: discordproto.DiscordSatoshiFuturesRole,
+		},
+	}).Send(ctx).Response(); err != nil {
+		return gerrors.Augment(err, "failed_to_remove_user_as_discord_futures_member", nil)
+	}
+
+	return nil
+}
+
 // readUserRoles reads the users roles from discord.
 func readUserRoles(ctx context.Context, userID string) ([]*discordproto.Role, error) {
 	rsp, err := (&discordproto.ReadUserRolesRequest{
@@ -93,4 +119,15 @@ func isMonthlyTransactionInDepositAccount(ctx context.Context, transactionID str
 	}
 
 	return false, nil
+}
+
+func listFuturesMembers(ctx context.Context) ([]*accountproto.Account, error) {
+	rsp, err := (&accountproto.ListAccountsRequest{
+		IsFuturesMember: true,
+	}).Send(ctx).Response()
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_list_futures_members", nil)
+	}
+
+	return rsp.Accounts, nil
 }

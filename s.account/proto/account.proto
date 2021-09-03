@@ -60,7 +60,6 @@ message Account {
 
 message ListAccountsRequest{
     bool is_futures_member = 1;
-    bool is_admin_member = 2;
 }
 
 message ListAccountsResponse {

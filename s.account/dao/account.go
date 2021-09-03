@@ -17,7 +17,24 @@ import (
 // ListAccounts returns a list of all domain accounts from the underlying datastore.
 func ListAccounts(ctx context.Context) ([]*domain.Account, error) {
 	var (
-		sql      = `SELECT * FROM s_account_accounts`
+		sql = `
+		SELECT * FROM s_account_accounts`
+		accounts []*domain.Account
+	)
+	err := db.Select(ctx, &accounts, sql)
+	if err != nil {
+		return nil, terrors.Propagate(err)
+	}
+
+	return accounts, nil
+}
+
+// ListFuturesMembers returns a list of all domain accounts from the underlying datastore, of whom are futures members.
+func ListFuturesMembers(ctx context.Context) ([]*domain.Account, error) {
+	var (
+		sql = `
+		SELECT * FROM s_account_accounts
+		WHERE is_futures_member=true`
 		accounts []*domain.Account
 	)
 	err := db.Select(ctx, &accounts, sql)

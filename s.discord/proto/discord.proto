@@ -10,6 +10,8 @@ service discord {
   rpc ReadUserRoles (ReadUserRolesRequest) returns (ReadUserRolesResponse);
 
   rpc UpdateUserRoles (UpdateUserRolesRequest) returns (UpdateUserRolesResponse);
+
+  rpc RemoveUserRole (RemoveUserRoleRequest) returns (RemoveUserRoleResponse);
 }
 
 message SendMsgToChannelRequest {
@@ -55,3 +57,11 @@ message UpdateUserRolesRequest {
 message UpdateUserRolesResponse {
     repeated Role roles = 1;
 }
+
+message RemoveUserRoleRequest {
+    string user_id = 1;
+    string actor_id = 2;
+    Role role = 3;
+}
+
+message RemoveUserRoleResponse {}

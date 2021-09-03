@@ -18,6 +18,8 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentsClient interface {
 	RegisterPayment(ctx context.Context, in *RegisterPaymentRequest, opts ...grpc.CallOption) (*RegisterPaymentResponse, error)
+	EnforceSubscription(ctx context.Context, in *EnforceSubscriptionRequest, opts ...grpc.CallOption) (*EnforceSubscriptionResponse, error)
+	PublishSubscriptionReminder(ctx context.Context, in *PublishSubscriptionReminderRequest, opts ...grpc.CallOption) (*PublishSubscriptionReminderResponse, error)
 }
 
 type paymentsClient struct {
@@ -37,11 +39,31 @@ func (c *paymentsClient) RegisterPayment(ctx context.Context, in *RegisterPaymen
 	return out, nil
 }
 
+func (c *paymentsClient) EnforceSubscription(ctx context.Context, in *EnforceSubscriptionRequest, opts ...grpc.CallOption) (*EnforceSubscriptionResponse, error) {
+	out := new(EnforceSubscriptionResponse)
+	err := c.cc.Invoke(ctx, "/payments/EnforceSubscription", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentsClient) PublishSubscriptionReminder(ctx context.Context, in *PublishSubscriptionReminderRequest, opts ...grpc.CallOption) (*PublishSubscriptionReminderResponse, error) {
+	out := new(PublishSubscriptionReminderResponse)
+	err := c.cc.Invoke(ctx, "/payments/PublishSubscriptionReminder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentsServer is the server API for Payments service.
 // All implementations must embed UnimplementedPaymentsServer
 // for forward compatibility
 type PaymentsServer interface {
 	RegisterPayment(context.Context, *RegisterPaymentRequest) (*RegisterPaymentResponse, error)
+	EnforceSubscription(context.Context, *EnforceSubscriptionRequest) (*EnforceSubscriptionResponse, error)
+	PublishSubscriptionReminder(context.Context, *PublishSubscriptionReminderRequest) (*PublishSubscriptionReminderResponse, error)
 	mustEmbedUnimplementedPaymentsServer()
 }
 
@@ -51,6 +73,12 @@ type UnimplementedPaymentsServer struct {
 
 func (*UnimplementedPaymentsServer) RegisterPayment(context.Context, *RegisterPaymentRequest) (*RegisterPaymentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterPayment not implemented")
+}
+func (*UnimplementedPaymentsServer) EnforceSubscription(context.Context, *EnforceSubscriptionRequest) (*EnforceSubscriptionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnforceSubscription not implemented")
+}
+func (*UnimplementedPaymentsServer) PublishSubscriptionReminder(context.Context, *PublishSubscriptionReminderRequest) (*PublishSubscriptionReminderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublishSubscriptionReminder not implemented")
 }
 func (*UnimplementedPaymentsServer) mustEmbedUnimplementedPaymentsServer() {}
 
@@ -76,6 +104,42 @@ func _Payments_RegisterPayment_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payments_EnforceSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnforceSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentsServer).EnforceSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payments/EnforceSubscription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentsServer).EnforceSubscription(ctx, req.(*EnforceSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Payments_PublishSubscriptionReminder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishSubscriptionReminderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentsServer).PublishSubscriptionReminder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payments/PublishSubscriptionReminder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentsServer).PublishSubscriptionReminder(ctx, req.(*PublishSubscriptionReminderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Payments_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "payments",
 	HandlerType: (*PaymentsServer)(nil),
@@ -83,6 +147,14 @@ var _Payments_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterPayment",
 			Handler:    _Payments_RegisterPayment_Handler,
+		},
+		{
+			MethodName: "EnforceSubscription",
+			Handler:    _Payments_EnforceSubscription_Handler,
+		},
+		{
+			MethodName: "PublishSubscriptionReminder",
+			Handler:    _Payments_PublishSubscriptionReminder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
