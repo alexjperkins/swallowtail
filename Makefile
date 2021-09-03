@@ -10,6 +10,7 @@ backend:
 	cd s.discord &&  sudo make docker &&  cd .. && \
 	cd s.coingecko &&  sudo make docker &&  cd .. && \
 	cd s.payments && sudo make docker && cd .. && \
+	cd s.ftx && sudo make docker && cd .. && \
 	docker-compose -f local.yml --profile backend up --build
 
 build:
@@ -48,6 +49,10 @@ binance:
 payments:
 	cd s.payments &&  sudo make docker &&  cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.payments
+
+ftx:
+	cd s.ftx &&  sudo make docker &&  cd .. && \
+	docker-compose -f local.yml up --build swallowtail.s.ftx
 
 test:
 	go test ./... -short

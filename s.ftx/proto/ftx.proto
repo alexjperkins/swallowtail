@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./;ftxproto";
+
+service ftx {
+    rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
+}
+
+message ListAccountDepositsRequest {
+    string actor_id = 1;
+    google.protobuf.Timestamp start = 2;
+    google.protobuf.Timestamp end = 3;
+}
+
+message ListAccountDepositsResponse {
+    repeated DepositRecord deposits = 1;
+}
+
+message DepositRecord {
+    string coin = 1;
+    int64 confirmations = 2;
+    google.protobuf.Timestamp confirmed_time = 3;
+    int64 fee = 4;
+    int64 id = 5;
+    google.protobuf.Timestamp sent_time = 6;
+    float size = 7;
+    string status = 8;
+    google.protobuf.Timestamp time = 9;
+    string transaction_id = 10;
+}

@@ -106,5 +106,5 @@ message VerifyCredentialsResponse {
     bool spot_enabled = 5;
     bool options_enabled = 6;
     bool ip_restrictions = 7;
-    string reason = 8;
+    string reason = 7;
 }
