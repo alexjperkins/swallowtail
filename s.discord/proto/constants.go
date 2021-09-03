@@ -1,6 +1,10 @@
 package discordproto
 
 const (
+	DiscordRolesUpdateActorPaymentsSystem = "actor-payments-system"
+)
+
+const (
 	// Guilds
 	DiscordSatoshiGuildID = "814144801977008228"
 )

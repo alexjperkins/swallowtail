@@ -54,8 +54,10 @@ type DiscordClient interface {
 	SendPrivateMessage(ctx context.Context, message, userID string) error
 	// AddHandler
 	AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate))
-	// ReadRole
+	// ReadRoles
 	ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error)
+	// SetRoles set the users roles to the roles passed. It replaces all the roles the user currently has.
+	SetRoles(ctx context.Context, userID string, roles []*domain.Role) error
 
 	// TODO: Remove below
 	Close()
@@ -76,8 +78,16 @@ func SendPrivateMessage(ctx context.Context, message, userID string) error {
 	return client.SendPrivateMessage(ctx, message, userID)
 }
 
+// ReadRoles ...
 func ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Read user roles")
 	defer span.Finish()
 	return client.ReadRoles(ctx, userID)
+}
+
+// SetRoles ...
+func SetRoles(ctx context.Context, userID string, roles []*domain.Role) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Set user roles")
+	defer span.Finish()
+	return client.SetRoles(ctx, userID, roles)
 }

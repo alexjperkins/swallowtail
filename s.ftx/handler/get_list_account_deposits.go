@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"swallowtail/libraries/gerrors"
-	accountproto "swallowtail/s.account/proto"
 	"swallowtail/s.ftx/client"
 	"swallowtail/s.ftx/marshaling"
 	ftxproto "swallowtail/s.ftx/proto"
@@ -23,15 +22,13 @@ func (s *FTXService) ListAccountDeposits(
 	}
 
 	// Check the actor is authorized to make this request.
-	account, err := (&accountproto.ReadAccountRequest{
-		UserId: in.ActorId,
-	}).Send(ctx).Response()
+	ok, err := isValidActor(ctx, in.ActorId)
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_list_account_deposits.failed_to_read_account_of_actor", errParams)
+		return nil, gerrors.Augment(err, "failed_to_list_account_deposits", errParams)
 	}
 
-	if !account.GetAccount().IsAdmin {
-		return nil, gerrors.Unauthenticated("failed_to_list_account_deposits.actor_unauthorized", errParams)
+	if !ok {
+		return nil, gerrors.Unauthenticated("failed_to_list_account_deposits.unauthorized_actor", errParams)
 	}
 
 	rsp, err := client.ListAccountDeposits(ctx, &client.ListAccountDepositsRequest{}, &client.PaginationFilter{
