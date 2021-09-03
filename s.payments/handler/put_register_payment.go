@@ -2,10 +2,14 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"swallowtail/libraries/gerrors"
+	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.payments/dao"
+	"swallowtail/s.payments/domain"
 	paymentsproto "swallowtail/s.payments/proto"
+	"time"
 
 	"github.com/monzo/slog"
 )
@@ -32,12 +36,12 @@ func (s *PaymentsService) RegisterPayment(
 	}
 
 	// Check the user does indeed have an account.
-	ok, err := isUserRegistered(ctx, in.UserId)
+	account, err := isUserRegistered(ctx, in.UserId)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_register_payment", errParams)
 	}
 
-	if !ok {
+	if account == nil {
 		return nil, gerrors.FailedPrecondition("failed_to_register_payment.user_does_not_have_an_account", errParams)
 	}
 
@@ -71,6 +75,19 @@ func (s *PaymentsService) RegisterPayment(
 		return nil, gerrors.FailedPrecondition("failed_to_register_payment.transaction_of_correct_amount_does_not_exist_in_deposit_account", errParams)
 	}
 
+	now := time.Now().UTC()
+
+	// Okay; everything is in check, we can now safely store the tx to our persistence layer.
+	if err := dao.RegisterPayment(ctx, &domain.Payment{
+		UserID:        in.UserId,
+		TransactionID: in.TransactionId,
+		AuditNote:     in.AuditNote,
+		AmountInUSDT:  float64(in.AmountInUsdt),
+		Timestamp:     now,
+	}); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_register_payment.persistence_layer", errParams)
+	}
+
 	slog.Info(ctx, "Payment registered for user: %s, setting as futures member", in.UserId)
 
 	// Set user as a futures member on s.account & in discord
@@ -80,5 +97,31 @@ func (s *PaymentsService) RegisterPayment(
 
 	slog.Info(ctx, "User: %s, set as a futures member", in.UserId)
 
+	postToPulseChannel(ctx, in.UserId, account.Username, in.TransactionId, in.AuditNote, float64(in.AmountInUsdt), now)
+
 	return &paymentsproto.RegisterPaymentResponse{}, nil
+}
+
+func postToPulseChannel(ctx context.Context, userID, username, transactionID, auditNote string, amount float64, timestamp time.Time) {
+	header := ":money_with_wings: :money_with_wings: :money_with_wings: PAYMENT RECEIVED :money_with_wings: :money_with_wings: :money_with_wings:"
+	context := `
+	UserID: %s
+	Username: %s
+	TXID: %s
+	AuditNote: %s
+	AmountInUSDT: %d
+	Timestamp: %v
+	`
+	formattedContent := fmt.Sprintf(context, userID, username, transactionID, auditNote, amount, timestamp)
+
+	// Best Effort
+	_, err := (&discordproto.SendMsgToChannelRequest{
+		ChannelId:      discordproto.DiscordSatoshiPaymentsPulseChannel,
+		SenderId:       "system-payments",
+		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
+		IdempotencyKey: formattedContent,
+	}).Send(ctx).Response()
+	if err != nil {
+		slog.Error(ctx, "Failed to post payment received msg: %s: %s", userID, transactionID)
+	}
 }

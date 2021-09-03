@@ -29,22 +29,23 @@ const (
 func init() {
 	register(portfolioCommandID, &Command{
 		ID:                  portfolioCommandID,
-		Private:             true,
+		IsPrivate:           true,
 		MinimumNumberOfArgs: 1,
 		FailureMsg:          "",
 		Handler:             portfolioCommand,
 		Usage:               portfolioCommandUsage,
 		SubCommands: map[string]*Command{
 			"list": {
-				ID:         "portfolio-list",
-				Private:    true,
-				Usage:      `!portfolio list`,
-				FailureMsg: "",
-				Handler:    listPortfolioCommand,
+				ID:            "portfolio-list",
+				IsPrivate:     true,
+				IsFuturesOnly: true,
+				Usage:         `!portfolio list`,
+				Handler:       listPortfolioCommand,
 			},
 			"delete": {
 				ID:                  "portfolio-delete",
-				Private:             true,
+				IsPrivate:           true,
+				IsFuturesOnly:       true,
 				Usage:               "!portfolio delete <googlesheet_id>",
 				FailureMsg:          "Please check the googlesheet id is correct - you can find this by using the list command",
 				Handler:             deletePorfolioCommand,
@@ -52,7 +53,8 @@ func init() {
 			},
 			"create": {
 				ID:                  "portfolio-create",
-				Private:             true,
+				IsPrivate:           true,
+				IsFuturesOnly:       true,
 				Usage:               "!portfolio create <email>",
 				MinimumNumberOfArgs: 1,
 				FailureMsg:          "Please check your email is correct; if it is ping @ajperkins with the error message",
@@ -60,7 +62,8 @@ func init() {
 			},
 			"register": {
 				ID:                  "portfolio-register",
-				Private:             true,
+				IsPrivate:           true,
+				IsFuturesOnly:       true,
 				Usage:               "!portfolio register <url> <sheet_name> <email>",
 				MinimumNumberOfArgs: 3,
 				FailureMsg:          "Please check the URL & sheet name passed are correct; satoshi needs the full URL.",

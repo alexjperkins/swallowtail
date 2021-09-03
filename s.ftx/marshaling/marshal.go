@@ -12,7 +12,7 @@ func DepositDTOToProto(deposit *client.DepositRecord) *ftxproto.DepositRecord {
 		Coin:          deposit.Coin,
 		Confirmations: deposit.Confirmations,
 		ConfirmedTime: timestamppb.New(deposit.ConfirmedTime),
-		Fee:           deposit.Fee,
+		Fee:           float32(deposit.Fee),
 		Id:            deposit.ID,
 		SentTime:      timestamppb.New(deposit.SentTime),
 		Size:          float32(deposit.Size),

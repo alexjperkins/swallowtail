@@ -22,7 +22,7 @@ message DepositRecord {
     string coin = 1;
     int64 confirmations = 2;
     google.protobuf.Timestamp confirmed_time = 3;
-    int64 fee = 4;
+    float fee = 4;
     int64 id = 5;
     google.protobuf.Timestamp sent_time = 6;
     float size = 7;

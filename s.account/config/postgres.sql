@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	updated TIME NOT NULL DEFAULT now(),
 	last_payment_timestamp TIME NOT NULL DEFAULT now(),
 
+
+	primary_exchange exchange NOT NULL DEFAULT 'BINANCE',
+
 	is_admin BOOLEAN DEFAULT FALSE,
 	is_futures_member BOOLEAN DEFAULT FALSE,
 
@@ -37,6 +40,7 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	exchange_id uuid DEFAULT uuid_generate_v4(),
 	exchange exchange,
+	
 	api_key VARCHAR(200),
 	secret_key VARCHAR(200),
 	user_id VARCHAR(20),
@@ -49,7 +53,7 @@ CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	PRIMARY KEY(exchange_id),
 	CONSTRAINT fk_account
 		FOREIGN KEY(user_id)
-			REFERENCES s_account_accounts(user_id) ON DELETE SET NULL
+			REFERENCES s_account_accounts(user_id) ON DELETE SET NULL,
 	
 	UNIQUE(user_id, exchange)
 );

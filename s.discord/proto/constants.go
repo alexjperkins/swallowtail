@@ -24,6 +24,9 @@ const (
 	DiscordSatoshiSwingsChannel      = "847953925575671848"
 	DiscordSatoshiGeneralChannel     = "814144802458828852"
 	DiscordSatoshiFuturesChannel     = "814146537088221284"
+
+	// Satoshi Discord Pulse Channels
+	DiscordSatoshiPaymentsPulseChannel
 )
 
 const (

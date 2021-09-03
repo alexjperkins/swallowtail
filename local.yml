@@ -77,6 +77,8 @@ services:
       - .envs/discord.env
       - .envs/binance.env
       - .envs/twitter.env
+    depends_on:
+      - postgres
     profiles:
       - backend
 
@@ -133,5 +135,7 @@ services:
       - "8008:8000"
     env_file:
       - .envs/ftx.env
+    depends_on:
+      - postgres
     profiles:
       - backend

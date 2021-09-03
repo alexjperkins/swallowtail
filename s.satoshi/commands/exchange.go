@@ -29,21 +29,23 @@ const (
 func init() {
 	register(exchangeCommandID, &Command{
 		ID:                  exchangeCommandID,
-		Private:             true,
+		IsPrivate:           true,
 		MinimumNumberOfArgs: 1,
 		Usage:               exchangeUsage,
 		Handler:             exchangeCommand,
 		SubCommands: map[string]*Command{
 			"register": {
 				ID:                  "exchange-register",
-				Private:             true,
+				IsPrivate:           true,
+				IsFuturesOnly:       true,
 				MinimumNumberOfArgs: 3,
 				Usage:               `Usage: !exchange register binance <api-key> <secret-key>`,
 				Handler:             registerExchangeCommand,
 			},
 			"list": {
 				ID:                  "exchange-list",
-				Private:             true,
+				IsPrivate:           true,
+				IsFuturesOnly:       true,
 				MinimumNumberOfArgs: 0,
 				Usage:               `Usage: !exchange list`,
 				Handler:             listExchangeCommand,
