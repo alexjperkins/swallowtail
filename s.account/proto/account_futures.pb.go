@@ -76,6 +76,74 @@ func (r *CreateAccountRequest) SendWithTimeout(ctx context.Context, timeout time
 	}
 }
 
+// --- List Accounts --- //
+
+type ListAccountsFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ListAccountsResponse
+	ctx     context.Context
+}
+
+func (a *ListAccountsFuture) Response() (*ListAccountsResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "list_accounts", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ListAccountsRequest) Send(ctx context.Context) *ListAccountsFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ListAccountsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ListAccountsFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ListAccountsResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &ListAccountsFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewAccountClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ListAccounts(ctx, r)
+		if err != nil {
+			errc <- err
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ListAccountsFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
 // --- Read Account --- //
 
 type ReadAccountFuture struct {

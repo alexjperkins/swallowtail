@@ -279,3 +279,71 @@ func (r *UpdateUserRolesRequest) SendWithTimeout(ctx context.Context, timeout ti
 		resultc: resultc,
 	}
 }
+
+// --- Update User Roles --- //
+
+type RemoveUserRoleFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *RemoveUserRoleResponse
+	ctx     context.Context
+}
+
+func (a *RemoveUserRoleFuture) Response() (*RemoveUserRoleResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "remove_user_role", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *RemoveUserRoleRequest) Send(ctx context.Context) *RemoveUserRoleFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *RemoveUserRoleRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *RemoveUserRoleFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *RemoveUserRoleResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-discord:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_discord_connection_failed", nil)
+		return &RemoveUserRoleFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewDiscordClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.RemoveUserRole(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_to_remove_user_role", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &RemoveUserRoleFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}

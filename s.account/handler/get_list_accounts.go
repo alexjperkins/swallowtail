@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"swallowtail/s.account/dao"
+	"swallowtail/s.account/domain"
 	"swallowtail/s.account/marshaling"
 	accountproto "swallowtail/s.account/proto"
 
@@ -13,7 +14,18 @@ import (
 func (s *AccountService) ListAccounts(
 	ctx context.Context, in *accountproto.ListAccountsRequest,
 ) (*accountproto.ListAccountsResponse, error) {
-	accounts, err := dao.ListAccounts(ctx)
+	var (
+		accounts []*domain.Account
+		err      error
+	)
+
+	switch {
+	case in.IsFuturesMember:
+		accounts, err = dao.ListFuturesMembers(ctx)
+	default:
+		accounts, err = dao.ListAccounts(ctx)
+	}
+
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to list accounts", nil)
 
