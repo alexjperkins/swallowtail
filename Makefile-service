@@ -2,8 +2,6 @@ SHELL=/bin/bash -O extglob -c
 binary := $(shell pwd | rev | cut -d '/' -f 1 | rev)
 fq-binary := swallowtail.$(binary)
 docker-tag ?= $(fq-binary)
-version ?= $(shell git rev-parse HEAD)
-repo-base-dir ?= $(shell git rev-parse --show-toplevel)
 
 define DOCKERFILE_CONTENTS
 ### --- Service --- ###

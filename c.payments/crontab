@@ -1,0 +1,8 @@
+59 23 28-31 * * [ "$(date +%d -d tomorrow)" = "01" ] && sh /jobs/enforce_subscriptions.sh
+
+## TODO: figure how to do this
+# * * * * * sh /jobs/publish_reminder_minus_40_hours.sh
+
+# * * * * * sh /jobs/publish_reminder_minus_4_hours.sh
+
+# * * * * * sh /jobs/publish_reminder_minus_1_hour.sh

@@ -29,7 +29,7 @@ func New(withJitter bool) Satoshi {
 	dc := discord.New(SatoshiBotID, satoshiToken, true)
 
 	for id, command := range commands.List() {
-		slog.Info(context.TODO(), "Registering command %s to %s", id, SatoshiBotID)
+		slog.Info(context.TODO(), "Registering command %d) %s to %s", id, command.ID, SatoshiBotID)
 		dc.AddHandler(command.Exec)
 	}
 

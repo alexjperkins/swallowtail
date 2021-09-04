@@ -65,5 +65,8 @@ func (s *PaymentsService) PublishSubscriptionReminder(
 }
 
 func formatReminderMsg(reminder string) string {
-	return fmt.Sprintf(":wave: Headsup all! Friendly reminder that futures subscriptions are due in %s. Please make sure you have registered a payment before then. Thanks", reminder)
+	return fmt.Sprintf(
+		":wave:   Headsup @everyone   :rotating_light:\nFriendly reminder that futures subscriptions are due in **%s**.\nPlease make sure you have registered a payment before then. Thanks!",
+		reminder,
+	)
 }

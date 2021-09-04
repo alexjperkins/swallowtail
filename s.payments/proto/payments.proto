@@ -5,7 +5,7 @@ option go_package = "./;paymentsproto";
 service payments {
     rpc RegisterPayment (RegisterPaymentRequest) returns (RegisterPaymentResponse) {}
 
-    rpc EnforceSubscription (EnforceSubscriptionRequest) returns (EnforceSubscriptionResponse) {}
+    rpc EnforceSubscriptions (EnforceSubscriptionsRequest) returns (EnforceSubscriptionsResponse) {}
 
     rpc PublishSubscriptionReminder(PublishSubscriptionReminderRequest) returns (PublishSubscriptionReminderResponse) {}
 }
@@ -23,12 +23,12 @@ message RegisterPaymentRequest{
 
 message RegisterPaymentResponse {}
 
-message EnforceSubscriptionRequest {
+message EnforceSubscriptionsRequest {
     string actor_id = 1;
     bool force = 2;
 }
 
-message EnforceSubscriptionResponse {}
+message EnforceSubscriptionsResponse {}
 
 enum SubscriptionReminderType {
     MINUS_40_HOURS = 0;

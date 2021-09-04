@@ -1,6 +1,6 @@
 ### --- Service --- ###
 FROM alpine:latest
-MAINTAINER alexperkins.crypto@gmail.com
+MAINTAINER alexperkins.dev@gmail.com
 ADD swallowtail.s.web3 /
 ADD ./config /s.web3/config
 EXPOSE 8080

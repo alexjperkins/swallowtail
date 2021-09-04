@@ -11,6 +11,7 @@ backend:
 	cd s.coingecko &&  sudo make docker &&  cd .. && \
 	cd s.payments && sudo make docker && cd .. && \
 	cd s.ftx && sudo make docker && cd .. && \
+	cd c.payments && sudo make && cd .. && \
 	docker-compose -f local.yml --profile backend up --build
 
 build:
@@ -23,36 +24,40 @@ postgres_test:
 	docker-compose -f local.yml up --build -V postgres_test
 
 satoshi:
-	cd s.satoshi &&  sudo make docker &&  cd .. && \
+	cd s.satoshi &&  sudo make docker && cd .. && \
 		docker-compose -f local.yml up --build swallowtail.s.satoshi
 
 googlesheets:
-	cd s.googlesheets &&  sudo make docker &&  cd .. && \
+	cd s.googlesheets &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build  swallowtail.s.googlesheets
 
 coingecko:
-	cd s.coingecko &&  sudo make docker &&  cd .. && \
+	cd s.coingecko &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build  swallowtail.s.coingecko
 
 discord:
-	cd s.discord &&  sudo -E make docker &&  cd .. && \
+	cd s.discord &&  sudo -E make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.discord
 
 account:
-	cd s.account &&  sudo make docker &&  cd .. && \
+	cd s.account &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.account
 
 binance:
-	cd s.binance &&  sudo make docker &&  cd .. && \
+	cd s.binance &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.binance
 
 payments:
-	cd s.payments &&  sudo make docker &&  cd .. && \
+	cd s.payments &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.payments
 
 ftx:
-	cd s.ftx &&  sudo make docker &&  cd .. && \
+	cd s.ftx &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.ftx
+
+cronpayments:
+	cd c.payments &&  sudo make && cd .. && \
+	docker-compose -f local.yml up --build swallowtail.c.payments
 
 test:
 	go test ./... -short
