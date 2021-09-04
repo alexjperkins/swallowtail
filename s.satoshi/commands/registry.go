@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 )
 
@@ -27,6 +28,11 @@ func List() []*Command {
 	for _, c := range registry {
 		commands = append(commands, c)
 	}
+
+	// Sort inplace by ID.
+	sort.Slice(commands, func(i, j int) bool {
+		return commands[i].ID < commands[j].ID
+	})
 
 	return commands
 }

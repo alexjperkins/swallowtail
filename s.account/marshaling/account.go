@@ -17,6 +17,7 @@ func AccountDomainToProto(account *domain.Account) *accountproto.Account {
 		IsAdmin:         account.IsAdmin,
 		Created:         timestamppb.New(account.Created),
 		LastUpdated:     timestamppb.New(account.Updated),
+		PrimaryExchange: account.PrimaryExchange,
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	accountproto "swallowtail/s.account/proto"
 )
 
+// ListExchanges ...
 func (s *AccountService) ListExchanges(
 	ctx context.Context, in *accountproto.ListExchangesRequest,
 ) (*accountproto.ListExchangesResponse, error) {

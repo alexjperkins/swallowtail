@@ -56,6 +56,7 @@ message Account {
     string username = 5;
     google.protobuf.Timestamp created = 6;
     google.protobuf.Timestamp last_updated = 7;
+    string primary_exchange = 8;
 }
 
 message ListAccountsRequest{
