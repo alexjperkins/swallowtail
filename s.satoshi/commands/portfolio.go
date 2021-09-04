@@ -9,37 +9,32 @@ import (
 	"github.com/bwmarrin/discordgo"
 
 	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/util"
 	googlesheetsproto "swallowtail/s.googlesheets/proto"
 )
 
 const (
 	portfolioCommandID    = "portfolio"
-	portfolioCommandUsage = `
-	Usage: !portfolio <subcommand> <args>
-	Example: !portfolio create alexperkins.crypto@gmail.com
-
-	Subcommands:
-	1. create: creates a new portfolio in googlesheets: args [email_address].
-	2. list: list all your googlesheets: args [].
-	3. register: register a previously created sheet: args [googlesheet_url, sheet_name, email_address]
-	4. delete: deletes a googlesheet by googlesheet id, you can find this by the "list" command: args [googlesheet_id]
-	`
+	portfolioCommandUsage = `!portfolio <subcommand> <args>`
 )
 
 func init() {
 	register(portfolioCommandID, &Command{
 		ID:                  portfolioCommandID,
 		IsPrivate:           true,
+		IsFuturesOnly:       true,
 		MinimumNumberOfArgs: 1,
-		FailureMsg:          "",
+		FailureMsg:          "Please check that your email is correct!",
 		Handler:             portfolioCommand,
 		Usage:               portfolioCommandUsage,
+		Description:         "Manages everything to do with your portfolio tracker.",
 		SubCommands: map[string]*Command{
 			"list": {
 				ID:            "portfolio-list",
 				IsPrivate:     true,
 				IsFuturesOnly: true,
 				Usage:         `!portfolio list`,
+				Description:   "Lists all your registered portfolios.",
 				Handler:       listPortfolioCommand,
 			},
 			"delete": {
@@ -49,6 +44,7 @@ func init() {
 				Usage:               "!portfolio delete <googlesheet_id>",
 				FailureMsg:          "Please check the googlesheet id is correct - you can find this by using the list command",
 				Handler:             deletePorfolioCommand,
+				Description:         "Deletes a registered portfolio tracker.",
 				MinimumNumberOfArgs: 1,
 			},
 			"create": {
@@ -57,6 +53,7 @@ func init() {
 				IsFuturesOnly:       true,
 				Usage:               "!portfolio create <email>",
 				MinimumNumberOfArgs: 1,
+				Description:         "Creates a new portfolio tracker. Limit of 5 per user",
 				FailureMsg:          "Please check your email is correct; if it is ping @ajperkins with the error message",
 				Handler:             createPortfolioCommand,
 			},
@@ -66,6 +63,7 @@ func init() {
 				IsFuturesOnly:       true,
 				Usage:               "!portfolio register <url> <sheet_name> <email>",
 				MinimumNumberOfArgs: 3,
+				Description:         "Registers a portfolio tracker. This is useful when you already have one.",
 				FailureMsg:          "Please check the URL & sheet name passed are correct; satoshi needs the full URL.",
 				Handler:             registerPortfolioCommand,
 			},
@@ -89,18 +87,16 @@ func listPortfolioCommand(ctx context.Context, tokens []string, s *discordgo.Ses
 		})
 	}
 
-	sheetsMsgArr := []string{"URL: Type"}
-	for _, sheet := range rsp.GetSheets() {
-		// Todo Add padding
-		sheetsMsgArr = append(sheetsMsgArr, fmt.Sprintf("%s: %s", sheet.Url, sheet.SheetType))
-	}
+	sheetsMsg := formatListGooglesheetsMsg(rsp.Sheets)
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s>, here are your sheets\n\n%s", m.Author.ID, strings.Join(sheetsMsgArr, "\n")))
+	// Best effort
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s>, here are your sheets:\n\n%s", m.Author.ID, sheetsMsg))
 	return nil
 }
 
 func deletePorfolioCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
 	googlesheetID := tokens[0]
+
 	if _, err := (&googlesheetsproto.DeleteSheetBySheetIDRequest{
 		GooglesheetId: googlesheetID,
 		UserId:        m.Author.ID,
@@ -114,6 +110,9 @@ func deletePorfolioCommand(ctx context.Context, tokens []string, s *discordgo.Se
 			"googlesheet_id":   googlesheetID,
 		})
 	}
+
+	// Best effort
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s>, I've successfully deleted the sheet %s. This means it will no longer be synced.", m.Author.ID, googlesheetID))
 
 	return nil
 }
@@ -166,4 +165,28 @@ func registerPortfolioCommand(ctx context.Context, tokens []string, s *discordgo
 	))
 
 	return nil
+}
+
+func formatListGooglesheetsMsg(sheets []*googlesheetsproto.SheetResponse) string {
+	head := "{"
+	tail := "}"
+
+	if len(sheets) == 0 {
+		return util.WrapAsCodeBlock(fmt.Sprintf("%s\n%s", head, tail))
+	}
+
+	tpl := `
+	{
+		GooglesheetsID: %s
+		SheetType: %s
+		SheetName: %s
+		URL: %s
+	},
+`
+	var body strings.Builder
+	for _, sheet := range sheets {
+		body.WriteString(fmt.Sprintf(tpl, sheet.GooglesheetId, sheet.SheetType, sheet.SheetName, sheet.Url))
+	}
+
+	return util.WrapAsCodeBlock(fmt.Sprintf("%s%s%s", head, body.String(), tail))
 }

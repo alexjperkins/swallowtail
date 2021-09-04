@@ -13,14 +13,7 @@ import (
 
 const (
 	priceCommandID    = "price"
-	priceCommandUsage = `
-	Usage: !price <[symbols... | all ]>
-	Example: !price BTC ETH LINK
-	Description: price command fetches the latest price from coingecko for the symbols provided.
-
-	SubCommands:
-	1. all: returns the price of all coins that are registered as default to satoshi.
-	`
+	priceCommandUsage = `!price <[symbols... | all ]>`
 )
 
 var (
@@ -29,9 +22,10 @@ var (
 
 func init() {
 	register(priceCommandID, &Command{
-		ID:      priceCommandID,
-		Usage:   priceCommandUsage,
-		Handler: priceCommand,
+		ID:          priceCommandID,
+		Usage:       priceCommandUsage,
+		Handler:     priceCommand,
+		Description: "Fetches the latest price from coingecko for the symbols provided. Pass `all` to republish the pricebot.",
 		SubCommands: map[string]*Command{
 			"all": {
 				ID:                  "price-all",

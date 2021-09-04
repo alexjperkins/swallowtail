@@ -12,13 +12,7 @@ import (
 
 const (
 	paymentCommandID = "payment"
-	paymentUsage     = `
-	Usage: !payment <subcommand>
-	Description: command for automating payments & more.
-
-	SubCommands:
-	1. register: registers a new payment.
-	`
+	paymentUsage     = `!payment <subcommand`
 )
 
 func init() {
@@ -28,12 +22,15 @@ func init() {
 		MinimumNumberOfArgs: 1,
 		Usage:               paymentUsage,
 		Handler:             paymentHandler,
+		Description:         "Command for registering subscriptions & viewing payments.",
+		Guide:               "https://scalloped-single-1bd.notion.site/How-to-register-a-subscription-payment-35abb69004d946de8010c2f58d9863e1",
 		SubCommands: map[string]*Command{
 			"register": {
 				ID:                  "payment-register",
 				IsPrivate:           true,
 				MinimumNumberOfArgs: 1,
 				Usage:               `!payment <transaction_id>`,
+				Description:         "Registers a new payment to satoshi. It checks the transaction is correct & keeps a record of it.",
 				Handler:             registerPaymentHandler,
 				FailureMsg:          "Please check that you have an account registered; or maybe you've already paid for this month? ping @ajperkins if unsure",
 			},

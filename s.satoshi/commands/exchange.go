@@ -17,38 +17,36 @@ import (
 
 const (
 	exchangeCommandID = "exchange"
-	exchangeUsage     = `
-	Usage: !exchange <subcommand>
-
-	Subcommands:
-	1. register <exchange> <api-key> <secret-key>
-	2. list
-	`
+	exchangeUsage     = `!exchange <subcommand>`
 )
 
 func init() {
 	register(exchangeCommandID, &Command{
 		ID:                  exchangeCommandID,
 		IsPrivate:           true,
+		IsFuturesOnly:       true,
 		MinimumNumberOfArgs: 1,
 		Usage:               exchangeUsage,
 		Handler:             exchangeCommand,
+		Description:         "Manages all things related to exchanges such as api keys & more; Binance supported, FTX coming soon",
+		Guide:               "https://scalloped-single-1bd.notion.site/How-to-register-an-exchange-d3d73af635f041a89a3e57d3d33a32b0",
 		SubCommands: map[string]*Command{
 			"register": {
 				ID:                  "exchange-register",
 				IsPrivate:           true,
 				IsFuturesOnly:       true,
 				MinimumNumberOfArgs: 3,
-				Usage:               `Usage: !exchange register binance <api-key> <secret-key>`,
+				Usage:               `!exchange register binance <api-key> <secret-key>`,
+				Description:         "Registers a set of API keys (Binance only for now).",
 				Handler:             registerExchangeCommand,
-				Guide:               "https://scalloped-single-1bd.notion.site/How-to-register-an-exchange-d3d73af635f041a89a3e57d3d33a32b0",
 			},
 			"list": {
 				ID:                  "exchange-list",
 				IsPrivate:           true,
 				IsFuturesOnly:       true,
 				MinimumNumberOfArgs: 0,
-				Usage:               `Usage: !exchange list`,
+				Usage:               `!exchange list`,
+				Description:         "Lists all registered API keys.",
 				Handler:             listExchangeCommand,
 			},
 		},

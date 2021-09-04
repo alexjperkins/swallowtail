@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	updated TIME NOT NULL DEFAULT now(),
 	last_payment_timestamp TIME NOT NULL DEFAULT now(),
 
-
 	primary_exchange exchange NOT NULL DEFAULT 'BINANCE',
 
 	is_admin BOOLEAN DEFAULT FALSE,
