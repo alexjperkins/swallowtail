@@ -41,6 +41,7 @@ func init() {
 				MinimumNumberOfArgs: 3,
 				Usage:               `Usage: !exchange register binance <api-key> <secret-key>`,
 				Handler:             registerExchangeCommand,
+				Guide:               "https://scalloped-single-1bd.notion.site/How-to-register-an-exchange-d3d73af635f041a89a3e57d3d33a32b0",
 			},
 			"list": {
 				ID:                  "exchange-list",

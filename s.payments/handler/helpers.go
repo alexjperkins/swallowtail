@@ -10,10 +10,14 @@ import (
 
 // CurrentMonthStartTimestamp returns the timestamp of the start of the current month.
 // This is defined as the 1st of every month at 00:00:00
-func currentMonthStartTimestamp() time.Time {
-	now := time.Now().UTC().Truncate(time.Hour)
-	daysIntoMonth := now.Day()
-	return now.AddDate(0, 0, -daysIntoMonth)
+func currentMonthStartFromTimestamp(now time.Time) time.Time {
+	ts := now.UTC().Truncate(time.Hour)
+	daysIntoMonth := ts.Day()
+
+	firstDayOfTheMonth := ts.AddDate(0, 0, -daysIntoMonth+1)
+	firstSecondOfTheMonth := firstDayOfTheMonth.Add(-1 * time.Duration(ts.Hour()) * time.Hour)
+
+	return firstSecondOfTheMonth
 }
 
 func offboardSubscriber(ctx context.Context, userID, username string) error {
