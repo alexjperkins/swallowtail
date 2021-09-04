@@ -2,12 +2,13 @@ package handler
 
 import (
 	"context"
+	"fmt"
+	"time"
+
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
-	"time"
-
-	"github.com/monzo/slog"
+	discordproto "swallowtail/s.discord/proto"
 )
 
 func validateExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
@@ -26,8 +27,6 @@ func validateExchangeCredentials(ctx context.Context, userID string, exchange *a
 }
 
 func validateBinanceExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
-	slog.Warn(ctx, "Creds: %v", exchange)
-
 	rsp, err := (&binanceproto.VerifyCredentialsRequest{
 		UserId: userID,
 		Credentials: &binanceproto.Credentials{
@@ -44,4 +43,23 @@ func validateBinanceExchangeCredentials(ctx context.Context, userID string, exch
 
 func validateFTXExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
 	return false, "", nil
+}
+
+func notifyPulseChannel(ctx context.Context, userID, username string, timestamp time.Time) error {
+	base := ":bear:    `NEW MEMBER`    :bear :bear"
+	msg := `
+User: %s
+Username: %s
+Timestamp: %v
+`
+	formattedMsg := fmt.Sprintf(msg, userID, username, timestamp)
+
+	if _, err := (&discordproto.SendMsgToChannelRequest{
+		ChannelId: discordproto.DiscordSatoshiAccountsPulseChannel,
+		Content:   fmt.Sprintf("%s```%s```", base, formattedMsg),
+	}).Send(ctx).Response(); err != nil {
+		return gerrors.Augment(err, "failed_to_notify_account_pulse_channel", nil)
+	}
+
+	return nil
 }

@@ -16,7 +16,7 @@ func currentMonthStartTimestamp() time.Time {
 	return now.AddDate(0, 0, -daysIntoMonth)
 }
 
-func offboardSubscriber(ctx context.Context, userID string) error {
+func offboardSubscriber(ctx context.Context, userID, username string) error {
 	errParams := map[string]string{
 		"user_id": userID,
 	}
@@ -32,18 +32,26 @@ func offboardSubscriber(ctx context.Context, userID string) error {
 	if _, err := (&discordproto.SendMsgToPrivateChannelRequest{
 		UserId:         userID,
 		SenderId:       "system:payments",
-		Content:        ":disappointed: Sorry <@%s>, looks like a payment wasn't received for futures subscription in time. Please ping @ajperkins if this is incorrect.",
-		IdempotencyKey: fmt.Sprintf("offboardsubscriber-%d-%d", now.Month(), now.Year()),
+		Content:        fmt.Sprintf(":disappointed: `Futures Subscription Exipired`.\n Sorry <@%s>, looks like a payment wasn't received for a futures subscription in time.\nPlease ping `@ajperkins` if this is incorrect.", userID),
+		IdempotencyKey: fmt.Sprintf("offboardsubscriber-personal-%d-%d", now.Month(), now.Year()),
 	}).Send(ctx).Response(); err != nil {
 		return gerrors.Augment(err, "failed_to_offboard_user.notify_user", errParams)
 	}
+
+	header := ":rotating_light:   `FUTURES SUB EXPIRED`    :rotating_light:"
+	content := `
+UserID: %s
+Username: %s
+Timestamp: %v
+	`
+	formattedContent := fmt.Sprintf(content, userID, username, time.Now().UTC().Truncate(time.Second))
 
 	// Let us know.
 	if _, err := (&discordproto.SendMsgToChannelRequest{
 		ChannelId:      discordproto.DiscordSatoshiPaymentsPulseChannel,
 		SenderId:       "system:payments",
-		Content:        ":rotating_light: Subscriber `%s` hasn't registered a payment for futures subscription. They have been offboard :grimacing:",
-		IdempotencyKey: fmt.Sprintf("offboardsubscriber-%d-%d", now.Month(), now.Year()),
+		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
+		IdempotencyKey: fmt.Sprintf("offboardsubscriber-pulse-%d-%d", now.Month(), now.Year()),
 	}).Send(ctx).Response(); err != nil {
 		return gerrors.Augment(err, "failed_to_offboard_user.publish_to_pulse_channel", errParams)
 	}

@@ -2,10 +2,8 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"swallowtail/libraries/gerrors"
-	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.payments/dao"
 	"swallowtail/s.payments/domain"
 	paymentsproto "swallowtail/s.payments/proto"
@@ -97,33 +95,18 @@ func (s *PaymentsService) RegisterPayment(
 	}); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_register_payment.persistence_layer", errParams)
 	}
+
 	slog.Info(ctx, "Payment registered for user: %s", in.UserId)
 
-	postToPulseChannel(ctx, in.UserId, account.Username, in.TransactionId, in.AuditNote, float64(in.AmountInUsdt), now)
+	// Best effort; post to pulse channels
+	if err := postToPaymentsPulseChannel(ctx, account.IsFuturesMember, in.UserId, account.Username, in.TransactionId, in.AuditNote, float64(in.AmountInUsdt), now); err != nil {
+		slog.Error(ctx, "Failed to publish to payments pulse channel: %v: Error", in.UserId, err)
+	}
+
+	if err := postToAccountsPulseChannel(ctx, account.IsFuturesMember, in.UserId, account.Username, now); err != nil {
+		slog.Error(ctx, "Failed to publish to accounts pulse channel: %v: Error", in.UserId, err)
+
+	}
 
 	return &paymentsproto.RegisterPaymentResponse{}, nil
-}
-
-func postToPulseChannel(ctx context.Context, userID, username, transactionID, auditNote string, amount float64, timestamp time.Time) {
-	header := ":money_with_wings: :money_with_wings: :money_with_wings: PAYMENT RECEIVED :money_with_wings: :money_with_wings: :money_with_wings:"
-	context := `
-	UserID: %s
-	Username: %s
-	TXID: %s
-	AuditNote: %s
-	AmountInUSDT: %d
-	Timestamp: %v
-	`
-	formattedContent := fmt.Sprintf(context, userID, username, transactionID, auditNote, amount, timestamp)
-
-	// Best Effort
-	_, err := (&discordproto.SendMsgToChannelRequest{
-		ChannelId:      discordproto.DiscordSatoshiPaymentsPulseChannel,
-		SenderId:       "system-payments",
-		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
-		IdempotencyKey: formattedContent,
-	}).Send(ctx).Response()
-	if err != nil {
-		slog.Error(ctx, "Failed to post payment received msg: %s: %s", userID, transactionID)
-	}
 }

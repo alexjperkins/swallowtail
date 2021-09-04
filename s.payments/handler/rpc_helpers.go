@@ -2,10 +2,12 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
 	discordproto "swallowtail/s.discord/proto"
 	ftxproto "swallowtail/s.ftx/proto"
+	"time"
 )
 
 // setUserAsFuturesMember sets the user as a futures member.
@@ -130,4 +132,58 @@ func listFuturesMembers(ctx context.Context) ([]*accountproto.Account, error) {
 	}
 
 	return rsp.Accounts, nil
+}
+
+func postToPaymentsPulseChannel(ctx context.Context, isExistingFuturesMember bool, userID, username, transactionID, auditNote string, amount float64, timestamp time.Time) error {
+	header := ":money_with_wings:   `PAYMENT RECEIVED`   :money_with_wings:"
+	content := `
+UserID: %s
+Username: %s
+TXID: %s
+AuditNote: %s
+AmountInUSDT: %d
+IsExistingMember: %v
+Timestamp: %v
+	`
+	formattedContent := fmt.Sprintf(content, userID, username, transactionID, auditNote, amount, isExistingFuturesMember, timestamp)
+
+	// Best Effort
+	_, err := (&discordproto.SendMsgToChannelRequest{
+		ChannelId:      discordproto.DiscordSatoshiPaymentsPulseChannel,
+		SenderId:       "system-payments",
+		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
+		IdempotencyKey: formattedContent,
+	}).Send(ctx).Response()
+	if err != nil {
+		return gerrors.Augment(err, "failed_to_post_to_payments_pulse_channel", nil)
+	}
+
+	return nil
+}
+
+func postToAccountsPulseChannel(ctx context.Context, isExistingFuturesMember bool, userID, username string, timestamp time.Time) error {
+	if isExistingFuturesMember {
+		// If the user is already a futures member then we don't have a new member; in such case theres no point posting to
+		// out pulse channel.
+		return nil
+	}
+
+	header := ":money_mouth:    New Futures Member    :face_with_monocle"
+	content := `
+UserID: %s
+Username: %s
+Timestamp: %v
+	`
+	formattedContent := fmt.Sprintf(content, userID, username, timestamp)
+
+	if _, err := (&discordproto.SendMsgToChannelRequest{
+		ChannelId:      discordproto.DiscordSatoshiAccountsPulseChannel,
+		SenderId:       "system-payments",
+		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
+		IdempotencyKey: formattedContent,
+	}).Send(ctx).Response(); err != nil {
+		return gerrors.Augment(err, "failed_to_post_to_account_pulse_channel", nil)
+	}
+
+	return nil
 }

@@ -71,7 +71,7 @@ func (s *PaymentsService) EnforceSubscriptions(
 		slog.Info(ctx, "Offboarding user: %v: %v", fm.Username, fm.UserId)
 
 		// Uh-oh they haven't paid, lets offboard them.
-		if err := offboardSubscriber(ctx, fm.UserId); err != nil {
+		if err := offboardSubscriber(ctx, fm.UserId, fm.Username); err != nil {
 			return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions", errParams)
 		}
 	}
