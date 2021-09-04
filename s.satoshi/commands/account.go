@@ -93,9 +93,15 @@ func readAccountHandler(ctx context.Context, tokens []string, s *discordgo.Sessi
 			m.ChannelID,
 			":disappointed: Looks like you haven't registered an account with us just yet! Use `!account register help` for help.",
 		)
+	case err != nil:
+		return gerrors.Augment(err, "failed_to_read_account", nil)
+	case rsp.GetAccount() == nil:
+		return gerrors.NotFound("failed_to_read_account.nil_account", map[string]string{
+			"user_id": m.Author.ID,
+		})
 	}
 
-	account := rsp.Account
+	account := rsp.GetAccount()
 
 	tpl := `
 	Username: %s
