@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
@@ -56,9 +55,6 @@ func helpCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *
 	sb.WriteString(helpMessage)
 
 	for _, command := range commands[:len(commands)/2] {
-		fmt.Println("COMMAND FUT", command.IsFuturesOnly, "ROLE", futuresMember)
-		fmt.Println("C AD", command.IsAdminOnly, "ROLE", admin)
-
 		sb.WriteString(formatHelpMsg(command, futuresMember, admin))
 	}
 
@@ -74,8 +70,6 @@ func helpCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *
 
 	sb.Reset()
 	for _, command := range commands[len(commands)/2:] {
-		fmt.Println("COMMAND FUT", command.IsFuturesOnly, "ROLE", futuresMember)
-		fmt.Println("C AD", command.IsAdminOnly, "ROLE", admin)
 		sb.WriteString(formatHelpMsg(command, futuresMember, admin))
 	}
 
