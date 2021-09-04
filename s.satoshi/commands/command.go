@@ -60,18 +60,25 @@ func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Sessio
 		return gerrors.Augment(err, "failed_to_page_user.private", nil)
 	}
 
-	// TODO: bug here; when sat pinged in private channel, then we lose what roles they have in the guild.
+	// Get members from the guild; this is for when the user messages a command via a private channel.
+	// Add extra safety in the fact that we reject the user if they try and message satoshi directly,
+	// when they're not in the guild.
+	membersRoles, err := getMembersRolesFromGuild(s, m.Author.ID)
+	if err != nil {
+		return gerrors.Augment(err, "failed_exec_command", nil)
+	}
+
 	// Check if they are indeed an admin member if the command requires so.
-	// if c.IsAdminOnly && !isAdmin(roles) {
-	//	_, err := s.ChannelMessageSend(m.ChannelID, formatNonAdminMsg(m.Author.ID))
-	//	return gerrors.Augment(err, "failed_to_page_user.non_admin", nil)
-	//}
+	if c.IsAdminOnly && !isAdmin(membersRoles) {
+		_, err := s.ChannelMessageSend(m.ChannelID, formatNonAdminMsg(m.Author.ID))
+		return gerrors.Augment(err, "failed_to_page_user.non_admin", nil)
+	}
 
 	// Check if they are a indeed a futures member if the command requires so.
-	// if c.IsFuturesOnly && !isFuturesMember(roles) {
-	//	_, err := s.ChannelMessageSend(m.ChannelID, formatNonFuturesMsg(m.Author.ID))
-	//	return gerrors.Augment(err, "failed_to_page_user.non_futures_member", nil)
-	//}
+	if c.IsFuturesOnly && !isFuturesMember(membersRoles) {
+		_, err := s.ChannelMessageSend(m.ChannelID, formatNonFuturesMsg(m.Author.ID))
+		return gerrors.Augment(err, "failed_to_page_user.non_futures_member", nil)
+	}
 
 	// Check Usage.
 	if len(tokens) > 0 && strings.ToLower(tokens[0]) == "help" {
@@ -159,7 +166,13 @@ func isFuturesMember(roles []string) bool {
 	return false
 }
 
-func isAdmin() bool {
+func isAdmin(roles []string) bool {
+	for _, role := range roles {
+		if role == discordproto.DiscordSatoshiAdminRoleID {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -168,10 +181,11 @@ func normalizeContent(content string) string {
 	return content
 }
 
-func safeGetRoles(member *discordgo.Member) []string {
-	if member == nil {
-		return []string{}
+func getMembersRolesFromGuild(session *discordgo.Session, userID string) ([]string, error) {
+	m, err := session.GuildMember(discordproto.DiscordSatoshiGuildID, userID)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_members_guild_roles", nil)
 	}
 
-	return member.Roles
+	return m.Roles, nil
 }

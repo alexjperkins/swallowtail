@@ -1,5 +1,4 @@
 # Midnight the last day of every month.
- * * * * * sh /jobs/enforce_subscriptions.sh
 # 59 23 28-31 * * [ "$(date +%d -d tomorrow)" = "01" ] && sh /jobs/enforce_subscriptions.sh
 
 # 54 hours before; or 10am the previous day.
