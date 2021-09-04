@@ -11,6 +11,7 @@ import (
 func AccountDomainToProto(account *domain.Account) *accountproto.Account {
 	return &accountproto.Account{
 		UserId:          account.UserID,
+		Username:        account.Username,
 		Email:           account.Email,
 		IsFuturesMember: account.IsFuturesMember,
 		IsAdmin:         account.IsAdmin,
