@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"time"
 
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
@@ -57,6 +58,11 @@ func (a *AccountService) CreateAccount(
 	}
 
 	slog.Info(ctx, "Created new account", errParams)
+
+	if err := notifyPulseChannel(ctx, in.UserId, in.Username, time.Now().UTC().Truncate(time.Second)); err != nil {
+		// Best effort
+		slog.Error(ctx, "Failed to notify pulse channel for %s, %s: Error: ", in.UserId, err)
+	}
 
 	return &accountproto.CreateAccountResponse{}, nil
 }

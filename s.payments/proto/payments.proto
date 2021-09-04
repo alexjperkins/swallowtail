@@ -31,7 +31,7 @@ message EnforceSubscriptionsRequest {
 message EnforceSubscriptionsResponse {}
 
 enum SubscriptionReminderType {
-    MINUS_40_HOURS = 0;
+    MINUS_54_HOURS = 0;
     MINUS_4_HOURS = 1;
     MINUS_1_HOUR = 2;
 }

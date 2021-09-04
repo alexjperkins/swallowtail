@@ -35,12 +35,12 @@ func (s *PaymentsService) PublishSubscriptionReminder(
 
 	var reminder string
 	switch in.ReminderType {
-	case paymentsproto.SubscriptionReminderType_MINUS_40_HOURS:
-		reminder = "40 hours"
+	case paymentsproto.SubscriptionReminderType_MINUS_54_HOURS:
+		reminder = "tomorrow before midnight"
 	case paymentsproto.SubscriptionReminderType_MINUS_4_HOURS:
-		reminder = "4 hours"
+		reminder = "in 4 hours"
 	case paymentsproto.SubscriptionReminderType_MINUS_1_HOUR:
-		reminder = "1 hour"
+		reminder = "in 1 hour"
 	default:
 		return nil, gerrors.FailedPrecondition("failed_to_publish_subscription_reminders.invalid_type", errParams)
 	}
@@ -66,7 +66,7 @@ func (s *PaymentsService) PublishSubscriptionReminder(
 
 func formatReminderMsg(reminder string) string {
 	return fmt.Sprintf(
-		":wave:   Headsup @everyone   :rotating_light:\nFriendly reminder that futures subscriptions are due in **%s**.\nPlease make sure you have registered a payment before then. Thanks!",
+		":wave:   Headsup @everyone   :rotating_light:\nFriendly reminder that futures subscriptions are due **%s**.\nPlease make sure you have registered a payment before then. Thanks :pray:",
 		reminder,
 	)
 }

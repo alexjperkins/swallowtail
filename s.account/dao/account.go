@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/imdario/mergo"
@@ -143,8 +142,6 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("ACC: ", account, "MUT: ", mutation)
 
 	if err := mergo.MergeWithOverwrite(account, mutation); err != nil {
 		return nil, gerrors.Augment(gerrors.Propagate(err, gerrors.ErrUnknown, nil), "failed_to_merge_accounts", nil)
