@@ -125,3 +125,13 @@ services:
       - postgres
     profiles:
       - backend
+
+  ### -- Crons --- ###
+
+  swallowtail.c.payments:
+    hostname: swallowtail-c-payments
+    image: swallowtail.c.payments
+    depends_on:
+      - swallowtail.s.payments
+    profiles:
+      - backend

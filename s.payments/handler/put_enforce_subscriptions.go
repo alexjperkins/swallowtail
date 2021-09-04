@@ -2,17 +2,20 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"swallowtail/libraries/gerrors"
+	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.payments/dao"
 	paymentsproto "swallowtail/s.payments/proto"
+	"time"
 
 	"github.com/monzo/slog"
 )
 
 // EnforceSubscriptions ...
 func (s *PaymentsService) EnforceSubscriptions(
-	ctx context.Context, in *paymentsproto.EnforceSubscriptionRequest,
-) (*paymentsproto.EnforceSubscriptionResponse, error) {
+	ctx context.Context, in *paymentsproto.EnforceSubscriptionsRequest,
+) (*paymentsproto.EnforceSubscriptionsResponse, error) {
 	// TODO validate the day.
 	switch {
 	case in.ActorId == "":
@@ -30,6 +33,16 @@ func (s *PaymentsService) EnforceSubscriptions(
 	}
 	if !validActor {
 		return nil, gerrors.Unauthenticated("failed_to_enforce_subscriptions.unauthorized", errParams)
+	}
+
+	// Notify Pulse channel.
+	if _, err := (&discordproto.SendMsgToChannelRequest{
+		Content:   formatCronitorMsg("Enforce Subscriptions", in.ActorId, "Started", time.Now().Truncate(time.Second)),
+		ChannelId: discordproto.DiscordSatoshiPaymentsPulseChannel,
+		SenderId:  "system:payments",
+		Force:     true,
+	}).Send(ctx).Response(); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions.failed_to_notify_pulse_channel", errParams)
 	}
 
 	futuresMembers, err := listFuturesMembers(ctx)
@@ -63,9 +76,26 @@ func (s *PaymentsService) EnforceSubscriptions(
 		}
 	}
 
-	return &paymentsproto.EnforceSubscriptionResponse{}, nil
+	return &paymentsproto.EnforceSubscriptionsResponse{}, nil
 }
 
 func isActorValid(ctx context.Context, actorID string) (bool, error) {
+	switch actorID {
+	case paymentsproto.ActorEnforceSubscriptionsCron, paymentsproto.ActorPublishReminderCron:
+		return true, nil
+	}
+
 	return false, nil
+}
+
+func formatCronitorMsg(job, actor, status string, timestamp time.Time) string {
+	header := ":shark:    `CRONITOR: PHIL MITCHELL`    :robot:"
+	base := `
+Job: %s
+Status: %s
+Actor: %s
+Timestamp: %v
+	`
+	formattedBase := fmt.Sprintf(base, job, status, actor, timestamp)
+	return fmt.Sprintf("%s```%s```", header, formattedBase)
 }

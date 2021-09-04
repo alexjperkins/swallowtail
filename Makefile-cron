@@ -1,0 +1,48 @@
+binary := $(shell pwd | rev | cut -d '/' -f 1 | rev)
+fq-binary := swallowtail.$(binary)
+docker-ports := $(shell cat ports 2> /dev/null || exit 0)
+docker-tag ?= $(fq-binary)
+
+define DOCKERFILE_CONTENTS
+FROM golang:1.17-alpine
+MAINTAINER alexperkins.dev@gmail.com
+LABEL "service"="$(fq-binary)"
+RUN apk update && apk add coreutils
+RUN go get github.com/fullstorydev/grpcurl@latest && go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+COPY crontab /var/spool/cron/crontabs/root
+COPY . /
+CMD crond -d 2 -f
+endef
+export DOCKERFILE_CONTENTS
+
+define DOCKERIGNORE_CONTENTS
+.Dockerfile
+endef
+export DOCKERIGNORE_CONTENTS
+
+# Build this service for running locally
+.DEFAULT_GOAL := docker
+
+.PHONY: clean
+clean:
+	rm -f Dockerfile .dockerignore
+
+.dockerignore: Makefile
+	echo "$$DOCKERIGNORE_CONTENTS" > .dockerignore
+
+Dockerfile: Makefile
+	echo "$$DOCKERFILE_CONTENTS" > Dockerfile
+
+# Build a Docker container for this service
+.PHONY: docker
+.DELETE_ON_ERROR: docker
+docker: Dockerfile .dockerignore
+	docker build  -t $(docker-tag) .
+
+.PHONY: name
+name:
+	@echo $(fq-binary)
+
+.PHONY: deps
+deps:
+	@echo ""
