@@ -99,7 +99,7 @@ func isUserRegistered(ctx context.Context, userID string) (*accountproto.Account
 
 // isMonthlyTransactionInDepositAccount checks if the txid exists in the deposit account.
 func isMonthlyTransactionInDepositAccount(ctx context.Context, transactionID string, minimumExpectedAmount float64) (bool, error) {
-	start := currentMonthStartTimestamp()
+	start := currentMonthStartFromTimestamp(time.Now())
 
 	rsp, err := (&ftxproto.ListAccountDepositsRequest{
 		ActorId: ftxproto.FTXDepositAccountActorPaymentsSystem,
@@ -141,7 +141,7 @@ UserID: %s
 Username: %s
 TXID: %s
 AuditNote: %s
-AmountInUSDT: %d
+AmountInUSDT: %v
 IsExistingMember: %v
 Timestamp: %v
 	`

@@ -16,11 +16,12 @@ import (
 func (s *PaymentsService) EnforceSubscriptions(
 	ctx context.Context, in *paymentsproto.EnforceSubscriptionsRequest,
 ) (*paymentsproto.EnforceSubscriptionsResponse, error) {
-	// TODO validate the day.
 	switch {
 	case in.ActorId == "":
 		return nil, gerrors.BadParam("missing_param.actor_id", nil)
 	}
+
+	// TODO validate the day.
 
 	errParams := map[string]string{
 		"actor_id": in.ActorId,
@@ -58,7 +59,7 @@ func (s *PaymentsService) EnforceSubscriptions(
 
 		errParams["user_id"] = fm.UserId
 
-		ok, err := dao.UserPaymentExistsSince(ctx, fm.UserId, currentMonthStartTimestamp())
+		ok, err := dao.UserPaymentExistsSince(ctx, fm.UserId, currentMonthStartFromTimestamp(time.Now()))
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions", errParams)
 		}

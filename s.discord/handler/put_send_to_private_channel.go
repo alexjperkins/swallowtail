@@ -39,7 +39,7 @@ func (s *DiscordService) SendMsgToPrivateChannel(
 
 	// If the touch doesn't exist or the sender wants to force through an update; then we set via the dao.
 	switch {
-	case !exists:
+	case !exists && in.IdempotencyKey != "":
 		if _, err := (dao.Create(ctx, &domain.Touch{
 			IdempotencyKey: in.IdempotencyKey,
 			SenderID:       in.SenderId,

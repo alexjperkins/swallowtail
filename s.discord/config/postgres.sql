@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS s_discord_touches;
 
 CREATE TABLE IF NOT EXISTS s_discord_touches (
 	touch_id uuid DEFAULT uuid_generate_v4(),
-	idempotency_key VARCHAR(255) NOT NULL UNIQUE,
+	idempotency_key VARCHAR(1024) NOT NULL UNIQUE,
 	updated TIME NOT NULL DEFAULT now(),
 	sender_id VARCHAR(255) NOT NULL
 );

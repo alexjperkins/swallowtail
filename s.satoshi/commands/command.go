@@ -26,7 +26,7 @@ type Command struct {
 	// Non-inclusive of the prefix.
 	MinimumNumberOfArgs int
 	Usage               string
-	Helps               string
+	Guide               string
 	FailureMsg          string
 	Handler             CommandHandler
 	SubCommands         map[string]*Command
@@ -60,27 +60,28 @@ func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Sessio
 		return gerrors.Augment(err, "failed_to_page_user.private", nil)
 	}
 
+	// TODO: bug here; when sat pinged in private channel, then we lose what roles they have in the guild.
 	// Check if they are indeed an admin member if the command requires so.
-	if c.IsAdminOnly && !isAdmin(m.Member.Roles) {
-		_, err := s.ChannelMessageSend(m.ChannelID, formatNonAdminMsg(m.Author.ID))
-		return gerrors.Augment(err, "failed_to_page_user.non_admin", nil)
-	}
+	// if c.IsAdminOnly && !isAdmin(roles) {
+	//	_, err := s.ChannelMessageSend(m.ChannelID, formatNonAdminMsg(m.Author.ID))
+	//	return gerrors.Augment(err, "failed_to_page_user.non_admin", nil)
+	//}
 
 	// Check if they are a indeed a futures member if the command requires so.
-	if c.IsFuturesOnly && !isFuturesMember(m.Member.Roles) {
-		_, err := s.ChannelMessageSend(m.ChannelID, formatNonFuturesMsg(m.Author.ID))
-		return gerrors.Augment(err, "failed_to_page_user.non_futures_member", nil)
-	}
+	// if c.IsFuturesOnly && !isFuturesMember(roles) {
+	//	_, err := s.ChannelMessageSend(m.ChannelID, formatNonFuturesMsg(m.Author.ID))
+	//	return gerrors.Augment(err, "failed_to_page_user.non_futures_member", nil)
+	//}
 
 	// Check Usage.
 	if len(tokens) > 0 && strings.ToLower(tokens[0]) == "help" {
-		_, err := s.ChannelMessageSend(m.ChannelID, formatUsageMsg(m.Author.ID, c.Usage))
+		_, err := s.ChannelMessageSend(m.ChannelID, formatUsageMsg(m.Author.ID, c.Usage, c.Guide))
 		return gerrors.Augment(err, "failed_to_page_user.help", nil)
 	}
 
 	// Check we have at least the correct number of arguments to execute the command.
 	if len(tokens) < c.MinimumNumberOfArgs {
-		_, err := s.ChannelMessageSend(m.ChannelID, formatUsageMsg(m.Author.ID, c.Usage))
+		_, err := s.ChannelMessageSend(m.ChannelID, formatUsageMsg(m.Author.ID, c.Usage, c.Guide))
 		return gerrors.Augment(err, "failed_to_page_user.bad_params", nil)
 	}
 
@@ -114,8 +115,13 @@ func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Sessio
 	return nil
 }
 
-func formatUsageMsg(userID, usage string) string {
-	return fmt.Sprintf(":wave: <@%s> %s", userID, util.WrapAsCodeBlock(usage))
+func formatUsageMsg(userID, usage string, guide string) string {
+	var formattedGuide string
+	if guide != "" {
+		formattedGuide = fmt.Sprintf("Guide: `%s`", guide)
+	}
+
+	return fmt.Sprintf(":wave: <@%s>\n%s\n%s", userID, formattedGuide, util.WrapAsCodeBlock(usage))
 }
 
 func formatNonAdminMsg(userID string) string {
@@ -153,17 +159,19 @@ func isFuturesMember(roles []string) bool {
 	return false
 }
 
-func isAdmin(roles []string) bool {
-	for _, role := range roles {
-		if role == discordproto.DiscordSatoshiAdminRoleID {
-			return true
-		}
-	}
-
+func isAdmin() bool {
 	return false
 }
 
 // Placeholder
 func normalizeContent(content string) string {
 	return content
+}
+
+func safeGetRoles(member *discordgo.Member) []string {
+	if member == nil {
+		return []string{}
+	}
+
+	return member.Roles
 }

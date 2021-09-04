@@ -29,7 +29,8 @@ const (
 	NOTE: "<...>" means you need to replace with the argument value, don't include the brackets.
 
 	To see what args are required for subcommands, call help as an argument.
-	See notion for more detail.
+
+	Some commands have guides attached; run "!<command> help" to see the guide if it's there.
 
 	Please ping @ajperkins if you have any questions.
 	`

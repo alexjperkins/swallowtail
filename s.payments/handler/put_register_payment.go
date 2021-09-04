@@ -3,13 +3,14 @@ package handler
 import (
 	"context"
 	"strconv"
+	"time"
+
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.payments/dao"
 	"swallowtail/s.payments/domain"
 	paymentsproto "swallowtail/s.payments/proto"
-	"time"
-
-	"github.com/monzo/slog"
 )
 
 // RegisterPayment ...
@@ -54,7 +55,7 @@ func (s *PaymentsService) RegisterPayment(
 	}
 
 	// Check the user hasn't already paid this month
-	hasAlreadyPaid, err := dao.UserPaymentExistsSince(ctx, in.UserId, currentMonthStartTimestamp())
+	hasAlreadyPaid, err := dao.UserPaymentExistsSince(ctx, in.UserId, currentMonthStartFromTimestamp(time.Now()))
 	if err != nil {
 		return nil, gerrors.AlreadyExists("failed_to_register_payment.failed_check_if_user_already_paid", errParams)
 	}
@@ -105,7 +106,6 @@ func (s *PaymentsService) RegisterPayment(
 
 	if err := postToAccountsPulseChannel(ctx, account.IsFuturesMember, in.UserId, account.Username, now); err != nil {
 		slog.Error(ctx, "Failed to publish to accounts pulse channel: %v: Error", in.UserId, err)
-
 	}
 
 	return &paymentsproto.RegisterPaymentResponse{}, nil
