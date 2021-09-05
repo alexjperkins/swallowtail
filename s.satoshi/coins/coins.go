@@ -45,6 +45,13 @@ var (
 		"STEP":  true,
 		"LINK":  true,
 		"MEDIA": true,
+		"LIQ":   true,
+		"DOGE":  true,
+		"SAIL":  true,
+		"GSAIL": true,
+		"ATLAS": true,
+		"AUDIO": true,
+		"POLIS": true,
 	}
 	coinSymbolsMtx sync.RWMutex
 )

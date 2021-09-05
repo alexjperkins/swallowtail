@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 	"swallowtail/libraries/gerrors"
 	paymentsproto "swallowtail/s.payments/proto"
 
@@ -28,8 +29,8 @@ func init() {
 			"register": {
 				ID:                  "payment-register",
 				IsPrivate:           true,
-				MinimumNumberOfArgs: 1,
-				Usage:               `!payment <transaction_id>`,
+				MinimumNumberOfArgs: 2,
+				Usage:               `!payment register <type> <transaction_id>`,
 				Description:         "Registers a new payment to satoshi. It checks the transaction is correct & keeps a record of it.",
 				Handler:             registerPaymentHandler,
 				FailureMsg:          "Please check that you have an account registered; or maybe you've already paid for this month? ping @ajperkins if unsure",
@@ -43,13 +44,19 @@ func paymentHandler(ctx context.Context, tokens []string, s *discordgo.Session, 
 }
 
 func registerPaymentHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	txid := tokens[0]
+	paymentType, txid := tokens[0], tokens[1]
+
+	var auditNote = paymentsproto.PaymentTypeFuturesSubscription
+	switch strings.ToLower(paymentType) {
+	case "futures":
+		auditNote = paymentsproto.PaymentTypeFuturesSubscription
+	}
 
 	_, err := (&paymentsproto.RegisterPaymentRequest{
 		UserId:        m.Author.ID,
 		TransactionId: txid,
 		AmountInUsdt:  20,
-		AuditNote:     paymentsproto.PaymentTypeFuturesSubscription,
+		AuditNote:     auditNote,
 	}).Send(ctx).Response()
 	switch {
 	case gerrors.Is(err, gerrors.ErrFailedPrecondition, "failed_to_register_payment.user_does_not_have_an_account"):
@@ -61,7 +68,7 @@ func registerPaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 	case gerrors.Is(err, gerrors.ErrAlreadyExists, "failed_to_register_payment.payment_already_exists"):
 		_, err := s.ChannelMessageSend(
 			m.ChannelID,
-			":rocket: Hey, looks like you've already paid for this month! If you don't think that's correct please ping @ajperkins",
+			":rocket: Hey, this transaction id has already been used. If you've already paid this month then you're good to go! If unsure ping @ajperkins",
 		)
 		return err
 	case gerrors.Is(err, gerrors.ErrFailedPrecondition, "failed_to_register_payment.user_has_already_paid"):
@@ -73,7 +80,7 @@ func registerPaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 	case gerrors.Is(err, gerrors.ErrFailedPrecondition, "failed_to_register_payment.transaction_of_correct_amount_does_not_exist_in_deposit_account"):
 		_, err := s.ChannelMessageSend(
 			m.ChannelID,
-			":disappointed: Hey, my bad I can't find that transaction id in the deposit account! Please check that the **transaction id** and the **amount** is correct ",
+			":disappointed: Hey, my bad I can't find that transaction id in the deposit account. Please check that both the **transaction id** and the **amount** is correct.",
 		)
 		return err
 	case err != nil:
