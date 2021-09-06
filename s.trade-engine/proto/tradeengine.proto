@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./;tradeengineoroto";
+
+service tradeengine {
+    rpc CreateTrade (CreateTradeRequest) returns (CreateTradeResponse) {}
+}
+
+enum TRADE_SIDE {
+    BUY = 0;
+    SELL = 1;
+}
+
+enum TRADE_STATUS {
+    PENDING = 0;
+    ACTIVE = 1;
+    COMPLETE = 2;
+    CANCELLED = 3;
+}
+
+enum TRADE_TYPE {
+    SPOT = 0;
+    FUTURES_PERPETUALS = 1;
+    FUTURES_QUARTERLY = 2;
+}
+
+message Trade {
+    string trade_id = 1;
+    string actor_id = 2;
+    string actor_type = 3;
+    string idempotency_key = 4;
+    string exchange = 5;
+    string trade_type = 6;
+    string asset = 7;
+    string pair = 8;
+    float entry = 9;
+    float stop_loss = 10;
+    repeated float take_profits = 11;
+    TRADE_STATUS status = 12;
+    float risk_return = 13;
+    google.protobuf.Timestamp created = 14;
+    google.protobuf.Timestamp last_updated = 15;
+    TRADE_SIDE trade_side = 16;
+}
+
+message CreateTradeRequest {
+    Trade trade = 1;
+    bool execute = 2;
+}
+
+message CreateTradeResponse {}
