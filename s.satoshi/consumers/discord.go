@@ -94,20 +94,34 @@ func handleModMessages(
 		if m.ChannelID != discordproto.DiscordMoonModMessagesChannel {
 			return
 		}
+
 		parsedContent, err := getLatestChannelMessages(ctx, s, m.ChannelID)
 		if err != nil {
 			slog.Error(ctx, "Failed to get latest mod message: %v", err)
 			return
 		}
+
 		msgs := []*ConsumerMessage{}
 		for i, pc := range parsedContent {
 			// First lets check if the content is part of any 1-10k challenge.
+			msgs = append(msgs, &ConsumerMessage{
+				ConsumerID:       discordConsumerID,
+				DiscordChannelID: discordproto.DiscordSatoshiModMessagesChannel,
+				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
+				Created:          time.Now(),
+				IsActive:         isActive,
+				Metadata: map[string]string{
+					"message": fmt.Sprintf("%v", i),
+					"total":   fmt.Sprintf("%v", len(parsedContent)),
+				},
+			})
+
 			switch {
 			case containsAstekz1To10kChallenge(m.Author.Username, strings.ToLower(pc.Content)):
 				slog.Debug(ctx, "Astekz 1-10k challenge message received: %s", pc.Content)
 				msg := &ConsumerMessage{
 					ConsumerID:       discordConsumerID,
-					DiscordChannelID: discordproto.DiscordSatoshiGeneralChannel,
+					DiscordChannelID: discordproto.DiscordSatoshiChallengesChannel,
 					Message:          warning("1-10k challenge update from Astekz", pc.Content),
 					Created:          time.Now(),
 					IsActive:         isActive,
@@ -117,7 +131,7 @@ func handleModMessages(
 				slog.Debug(ctx, "Rego 1-10k challenge message received: %s", pc.Content)
 				msg := &ConsumerMessage{
 					ConsumerID:       discordConsumerID,
-					DiscordChannelID: discordproto.DiscordSatoshiFuturesChannel,
+					DiscordChannelID: discordproto.DiscordSatoshiChallengesChannel,
 					Message:          warning("1-10k challenge update from Rego", pc.Content),
 					Created:          time.Now(),
 					IsActive:         isActive,
@@ -132,7 +146,7 @@ func handleModMessages(
 			}
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
-				DiscordChannelID: discordproto.DiscordSatoshiModMessagesChannel,
+				DiscordChannelID: discordproto.DiscordSatoshiModTradesChannel,
 				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
 				Created:          time.Now(),
 				IsActive:         isActive,
@@ -318,9 +332,6 @@ func containsTicker(content string) bool {
 			strings.Contains(token, "usdt"):
 			// But if a token contains a stable coins, then lets assume it's of the form BTCUSDT.
 			// We might pick up typos and similar here, but that's fine for now.
-
-			fmt.Println(token)
-
 			return true
 		case strings.Contains(token, "/"):
 			// Some mods format their trades as `BTC/USDT`.

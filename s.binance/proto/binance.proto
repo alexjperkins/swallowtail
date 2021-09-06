@@ -7,13 +7,7 @@ option go_package = "./;binanceproto";
 service binance {
     rpc ListAllAssetPairs (ListAllAssetPairsRequest) returns (ListAllAssetPairsResponse) {}
 
-    rpc SpotTrade (SpotTradeRequest) returns (SpotTradeResponse) {}
-
-    rpc PerpetualFutureTrade (PerpetualFutureTradeRequest) returns (PerpetualFutureTradeResponse) {}
-
-    rpc ReadSpotAccount (ReadSpotAccountRequest) returns (ReadSpotAccountResponse) {}
-
-    rpc ReadPerpetualFuturesAccount (ReadPerpetualFuturesAccountRequest) returns (ReadPerpetualFuturesAccountResponse) {} 
+    rpc ExecuteFuturesPerpetualsTrade (ExecuteFuturesPerpetualsTradeRequest) returns (ExecuteFuturesPerpetualsTradeResponse) {}
 
     rpc VerifyCredentials (VerifyCredentialsRequest) returns (VerifyCredentialsResponse) {}
 }
@@ -42,51 +36,19 @@ enum TradeType {
     QUARTERLY_FUTURES = 2;
 }
 
-message SpotTradeRequest {
-    string user_discord_id = 1;
-    string idempotency_key = 2;
+message ExecuteFuturesPerpetualsTradeRequest {
+    string trade_id = 1;
+    string actor_id = 2;
     TradeSide side = 3;
-    string asset_pair = 4;
-    string amount = 5;
-    string value = 6;
-    google.protobuf.Timestamp created = 7;
-    google.protobuf.Timestamp attempt_retry_until = 8;
+    string asset = 4;
+    string pair = 5;
+    float entry = 6;
+    float stop_loss = 7;
+    repeated float take_profits = 8;
+    google.protobuf.Timestamp timestamp = 9;
 }
 
-message SpotTradeResponse {
-    bool executed = 1;
-    string trade_id = 2;
-}
-
-message PerpetualFutureTradeRequest {
-    string user_discord_id = 1;
-    string idempotency_key = 2;
-    TradeSide side = 3;
-    string asset_pair = 4;
-    string amount = 5;
-    string value = 6;
-    google.protobuf.Timestamp created = 7;
-    google.protobuf.Timestamp attempt_retry_until = 8;
-}
-
-message PerpetualFutureTradeResponse {
-    bool executed = 1;
-    string trade_id = 2;
-}
-
-message ReadSpotAccountRequest {
-  string user_discord_id = 1;
-}
-
-message ReadSpotAccountResponse {
-}
-
-message ReadPerpetualFuturesAccountRequest {
-  string user_discord_id = 1;
-}
-
-message ReadPerpetualFuturesAccountResponse {
-}
+message ExecuteFuturesPerpetualsTradeResponse {}
 
 message Credentials {
     string api_key = 1;
@@ -106,5 +68,5 @@ message VerifyCredentialsResponse {
     bool spot_enabled = 5;
     bool options_enabled = 6;
     bool ip_restrictions = 7;
-    string reason = 7;
+    string reason = 8;
 }
