@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "./;tradeengineoroto";
+option go_package = "./;tradeengineproto";
 
 service tradeengine {
     rpc CreateTrade (CreateTradeRequest) returns (CreateTradeResponse) {}

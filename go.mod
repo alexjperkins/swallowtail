@@ -17,6 +17,7 @@ require (
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e
 	github.com/dghubble/oauth1 v0.7.0
 	github.com/dghubble/sling v1.3.0 // indirect
+	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/fatih/color v1.10.0
 	github.com/georgysavva/scany v0.2.9 // indirect
 	github.com/go-kit/kit v0.10.0 // indirect
