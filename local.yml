@@ -1,5 +1,4 @@
 version: "3.9"
-
 volumes:
   swallowtail_zookeeper_data: {}
   swallowtail_zookeeper_datalog: {}
@@ -133,5 +132,19 @@ services:
     image: swallowtail.c.payments
     depends_on:
       - swallowtail.s.payments
+    profiles:
+      - backend
+
+  swallowtail.c.exchanges:
+    hostname: swallowtail-c-exchanges
+    image: swallowtail.c.exchanges
+    depends_on:
+      - swallowtail.s.binance
+    profiles:
+      - backend
+
+  swallowtail.c.satoshi:
+    hostname: swallowtail-c-satoshi
+    image: swallowtail.c.satoshi
     profiles:
       - backend

@@ -20,6 +20,7 @@ type BinanceClient interface {
 	ListAllAssetPairs(ctx context.Context, in *ListAllAssetPairsRequest, opts ...grpc.CallOption) (*ListAllAssetPairsResponse, error)
 	ExecuteFuturesPerpetualsTrade(ctx context.Context, in *ExecuteFuturesPerpetualsTradeRequest, opts ...grpc.CallOption) (*ExecuteFuturesPerpetualsTradeResponse, error)
 	VerifyCredentials(ctx context.Context, in *VerifyCredentialsRequest, opts ...grpc.CallOption) (*VerifyCredentialsResponse, error)
+	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 }
 
 type binanceClient struct {
@@ -57,6 +58,15 @@ func (c *binanceClient) VerifyCredentials(ctx context.Context, in *VerifyCredent
 	return out, nil
 }
 
+func (c *binanceClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error) {
+	out := new(GetStatusResponse)
+	err := c.cc.Invoke(ctx, "/binance/GetStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BinanceServer is the server API for Binance service.
 // All implementations must embed UnimplementedBinanceServer
 // for forward compatibility
@@ -64,6 +74,7 @@ type BinanceServer interface {
 	ListAllAssetPairs(context.Context, *ListAllAssetPairsRequest) (*ListAllAssetPairsResponse, error)
 	ExecuteFuturesPerpetualsTrade(context.Context, *ExecuteFuturesPerpetualsTradeRequest) (*ExecuteFuturesPerpetualsTradeResponse, error)
 	VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error)
+	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	mustEmbedUnimplementedBinanceServer()
 }
 
@@ -79,6 +90,9 @@ func (*UnimplementedBinanceServer) ExecuteFuturesPerpetualsTrade(context.Context
 }
 func (*UnimplementedBinanceServer) VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyCredentials not implemented")
+}
+func (*UnimplementedBinanceServer) GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
 }
 func (*UnimplementedBinanceServer) mustEmbedUnimplementedBinanceServer() {}
 
@@ -140,6 +154,24 @@ func _Binance_VerifyCredentials_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Binance_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BinanceServer).GetStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/binance/GetStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BinanceServer).GetStatus(ctx, req.(*GetStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Binance_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "binance",
 	HandlerType: (*BinanceServer)(nil),
@@ -155,6 +187,10 @@ var _Binance_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyCredentials",
 			Handler:    _Binance_VerifyCredentials_Handler,
+		},
+		{
+			MethodName: "GetStatus",
+			Handler:    _Binance_GetStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

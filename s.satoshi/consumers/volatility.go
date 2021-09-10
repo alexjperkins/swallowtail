@@ -133,17 +133,19 @@ func (pa *priceAction) percentageDiff() float64 {
 	if pa.prev == 0.0 || pa.curr == 0.0 {
 		return 0.0
 	}
-	return (pa.curr / pa.prev) - 1
 
+	return (pa.curr / pa.prev) - 1
 }
 
 func getVolatilityDelta(symbol string) float64 {
 	if _, ok := highVolatilitySet[symbol]; ok {
 		return highVolatilityDelta
 	}
+
 	if _, ok := lowVolatilitySet[symbol]; ok {
 		return lowVolatilityDelta
 	}
+
 	return midVolatilityDelta
 }
 
@@ -151,5 +153,6 @@ func abs(v float64) float64 {
 	if v < 0 {
 		return -v
 	}
+
 	return v
 }

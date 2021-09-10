@@ -6,6 +6,8 @@ option go_package = "./;ftxproto";
 
 service ftx {
     rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
+
+    rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
 }
 
 message ListAccountDepositsRequest {
@@ -31,4 +33,11 @@ message DepositRecord {
     string status = 8;
     google.protobuf.Timestamp time = 9;
     string transaction_id = 10;
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+    int64 server_time = 1;
+    int64 request_latency = 2;
 }

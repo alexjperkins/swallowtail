@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "./;satoshiproto";
+
+service satoshi {
+    rpc PublishStatus (PublishStatusRequest) returns (PublishStatusResponse) {}
+}
+
+message PublishStatusRequest {
+}
+
+message PublishStatusResponse{
+    bool alive = 1;
+    string version = 2;
+}

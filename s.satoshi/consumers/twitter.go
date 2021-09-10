@@ -57,16 +57,18 @@ func (tw TwitterConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage,
 	}
 
 	tweetHandler := postTweetToDiscordHandler(ctx, c, tw.Active)
-	err := cli.NewStream(ctx, filterParams, tweetHandler)
-	if err != nil {
+
+	if err := cli.NewStream(ctx, filterParams, tweetHandler); err != nil {
 		slog.Error(ctx, "Failed to start twitter stream.", map[string]string{
 			"consumer_id": twitterConsumerID,
 			"error":       err.Error(),
 		})
 		return
 	}
+
 	defer cli.StopStream()
 	defer slog.Warn(ctx, "Stopping twitter client stream")
+
 	slog.Info(ctx, "Stream created; waiting for tweets...")
 	for {
 		select {

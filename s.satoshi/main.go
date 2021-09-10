@@ -2,35 +2,35 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
 
-	binanceclient "swallowtail/s.binance/client"
+	"swallowtail/libraries/mariana"
+	"swallowtail/s.satoshi/handler"
+	"swallowtail/s.satoshi/parser"
+	satoshiproto "swallowtail/s.satoshi/proto"
 	"swallowtail/s.satoshi/satoshi"
-	"syscall"
+)
 
-	"github.com/monzo/slog"
+const (
+	svcName = "s.satoshi"
 )
 
 func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	// Initialize the binance client.
-	binanceclient.Init(ctx)
-
-	satoshi := satoshi.New(true)
-
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	defer slog.Warn(ctx, "Received shutdown signal....")
-
-	slog.Info(ctx, "Starting Satoshi...")
-	satoshi.Run(ctx)
-	select {
-	case <-sc:
-		satoshi.Stop()
-		cancel()
-		return
+	// Init parser.
+	if err := parser.Init(ctx); err != nil {
+		panic(err)
 	}
+
+	// Init our background satoshi jobs.
+	if err := satoshi.Init(ctx); err != nil {
+		panic(err)
+	}
+
+	// Init Mariana Server.
+	srv := mariana.Init(svcName)
+	satoshiproto.RegisterSatoshiServer(srv.Grpc(), &handler.SatoshiService{})
+	srv.Run(ctx)
 }

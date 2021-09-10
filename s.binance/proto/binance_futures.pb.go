@@ -78,6 +78,7 @@ func (r *ExecuteFuturesPerpetualsTradeRequest) SendWithTimeout(ctx context.Conte
 }
 
 // --- VerifyCredentials --- //
+
 type VerifyCredentialsFuture struct {
 	closer  func() error
 	errc    chan error
@@ -134,6 +135,74 @@ func (r *VerifyCredentialsRequest) SendWithTimeout(ctx context.Context, timeout 
 	}()
 
 	return &VerifyCredentialsFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
+// --- List All Asset Pairs --- //
+
+type ListAllAssetPairsFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ListAllAssetPairsResponse
+	ctx     context.Context
+}
+
+func (a *ListAllAssetPairsFuture) Response() (*ListAllAssetPairsResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "list_all_asset_pairs", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ListAllAssetPairsRequest) Send(ctx context.Context) *ListAllAssetPairsFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ListAllAssetPairsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ListAllAssetPairsFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ListAllAssetPairsResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-binance:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_binance_connection_failed", nil)
+		return &ListAllAssetPairsFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewBinanceClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ListAllAssetPairs(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "list_all_asset_pairs", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ListAllAssetPairsFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

@@ -1,5 +1,7 @@
 package client
 
+import "time"
+
 // Credentials
 type Credentials struct {
 	APIKey    string
@@ -15,8 +17,12 @@ func (c *Credentials) AsHeaders() map[string]string {
 
 // BinanceAssetItem defines the asset item.
 type BinanceAssetItem struct {
-	Symbol            string `json:"symbol"`
-	BaseAsset         string `json:"baseAsset"`
+	// e.g BTCUSDT
+	Symbol string `json:"symbol"`
+	// e.g ETH
+	BaseAsset string `json:"baseAsset"`
+	// e.g USDT
+	QuoteAsset        string `json:"quoteAsset"`
 	WithMarginTrading bool   `json:"isMarginTradingAllowed"`
 	WithSpotTrading   bool   `json:"isSpotTradingAllowed"`
 }
@@ -62,4 +68,12 @@ type VerifyCredentialsResponse struct {
 	EnableMargin                   bool `json:"enableMargin"`
 	EnableSpotAndMarginTrading     bool `json:"enableSpotAndMarginTrading"`
 	TradingAuthorityExpirationTime int  `json:"tradingAuthorityExpirationTime"`
+}
+
+type GetStatusRequest struct{}
+
+type GetStatusResponse struct {
+	AssumedClockDrift time.Duration
+	ServerTime        int `json:"serverTime"`
+	ServerLatency     time.Duration
 }

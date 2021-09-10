@@ -7,16 +7,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-
-	"swallowtail/libraries/util"
-	binanceclient "swallowtail/s.binance/client"
-	discordclient "swallowtail/s.discord/client"
-	discordproto "swallowtail/s.discord/proto"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"swallowtail/libraries/util"
+	discordclient "swallowtail/s.discord/client"
+	discordproto "swallowtail/s.discord/proto"
+	"swallowtail/s.satoshi/formatter"
+	"swallowtail/s.satoshi/parser"
 )
 
 const (
@@ -27,8 +29,6 @@ const (
 var (
 	discordConsumerToken string
 	discordConsumerName  = "satoshi_consumer"
-
-	binanceAssetPairs = map[string]bool{}
 )
 
 func init() {
@@ -36,7 +36,6 @@ func init() {
 	register(discordConsumerID, DiscordConsumer{
 		Active: true,
 	})
-
 }
 
 type DiscordConsumer struct {
@@ -45,18 +44,6 @@ type DiscordConsumer struct {
 
 func (dc DiscordConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage, d chan struct{}, _ bool) {
 	discordClient := discordclient.New(discordConsumerName, discordConsumerToken, false)
-
-	// Build a list of asset pairs that have futures trading enabled.
-	assets, err := binanceclient.ListAllAssetPairs(context.Background())
-	if err != nil {
-		panic(err)
-	}
-	for _, asset := range assets.Symbols {
-		if asset.WithMarginTrading {
-			binanceAssetPairs[strings.ToLower(asset.BaseAsset)] = true
-		}
-	}
-	slog.Info(ctx, "Fetched all binance asset pairs for the discord consumer; total: %v", len(binanceAssetPairs))
 
 	// Add handlers
 	discordClient.AddHandler(handleModMessages(ctx, c, dc.Active))
@@ -91,10 +78,12 @@ func handleModMessages(
 ) func(s *discordgo.Session, m *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, mc *discordgo.MessageCreate) {
 		m := mc.Message
+
 		if m.ChannelID != discordproto.DiscordMoonModMessagesChannel {
 			return
 		}
 
+		// Parse our content.
 		parsedContent, err := getLatestChannelMessages(ctx, s, m.ChannelID)
 		if err != nil {
 			slog.Error(ctx, "Failed to get latest mod message: %v", err)
@@ -110,6 +99,7 @@ func handleModMessages(
 				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
 				Created:          time.Now(),
 				IsActive:         isActive,
+				Attachments:      m.Attachments,
 				Metadata: map[string]string{
 					"message": fmt.Sprintf("%v", i),
 					"total":   fmt.Sprintf("%v", len(parsedContent)),
@@ -139,15 +129,29 @@ func handleModMessages(
 				msgs = append(msgs, msg)
 			}
 
-			// We want to reduce the noise here; we only care if the content contains a Ticker.
-			if !containsTicker(strings.ToLower(pc.Content)) {
-				slog.Debug(ctx, "Received mod message without ticker: %s", pc.Content)
-				return
+			// Attempt to parse a trade.
+			trade, err := parser.Parse(ctx, discordproto.DiscordMoonModMessagesChannel, pc.Content, mc)
+			if err != nil {
+				// No trade can be parsed; so lets continue.
+				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
+				continue
 			}
+
+			now := time.Now().UTC()
+			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
+
+			// Sign our trade with the timestamp.
+			trade.Created = timestamppb.New(now)
+			trade.LastUpdated = trade.Created
+			// Sign our trade with our idempotency key.
+			trade.IdempotencyKey = idempotencyKey
+
+			tradeContent := formatter.FormatTrade("WWG", trade, pc.Content)
+
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
 				DiscordChannelID: discordproto.DiscordSatoshiModTradesChannel,
-				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
+				Message:          tradeContent,
 				Created:          time.Now(),
 				IsActive:         isActive,
 				Metadata: map[string]string{
@@ -155,6 +159,7 @@ func handleModMessages(
 					"total":   fmt.Sprintf("%v", len(parsedContent)),
 				},
 			}
+
 			msgs = append(msgs, msg)
 		}
 
@@ -175,9 +180,11 @@ func handleSwingMessages(
 ) func(s *discordgo.Session, m *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, mc *discordgo.MessageCreate) {
 		m := mc.Message
+
 		if m.ChannelID != discordproto.DiscordMoonSwingGroupChannel {
 			return
 		}
+
 		parsedContent, err := getLatestChannelMessages(ctx, s, m.ChannelID)
 		if err != nil {
 			slog.Error(ctx, "Failed to get latest mod message: %v", err)
@@ -185,17 +192,38 @@ func handleSwingMessages(
 		}
 
 		for i, pc := range parsedContent {
+			// Attempt to parse a trade.
+			trade, err := parser.Parse(ctx, discordproto.DiscordMoonModMessagesChannel, pc.Content, mc)
+			if err != nil {
+				// No trade can be parsed; so lets continue.
+				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
+				continue
+			}
+
+			now := time.Now().UTC()
+			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
+
+			// Sign our trade with the timestamp.
+			trade.Created = timestamppb.New(now)
+			trade.LastUpdated = trade.Created
+			// Sign our trade with an idempotency key.
+			trade.IdempotencyKey = idempotencyKey
+
+			tradeContent := formatter.FormatTrade("Swings & Scalps", trade, pc.Content)
+
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
 				DiscordChannelID: discordproto.DiscordSatoshiSwingsChannel,
-				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
 				Created:          time.Now(),
+				Message:          tradeContent,
+				Attachments:      m.Attachments,
 				IsActive:         isActive,
 				Metadata: map[string]string{
 					"message": fmt.Sprintf("%v", i),
 					"total":   fmt.Sprintf("%v", len(parsedContent)),
 				},
 			}
+
 			select {
 			case c <- msg:
 			default:
@@ -222,11 +250,13 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	if s == nil {
 		return nil, nil
 	}
+
 	url := fmt.Sprintf(discordChannelUrl, channelID)
 	slogParams := map[string]string{
 		"channel_id": channelID,
 		"url":        url,
 	}
+
 	// Create request
 	req, err := http.NewRequestWithContext(
 		ctx, "GET", url, nil,
@@ -234,6 +264,7 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to create request", slogParams)
 	}
+
 	req.Header.Set("authorization", discordConsumerToken)
 
 	// Execute request.
@@ -241,6 +272,7 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to make request", slogParams)
 	}
+
 	defer rsp.Body.Close()
 
 	// Parse Body.
@@ -248,6 +280,7 @@ func getLatestChannelMessages(ctx context.Context, s *discordgo.Session, channel
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to read response.", slogParams)
 	}
+
 	var msgList []*channelMessage
 	json.Unmarshal([]byte(body), &msgList)
 
@@ -312,40 +345,6 @@ func containsRego1To10kChallenge(modUsername, content string) bool {
 	}
 
 	return containsRego && contains1k && contains10k
-}
-
-// containsTicker checks if the contain contains a ticker that is traded on Binance
-// it assumes that the content passed with be normalized to lowercase.
-func containsTicker(content string) bool {
-	tokens := strings.Fields(strings.ToLower(content))
-	for _, token := range tokens {
-		switch {
-		case
-			token == "usd",
-			token == "usdt",
-			token == "usdc":
-			// If we match against some stablecoin inadvertly; then we can skip.
-			continue
-		case
-			strings.Contains(token, "usd"),
-			strings.Contains(token, "usdc"),
-			strings.Contains(token, "usdt"):
-			// But if a token contains a stable coins, then lets assume it's of the form BTCUSDT.
-			// We might pick up typos and similar here, but that's fine for now.
-			return true
-		case strings.Contains(token, "/"):
-			// Some mods format their trades as `BTC/USDT`.
-			childContent := strings.ReplaceAll(token, "/", " ")
-			if containsTicker(childContent) {
-				return true
-			}
-		}
-
-		if _, ok := binanceAssetPairs[token]; ok {
-			return true
-		}
-	}
-	return false
 }
 
 // Formats a message for a standardized warning.

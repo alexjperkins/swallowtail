@@ -63,6 +63,23 @@ func (c *binanceClient) VerifyCredentials(ctx context.Context, credentials *Cred
 			"endpoint": endpoint,
 		})
 	}
+
+	return rspBody, nil
+}
+
+func (c *binanceClient) GetStatus(ctx context.Context) (*GetStatusResponse, error) {
+	endpoint := fmt.Sprintf("%s/time", binanceAPIUrl)
+	rspBody := &GetStatusResponse{}
+
+	if err := c.http.Do(ctx, http.MethodGet, endpoint, nil, rspBody); err != nil {
+		return nil, gerrors.Augment(err, "client_request_failed.get_status.time", map[string]string{
+			"endpoint": endpoint,
+		})
+	}
+
+	// Convert to millisecond time
+	rspBody.ServerTime /= 1_000
+
 	return rspBody, nil
 }
 

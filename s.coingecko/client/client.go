@@ -40,7 +40,7 @@ type CoinGeckoClient interface {
 // Init initializes the coingecko client.
 func Init(ctx context.Context) error {
 	// Create new cache.
-	ttl := ttlcache.New(30 * time.Second)
+	ttl := ttlcache.New(2 * time.Minute)
 
 	// Create new http client.
 	httpClient := &http.Client{
@@ -69,12 +69,14 @@ func Init(ctx context.Context) error {
 
 // GetCurrentPriceFromSymbol ...
 func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko by symbol")
+	defer span.Finish()
 	return client.GetCurrentPriceFromSymbol(ctx, symbol, assetPair)
 }
 
 // GetCurrentPriceFromID ...
 func GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko by id")
 	defer span.Finish()
 	return client.GetCurrentPriceFromID(ctx, id, assetPair)
 }
