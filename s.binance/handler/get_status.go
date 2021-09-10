@@ -45,7 +45,7 @@ SUCCESS: FALSE
 		ChannelId:      discordproto.DiscordSatoshiExchangePulseChannel,
 		SenderId:       "c.exchange",
 		Content:        fmt.Sprintf("%s```%s```", header, content),
-		IdempotencyKey: time.Now().UTC().Truncate(time.Minute).String(),
+		IdempotencyKey: fmt.Sprintf("%s-%s", "binancestatus", time.Now().UTC().Truncate(time.Minute).String()),
 	}).Send(ctx).Response()
 	if err != nil {
 		// Best Effort
@@ -70,7 +70,7 @@ LATENCY (ms): %v
 		ChannelId:      discordproto.DiscordSatoshiExchangePulseChannel,
 		SenderId:       "c.exchange",
 		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
-		IdempotencyKey: time.Now().UTC().Truncate(time.Minute).String(),
+		IdempotencyKey: fmt.Sprintf("%s-%s", "binancestatus", time.Now().UTC().Truncate(time.Minute).String()),
 	}).Send(ctx).Response()
 	if err != nil {
 		// Best Effort

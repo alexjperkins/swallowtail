@@ -14,11 +14,12 @@ func (ttlr *cacheResult) HasExpired() bool {
 	return ttlr.expirationDate.Before(time.Now())
 }
 
-// TTLCache provides a simple cache with a time-to-live eviction policy policy.
-// old expired keys aren't removed, rather replaced; so this isn't intented for uses
+// TTLCache provides a simple cache with a time-to-live eviction policy.
+//
+// Old expired keys aren't removed, rather replaced; so this isn't intented for uses
 // with a large possible set of keys.
 // It works well for a small finite set of known keys, that are both hot & liable to refresh
-// in near term.
+// in the near term.
 type TTLCache struct {
 	ttl   time.Duration
 	cache map[string]*cacheResult
@@ -40,21 +41,25 @@ func New(ttl time.Duration) *TTLCache {
 func (tc *TTLCache) Get(key string) (interface{}, bool) {
 	tc.mu.RLock()
 	defer tc.mu.RUnlock()
+
 	r, ok := tc.cache[key]
 	if !ok {
 		return nil, false
 	}
+
 	return r.value, r.HasExpired()
 }
 
-// Set sets the value to the given key. It is thread-safe
+// Set sets the value to the given key. It is thread-safe.
 func (tc *TTLCache) Set(key string, value interface{}) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
+
 	r := &cacheResult{
 		expirationDate: time.Now().Add(tc.ttl),
 		value:          value,
 	}
+
 	tc.cache[key] = r
 }
 

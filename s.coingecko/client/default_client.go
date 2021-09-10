@@ -11,6 +11,7 @@ import (
 	"github.com/monzo/terrors"
 	coingecko "github.com/superoo7/go-gecko/v3"
 
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.coingecko/cache"
 )
 
@@ -33,6 +34,7 @@ func (c *coingeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCo
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to retreive coins list", nil)
 	}
+
 	coins := []*CoingeckoListCoinItem{}
 	for _, coin := range *l {
 		coins = append(coins, &CoingeckoListCoinItem{
@@ -41,6 +43,7 @@ func (c *coingeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCo
 			Symbol: strings.ToLower(coin.Symbol),
 		})
 	}
+
 	return coins, nil
 }
 
@@ -49,17 +52,19 @@ func (c *coingeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol,
 	if err != nil {
 		return 0, err
 	}
+
 	return c.GetCurrentPriceFromID(ctx, id, assetPair)
 }
 
 func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
 	// First check the cache, if price exists for id, then check if it has expired.
 	value, hasExpired, _ := c.cache.Get(id)
+
 	if value == nil || hasExpired {
 		// Get the latest price.
 		ssp, err := c.cli.SimpleSinglePrice(strings.ToLower(id), strings.ToLower(assetPair))
 		if err != nil {
-			return 0, terrors.Augment(err, "Failed to retreive current price", map[string]string{
+			return 0, gerrors.Augment(err, "failed_to_get_current_price", map[string]string{
 				"coingecko_id": id,
 				"asset_pair":   assetPair,
 			})
@@ -69,14 +74,15 @@ func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPa
 		price := float64(ssp.MarketPrice)
 		c.cache.Set(id, price)
 
-		slog.Trace(ctx, "Updated coingecko price cache for [%s].", id)
+		slog.Trace(ctx, "Updated coingecko price cache for [%s] with price %v.", id, price)
+
 		return price, nil
 	}
 
-	// Convert cache value to a price. We can user floats, since for this purpose we don't need accuracy.
+	// Convert cache value to a price. We can use floats, since for this purpose we don't need accuracy.
 	price, ok := value.(float64)
 	if !ok {
-		return 0, terrors.BadResponse("invalid-price-type", "Failed to convert cached price to float", map[string]string{
+		return 0, gerrors.FailedPrecondition("failed_to_convert_cached_price_to_float", map[string]string{
 			"id": id,
 		})
 	}
@@ -90,6 +96,7 @@ func (c *coingeckoClient) GetATHFromSymbol(ctx context.Context, symbol string) (
 	if err != nil {
 		return 0, err
 	}
+
 	return c.GetATHFromID(ctx, id)
 }
 
@@ -106,6 +113,7 @@ func (c *coingeckoClient) Ping(ctx context.Context) error {
 	if _, err := c.cli.Ping(); err != nil {
 		return terrors.Augment(err, "Failed to establish connection to coingecko", nil)
 	}
+
 	return nil
 }
 
@@ -168,11 +176,13 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 func (c *coingeckoClient) getIDFromSymbol(symbol string) (string, error) {
 	c.coinsMu.RLock()
 	defer c.coinsMu.RUnlock()
+
 	id, ok := c.coins[strings.ToLower(symbol)]
 	if !ok {
 		return "", terrors.BadResponse("failed-to-convert-symbol-to-id", "No id found for this symbol", map[string]string{
 			"symbol": symbol,
 		})
 	}
+
 	return id, nil
 }

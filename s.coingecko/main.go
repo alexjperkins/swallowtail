@@ -25,5 +25,6 @@ func main() {
 	// Init Mariana Server
 	srv := mariana.Init(svcName)
 	coingeckoproto.RegisterCoingeckoServer(srv.Grpc(), &handler.CoingeckoService{})
+
 	srv.Run(ctx)
 }

@@ -142,3 +142,9 @@ services:
       - swallowtail.s.binance
     profiles:
       - backend
+
+  swallowtail.c.satoshi:
+    hostname: swallowtail-c-satoshi
+    image: swallowtail.c.satoshi
+    profiles:
+      - backend

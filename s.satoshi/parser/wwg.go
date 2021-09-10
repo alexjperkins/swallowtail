@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/monzo/slog"
 
 	"swallowtail/libraries/gerrors"
 	discordproto "swallowtail/s.discord/proto"
@@ -20,8 +19,6 @@ func init() {
 type WWGParser struct{}
 
 func (w *WWGParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate) (*tradeengineproto.Trade, error) {
-	slog.Warn(ctx, "PARSER CONTENT: ", content, m.Content)
-
 	ticker := parseTicker(content)
 	if ticker == "" {
 		return nil, gerrors.FailedPrecondition("failed_to_parse_wwg.not_enough_information.missing_ticker", nil)

@@ -12,20 +12,17 @@ import (
 	"swallowtail/s.satoshi/consumers"
 )
 
+const (
+	Version = "v0.1.9"
+)
+
 var (
 	satoshiToken = util.SetEnv("DISCORD_API_TOKEN")
 	SatoshiBotID = "satoshi-bot"
 )
 
-// Satoshi Interface
-type Satoshi interface {
-	// Run simply starts Satohsi & all registered consumers & command handlers.
-	Run(ctx context.Context)
-	// Stop stops satoshi gracefully.
-	Stop()
-}
-
-func New(withJitter bool) Satoshi {
+// Initializes satoshi background processes.
+func Init(ctx context.Context) error {
 	dc := discord.New(SatoshiBotID, satoshiToken, true)
 
 	for id, command := range commands.List() {
@@ -33,13 +30,16 @@ func New(withJitter bool) Satoshi {
 		dc.AddHandler(command.Exec)
 	}
 
-	return &satoshi{
+	s := &satoshi{
 		dc:             dc,
-		withJitter:     withJitter,
+		withJitter:     true,
 		consumers:      consumers.Registry(),
 		consumerStream: make(chan *consumers.ConsumerMessage, 32),
 		done:           make(chan struct{}, 1),
 	}
+
+	s.run(ctx)
+	return nil
 }
 
 type satoshi struct {
@@ -50,7 +50,7 @@ type satoshi struct {
 	done           chan struct{}
 }
 
-func (s *satoshi) Run(ctx context.Context) {
+func (s *satoshi) run(ctx context.Context) {
 	s.consume(ctx)
 	go s.streamEventHandler(ctx)
 }
