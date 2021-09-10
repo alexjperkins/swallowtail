@@ -47,6 +47,9 @@ type BinanceClient interface {
 
 	// VerifyCredentials verifies the given credentials of the users.
 	VerifyCredentials(context.Context, *Credentials) (*VerifyCredentialsResponse, error)
+
+	// GetStatus returns the statistics round the exchange server time & latency.
+	GetStatus(context.Context) (*GetStatusResponse, error)
 }
 
 // Init initializes the default binance client for this service.
@@ -99,4 +102,28 @@ func VerifyCredentials(ctx context.Context, credentials *Credentials) (*VerifyCr
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Verify credentials for user")
 	defer span.Finish()
 	return client.VerifyCredentials(ctx, credentials)
+}
+
+// GetStatus ...
+func GetStatus(ctx context.Context) (*GetStatusResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get Binance exchange status")
+	defer span.Finish()
+
+	requestStart := time.Now().UTC()
+
+	rsp, err := client.GetStatus(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+	// This is not entirely accurate since it includes the time take for the server to respond
+	// This would be ~ systematic - but a more slightly accurate approach would be the subtract half the latency (again not great).
+	assumedClockDrift := now.Sub(time.Unix(int64(rsp.ServerTime), 0))
+
+	requestEnd := now.Sub(requestStart)
+	rsp.ServerLatency = requestEnd
+	rsp.AssumedClockDrift = assumedClockDrift
+
+	return rsp, nil
 }

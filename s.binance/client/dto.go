@@ -1,5 +1,7 @@
 package client
 
+import "time"
+
 // Credentials
 type Credentials struct {
 	APIKey    string
@@ -66,4 +68,12 @@ type VerifyCredentialsResponse struct {
 	EnableMargin                   bool `json:"enableMargin"`
 	EnableSpotAndMarginTrading     bool `json:"enableSpotAndMarginTrading"`
 	TradingAuthorityExpirationTime int  `json:"tradingAuthorityExpirationTime"`
+}
+
+type GetStatusRequest struct{}
+
+type GetStatusResponse struct {
+	AssumedClockDrift time.Duration
+	ServerTime        int `json:"serverTime"`
+	ServerLatency     time.Duration
 }

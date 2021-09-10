@@ -12,6 +12,7 @@ backend:
 	cd s.payments && sudo make docker && cd .. && \
 	cd s.ftx && sudo make docker && cd .. && \
 	cd c.payments && sudo make && cd .. && \
+	cd c.exchanges &&  sudo make && cd .. && \
 	docker-compose -f local.yml --profile backend up --build
 
 build:
@@ -58,6 +59,10 @@ ftx:
 cronpayments:
 	cd c.payments &&  sudo make && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.c.payments
+
+cronexchanges:
+	cd c.exchanges &&  sudo make && cd .. && \
+	docker-compose -f local.yml up --build swallowtail.c.exchanges
 
 test:
 	go test ./... -short

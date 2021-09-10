@@ -48,7 +48,7 @@ func validateFTXExchangeCredentials(ctx context.Context, userID string, exchange
 func notifyPulseChannel(ctx context.Context, userID, username string, timestamp time.Time) error {
 	base := ":bear:    `NEW MEMBER`    :bear:"
 	msg := `
-User: %s
+UserID: %s
 Username: %s
 Timestamp: %v
 `

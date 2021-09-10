@@ -10,6 +10,8 @@ service binance {
     rpc ExecuteFuturesPerpetualsTrade (ExecuteFuturesPerpetualsTradeRequest) returns (ExecuteFuturesPerpetualsTradeResponse) {}
 
     rpc VerifyCredentials (VerifyCredentialsRequest) returns (VerifyCredentialsResponse) {}
+
+    rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
 }
 
 message AssetPair {
@@ -60,4 +62,15 @@ message VerifyCredentialsResponse {
     bool options_enabled = 6;
     bool ip_restrictions = 7;
     string reason = 8;
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+    // The time recorded by the server on Binances side.
+    int64 server_time = 1;
+    // The time it took to receive the request response
+    int64 request_latency = 2;
+    // The assumed clock drift between the client & the server time
+    int64 assumed_clock_drift = 3;
 }

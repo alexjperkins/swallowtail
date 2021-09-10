@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"swallowtail/libraries/mariana"
-	"swallowtail/s.account/dao"
 	"swallowtail/s.binance/client"
 	"swallowtail/s.binance/handler"
 	binanceproto "swallowtail/s.binance/proto"
@@ -18,11 +17,6 @@ func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
-	// Init Dao.
-	if err := dao.Init(ctx, svcName); err != nil {
-		panic(err)
-	}
 
 	// Init Binance client.
 	if err := client.Init(ctx); err != nil {

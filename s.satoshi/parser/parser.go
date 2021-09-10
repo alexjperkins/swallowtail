@@ -52,10 +52,6 @@ func Init(ctx context.Context) error {
 		binanceAssetPairs[strings.ToLower(assetPair.BaseAsset)] = true
 	}
 
-	for ap := range binanceAssetPairs {
-		slog.Info(ctx, "Adding symbol [%s] to the satoshi trade parser registry", ap)
-	}
-
 	slog.Info(context.Background(), "Fetched all binance asset pairs for satoshi parser; total: %v", len(binanceAssetPairs))
 	return nil
 }
