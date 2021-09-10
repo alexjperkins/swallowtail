@@ -6,6 +6,7 @@ import (
 	"os/signal"
 
 	binanceclient "swallowtail/s.binance/client"
+	"swallowtail/s.satoshi/parser"
 	"swallowtail/s.satoshi/satoshi"
 	"syscall"
 
@@ -26,6 +27,12 @@ func main() {
 	defer slog.Warn(ctx, "Received shutdown signal....")
 
 	slog.Info(ctx, "Starting Satoshi...")
+
+	// Init parser.
+	if err := parser.Init(ctx); err != nil {
+		panic(err)
+	}
+
 	satoshi.Run(ctx)
 	select {
 	case <-sc:

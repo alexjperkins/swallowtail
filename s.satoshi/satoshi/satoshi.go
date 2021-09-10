@@ -98,6 +98,7 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 				s.dc.SendPrivateMessage(ctx, e.Message, participent)
 				continue
 			}
+
 			// Send the event message to the appropriate discord channel.
 			s.dc.Send(ctx, e.Message, e.DiscordChannelID)
 		case <-ctx.Done():

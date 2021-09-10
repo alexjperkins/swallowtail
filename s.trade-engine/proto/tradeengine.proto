@@ -8,11 +8,17 @@ service tradeengine {
     rpc CreateTrade (CreateTradeRequest) returns (CreateTradeResponse) {}
 }
 
+enum ACTOR_TYPE {
+    AUTOMATED = 0;
+    MANUAL = 1;
+    INTERNAL = 2;
+    EXTERNAL = 3;
+}
+
 enum TRADE_SIDE {
     BUY = 0;
     SELL = 1;
 }
-
 enum TRADE_STATUS {
     PENDING = 0;
     ACTIVE = 1;
@@ -26,15 +32,26 @@ enum TRADE_TYPE {
     FUTURES_QUARTERLY = 2;
 }
 
+enum TRADE_PAIR {
+    USDT = 0;
+    USD = 1;
+    BTC = 2;
+}
+
+enum ORDER_TYPE {
+    LIMIT = 0;
+    MARKET = 1;
+}
+
 message Trade {
     string trade_id = 1;
     string actor_id = 2;
     string actor_type = 3;
     string idempotency_key = 4;
-    string exchange = 5;
-    string trade_type = 6;
+    ORDER_TYPE order_type = 5;
+    TRADE_TYPE trade_type = 6;
     string asset = 7;
-    string pair = 8;
+    TRADE_PAIR pair = 8;
     float entry = 9;
     float stop_loss = 10;
     repeated float take_profits = 11;

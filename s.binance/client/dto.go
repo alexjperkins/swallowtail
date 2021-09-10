@@ -15,8 +15,12 @@ func (c *Credentials) AsHeaders() map[string]string {
 
 // BinanceAssetItem defines the asset item.
 type BinanceAssetItem struct {
-	Symbol            string `json:"symbol"`
-	BaseAsset         string `json:"baseAsset"`
+	// e.g BTCUSDT
+	Symbol string `json:"symbol"`
+	// e.g ETH
+	BaseAsset string `json:"baseAsset"`
+	// e.g USDT
+	QuoteAsset        string `json:"quoteAsset"`
 	WithMarginTrading bool   `json:"isMarginTradingAllowed"`
 	WithSpotTrading   bool   `json:"isSpotTradingAllowed"`
 }

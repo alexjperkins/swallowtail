@@ -15,8 +15,9 @@ service binance {
 message AssetPair {
     string symbol = 1;
     string base_asset = 2;
-    bool with_margin_trading = 3;
+    string quote_asset = 3;
     bool with_spot_trading = 4;
+    bool with_margin_trading = 5;
 }
 
 message ListAllAssetPairsRequest {}
@@ -25,21 +26,11 @@ message ListAllAssetPairsResponse {
     repeated AssetPair asset_pairs = 1;
 }
 
-enum TradeSide {
-    BUY = 0;
-    SELL = 1;
-}
-
-enum TradeType {
-    SPOT = 0;
-    PERPETUAL_FUTURES = 1;
-    QUARTERLY_FUTURES = 2;
-}
-
 message ExecuteFuturesPerpetualsTradeRequest {
     string trade_id = 1;
-    string actor_id = 2;
-    TradeSide side = 3;
+    string actor_id= 2;
+    // TODO
+    string TradeSide = 3;
     string asset = 4;
     string pair = 5;
     float entry = 6;

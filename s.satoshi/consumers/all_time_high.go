@@ -94,6 +94,7 @@ func publishATHMsg(c chan<- *ConsumerMessage, msg, symbol string, currentPrice, 
 	created := time.Now()
 	// Idempotent on the current price & current all the time & valid for an hour.
 	idempotencyKey := fmt.Sprintf("%v-%v-%v", currentPrice, currentATH, created.Hour())
+
 	select {
 	case c <- &ConsumerMessage{
 		ConsumerID:       athConsumerID,
@@ -120,5 +121,6 @@ func isApproachingATH(currentPrice, ath float64) bool {
 	if distance > 0 && distance < approachingTriggerDelta {
 		return true
 	}
+
 	return false
 }

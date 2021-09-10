@@ -6,7 +6,7 @@ import (
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-// CreateTrade
+// CreateTrade ...
 func CreateTrade(
 	ctx context.Context, in *tradeengineproto.CreateTradeRequest,
 ) (*tradeengineproto.CreateTradeResponse, error) {

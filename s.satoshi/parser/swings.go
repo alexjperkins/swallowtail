@@ -11,7 +11,6 @@ const (
 )
 
 func init() {
-	register(swingsParserID, &SwingsParser{})
 }
 
 type SwingsParser struct{}

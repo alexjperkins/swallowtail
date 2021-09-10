@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trades (
 
 	idempotency_key VARCHAR(256) UNIQUE,
 
-	exchange exchange NOT NULL,
 	trade_type s_tradeengine_trade_type NOT NULL,
 
 	asset VARCHAR(8) NOT NULL,
@@ -61,6 +60,8 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trade_participants (
 	is_bot BOOLEAN NOT NULL DEFAULT FALSE,
 
 	size DECIMAL NOT NULL,
+
+	exchange exchange NOT NULL,
 
 	executed TIME NOT NULL,
 
