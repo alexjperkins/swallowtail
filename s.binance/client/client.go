@@ -29,7 +29,11 @@ var (
 	client BinanceClient
 )
 
+// BinanceClient defines the contract for connection to the Binance Exchange API.
 type BinanceClient interface {
+	// GetLatestPrices gets all the latest prices from the passed symbols.
+	GetLatestPrice(context.Context, *GetLatestPriceRequest) (*GetLatestPriceResponse, error)
+
 	// ListAllAssetPairs makes a call to Binance to retrieve all the futures tradable asset pairs.
 	ListAllAssetPairs(context.Context) (*ListAllAssetPairsResponse, error)
 
@@ -65,6 +69,13 @@ func Init(ctx context.Context) error {
 
 	client = c
 	return nil
+}
+
+// GetLatestPrices ...
+func GetLatestPrice(ctx context.Context, req *GetLatestPriceRequest) (*GetLatestPriceResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get all latest prices")
+	defer span.Finish()
+	return client.GetLatestPrice(ctx, req)
 }
 
 // ListAllAssetPairs forwards the response of the binance client; it also adds opentracing span to the

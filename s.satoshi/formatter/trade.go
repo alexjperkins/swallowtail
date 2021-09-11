@@ -15,9 +15,9 @@ var (
 func FormatTrade(header string, trade *tradeengineproto.Trade, parsedFrom string) string {
 	var sideEmoji string
 	switch trade.TradeSide {
-	case tradeengineproto.TRADE_SIDE_BUY:
+	case tradeengineproto.TRADE_SIDE_LONG, tradeengineproto.TRADE_SIDE_BUY:
 		sideEmoji = longEmoji
-	case tradeengineproto.TRADE_SIDE_SELL:
+	case tradeengineproto.TRADE_SIDE_SHORT, tradeengineproto.TRADE_SIDE_SELL:
 		sideEmoji = shortEmoji
 	}
 
@@ -28,19 +28,21 @@ func FormatTrade(header string, trade *tradeengineproto.Trade, parsedFrom string
 `
 
 	content := `
-TRADE ID:   %s 
-TIMESTAMP:  %v
+TRADE ID:     %s 
+TIMESTAMP:    %v
 
-ASSET:      %v
-PAIR:       %v
-TRADE TYPE: %s
-TRADE SIDE: %s
-ORDER TYPE: %s
-MOD:        %s
-MOD TYPE:   %s
+ASSET:        %v
+PAIR:         %v
+TRADE TYPE:   %s
+TRADE SIDE:   %s
+ORDER TYPE:   %s
+MOD:          %s
+MOD TYPE:     %s
 
-ENTRY:      %v
-STOP LOSS:  %v
+CURRENT_PRICE %s
+
+ENTRY:        %v
+STOP LOSS:    %v
 `
 	formattedContent := fmt.Sprintf(
 		content,
@@ -54,7 +56,8 @@ STOP LOSS:  %v
 		trade.TradeSide.String(),
 		trade.OrderType.String(),
 		trade.ActorId,
-		trade.ActorType,
+		trade.ActorType.String(),
+		trade.CurrentPrice,
 		trade.Entry,
 		trade.StopLoss,
 	)

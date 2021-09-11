@@ -17,6 +17,10 @@ type binanceClient struct {
 	http transport.HttpClient
 }
 
+func (c *binanceClient) GetLatestPrice(ctx context.Context, req *GetLatestPriceRequest) (*GetLatestPriceResponse, error) {
+	return nil, nil
+}
+
 func (c *binanceClient) ListAllAssetPairs(ctx context.Context) (*ListAllAssetPairsResponse, error) {
 	url := fmt.Sprintf("%s/%s", binanceAPIUrl, "exchangeInfo")
 	rspBody := &ListAllAssetPairsResponse{}

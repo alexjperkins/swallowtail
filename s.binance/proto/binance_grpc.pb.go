@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion6
 type BinanceClient interface {
 	ListAllAssetPairs(ctx context.Context, in *ListAllAssetPairsRequest, opts ...grpc.CallOption) (*ListAllAssetPairsResponse, error)
 	ExecuteFuturesPerpetualsTrade(ctx context.Context, in *ExecuteFuturesPerpetualsTradeRequest, opts ...grpc.CallOption) (*ExecuteFuturesPerpetualsTradeResponse, error)
+	GetLatestPrice(ctx context.Context, in *GetLatestPriceRequest, opts ...grpc.CallOption) (*GetLatestPriceResponse, error)
 	VerifyCredentials(ctx context.Context, in *VerifyCredentialsRequest, opts ...grpc.CallOption) (*VerifyCredentialsResponse, error)
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 }
@@ -49,6 +50,15 @@ func (c *binanceClient) ExecuteFuturesPerpetualsTrade(ctx context.Context, in *E
 	return out, nil
 }
 
+func (c *binanceClient) GetLatestPrice(ctx context.Context, in *GetLatestPriceRequest, opts ...grpc.CallOption) (*GetLatestPriceResponse, error) {
+	out := new(GetLatestPriceResponse)
+	err := c.cc.Invoke(ctx, "/binance/GetLatestPrice", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *binanceClient) VerifyCredentials(ctx context.Context, in *VerifyCredentialsRequest, opts ...grpc.CallOption) (*VerifyCredentialsResponse, error) {
 	out := new(VerifyCredentialsResponse)
 	err := c.cc.Invoke(ctx, "/binance/VerifyCredentials", in, out, opts...)
@@ -73,6 +83,7 @@ func (c *binanceClient) GetStatus(ctx context.Context, in *GetStatusRequest, opt
 type BinanceServer interface {
 	ListAllAssetPairs(context.Context, *ListAllAssetPairsRequest) (*ListAllAssetPairsResponse, error)
 	ExecuteFuturesPerpetualsTrade(context.Context, *ExecuteFuturesPerpetualsTradeRequest) (*ExecuteFuturesPerpetualsTradeResponse, error)
+	GetLatestPrice(context.Context, *GetLatestPriceRequest) (*GetLatestPriceResponse, error)
 	VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error)
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	mustEmbedUnimplementedBinanceServer()
@@ -87,6 +98,9 @@ func (*UnimplementedBinanceServer) ListAllAssetPairs(context.Context, *ListAllAs
 }
 func (*UnimplementedBinanceServer) ExecuteFuturesPerpetualsTrade(context.Context, *ExecuteFuturesPerpetualsTradeRequest) (*ExecuteFuturesPerpetualsTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteFuturesPerpetualsTrade not implemented")
+}
+func (*UnimplementedBinanceServer) GetLatestPrice(context.Context, *GetLatestPriceRequest) (*GetLatestPriceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLatestPrice not implemented")
 }
 func (*UnimplementedBinanceServer) VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyCredentials not implemented")
@@ -132,6 +146,24 @@ func _Binance_ExecuteFuturesPerpetualsTrade_Handler(srv interface{}, ctx context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BinanceServer).ExecuteFuturesPerpetualsTrade(ctx, req.(*ExecuteFuturesPerpetualsTradeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Binance_GetLatestPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLatestPriceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BinanceServer).GetLatestPrice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/binance/GetLatestPrice",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BinanceServer).GetLatestPrice(ctx, req.(*GetLatestPriceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -183,6 +215,10 @@ var _Binance_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExecuteFuturesPerpetualsTrade",
 			Handler:    _Binance_ExecuteFuturesPerpetualsTrade_Handler,
+		},
+		{
+			MethodName: "GetLatestPrice",
+			Handler:    _Binance_GetLatestPrice_Handler,
 		},
 		{
 			MethodName: "VerifyCredentials",

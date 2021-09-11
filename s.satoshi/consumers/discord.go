@@ -19,6 +19,7 @@ import (
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.satoshi/formatter"
 	"swallowtail/s.satoshi/parser"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 const (
@@ -48,6 +49,7 @@ func (dc DiscordConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage,
 	// Add handlers
 	discordClient.AddHandler(handleModMessages(ctx, c, dc.Active))
 	discordClient.AddHandler(handleSwingMessages(ctx, c, dc.Active))
+	discordClient.AddHandler(handleInternalCallsMessages(ctx, c, dc.Active))
 
 	defer slog.Warn(ctx, "Discord consumer stop signal received.")
 	defer discordClient.Close()
@@ -130,7 +132,7 @@ func handleModMessages(
 			}
 
 			// Attempt to parse a trade.
-			trade, err := parser.Parse(ctx, discordproto.DiscordMoonModMessagesChannel, pc.Content, mc)
+			trade, err := parser.Parse(ctx, discordproto.DiscordMoonModMessagesChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_EXTERNAL)
 			if err != nil {
 				// No trade can be parsed; so lets continue.
 				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
@@ -191,9 +193,24 @@ func handleSwingMessages(
 			return
 		}
 
+		msgs := []*ConsumerMessage{}
 		for i, pc := range parsedContent {
+			// Add message regardless.
+			msgs = append(msgs, &ConsumerMessage{
+				ConsumerID:       discordConsumerID,
+				DiscordChannelID: discordproto.DiscordSatoshiSwingsChannel,
+				Message:          formatContent(ctx, pc.Author.Username, pc.Timestamp, pc.Content),
+				Created:          time.Now(),
+				IsActive:         isActive,
+				Attachments:      m.Attachments,
+				Metadata: map[string]string{
+					"message": fmt.Sprintf("%v", i),
+					"total":   fmt.Sprintf("%v", len(parsedContent)),
+				},
+			})
+
 			// Attempt to parse a trade.
-			trade, err := parser.Parse(ctx, discordproto.DiscordMoonModMessagesChannel, pc.Content, mc)
+			trade, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_EXTERNAL)
 			if err != nil {
 				// No trade can be parsed; so lets continue.
 				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
@@ -213,7 +230,7 @@ func handleSwingMessages(
 
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
-				DiscordChannelID: discordproto.DiscordSatoshiSwingsChannel,
+				DiscordChannelID: discordproto.DiscordSatoshiModTradesChannel,
 				Created:          time.Now(),
 				Message:          tradeContent,
 				Attachments:      m.Attachments,
@@ -229,6 +246,62 @@ func handleSwingMessages(
 			default:
 				slog.Warn(ctx, "Failed to publish satoshi swings msg; blocked channel")
 			}
+		}
+
+		// Lets publish our messages.
+		for _, msg := range msgs {
+			select {
+			case c <- msg:
+			default:
+				slog.Warn(ctx, "Failed to publish satoshi mods msg; blocked channel")
+			}
+
+		}
+	}
+}
+
+func handleInternalCallsMessages(
+	ctx context.Context, c chan *ConsumerMessage, isActive bool,
+) func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	return func(s *discordgo.Session, mc *discordgo.MessageCreate) {
+		m := mc.Message
+
+		if m.ChannelID != discordproto.DiscordSatoshiInternalCallsChannel {
+			return
+		}
+
+		// Attempt to parse a trade.
+		trade, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, mc.Content, mc, tradeengineproto.ACTOR_TYPE_INTERNAL)
+		if err != nil {
+			// No trade can be parsed; so lets continue.
+			slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, mc.Content)
+			return
+		}
+
+		now := time.Now().UTC()
+		idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
+
+		// Sign our trade with the timestamp.
+		trade.Created = timestamppb.New(now)
+		trade.LastUpdated = trade.Created
+		// Sign our trade with an idempotency key.
+		trade.IdempotencyKey = idempotencyKey
+
+		tradeContent := formatter.FormatTrade("SCG Internal Call", trade, mc.Content)
+
+		msg := &ConsumerMessage{
+			ConsumerID:       discordConsumerID,
+			DiscordChannelID: discordproto.DiscordSatoshiModTradesChannel,
+			Created:          time.Now(),
+			Message:          tradeContent,
+			Attachments:      m.Attachments,
+			IsActive:         isActive,
+		}
+
+		select {
+		case c <- msg:
+		default:
+			slog.Warn(ctx, "Failed to publish satoshi swings msg; blocked channel")
 		}
 	}
 }

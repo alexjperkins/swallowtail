@@ -49,7 +49,7 @@ enum ORDER_TYPE {
 message Trade {
     string trade_id = 1;
     string actor_id = 2;
-    string actor_type = 3;
+    ACTOR_TYPE actor_type = 3;
     string idempotency_key = 4;
     ORDER_TYPE order_type = 5;
     TRADE_TYPE trade_type = 6;
@@ -63,6 +63,7 @@ message Trade {
     google.protobuf.Timestamp created = 14;
     google.protobuf.Timestamp last_updated = 15;
     TRADE_SIDE trade_side = 16;
+    float current_price = 17;
 }
 
 message CreateTradeRequest {

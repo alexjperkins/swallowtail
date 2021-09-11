@@ -18,7 +18,7 @@ var (
 
 // TradeParser ...
 type TradeParser interface {
-	Parse(ctx context.Context, content string, m *discordgo.MessageCreate) (*tradeengineproto.Trade, error)
+	Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error)
 }
 
 // Init initializes the parser; we do this since we need to pull all the latest assets that are tradable.
@@ -57,7 +57,7 @@ func Init(ctx context.Context) error {
 }
 
 // Parse ...
-func Parse(ctx context.Context, identifier, content string, m *discordgo.MessageCreate) (*tradeengineproto.Trade, error) {
+func Parse(ctx context.Context, identifier, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error) {
 	parser, ok := getParserByIdentifier(identifier)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_parse.parser_does_not_exist", nil)
@@ -65,18 +65,21 @@ func Parse(ctx context.Context, identifier, content string, m *discordgo.Message
 
 	cleanedContent := cleanContent(content)
 
-	return parser.Parse(ctx, cleanedContent, m)
+	return parser.Parse(ctx, cleanedContent, m, actorType)
 }
 
 func cleanContent(content string) string {
 	// Remove the dollar sign.
-	c := strings.ReplaceAll(content, "$", "")
+	c := strings.ReplaceAll(content, "$", " ")
 
 	// Remove commas.
 	c = strings.ReplaceAll(c, ",", "")
 
-	c = strings.ReplaceAll(c, "\n", "")
-	c = strings.ReplaceAll(c, "\t", "")
+	// Remove tabs & newlines; replace with spaces & then trim & remove excess spaces.
+	c = strings.ReplaceAll(c, "\n", " ")
+	c = strings.ReplaceAll(c, "\t", " ")
+	c = strings.TrimSpace(c)
+	c = strings.ReplaceAll(c, "  ", " ")
 
 	// TODO: Remove Attachments
 	// TODO: Remove --- in reply too ---
@@ -84,16 +87,18 @@ func cleanContent(content string) string {
 	// Normalize
 	c = strings.ToLower(c)
 
-	if strings.Contains(c, "--- in reply too ---") {
-		splits := strings.Split(c, "--- in reply too ---")
+	// Remove any replies.
+	if strings.Contains(c, "--- message was a reply to ---") {
+		splits := strings.Split(c, "--- message was a reply to ---")
 		c = splits[0]
 	}
 
+	// Remove all old messages.
 	if !strings.Contains(c, "---new---") {
 		return c
 	}
 
-	// Take everything after "---new---"
+	// Take everything after "---new---".
 	updates := strings.SplitAfter(c, "---new---")
 	return updates[len(updates)-1]
 }

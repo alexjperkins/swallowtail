@@ -3,6 +3,8 @@ package parser
 import (
 	"fmt"
 	"sync"
+
+	"github.com/monzo/slog"
 )
 
 var (
@@ -19,6 +21,8 @@ func register(identifier string, parser TradeParser) {
 	}
 
 	registry[identifier] = parser
+
+	slog.Info(nil, "Registered parser for: %s", identifier)
 }
 
 func getParserByIdentifier(identifier string) (TradeParser, bool) {
