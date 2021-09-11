@@ -39,7 +39,7 @@ ORDER TYPE:   %s
 MOD:          %s
 MOD TYPE:     %s
 
-CURRENT_PRICE %s
+CURRENT_PRICE %v
 
 ENTRY:        %v
 STOP LOSS:    %v
@@ -65,7 +65,7 @@ STOP LOSS:    %v
 	// Append take profits if they exist.
 	var footer strings.Builder
 	for i, tp := range trade.TakeProfits {
-		footer.WriteString(fmt.Sprintf("TP%v:        %v\n", i+1, tp))
+		footer.WriteString(fmt.Sprintf("TP%v:         %v\n", i+1, tp))
 	}
 
 	// Append where we parsed the trade from.

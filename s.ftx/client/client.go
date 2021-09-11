@@ -19,8 +19,13 @@ var (
 
 // FTXClient defines the client side contract of the FTX REST API
 type FTXClient interface {
+	// Ping ...
 	Ping(ctx context.Context) error
+
+	// ListAccountDeposits ...
 	ListAccountDeposits(ctx context.Context, req *ListAccountDepositsRequest, pagination *PaginationFilter) (*ListAccountDepositsResponse, error)
+
+	// VerifyCredentials ...
 	VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *Credentials) (*VerifyCredentialsResponse, error)
 }
 

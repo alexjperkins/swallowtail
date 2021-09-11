@@ -8,6 +8,7 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
+	"swallowtail/libraries/util"
 	"swallowtail/s.binance/domain"
 )
 
@@ -23,10 +24,14 @@ const (
 	binanceSpotURL1 = "https://api1.binance.com/sapi/v1"
 	binanceSpotURL2 = "https://api2.binance.com/sapi/v1"
 	binanceSpotURL3 = "https://api3.binance.com/sapi/v1"
+
+	// Base FUTURES URL(s)
+	binanceFuturesURL = "https://fapi.binance.com/fapi/v1"
 )
 
 var (
-	client BinanceClient
+	client             BinanceClient
+	defaultCredentials *Credentials
 )
 
 // BinanceClient defines the contract for connection to the Binance Exchange API.
@@ -65,6 +70,18 @@ func Init(ctx context.Context) error {
 	if err := c.Ping(ctx); err != nil {
 		// Panic since if we can't connect to Binance then this service is as good as dead.
 		return gerrors.Augment(err, "failed.binance_client_initialization", nil)
+	}
+
+	apiKey := util.SetEnv("BINANCE_DEFAULT_API_KEY")
+	secretKey := util.SetEnv("BINANCE_DEFAULT_SECRET_KEY")
+
+	if apiKey == "" || secretKey == "" {
+		return gerrors.FailedPrecondition("failed_to_init_binance_client.credentials_not_set", nil)
+	}
+
+	defaultCredentials = &Credentials{
+		APIKey:    apiKey,
+		SecretKey: secretKey,
 	}
 
 	client = c

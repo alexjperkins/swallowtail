@@ -8,8 +8,8 @@ import (
 	binanceproto "swallowtail/s.binance/proto"
 )
 
-// GetLatestPrices ...
-func (s *BinanceService) GetLatestPrices(
+// GetLatestPrice ...
+func (s *BinanceService) GetLatestPrice(
 	ctx context.Context, in *binanceproto.GetLatestPriceRequest,
 ) (*binanceproto.GetLatestPriceResponse, error) {
 	switch {

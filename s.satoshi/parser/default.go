@@ -57,7 +57,7 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		})
 	}
 
-	currentPrice, err := fetchLatestPrice(ctx, ticker, tradeengineproto.TRADE_PAIR_USD.String())
+	currentPrice, err := fetchLatestPrice(ctx, ticker)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_parse_default", nil)
 	}
