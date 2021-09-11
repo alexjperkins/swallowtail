@@ -75,12 +75,25 @@ func cleanContent(content string) string {
 	// Remove commas.
 	c = strings.ReplaceAll(c, ",", "")
 
+	c = strings.ReplaceAll(c, "\n", "")
+	c = strings.ReplaceAll(c, "\t", "")
+
 	// TODO: Remove Attachments
-	// TODO: Remove --- old ---
 	// TODO: Remove --- in reply too ---
 
 	// Normalize
 	c = strings.ToLower(c)
 
-	return c
+	if strings.Contains(c, "--- in reply too ---") {
+		splits := strings.Split(c, "--- in reply too ---")
+		c = splits[0]
+	}
+
+	if !strings.Contains(c, "---new---") {
+		return c
+	}
+
+	// Take everything after "---new---"
+	updates := strings.SplitAfter(c, "---new---")
+	return updates[len(updates)-1]
 }

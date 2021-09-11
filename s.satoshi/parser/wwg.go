@@ -38,9 +38,9 @@ func (w *WWGParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 	side, _ := parseSide(content)
 
 	switch {
-	case side == tradeengineproto.TRADE_SIDE_BUY:
+	case side == tradeengineproto.TRADE_SIDE_LONG:
 		sort.Float64s(possibleValues)
-	case side == tradeengineproto.TRADE_SIDE_SELL:
+	case side == tradeengineproto.TRADE_SIDE_SHORT:
 		// Reverse Sort
 		sort.Slice(possibleValues, func(i, j int) bool {
 			return possibleValues[i] > possibleValues[j]
@@ -64,8 +64,10 @@ func (w *WWGParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 		protoTakeProfits = append(protoTakeProfits, float32(tp))
 	}
 
+	actor := parseActor(m.Author.Username)
+
 	return &tradeengineproto.Trade{
-		ActorId:     strings.ToUpper(m.Author.Username),
+		ActorId:     actor,
 		ActorType:   tradeengineproto.ACTOR_TYPE_EXTERNAL.String(),
 		Asset:       strings.ToUpper(ticker),
 		Pair:        tradeengineproto.TRADE_PAIR_USDT,

@@ -2,11 +2,8 @@ package parser
 
 import (
 	"context"
-	"swallowtail/libraries/gerrors"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 	"testing"
-
-	"google.golang.org/grpc/codes"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +17,7 @@ func TestWWGParser(t *testing.T) {
 		username      string
 		truthValue    float64
 		expectedTrade *tradeengineproto.Trade
-		withErr       *codes.Code
+		withErr       bool
 	}{
 		{
 			name: "rego_full_trade_wwg_with_three_tp",
@@ -43,7 +40,7 @@ func TestWWGParser(t *testing.T) {
 				OrderType: tradeengineproto.ORDER_TYPE_MARKET,
 				Asset:     "BTC",
 				Pair:      tradeengineproto.TRADE_PAIR_USDT,
-				TradeSide: tradeengineproto.TRADE_SIDE_BUY,
+				TradeSide: tradeengineproto.TRADE_SIDE_LONG,
 				TradeType: tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
 				Entry:     50000,
 				StopLoss:  49000,
@@ -70,7 +67,7 @@ func TestWWGParser(t *testing.T) {
 				OrderType: tradeengineproto.ORDER_TYPE_MARKET,
 				Asset:     "SOL",
 				Pair:      tradeengineproto.TRADE_PAIR_USDT,
-				TradeSide: tradeengineproto.TRADE_SIDE_BUY,
+				TradeSide: tradeengineproto.TRADE_SIDE_LONG,
 				TradeType: tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
 				Entry:     165,
 				StopLoss:  135.61,
@@ -97,7 +94,7 @@ func TestWWGParser(t *testing.T) {
 				OrderType:   tradeengineproto.ORDER_TYPE_MARKET,
 				Asset:       "AAVE",
 				Pair:        tradeengineproto.TRADE_PAIR_USDT,
-				TradeSide:   tradeengineproto.TRADE_SIDE_BUY,
+				TradeSide:   tradeengineproto.TRADE_SIDE_LONG,
 				TradeType:   tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
 				Entry:       343,
 				StopLoss:    323,
@@ -115,7 +112,7 @@ func TestWWGParser(t *testing.T) {
 				OrderType:   tradeengineproto.ORDER_TYPE_LIMIT,
 				Asset:       "SRM",
 				Pair:        tradeengineproto.TRADE_PAIR_USDT,
-				TradeSide:   tradeengineproto.TRADE_SIDE_BUY,
+				TradeSide:   tradeengineproto.TRADE_SIDE_LONG,
 				TradeType:   tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
 				Entry:       9.80,
 				StopLoss:    8.90,
@@ -137,7 +134,7 @@ func TestWWGParser(t *testing.T) {
 				OrderType:   tradeengineproto.ORDER_TYPE_MARKET,
 				Asset:       "RSR",
 				Pair:        tradeengineproto.TRADE_PAIR_USDT,
-				TradeSide:   tradeengineproto.TRADE_SIDE_BUY,
+				TradeSide:   tradeengineproto.TRADE_SIDE_LONG,
 				TradeType:   tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
 				Entry:       0.0402,
 				StopLoss:    0.0374,
@@ -162,7 +159,7 @@ func TestWWGParser(t *testing.T) {
 				OrderType: tradeengineproto.ORDER_TYPE_MARKET,
 				Asset:     "BTC",
 				Pair:      tradeengineproto.TRADE_PAIR_USDT,
-				TradeSide: tradeengineproto.TRADE_SIDE_SELL,
+				TradeSide: tradeengineproto.TRADE_SIDE_SHORT,
 				TradeType: tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
 				Entry:     46650,
 				StopLoss:  47801,
@@ -178,6 +175,7 @@ func TestWWGParser(t *testing.T) {
 			name:          "ticker_but_no_valid_information_example_ftt",
 			content:       `if i ever get ftt at 50 again im gonna put entire portfolio there like jeliaz said`,
 			expectedTrade: nil,
+			withErr:       true,
 		},
 	}
 
@@ -212,12 +210,11 @@ func TestWWGParser(t *testing.T) {
 			})
 
 			switch {
-			case tt.withErr == nil:
+			case !tt.withErr:
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedTrade, trade)
 			default:
 				require.Error(t, err)
-				assert.True(t, gerrors.Is(err, *tt.withErr))
 			}
 		})
 	}

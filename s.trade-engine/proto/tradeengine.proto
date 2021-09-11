@@ -18,7 +18,10 @@ enum ACTOR_TYPE {
 enum TRADE_SIDE {
     BUY = 0;
     SELL = 1;
+    LONG = 2;
+    SHORT = 3;
 }
+
 enum TRADE_STATUS {
     PENDING = 0;
     ACTIVE = 1;

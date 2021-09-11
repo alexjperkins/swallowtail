@@ -298,7 +298,7 @@ func containsAstekz1To10kChallenge(modUsername string, content string) bool {
 		containsAstekz = true
 	}
 
-	tokens := strings.Fields(content)
+	tokens := strings.Fields(content + modUsername)
 	for _, token := range tokens {
 		if contains1k && contains10k && containsAstekz {
 			return true
@@ -328,7 +328,7 @@ func containsRego1To10kChallenge(modUsername, content string) bool {
 		containsRego = true
 	}
 
-	tokens := strings.Fields(content)
+	tokens := strings.Fields(content + modUsername)
 	for _, token := range tokens {
 		if contains1k && contains10k && containsRego {
 			return true
