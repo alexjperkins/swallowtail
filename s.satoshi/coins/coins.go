@@ -4,6 +4,8 @@ import "sync"
 
 var (
 	coinSymbols = map[string]bool{
+		"AVAX":  true,
+		"FTM":   true,
 		"BTC":   true,
 		"ETH":   true,
 		"ROPE":  true,
@@ -33,9 +35,7 @@ var (
 		"SRM":   true,
 		"ORK":   true,
 		"AKRO":  true,
-		"SC":    true,
 		"TVK":   true,
-		"IOST":  true,
 		"BOSON": true,
 		"FIDA":  true,
 		"OXY":   true,
@@ -45,6 +45,9 @@ var (
 		"STEP":  true,
 		"LINK":  true,
 		"MEDIA": true,
+		"LIQ":   true,
+		"FAB":   true,
+		"COPE":  true,
 	}
 	coinSymbolsMtx sync.RWMutex
 )

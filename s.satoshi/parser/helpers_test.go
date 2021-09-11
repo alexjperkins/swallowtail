@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"sort"
 	"testing"
 
 	tradeengineproto "swallowtail/s.trade-engine/proto"
@@ -47,6 +48,9 @@ func TestCaptureNumbers(t *testing.T) {
 			floats, err := parseNumbersFromContent(tt.content)
 			require.NoError(t, err)
 
+			sort.Float64s(tt.expectedFloats)
+			sort.Float64s(floats)
+
 			assert.Equal(t, tt.expectedFloats, floats)
 		})
 	}
@@ -62,21 +66,21 @@ func TestParseSide(t *testing.T) {
 		isOk         bool
 	}{
 		{
-			name:         "buy-side",
+			name:         "long-side",
 			content:      "[A]: LONG BTC 50900.12 45000.43",
-			expectedSide: tradeengineproto.TRADE_SIDE_BUY,
+			expectedSide: tradeengineproto.TRADE_SIDE_LONG,
 			isOk:         true,
 		},
 		{
-			name:         "sell-side",
+			name:         "short-side",
 			content:      "[T]: Short SOLUSDT 500 550 400 350 200",
-			expectedSide: tradeengineproto.TRADE_SIDE_SELL,
+			expectedSide: tradeengineproto.TRADE_SIDE_SHORT,
 			isOk:         true,
 		},
 		{
 			name:         "no-side",
 			content:      "[T]: SOLUSDT 500 550 400 350 200",
-			expectedSide: tradeengineproto.TRADE_SIDE_BUY,
+			expectedSide: tradeengineproto.TRADE_SIDE_LONG,
 			isOk:         false,
 		},
 	}

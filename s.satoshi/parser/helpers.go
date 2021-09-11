@@ -31,7 +31,7 @@ func parseNumbersFromContent(content string) ([]float64, error) {
 		return nil, gerrors.Augment(err, "failed_to_capture_numbers", nil)
 	}
 
-	floats := []float64{}
+	floatsSet := map[float64]bool{}
 	for {
 		if match == nil {
 			break
@@ -53,12 +53,17 @@ func parseNumbersFromContent(content string) ([]float64, error) {
 			})
 		}
 
-		floats = append(floats, f)
+		floatsSet[f] = true
 
 		match, err = numeric.FindNextMatch(match)
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_capture_numbers", nil)
 		}
+	}
+
+	floats := []float64{}
+	for f := range floatsSet {
+		floats = append(floats, f)
 	}
 
 	return floats, nil
@@ -70,14 +75,14 @@ func parseSide(content string) (tradeengineproto.TRADE_SIDE, bool) {
 	for _, f := range fields {
 		switch strings.ToLower(f) {
 		case "long":
-			return tradeengineproto.TRADE_SIDE_BUY, true
+			return tradeengineproto.TRADE_SIDE_LONG, true
 		case "short":
-			return tradeengineproto.TRADE_SIDE_SELL, true
+			return tradeengineproto.TRADE_SIDE_SHORT, true
 		}
 	}
 
 	// We default to longing. It is crypto after all.
-	return tradeengineproto.TRADE_SIDE_BUY, false
+	return tradeengineproto.TRADE_SIDE_LONG, false
 }
 
 // containsTicker checks if the contain contains a ticker that is traded on Binance
@@ -192,11 +197,17 @@ func parseOrderType(content string, currentValue, entry float64, side tradeengin
 	switch {
 	case !containsLimit:
 		return tradeengineproto.ORDER_TYPE_MARKET, true
-	case side == tradeengineproto.TRADE_SIDE_BUY && entry < currentValue:
+	case (side == tradeengineproto.TRADE_SIDE_LONG || side == tradeengineproto.TRADE_SIDE_BUY) && entry < currentValue:
 		return tradeengineproto.ORDER_TYPE_LIMIT, true
-	case side == tradeengineproto.TRADE_SIDE_SELL && entry > currentValue:
+	case (side == tradeengineproto.TRADE_SIDE_SHORT || side == tradeengineproto.TRADE_SIDE_SELL) && entry > currentValue:
 		return tradeengineproto.ORDER_TYPE_LIMIT, true
 	default:
 		return tradeengineproto.ORDER_TYPE_MARKET, false
 	}
+}
+
+func parseActor(actorID string) string {
+	// E.g Eli [Trades]
+	splits := strings.Split(actorID, "[")
+	return strings.ToUpper(splits[0])
 }

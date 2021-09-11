@@ -13,7 +13,7 @@ import (
 
 const (
 	volatilityConsumerID = "volatility-consumer"
-	volatilityInterval   = time.Duration(3 * time.Minute)
+	volatilityInterval   = time.Duration(5 * time.Minute)
 
 	// Jitter defaults
 	volatilityJitterMax      = 3
@@ -43,7 +43,7 @@ type priceAction struct {
 func init() {
 	defaultVolatilitySymbols = coins.List()
 	register(volatilityConsumerID, VolatilityConumser{
-		Active: false,
+		Active: true,
 	})
 }
 

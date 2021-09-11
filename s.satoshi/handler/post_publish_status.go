@@ -3,12 +3,14 @@ package handler
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/monzo/slog"
 
 	"swallowtail/libraries/gerrors"
 	discordproto "swallowtail/s.discord/proto"
+	"swallowtail/s.satoshi/consumers"
 	satoshiproto "swallowtail/s.satoshi/proto"
 	"swallowtail/s.satoshi/satoshi"
 )
@@ -21,7 +23,9 @@ var (
 func (s *SatoshiService) PublishStatus(
 	ctx context.Context, in *satoshiproto.PublishStatusRequest,
 ) (*satoshiproto.PublishStatusResponse, error) {
-	if err := notifyPulseChannelSuccess(ctx, version); err != nil {
+	cs := consumers.Registry()
+
+	if err := notifyPulseChannelSuccess(ctx, version, cs); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_publish_status.notify_pulse_channel", nil)
 	}
 
@@ -31,7 +35,7 @@ func (s *SatoshiService) PublishStatus(
 	}, nil
 }
 
-func notifyPulseChannelSuccess(ctx context.Context, version string) error {
+func notifyPulseChannelSuccess(ctx context.Context, version string, consumers map[string]consumers.Consumer) error {
 	header := "<:satoshi:886008008491024445>    `CRONITOR: SATOSHI PULSE`    <:satoshi:886008008491024445>"
 	content := `
 ALIVE:   TRUE
@@ -39,10 +43,17 @@ VERSION: %s
 `
 	formattedContent := fmt.Sprintf(content, version)
 
+	var sb strings.Builder
+	for id, c := range consumers {
+		sb.WriteString(fmt.Sprintf("\n%s: %v", strings.ToUpper(id), c.IsActive()))
+	}
+
+	withConsumers := fmt.Sprintf("%s%s", formattedContent, sb.String())
+
 	_, err := (&discordproto.SendMsgToChannelRequest{
 		ChannelId:      discordproto.DiscordSatoshiSatoshiPulseChannel,
 		SenderId:       "c.satoshi",
-		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
+		Content:        fmt.Sprintf("%s```%s```", header, withConsumers),
 		IdempotencyKey: fmt.Sprintf("%s-%s", "satoshistatus", time.Now().UTC().Truncate(time.Minute).String()),
 	}).Send(ctx).Response()
 	if err != nil {
