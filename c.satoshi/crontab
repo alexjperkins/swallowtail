@@ -1,1 +1,1 @@
-* * * * * sh /jobs/publish_status.sh
+* /5 * * * sh /jobs/publish_status.sh
