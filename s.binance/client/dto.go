@@ -2,7 +2,7 @@ package client
 
 import "time"
 
-// Credentials
+// Credentials ...
 type Credentials struct {
 	APIKey    string
 	SecretKey string
@@ -25,6 +25,18 @@ type BinanceAssetItem struct {
 	QuoteAsset        string `json:"quoteAsset"`
 	WithMarginTrading bool   `json:"isMarginTradingAllowed"`
 	WithSpotTrading   bool   `json:"isSpotTradingAllowed"`
+}
+
+// GetLatestPriceRequest ...
+type GetLatestPriceRequest struct {
+	Symbol string `json:"symbols"`
+}
+
+// GetLatestPriceResponse ...
+type GetLatestPriceResponse struct {
+	Symbol string `json:"symbol"`
+	Price  string `json:"price"`
+	Time   int    `json:"time"`
 }
 
 // ListAllAssetPairsRequest is the data transfer object for listing all asset pairs on Binance.

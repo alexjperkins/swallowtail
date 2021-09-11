@@ -212,3 +212,71 @@ func (r *ListAllAssetPairsRequest) SendWithTimeout(ctx context.Context, timeout 
 		resultc: resultc,
 	}
 }
+
+// --- Get Latest Price --- //
+
+type GetLatestPricesFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *GetLatestPriceResponse
+	ctx     context.Context
+}
+
+func (a *GetLatestPricesFuture) Response() (*GetLatestPriceResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "get_latest_price", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *GetLatestPriceRequest) Send(ctx context.Context) *GetLatestPricesFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *GetLatestPriceRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *GetLatestPricesFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *GetLatestPriceResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-binance:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_binance_connection_failed", nil)
+		return &GetLatestPricesFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewBinanceClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.GetLatestPrice(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "get_latest_prices", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &GetLatestPricesFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}

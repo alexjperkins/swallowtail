@@ -43,7 +43,7 @@ type priceAction struct {
 func init() {
 	defaultVolatilitySymbols = coins.List()
 	register(volatilityConsumerID, VolatilityConumser{
-		Active: true,
+		Active: false,
 	})
 }
 

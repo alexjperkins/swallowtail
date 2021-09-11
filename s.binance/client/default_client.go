@@ -17,6 +17,19 @@ type binanceClient struct {
 	http transport.HttpClient
 }
 
+func (c *binanceClient) GetLatestPrice(ctx context.Context, req *GetLatestPriceRequest) (*GetLatestPriceResponse, error) {
+	url := fmt.Sprintf("%s/%s", binanceFuturesURL, "ticker/price")
+	rspBody := &GetLatestPriceResponse{}
+
+	qs := fmt.Sprintf("symbol=%s", req.Symbol)
+
+	if err := c.do(ctx, http.MethodGet, url, qs, nil, rspBody, defaultCredentials); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_get_latest_price", nil)
+	}
+
+	return rspBody, nil
+}
+
 func (c *binanceClient) ListAllAssetPairs(ctx context.Context) (*ListAllAssetPairsResponse, error) {
 	url := fmt.Sprintf("%s/%s", binanceAPIUrl, "exchangeInfo")
 	rspBody := &ListAllAssetPairsResponse{}
@@ -88,6 +101,7 @@ func (c *binanceClient) do(ctx context.Context, method, endpoint, queryString st
 	if credentials == nil {
 		return c.http.Do(ctx, method, formattedEndpoint, reqBody, rspBody)
 	}
+
 	return c.http.DoWithEphemeralHeaders(ctx, method, formattedEndpoint, reqBody, rspBody, credentials.AsHeaders())
 }
 

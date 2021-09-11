@@ -1,16 +1,13 @@
 package parser
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dlclark/regexp2"
 
 	"swallowtail/libraries/gerrors"
-	coingeckoproto "swallowtail/s.coingecko/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -19,9 +16,6 @@ var (
 	// - All the numbers in a string
 	// - That are either integers or decimals of any precision, that are not percentages and are not RR valuess
 	numeric = regexp2.MustCompile(`(\b\d+(?:[\.,]\d+)?\b(?!(?:[\.,]\d+)|(?:\s*(?:%|percent|RR|hr|\$|\.|\/))))`, regexp2.None)
-
-	// TODO: we need proper gRPC service testing.
-	fetchLatestPrice = getLatestPrice
 )
 
 func parseNumbersFromContent(content string) ([]float64, error) {
@@ -47,6 +41,7 @@ func parseNumbersFromContent(content string) ([]float64, error) {
 		trimmed = strings.ReplaceAll(trimmed, ",", "")
 
 		f, err := strconv.ParseFloat(trimmed, 64)
+
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_capture_numbers.failed_to_parse_float", map[string]string{
 				"num_str": trimmed,
@@ -101,9 +96,12 @@ func parseTicker(content string) string {
 			strings.Contains(token, "usd"),
 			strings.Contains(token, "usdc"),
 			strings.Contains(token, "usdt"):
-			// But if a token contains a stable coins, then lets assume it's of the form BTCUSDT.
-			// We might pick up typos and similar here, but that's fine for now.
-			return token
+			// Here we clean up any possible stable coins ticker and run the parser on the cleaned field.
+			t := strings.ReplaceAll(token, "usdt", "")
+			t = strings.ReplaceAll(t, "usdc", "")
+			t = strings.ReplaceAll(t, "usd", "")
+
+			return parseTicker(t)
 
 		case strings.Contains(token, "/"):
 			// Some mods format their trades as `BTC/USDT`.
@@ -114,6 +112,7 @@ func parseTicker(content string) string {
 		}
 
 		if _, ok := binanceAssetPairs[token]; ok {
+			// Remove any usdt if it's present.
 			return token
 		}
 	}
@@ -132,18 +131,6 @@ func withinRange(value, truth, rangeAsPercentage float64) bool {
 	default:
 		return true
 	}
-}
-
-func getLatestPrice(ctx context.Context, asset, pair string) (float64, error) {
-	rsp, err := (&coingeckoproto.GetAssetLatestPriceBySymbolRequest{
-		AssetPair:   pair,
-		AssetSymbol: asset,
-	}).SendWithTimeout(ctx, 15*time.Second).Response()
-	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_get_latest_price", nil)
-	}
-
-	return float64(rsp.LatestPrice), nil
 }
 
 func validatePosition(asset, pair string, truth float64, possibleValues []float64) (entry float64, stopLoss float64, takeProfits []float64, err error) {

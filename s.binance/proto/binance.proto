@@ -9,6 +9,8 @@ service binance {
 
     rpc ExecuteFuturesPerpetualsTrade (ExecuteFuturesPerpetualsTradeRequest) returns (ExecuteFuturesPerpetualsTradeResponse) {}
 
+    rpc GetLatestPrice (GetLatestPriceRequest) returns (GetLatestPriceResponse) {}
+
     rpc VerifyCredentials (VerifyCredentialsRequest) returns (VerifyCredentialsResponse) {}
 
     rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
@@ -42,6 +44,15 @@ message ExecuteFuturesPerpetualsTradeRequest {
 }
 
 message ExecuteFuturesPerpetualsTradeResponse {}
+
+message GetLatestPriceRequest{
+    string symbol = 1;
+}
+
+message GetLatestPriceResponse{
+    float price = 1;
+    int64 timestamp = 2;
+}
 
 message Credentials {
     string api_key = 1;

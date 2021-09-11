@@ -34,6 +34,9 @@ const (
 	DiscordSatoshiExchangePulseChannel = "885923351707652156"
 	DiscordSatoshiPaymentsPulseChannel = "883306360798859274"
 	DiscordSatoshiSatoshiPulseChannel  = "886007169982562364"
+
+	// Internal Calls Channels
+	DiscordSatoshiInternalCallsChannel = "816797164000116778"
 )
 
 const (
