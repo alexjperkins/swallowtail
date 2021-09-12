@@ -80,14 +80,14 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		ActorId:            m.Author.ID,
 		HumanizedActorName: actor,
 		ActorType:          actorType,
+		OrderType:          orderType,
+		TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+		TradeSide:          side,
 		Asset:              strings.ToUpper(ticker),
 		Pair:               tradeengineproto.TRADE_PAIR_USDT,
-		TradeSide:          side,
-		CurrentPrice:       float32(currentPrice),
 		Entry:              float32(entry),
 		StopLoss:           float32(stopLoss),
 		TakeProfits:        protoTakeProfits,
-		OrderType:          orderType,
-		TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+		CurrentPrice:       float32(currentPrice),
 	}, nil
 }

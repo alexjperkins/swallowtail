@@ -17,20 +17,21 @@ func TradeProtoToDomain(proto *tradeengineproto.Trade) *domain.Trade {
 	return &domain.Trade{
 		TradeID:            proto.TradeId,
 		ActorID:            proto.ActorId,
+		ActorType:          proto.ActorType.String(),
 		HumanizedActorName: proto.HumanizedActorName,
 		IdempotencyKey:     proto.IdempotencyKey,
 		OrderType:          proto.OrderType.String(),
-		TradeType:          proto.TradeSide.String(),
+		TradeType:          proto.TradeType.String(),
+		TradeSide:          proto.TradeSide.String(),
 		Asset:              proto.Asset,
 		Pair:               proto.Pair.String(),
 		Entry:              float64(proto.Entry),
 		StopLoss:           float64(proto.StopLoss),
 		TakeProfits:        tps,
+		CurrentPrice:       float64(proto.CurrentPrice),
 		Status:             proto.Status.String(),
 		Created:            proto.Created.AsTime(),
 		LastUpdated:        proto.LastUpdated.AsTime(),
-		TradeSide:          proto.TradeSide.String(),
-		CurrentPrice:       float64(proto.CurrentPrice),
 	}
 }
 
