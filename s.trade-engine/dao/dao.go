@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"strings"
 	"sync"
 
 	"swallowtail/libraries/sql"
@@ -18,7 +19,7 @@ var (
 
 // Init creates the database connection.
 func Init(ctx context.Context, serviceName string) error {
-	psql, err := sql.NewPostgresSQL(ctx, true, serviceName)
+	psql, err := sql.NewPostgresSQL(ctx, true, strings.ReplaceAll(serviceName, "-", ""))
 	if err != nil {
 		return terrors.Augment(err, "Failed to initialize dao", map[string]string{
 			"service_name": serviceName,

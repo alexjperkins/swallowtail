@@ -106,6 +106,7 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 		lowPriorityPager  = account.LowPriorityPager
 		highPriorityPager = account.HighPriorityPager
 	)
+
 	if lowPriorityPager == "" {
 		lowPriorityPager = accountproto.PagerType_DISCORD.String()
 	}

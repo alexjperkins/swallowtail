@@ -11,6 +11,7 @@ backend:
 	cd s.coingecko &&  sudo make docker &&  cd .. && \
 	cd s.payments && sudo make docker && cd .. && \
 	cd s.ftx && sudo make docker && cd .. && \
+	cd s.trade-engine && sudo make docker && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.exchanges &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
@@ -56,6 +57,10 @@ payments:
 ftx:
 	cd s.ftx &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.ftx
+
+trade-engine:
+	cd s.trade-engine &&  sudo make docker && cd .. && \
+	docker-compose -f local.yml up --build swallowtail.s.tradeengine
 
 cronpayments:
 	cd c.payments &&  sudo make && cd .. && \

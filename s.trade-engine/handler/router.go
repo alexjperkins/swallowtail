@@ -4,7 +4,7 @@ import (
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-// TradeEngineHandler ...
-type TradeEngineHandler struct {
+// TradeEngineService ...
+type TradeEngineService struct {
 	*tradeengineproto.UnimplementedTradeengineServer
 }
