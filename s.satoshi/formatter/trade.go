@@ -55,7 +55,7 @@ STOP LOSS:    %v
 		trade.TradeType.String(),
 		trade.TradeSide.String(),
 		trade.OrderType.String(),
-		trade.ActorId,
+		trade.HumanizedActorName,
 		trade.ActorType.String(),
 		trade.CurrentPrice,
 		trade.Entry,
@@ -65,7 +65,7 @@ STOP LOSS:    %v
 	// Append take profits if they exist.
 	var footer strings.Builder
 	for i, tp := range trade.TakeProfits {
-		footer.WriteString(fmt.Sprintf("TP%v:         %v\n", i+1, tp))
+		footer.WriteString(fmt.Sprintf("TP%v:          %v\n", i+1, tp))
 	}
 
 	// Append where we parsed the trade from.

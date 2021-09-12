@@ -1,5 +1,5 @@
 SHELL=/bin/bash -O extglob -c
-binary := $(shell pwd | rev | cut -d '/' -f 1 | rev)
+binary := $(shell pwd | rev | cut -d '/' -f 1 | rev | sed 's/-//g' )
 fq-binary := swallowtail.$(binary)
 docker-tag ?= $(fq-binary)
 

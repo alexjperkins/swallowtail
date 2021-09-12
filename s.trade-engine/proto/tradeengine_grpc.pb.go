@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TradeengineClient interface {
 	CreateTrade(ctx context.Context, in *CreateTradeRequest, opts ...grpc.CallOption) (*CreateTradeResponse, error)
+	ReadTradeByTradeID(ctx context.Context, in *ReadTradeByTradeIDRequest, opts ...grpc.CallOption) (*ReadTradeByTradeIDResponse, error)
 }
 
 type tradeengineClient struct {
@@ -37,11 +38,21 @@ func (c *tradeengineClient) CreateTrade(ctx context.Context, in *CreateTradeRequ
 	return out, nil
 }
 
+func (c *tradeengineClient) ReadTradeByTradeID(ctx context.Context, in *ReadTradeByTradeIDRequest, opts ...grpc.CallOption) (*ReadTradeByTradeIDResponse, error) {
+	out := new(ReadTradeByTradeIDResponse)
+	err := c.cc.Invoke(ctx, "/tradeengine/ReadTradeByTradeID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TradeengineServer is the server API for Tradeengine service.
 // All implementations must embed UnimplementedTradeengineServer
 // for forward compatibility
 type TradeengineServer interface {
 	CreateTrade(context.Context, *CreateTradeRequest) (*CreateTradeResponse, error)
+	ReadTradeByTradeID(context.Context, *ReadTradeByTradeIDRequest) (*ReadTradeByTradeIDResponse, error)
 	mustEmbedUnimplementedTradeengineServer()
 }
 
@@ -51,6 +62,9 @@ type UnimplementedTradeengineServer struct {
 
 func (*UnimplementedTradeengineServer) CreateTrade(context.Context, *CreateTradeRequest) (*CreateTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTrade not implemented")
+}
+func (*UnimplementedTradeengineServer) ReadTradeByTradeID(context.Context, *ReadTradeByTradeIDRequest) (*ReadTradeByTradeIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadTradeByTradeID not implemented")
 }
 func (*UnimplementedTradeengineServer) mustEmbedUnimplementedTradeengineServer() {}
 
@@ -76,6 +90,24 @@ func _Tradeengine_CreateTrade_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Tradeengine_ReadTradeByTradeID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadTradeByTradeIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TradeengineServer).ReadTradeByTradeID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/tradeengine/ReadTradeByTradeID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TradeengineServer).ReadTradeByTradeID(ctx, req.(*ReadTradeByTradeIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Tradeengine_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "tradeengine",
 	HandlerType: (*TradeengineServer)(nil),
@@ -83,6 +115,10 @@ var _Tradeengine_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateTrade",
 			Handler:    _Tradeengine_CreateTrade_Handler,
+		},
+		{
+			MethodName: "ReadTradeByTradeID",
+			Handler:    _Tradeengine_ReadTradeByTradeID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

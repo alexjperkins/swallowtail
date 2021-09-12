@@ -6,6 +6,8 @@ option go_package = "./;tradeengineproto";
 
 service tradeengine {
     rpc CreateTrade (CreateTradeRequest) returns (CreateTradeResponse) {}
+
+    rpc ReadTradeByTradeID (ReadTradeByTradeIDRequest) returns (ReadTradeByTradeIDResponse) {}
 }
 
 enum ACTOR_TYPE {
@@ -49,6 +51,7 @@ enum ORDER_TYPE {
 message Trade {
     string trade_id = 1;
     string actor_id = 2;
+    string humanized_actor_name = 18;
     ACTOR_TYPE actor_type = 3;
     string idempotency_key = 4;
     ORDER_TYPE order_type = 5;
@@ -59,7 +62,6 @@ message Trade {
     float stop_loss = 10;
     repeated float take_profits = 11;
     TRADE_STATUS status = 12;
-    float risk_return = 13;
     google.protobuf.Timestamp created = 14;
     google.protobuf.Timestamp last_updated = 15;
     TRADE_SIDE trade_side = 16;
@@ -68,7 +70,17 @@ message Trade {
 
 message CreateTradeRequest {
     Trade trade = 1;
-    bool execute = 2;
 }
 
-message CreateTradeResponse {}
+message CreateTradeResponse {
+    string trade_id = 1;
+    google.protobuf.Timestamp created = 2;
+}
+
+message ReadTradeByTradeIDRequest {
+    string trade_id = 1;
+}
+
+message ReadTradeByTradeIDResponse {
+    Trade trade = 1;
+}
