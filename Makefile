@@ -74,6 +74,10 @@ cronsatoshi:
 	cd c.satoshi &&  sudo make && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.c.satoshi
 
+clean:
+	# NOTE: this removes all volumes.
+	docker-compose -f local.yml down --volumes
+
 test:
 	go test ./... -short
 

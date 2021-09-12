@@ -33,7 +33,7 @@ func Init(ctx context.Context) error {
 		rsp, retryErr := (&binanceproto.ListAllAssetPairsRequest{}).Send(context.Background()).Response()
 		if retryErr != nil {
 			slog.Info(ctx, "Failed to fetch all asset pairs on binance. Trying again...", err)
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(2 * time.Second)
 			err = retryErr
 			continue
 		}

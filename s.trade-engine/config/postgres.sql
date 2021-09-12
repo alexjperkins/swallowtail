@@ -22,8 +22,12 @@ BEGIN
 		CREATE TYPE s_tradeengine_trade_status AS ENUM ('PENDING', 'ACTIVE', 'COMPLETE', 'CANCELLED');
 	END IF;
 
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 's_tradeengine_order_type') THEN
+		CREATE TYPE s_tradeengine_order_type AS ENUM ('LIMIT', 'MARKET');
+	END IF;
+
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 's_tradeengine_trade_side') THEN
-		CREATE TYPE s_tradeengine_trade_side AS ENUM ('BUY', 'SELL' );
+		CREATE TYPE s_tradeengine_trade_side AS ENUM ('BUY', 'SELL', 'LONG', 'SHORT');
 	END IF;
 END
 $$;
@@ -37,7 +41,9 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trades (
 
 	idempotency_key VARCHAR(256) UNIQUE,
 
+	order_type s_tradeengine_order_type NOT NULL,
 	trade_type s_tradeengine_trade_type NOT NULL,
+	trade_side s_tradeengine_trade_side NOT NULL,
 
 	asset VARCHAR(8) NOT NULL,
 	pair VARCHAR(4) NOT NULL,
@@ -45,6 +51,8 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trades (
 	entry DECIMAL NOT NULL,
 	stop_loss DECIMAL NOT NULL,
 	take_profits DECIMAL[] NOT NULL,
+
+	current_price DECIMAL NOT NULL,
 
 	status s_tradeengine_trade_status NOT NULL DEFAULT 'PENDING',
 

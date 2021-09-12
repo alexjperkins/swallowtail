@@ -4,6 +4,7 @@ import (
 	"context"
 	"swallowtail/libraries/gerrors"
 	coingeckoproto "swallowtail/s.coingecko/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 func getAssetLatestPrice(ctx context.Context, symbol, assetPair string) (float64, error) {
@@ -18,4 +19,15 @@ func getAssetLatestPrice(ctx context.Context, symbol, assetPair string) (float64
 		})
 	}
 	return float64(rsp.LatestPrice), nil
+}
+
+func createTrade(ctx context.Context, trade *tradeengineproto.Trade) (*tradeengineproto.CreateTradeResponse, error) {
+	rsp, err := (&tradeengineproto.CreateTradeRequest{
+		Trade: trade,
+	}).Send(ctx).Response()
+	if err != nil {
+		return nil, err
+	}
+
+	return rsp, nil
 }

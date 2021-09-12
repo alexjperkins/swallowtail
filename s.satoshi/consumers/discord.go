@@ -12,7 +12,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"swallowtail/libraries/util"
 	discordclient "swallowtail/s.discord/client"
@@ -139,15 +138,24 @@ func handleModMessages(
 				continue
 			}
 
+			if trade == nil {
+				continue
+			}
+
 			now := time.Now().UTC()
 			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
 
-			// Sign our trade with the timestamp.
-			trade.Created = timestamppb.New(now)
-			trade.LastUpdated = trade.Created
 			// Sign our trade with our idempotency key.
 			trade.IdempotencyKey = idempotencyKey
 
+			rsp, err := createTrade(ctx, trade)
+			if err != nil {
+				// Best effort for now.
+				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+			}
+
+			trade.TradeId = rsp.TradeId
+			trade.Created = rsp.Created
 			tradeContent := formatter.FormatTrade("WWG", trade, pc.Content)
 
 			msg := &ConsumerMessage{
@@ -157,8 +165,9 @@ func handleModMessages(
 				Created:          time.Now(),
 				IsActive:         isActive,
 				Metadata: map[string]string{
-					"message": fmt.Sprintf("%v", i),
-					"total":   fmt.Sprintf("%v", len(parsedContent)),
+					"message":  fmt.Sprintf("%v", i),
+					"total":    fmt.Sprintf("%v", len(parsedContent)),
+					"trade_id": trade.TradeId,
 				},
 			}
 
@@ -172,7 +181,6 @@ func handleModMessages(
 			default:
 				slog.Warn(ctx, "Failed to publish satoshi mods msg; blocked channel")
 			}
-
 		}
 	}
 }
@@ -220,13 +228,18 @@ func handleSwingMessages(
 			now := time.Now().UTC()
 			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
 
-			// Sign our trade with the timestamp.
-			trade.Created = timestamppb.New(now)
-			trade.LastUpdated = trade.Created
 			// Sign our trade with an idempotency key.
 			trade.IdempotencyKey = idempotencyKey
 
-			tradeContent := formatter.FormatTrade("Swings & Scalps", trade, pc.Content)
+			rsp, err := createTrade(ctx, trade)
+			if err != nil {
+				// Best effort for now.
+				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+			}
+
+			trade.TradeId = rsp.TradeId
+			trade.Created = rsp.Created
+			tradeContent := formatter.FormatTrade("SWINGS & SCALPS", trade, pc.Content)
 
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
@@ -236,8 +249,9 @@ func handleSwingMessages(
 				Attachments:      m.Attachments,
 				IsActive:         isActive,
 				Metadata: map[string]string{
-					"message": fmt.Sprintf("%v", i),
-					"total":   fmt.Sprintf("%v", len(parsedContent)),
+					"message":  fmt.Sprintf("%v", i),
+					"total":    fmt.Sprintf("%v", len(parsedContent)),
+					"trade_id": trade.TradeId,
 				},
 			}
 
@@ -282,12 +296,17 @@ func handleInternalCallsMessages(
 		idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
 
 		// Sign our trade with the timestamp.
-		trade.Created = timestamppb.New(now)
-		trade.LastUpdated = trade.Created
-		// Sign our trade with an idempotency key.
 		trade.IdempotencyKey = idempotencyKey
 
-		tradeContent := formatter.FormatTrade("SCG Internal Call", trade, mc.Content)
+		rsp, err := createTrade(ctx, trade)
+		if err != nil {
+			// Best effort for now.
+			slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+		}
+
+		trade.TradeId = rsp.TradeId
+		trade.Created = rsp.Created
+		tradeContent := formatter.FormatTrade("SCG INTERNAL CALL", trade, mc.Content)
 
 		msg := &ConsumerMessage{
 			ConsumerID:       discordConsumerID,
@@ -296,6 +315,9 @@ func handleInternalCallsMessages(
 			Message:          tradeContent,
 			Attachments:      m.Attachments,
 			IsActive:         isActive,
+			Metadata: map[string]string{
+				"trade_id": trade.TradeId,
+			},
 		}
 
 		select {

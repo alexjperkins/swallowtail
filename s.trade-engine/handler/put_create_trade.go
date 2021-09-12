@@ -35,9 +35,16 @@ func (s *TradeEngineService) CreateTrade(
 		return nil, gerrors.AlreadyExists("failed_to_create_trade.already_exists", errParams)
 	}
 
-	embelishedTrade, err := dao.CreateTrade(ctx, trade)
-	if err != nil {
+	// Create trade.
+	if err := dao.CreateTrade(ctx, trade); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_create_trade.dao", errParams)
+	}
+
+	// Read trade back out; we don't know the internal uuid, so we use our idempotency key which
+	// guranteed to be unique.
+	embelishedTrade, err := dao.ReadTradeByIdempotencyKey(ctx, trade.IdempotencyKey)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_create_trade.failed_to_read_created_trade_back", errParams)
 	}
 
 	return &tradeengineproto.CreateTradeResponse{
