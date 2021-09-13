@@ -60,9 +60,24 @@ type ReadSpotAccountRequest struct{}
 
 type ReadSpotAccountResponse struct{}
 
-type ReadPerptualFuturesAccountRequest struct{}
+// ReadPerpetualFuturesAccountRequest ...
+type ReadPerpetualFuturesAccountRequest struct{}
 
-type ReadPerptualFuturesAccountResponse struct{}
+// PerpetualFuturesAccountBalance
+type PerpetualFuturesAccountBalance struct {
+	AccountAlias       string `json:"accountAlias"`
+	Asset              string `json:"asset"`
+	Balance            string `json:"balance"`
+	CrossWalletBalance string `json:"crossWalletBalance"`
+	CrossUnPNL         string `json:"crossUnPnl"`
+	AvailableBalance   string `json:"availableBalance"`
+	MaxWithdrawAmount  string `json:"maxWithdrawAmount"`
+	MarginAvailable    bool   `json:"marginAvailable"`
+	LastUpdated        int    `json:"updateTime"`
+}
+
+// ReadPerpetualFuturesAccountResponse an array of balances; identical to the Binance exchange API definition.
+type ReadPerpetualFuturesAccountResponse []*PerpetualFuturesAccountBalance
 
 type VerifyCredentialsRequest struct {
 	Credentials *Credentials

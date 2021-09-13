@@ -576,6 +576,8 @@ github.com/monzo/terrors v0.0.0-20201123122426-526801726c25 h1:GLQ5by+mG7mSOokXP
 github.com/monzo/terrors v0.0.0-20201123122426-526801726c25/go.mod h1:gfOuNDWYOyNdgpG0gUVODIjwDBQRXe+mPjnTybHGb5k=
 github.com/monzo/terrors v0.0.0-20210528124329-46c9a3148647 h1:FRG+hpgJGtv0lOKiVcx6B9KqmmnD0ntlKPKjtUuZ3cc=
 github.com/monzo/terrors v0.0.0-20210528124329-46c9a3148647/go.mod h1:gfOuNDWYOyNdgpG0gUVODIjwDBQRXe+mPjnTybHGb5k=
+github.com/monzo/terrors v0.0.0-20210913110404-18e3626e3653 h1:u/nCIl4OpcfV1jIW0djtkY5/Ku8gEhuC/gCYIJT+LtE=
+github.com/monzo/terrors v0.0.0-20210913110404-18e3626e3653/go.mod h1:gfOuNDWYOyNdgpG0gUVODIjwDBQRXe+mPjnTybHGb5k=
 github.com/monzo/typhon v0.0.0-20210303111521-a0b41c74ff77 h1:ASm71qLXNJLx2sJjiqIYxvSyfn7i//7dFrhIeN5llTw=
 github.com/monzo/typhon v0.0.0-20210303111521-a0b41c74ff77/go.mod h1:PwlvLMpr2GwvL6TJsROBExc1KTxZz2BHu4wSX7c+dyQ=
 github.com/monzo/typhon v0.0.0-20210504124246-de98301f3821 h1:dnmYstNFmyR9jFlZXn8u5ba/sX+c4U3ckYpuxYx8ZyQ=

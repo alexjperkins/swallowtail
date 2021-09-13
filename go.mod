@@ -49,7 +49,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/monzo/slog v0.0.0-20210125103028-f7973b45249d
-	github.com/monzo/terrors v0.0.0-20210528124329-46c9a3148647
+	github.com/monzo/terrors v0.0.0-20210913110404-18e3626e3653
 	github.com/monzo/typhon v0.0.0-20210504124246-de98301f3821
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/opencontainers/runc v1.0.0-rc95 // indirect
