@@ -47,11 +47,8 @@ type discordClient struct {
 	isActive bool
 }
 
-func (d *discordClient) Send(ctx context.Context, message, channelID string) error {
-	var (
-		cID = channelID
-	)
-
+func (d *discordClient) Send(ctx context.Context, message, channelID string) (*discordgo.Message, error) {
+	var cID = channelID
 	if !d.isActive {
 		cID = discordTestingChannel
 
@@ -59,29 +56,28 @@ func (d *discordClient) Send(ctx context.Context, message, channelID string) err
 
 	msg, err := d.session.ChannelMessageSend(cID, message)
 	if err != nil {
-		return err
+		return nil, gerrors.Augment(err, "failed_to_send_message", nil)
 	}
 
-	slog.Info(ctx, "Message Posted to discord: %v", msg)
-	return nil
+	return msg, nil
 }
 
 func (d *discordClient) SendPrivateMessage(ctx context.Context, message, userID string) error {
 	if !d.isActive {
 		// If not active; we simply send to the testing channel.
-		return d.Send(ctx, discordTestingChannel, message)
+		_, err := d.Send(ctx, discordTestingChannel, message)
+		return err
 	}
-
-	slog.Info(ctx, "user-id: %s", userID)
 
 	ch, err := d.session.UserChannelCreate(userID)
 	if err != nil {
-		return terrors.Augment(err, "Failed to create private channel", map[string]string{
+		return gerrors.Augment(err, "failed_to_create_private_channel", map[string]string{
 			"discord_user_id": userID,
 		})
 	}
 
-	return d.Send(ctx, message, ch.ID)
+	_, err = d.Send(ctx, message, ch.ID)
+	return err
 }
 
 func (d *discordClient) ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error) {
@@ -122,6 +118,30 @@ func (d *discordClient) SetRoles(ctx context.Context, userID string, roles []*do
 	}
 
 	return nil
+}
+
+func (d *discordClient) ReadMessageReactions(ctx context.Context, messageID, channelID string) (map[EmojiID][]string, error) {
+	m, err := d.session.ChannelMessage(channelID, messageID)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_message_reactions.message", nil)
+	}
+
+	reactions := map[EmojiID][]string{}
+	for _, reaction := range m.Reactions {
+		users, err := d.session.MessageReactions(channelID, messageID, reaction.Emoji.Name, 100, "", "")
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_read_message_reactions.reactions", nil)
+		}
+
+		userIDs := []string{}
+		for _, user := range users {
+			userIDs = append(userIDs, user.ID)
+		}
+
+		reactions[EmojiID(reaction.Emoji.APIName())] = userIDs
+	}
+
+	return reactions, nil
 }
 
 func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate)) {

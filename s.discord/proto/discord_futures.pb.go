@@ -46,9 +46,14 @@ func (r *SendMsgToChannelRequest) SendWithTimeout(ctx context.Context, timeout t
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s_discord_connection_failed", nil)
 		return &SendMsgToChannelFuture{
-			ctx:     ctx,
-			errc:    errc,
-			closer:  conn.Close,
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn == nil {
+					return nil
+				}
+				return conn.Close()
+			},
 			resultc: resultc,
 		}
 	}
@@ -62,6 +67,7 @@ func (r *SendMsgToChannelRequest) SendWithTimeout(ctx context.Context, timeout t
 			errc <- gerrors.Augment(err, "failed_send_msg_to_channel", nil)
 			return
 		}
+
 		resultc <- rsp
 	}()
 
@@ -114,9 +120,14 @@ func (r *SendMsgToPrivateChannelRequest) SendWithTimeout(ctx context.Context, ti
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s_discord_connection_failed", nil)
 		return &SendMsgToPrivateChannelFuture{
-			ctx:     ctx,
-			errc:    errc,
-			closer:  conn.Close,
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
 			resultc: resultc,
 		}
 	}
@@ -338,6 +349,79 @@ func (r *RemoveUserRoleRequest) SendWithTimeout(ctx context.Context, timeout tim
 	}()
 
 	return &RemoveUserRoleFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
+// --- Read Message Reactions --- //
+
+type ReadMessageReactionsFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ReadMessageReactionsResponse
+	ctx     context.Context
+}
+
+func (a *ReadMessageReactionsFuture) Response() (*ReadMessageReactionsResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_message_reactions", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ReadMessageReactionsRequest) Send(ctx context.Context) *ReadMessageReactionsFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ReadMessageReactionsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadMessageReactionsFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ReadMessageReactionsResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-discord:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_discord_connection_failed", nil)
+		return &ReadMessageReactionsFuture{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewDiscordClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ReadMessageReactions(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_to_read_message_reactions", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ReadMessageReactionsFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()
