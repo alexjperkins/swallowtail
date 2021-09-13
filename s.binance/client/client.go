@@ -26,7 +26,8 @@ const (
 	binanceSpotURL3 = "https://api3.binance.com/sapi/v1"
 
 	// Base FUTURES URL(s)
-	binanceFuturesURL = "https://fapi.binance.com/fapi/v1"
+	binanceFuturesURL   = "https://fapi.binance.com/fapi/v1"
+	binanceFuturesURLV2 = "https://fapi.binance.com/fapi/v2"
 )
 
 var (
@@ -52,7 +53,7 @@ type BinanceClient interface {
 	ReadSpotAccount(context.Context, *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error)
 
 	// ReadPerpetualFuturesAccount reads from the users perpetual futures account.
-	ReadPerpetualFuturesAccount(context.Context, *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error)
+	ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest, *Credentials) (*ReadPerpetualFuturesAccountResponse, error)
 
 	// VerifyCredentials verifies the given credentials of the users.
 	VerifyCredentials(context.Context, *Credentials) (*VerifyCredentialsResponse, error)
@@ -119,10 +120,10 @@ func ReadSpotAccount(ctx context.Context, req *ReadSpotAccountRequest) (*ReadSpo
 }
 
 // ReadPerpetualFuturesAccount ...
-func ReadPerpetualFuturesAccount(ctx context.Context, req *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error) {
+func ReadPerpetualFuturesAccount(ctx context.Context, req *ReadPerpetualFuturesAccountRequest, credentials *Credentials) (*ReadPerpetualFuturesAccountResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Read from binance perpetual futures account")
 	defer span.Finish()
-	return nil, nil
+	return client.ReadPerpetualFuturesAccount(ctx, req, credentials)
 }
 
 // VerifyCredentials ...

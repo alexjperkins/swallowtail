@@ -1,9 +1,14 @@
 package marshaling
 
 import (
+	"strconv"
 	"strings"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.binance/client"
 	binanceproto "swallowtail/s.binance/proto"
+	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // CredentialsProtoToDTO ...
@@ -14,6 +19,7 @@ func CredentialsProtoToDTO(in *binanceproto.Credentials) *client.Credentials {
 	}
 }
 
+// VerifyRequestDTOToProto ...
 func VerifyRequestDTOToProto(in *client.VerifyCredentialsResponse) *binanceproto.VerifyCredentialsResponse {
 	isSuccess, reason := isSuccess(in)
 
@@ -29,20 +35,45 @@ func VerifyRequestDTOToProto(in *client.VerifyCredentialsResponse) *binanceproto
 	}
 }
 
+// PerpetualFuturesAccountBalanceDTOToProto ...
+func PerpetualFuturesAccountBalanceDTOToProto(in *client.PerpetualFuturesAccountBalance) (*binanceproto.ReadPerpetualFuturesAccountResponse, error) {
+	balance, err := strconv.ParseFloat(in.Balance, 64)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_parse_float.balance", nil)
+	}
+
+	availableBalance, err := strconv.ParseFloat(in.AvailableBalance, 64)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_parse_float.available_balance", nil)
+	}
+
+	return &binanceproto.ReadPerpetualFuturesAccountResponse{
+		Asset:            in.Asset,
+		Balance:          float32(balance),
+		AvailableBalance: float32(availableBalance),
+		LastUpdated:      timestamppb.New(time.Unix(int64(in.LastUpdated/1_000), 0)),
+	}, nil
+}
+
 func isSuccess(rsp *client.VerifyCredentialsResponse) (bool, string) {
 	reasons := []string{}
+
 	if !rsp.EnableReading {
 		reasons = append(reasons, "please enabled ability to read account")
 	}
+
 	if !rsp.EnableFutures {
 		reasons = append(reasons, "please enable futures access")
 	}
+
 	if rsp.EnableWithdrawals {
 		reasons = append(reasons, "withdrawals enabled, please turn off")
 	}
+
 	if !rsp.IPRestrict {
 		reasons = append(reasons, "no ip restrictions, please consider adding")
 	}
+
 	if !rsp.EnableSpotAndMarginTrading {
 		reasons = append(reasons, "please enable spot access")
 	}

@@ -11,6 +11,8 @@ service binance {
 
     rpc GetLatestPrice (GetLatestPriceRequest) returns (GetLatestPriceResponse) {}
 
+    rpc ReadPerpetualFuturesAccount (ReadPerpetualFuturesAccountRequest) returns (ReadPerpetualFuturesAccountResponse) {}
+
     rpc VerifyCredentials (VerifyCredentialsRequest) returns (VerifyCredentialsResponse) {}
 
     rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
@@ -44,6 +46,18 @@ message ExecuteFuturesPerpetualsTradeRequest {
 }
 
 message ExecuteFuturesPerpetualsTradeResponse {}
+
+message ReadPerpetualFuturesAccountRequest {
+    string actor_id = 1;
+    Credentials credentials = 2;
+}
+
+message ReadPerpetualFuturesAccountResponse {
+    string asset = 1;
+    float balance = 2;
+    float available_balance = 3;
+    google.protobuf.Timestamp last_updated = 4;
+}
 
 message GetLatestPriceRequest{
     string symbol = 1;

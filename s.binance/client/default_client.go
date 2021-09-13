@@ -51,9 +51,15 @@ func (c *binanceClient) ReadSpotAccount(ctx context.Context, in *ReadSpotAccount
 	return nil, nil
 }
 
-func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerptualFuturesAccountRequest) (*ReadPerptualFuturesAccountResponse, error) {
-	// TODO
-	return nil, nil
+func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, _ *ReadPerpetualFuturesAccountRequest, credentials *Credentials) (*ReadPerpetualFuturesAccountResponse, error) {
+	url := fmt.Sprintf("%s/%s", binanceFuturesURLV2, "balance")
+	rspBody := &ReadPerpetualFuturesAccountResponse{}
+
+	if err := c.doWithSignature(ctx, http.MethodGet, url, "", nil, rspBody, credentials); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_perpetual_futures_account.client", nil)
+	}
+
+	return rspBody, nil
 }
 
 func (c *binanceClient) Ping(ctx context.Context) error {

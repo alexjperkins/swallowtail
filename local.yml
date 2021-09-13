@@ -60,7 +60,6 @@ services:
     env_file:
       - .envs/postgres.env
       - .envs/discord.env
-      - .envs/binance.env
       - .envs/twitter.env
     depends_on:
       - postgres
