@@ -7,6 +7,8 @@ option go_package = "./;tradeengineproto";
 service tradeengine {
     rpc CreateTrade (CreateTradeRequest) returns (CreateTradeResponse) {}
 
+    rpc AddParticipantToTrade (AddParticipantToTradeRequest) returns (AddParticipantToTradeResponse) {}
+
     rpc ReadTradeByTradeID (ReadTradeByTradeIDRequest) returns (ReadTradeByTradeIDResponse) {}
 }
 
@@ -75,6 +77,23 @@ message CreateTradeRequest {
 message CreateTradeResponse {
     string trade_id = 1;
     google.protobuf.Timestamp created = 2;
+}
+
+message AddParticipantToTradeRequest {
+    string actor_id = 1;
+    string user_id = 2;
+    string trade_id = 3;
+    float entry = 4;
+    float size = 5;
+    string exchange = 6;
+    bool is_bot = 7;
+    float risk = 8;
+}
+
+message AddParticipantToTradeResponse {
+    string exchange_trade_id = 1;
+    string trade_participant_id = 2;
+    google.protobuf.Timestamp timestamp = 3;
 }
 
 message ReadTradeByTradeIDRequest {

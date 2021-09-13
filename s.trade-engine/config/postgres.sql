@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trade_participants (
 
 	entry DECIMAL NOT NULL,
 	size DECIMAL NOT NULL,
-
+	risk DECIMAL NOT NULL,
+ 
 	exchange exchange NOT NULL,
 	exchange_order_id VARCHAR(256) UNIQUE NOT NULL,
 

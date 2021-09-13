@@ -39,10 +39,12 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	exchange_id uuid DEFAULT uuid_generate_v4(),
 	exchange exchange,
+
+	user_id VARCHAR(20),
 	
 	api_key VARCHAR(200),
 	secret_key VARCHAR(200),
-	user_id VARCHAR(20),
+	subaccount VARCHAR(256),
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),

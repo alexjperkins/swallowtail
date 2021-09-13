@@ -15,7 +15,6 @@ func (s *AccountService) ReadExchange(
 ) (*accountproto.ReadExchangeResponse, error) {
 	if in.ExchangeId == "" {
 		return nil, terrors.PreconditionFailed("missing-param.exchange-id", "Cannot read exchange; missing exchange id", nil)
-
 	}
 
 	errParams := map[string]string{

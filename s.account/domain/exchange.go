@@ -8,6 +8,7 @@ type Exchange struct {
 	ExchangeType string    `db:"exchange"`
 	APIKey       string    `db:"api_key"`
 	SecretKey    string    `db:"secret_key"`
+	SubAccount   string    `db:"subaccount"`
 	UserID       string    `db:"user_id"`
 	Created      time.Time `db:"created"`
 	Updated      time.Time `db:"updated"`
