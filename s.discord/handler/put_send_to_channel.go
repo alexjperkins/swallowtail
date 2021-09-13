@@ -44,7 +44,7 @@ func (s *DiscordService) SendMsgToChannel(
 	}
 
 	// Send message via discord.
-	if err := client.Send(ctx, in.Content, in.ChannelId); err != nil {
+	if _, err := client.Send(ctx, in.Content, in.ChannelId); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_send_msg_channel.client_failure", errParams)
 	}
 

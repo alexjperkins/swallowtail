@@ -83,7 +83,8 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 				continue
 			}
 
-			if e.IsPrivate {
+			switch {
+			case e.IsPrivate:
 				if len(e.ParticipentIDs) == 0 {
 					slog.Warn(
 						ctx, "Dropping event; cannot send private message with no participents.",
@@ -93,14 +94,32 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 					)
 					continue
 				}
+
 				// Currently we only have the functionality to send to one participent.
 				participent := e.ParticipentIDs[0]
-				s.dc.SendPrivateMessage(ctx, e.Message, participent)
-				continue
+				if err := s.dc.SendPrivateMessage(ctx, e.Message, participent); err != nil {
+					slog.Error(ctx, "Failed to send message via discord: %v", e.Message)
+				}
+			default:
+				// Send the event message to the appropriate discord channel.
+				m, err := s.dc.Send(ctx, e.Message, e.DiscordChannelID)
+				if err != nil {
+					slog.Error(ctx, "Failed to send message via discord: %v", e.Message)
+				}
+
+				if e.Poller == nil {
+					continue
+				}
+
+				// Call the poller if one is defined.
+				if err := e.Poller(ctx, m.ID); err != nil {
+					slog.Error(ctx, "Failed to call poller: %v: Error: %v", e.ConsumerID, err)
+					continue
+				}
+
+				slog.Info(ctx, "Called poller for [%v]", m.ID)
 			}
 
-			// Send the event message to the appropriate discord channel.
-			s.dc.Send(ctx, e.Message, e.DiscordChannelID)
 		case <-ctx.Done():
 			return
 		case <-s.done:

@@ -22,6 +22,7 @@ type DiscordClient interface {
 	ReadUserRoles(ctx context.Context, in *ReadUserRolesRequest, opts ...grpc.CallOption) (*ReadUserRolesResponse, error)
 	UpdateUserRoles(ctx context.Context, in *UpdateUserRolesRequest, opts ...grpc.CallOption) (*UpdateUserRolesResponse, error)
 	RemoveUserRole(ctx context.Context, in *RemoveUserRoleRequest, opts ...grpc.CallOption) (*RemoveUserRoleResponse, error)
+	ReadMessageReactions(ctx context.Context, in *ReadMessageReactionsRequest, opts ...grpc.CallOption) (*ReadMessageReactionsResponse, error)
 }
 
 type discordClient struct {
@@ -77,6 +78,15 @@ func (c *discordClient) RemoveUserRole(ctx context.Context, in *RemoveUserRoleRe
 	return out, nil
 }
 
+func (c *discordClient) ReadMessageReactions(ctx context.Context, in *ReadMessageReactionsRequest, opts ...grpc.CallOption) (*ReadMessageReactionsResponse, error) {
+	out := new(ReadMessageReactionsResponse)
+	err := c.cc.Invoke(ctx, "/discord/ReadMessageReactions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DiscordServer is the server API for Discord service.
 // All implementations must embed UnimplementedDiscordServer
 // for forward compatibility
@@ -86,6 +96,7 @@ type DiscordServer interface {
 	ReadUserRoles(context.Context, *ReadUserRolesRequest) (*ReadUserRolesResponse, error)
 	UpdateUserRoles(context.Context, *UpdateUserRolesRequest) (*UpdateUserRolesResponse, error)
 	RemoveUserRole(context.Context, *RemoveUserRoleRequest) (*RemoveUserRoleResponse, error)
+	ReadMessageReactions(context.Context, *ReadMessageReactionsRequest) (*ReadMessageReactionsResponse, error)
 	mustEmbedUnimplementedDiscordServer()
 }
 
@@ -107,6 +118,9 @@ func (*UnimplementedDiscordServer) UpdateUserRoles(context.Context, *UpdateUserR
 }
 func (*UnimplementedDiscordServer) RemoveUserRole(context.Context, *RemoveUserRoleRequest) (*RemoveUserRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveUserRole not implemented")
+}
+func (*UnimplementedDiscordServer) ReadMessageReactions(context.Context, *ReadMessageReactionsRequest) (*ReadMessageReactionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadMessageReactions not implemented")
 }
 func (*UnimplementedDiscordServer) mustEmbedUnimplementedDiscordServer() {}
 
@@ -204,6 +218,24 @@ func _Discord_RemoveUserRole_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Discord_ReadMessageReactions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadMessageReactionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiscordServer).ReadMessageReactions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/discord/ReadMessageReactions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiscordServer).ReadMessageReactions(ctx, req.(*ReadMessageReactionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Discord_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "discord",
 	HandlerType: (*DiscordServer)(nil),
@@ -227,6 +259,10 @@ var _Discord_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveUserRole",
 			Handler:    _Discord_RemoveUserRole_Handler,
+		},
+		{
+			MethodName: "ReadMessageReactions",
+			Handler:    _Discord_ReadMessageReactions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

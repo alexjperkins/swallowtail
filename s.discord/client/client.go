@@ -24,6 +24,8 @@ var (
 	clientToken string
 )
 
+type EmojiID string
+
 func init() {
 	clientToken = fmt.Sprintf("%v", util.EnvGetOrDefault("SATOSHI_DISCORD_API_TOKEN", ""))
 	v := util.EnvGetOrDefault("DISCORD_TESTING_OVERRIDE", "0")
@@ -49,7 +51,7 @@ func Init(ctx context.Context) error {
 // DiscordClient ...
 type DiscordClient interface {
 	// Send
-	Send(ctx context.Context, message, channelID string) error
+	Send(ctx context.Context, message, channelID string) (*discordgo.Message, error)
 	// SendPrivateMessage
 	SendPrivateMessage(ctx context.Context, message, userID string) error
 	// AddHandler
@@ -58,6 +60,8 @@ type DiscordClient interface {
 	ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error)
 	// SetRoles set the users roles to the roles passed. It replaces all the roles the user currently has.
 	SetRoles(ctx context.Context, userID string, roles []*domain.Role) error
+	// ReadMessageReactions returns a map of reactions by emoji id and the list of users who made that reaction.
+	ReadMessageReactions(ctx context.Context, messageID, channelID string) (map[EmojiID][]string, error)
 
 	// TODO: Remove below
 	Close()
@@ -65,7 +69,7 @@ type DiscordClient interface {
 }
 
 // Send sends a message to a given channel`channel_id` via discord.
-func Send(ctx context.Context, message, channelID string) error {
+func Send(ctx context.Context, message, channelID string) (*discordgo.Message, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Send discord message via channel")
 	defer span.Finish()
 	return client.Send(ctx, message, channelID)
@@ -90,4 +94,11 @@ func SetRoles(ctx context.Context, userID string, roles []*domain.Role) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Set user roles")
 	defer span.Finish()
 	return client.SetRoles(ctx, userID, roles)
+}
+
+// ReadMessage ...
+func ReadMessageReactions(ctx context.Context, messageID, channelID string) (map[EmojiID][]string, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Read message")
+	defer span.Finish()
+	return client.ReadMessageReactions(ctx, messageID, channelID)
 }

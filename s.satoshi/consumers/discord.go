@@ -318,6 +318,10 @@ func handleInternalCallsMessages(
 			Metadata: map[string]string{
 				"trade_id": trade.TradeId,
 			},
+			Poller: func(ctx context.Context, messageID string) error {
+				// Inject the trade ID.
+				return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
+			},
 		}
 
 		select {
@@ -325,6 +329,7 @@ func handleInternalCallsMessages(
 		default:
 			slog.Warn(ctx, "Failed to publish satoshi swings msg; blocked channel")
 		}
+
 	}
 }
 

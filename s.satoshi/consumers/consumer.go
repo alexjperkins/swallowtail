@@ -33,6 +33,9 @@ type ConsumerMessage struct {
 	Created time.Time
 	// If this is true; then we don't send, rather we log.
 	IsActive bool
+	// Poller is a function that is called that monitors a given message over some period.
+	// This is will be called synchronously by the Satoshi client stream if a message contains it.
+	Poller func(ctx context.Context, messageID string) error
 }
 
 // Consumer ...

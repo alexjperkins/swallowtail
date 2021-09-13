@@ -12,6 +12,8 @@ service discord {
   rpc UpdateUserRoles (UpdateUserRolesRequest) returns (UpdateUserRolesResponse);
 
   rpc RemoveUserRole (RemoveUserRoleRequest) returns (RemoveUserRoleResponse);
+
+  rpc ReadMessageReactions (ReadMessageReactionsRequest) returns (ReadMessageReactionsResponse);
 }
 
 message SendMsgToChannelRequest {
@@ -65,3 +67,17 @@ message RemoveUserRoleRequest {
 }
 
 message RemoveUserRoleResponse {}
+
+message ReadMessageReactionsRequest {
+    string message_id = 1;
+    string channel_id = 2;
+}
+
+message Reaction {
+    string reaction_id = 1;
+    repeated string user_ids = 2;
+}
+
+message ReadMessageReactionsResponse {
+    repeated Reaction reactions = 1;
+}
