@@ -5,7 +5,6 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
-	binanceproto "swallowtail/s.binance/proto"
 )
 
 func readPrimaryExchangeCredentials(ctx context.Context, userID string) (*accountproto.Exchange, error) {
@@ -18,16 +17,4 @@ func readPrimaryExchangeCredentials(ctx context.Context, userID string) (*accoun
 	}
 
 	return rsp.PrimaryExchange, nil
-}
-
-func readBinanceFuturesAccountBalance(ctx context.Context, binanceCredentials *binanceproto.Credentials) (*binanceproto.ReadPerpetualFuturesAccountResponse, error) {
-	rsp, err := (&binanceproto.ReadPerpetualFuturesAccountRequest{
-		Credentials: binanceCredentials,
-		ActorId:     binanceproto.BinanceAccountActorTradeEngineSystem,
-	}).Send(ctx).Response()
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_read_binance_account_futures_balance", nil)
-	}
-
-	return rsp, nil
 }

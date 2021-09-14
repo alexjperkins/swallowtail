@@ -3,13 +3,21 @@ package handler
 import (
 	"context"
 
-	"github.com/monzo/slog"
+	"swallowtail/libraries/gerrors"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-func executeTradeForUser(ctx context.Context, userID, tradeID string, riskPercentage int) error {
-	if err := notifyUserOnSuccess(ctx, userID, tradeID, riskPercentage); err != nil {
-		slog.Error(ctx, "Failed to notify user of trade.", nil)
+func executeTradeForUser(ctx context.Context, userID, tradeID string, riskPercentage int) (*tradeengineproto.AddParticipantToTradeResponse, error) {
+	rsp, err := (&tradeengineproto.AddParticipantToTradeRequest{
+		ActorId: tradeengineproto.TradeEngineActorSatoshiSystem,
+		IsBot:   true,
+		UserId:  userID,
+		TradeId: tradeID,
+		Risk:    float32(riskPercentage),
+	}).Send(ctx).Response()
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_execute_trade_for_user", nil)
 	}
 
-	return nil
+	return rsp, nil
 }

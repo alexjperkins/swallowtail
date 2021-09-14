@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/imdario/mergo"
-	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 )
 
@@ -30,39 +29,6 @@ func ReadExchangeByExchangeID(ctx context.Context, exchangeID string) (*domain.E
 	}
 
 	return exchanges[0], nil
-}
-
-// ReadPrimaryExchangeByUserID ...
-func ReadPrimaryExchangeByUserID(ctx context.Context, userID string) (*domain.Exchange, error) {
-	var (
-		sql = `
-		SELECT * 
-		FROM s_account_exchanges
-		LEFT JOIN 
-			account IN (
-				SELECT * FROM s_account_accounts
-				WHERE user_id=$1
-			);
-		ON s_account_exchanges.user_id = account.user_id
-		WHERE s_account_exchanges.exchange = s_account_accounts.exchange
-		`
-		exchanges []*domain.Exchange
-	)
-
-	if err := db.Select(ctx, exchanges, sql, userID); err != nil {
-		return nil, terrors.Propagate(err)
-	}
-
-	switch len(exchanges) {
-	case 0:
-		return nil, gerrors.NotFound("not_found.primary_exchange", nil)
-	case 1:
-		return exchanges[0], nil
-	default:
-		// We should never have this; but at least make a record of it if we do.
-		slog.Critical(ctx, "Inconsitent state: more than one primary exchange")
-		return exchanges[0], nil
-	}
 }
 
 // ListExchangesByUserID ...

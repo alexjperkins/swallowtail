@@ -61,3 +61,8 @@ func TradeDomainToProto(domain *domain.Trade) *tradeengineproto.Trade {
 		LastUpdated:        timestamppb.New(domain.LastUpdated),
 	}
 }
+
+// TradeParticipantProtoToDomain
+func TradeParticipantProtoToDomain(in *tradeengineproto.AddParticipantToTradeRequest) *domain.TradeParticipent {
+	return &domain.TradeParticipent{}
+}

@@ -83,17 +83,20 @@ message AddParticipantToTradeRequest {
     string actor_id = 1;
     string user_id = 2;
     string trade_id = 3;
-    float entry = 4;
     float size = 5;
     string exchange = 6;
     bool is_bot = 7;
-    float risk = 8;
+    float risk = 8; 
 }
 
 message AddParticipantToTradeResponse {
     string exchange_trade_id = 1;
     string trade_participant_id = 2;
-    google.protobuf.Timestamp timestamp = 3;
+    string trade_id = 3;
+    float notional_size = 4;
+    google.protobuf.Timestamp timestamp = 5;
+    string exchange = 6;
+    string asset = 7;
 }
 
 message ReadTradeByTradeIDRequest {

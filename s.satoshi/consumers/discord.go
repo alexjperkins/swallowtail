@@ -143,7 +143,7 @@ func handleModMessages(
 			}
 
 			now := time.Now().UTC()
-			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
+			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Hour))
 
 			// Sign our trade with our idempotency key.
 			trade.IdempotencyKey = idempotencyKey
@@ -329,7 +329,6 @@ func handleInternalCallsMessages(
 		default:
 			slog.Warn(ctx, "Failed to publish satoshi swings msg; blocked channel")
 		}
-
 	}
 }
 

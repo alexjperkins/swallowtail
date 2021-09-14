@@ -18,6 +18,12 @@ message ListAccountDepositsRequest {
     int64 end = 3;
 }
 
+message FTXCredentials {
+    string api_key = 1;
+    string secret_key = 2;
+    string subaccount = 3;
+}
+
 message ListAccountDepositsResponse {
     repeated DepositRecord deposits = 1;
 }
