@@ -57,9 +57,9 @@ func (s *AccountService) ReadPrimaryExchangeByUserID(
 		return nil, gerrors.FailedPrecondition("exchange_found_different_to_primary_exchange_on_account", errParams)
 	}
 
-	protoExchange, err := marshaling.ExchangeDomainToProto(primaryExchange)
+	protoExchange, err := marshaling.ExchangeDomainToProtosUnmasked(primaryExchange)
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_read_primary_exchange.marshal_from_domain_to_proto", errParams)
+		return nil, gerrors.Augment(err, "failed_to_read_primary_exchange.marshal_from_domain_to_proto_unmasked", errParams)
 	}
 
 	return &accountproto.ReadPrimaryExchangeByUserIDResponse{

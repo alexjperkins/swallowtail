@@ -9,39 +9,50 @@ import (
 )
 
 // AddTradeParticpantToTrade ...
-func AddTradeParticpantToTrade(ctx context.Context, tradeParticipant *domain.TradeParticipent) error {
+func AddTradeParticpantToTrade(ctx context.Context, tradeParticipant *domain.TradeParticipant) error {
 	var (
 		sql = `
 		INSERT INTO 
 			s_tradeengine_trade_participants(
+				trade_id,
+				user_id,
+				is_bot,
+				size,
+				risk,
+				exchange,
+				exchange_order_id,
+				executed
 			)
 		VALUES
 			(
+				$1, $2, $3, $4, $5, $6, $7, $8
 			)
 		`
 	)
 
-	if _, err := (db.Exec(ctx, sql)); err != nil {
-		gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	if _, err := (db.Exec(
+		ctx, sql,
+		tradeParticipant.TradeID, tradeParticipant.UserID, tradeParticipant.IsBot, tradeParticipant.Size, tradeParticipant.Risk, tradeParticipant.Exchange, tradeParticipant.ExchangeOrderID,
+		tradeParticipant.ExecutedTimestamp,
+	)); err != nil {
+		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	return nil
 }
 
 // ReadTradeParticipantByTradeID ...
-func ReadTradeParticipantByTradeID(ctx context.Context, tradeID, userID string) (*domain.TradeParticipent, error) {
+func ReadTradeParticipantByTradeID(ctx context.Context, tradeID, userID string) (*domain.TradeParticipant, error) {
 	var (
 		sql = `
 		SELECT * FROM s_tradeengine_trade_participants
-		WHERE
-			trade_id=$1
-		AND
-			user_id=$2
+		WHERE trade_id=$1
+		AND user_id=$2
 		`
-		participants []*domain.TradeParticipent
+		participants []*domain.TradeParticipant
 	)
 
-	if err := db.Select(ctx, sql, tradeID, userID); err != nil {
+	if err := db.Select(ctx, &participants, sql, tradeID, userID); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 

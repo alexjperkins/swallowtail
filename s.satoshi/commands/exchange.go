@@ -86,7 +86,7 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 		return nil
 	}
 
-	if _, err := (&accountproto.AddExchangeRequest{
+	rsp, err := (&accountproto.AddExchangeRequest{
 		UserId: m.Author.ID,
 		Exchange: &accountproto.Exchange{
 			ExchangeType: exchangeType,
@@ -94,15 +94,41 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 			SecretKey:    secretKey,
 			IsActive:     true,
 		},
-	}).Send(ctx).Response(); err != nil {
-		s.ChannelMessageSend(
+	}).Send(ctx).Response()
+	if err != nil {
+		_, derr := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf(":wave: Sorry, I wasn't able to to add an exchange; please ping @ajperkins to investigate."),
 		)
-		return gerrors.Augment(err, "failed_to_send_to_discord_failure", nil)
+		if derr != nil {
+			return gerrors.Augment(derr, "failed_to_send_to_discord_failure", nil)
+		}
+
+		return nil
 	}
 
-	_, err := s.ChannelMessageSend(
+	if !rsp.Verified {
+		// Convert reasons into human friendly format.
+		var reasons strings.Builder
+		for _, r := range strings.Split(rsp.Reason, ",") {
+			reasons.WriteString(fmt.Sprintf("- %s\n", r))
+		}
+
+		_, derr := s.ChannelMessageSend(
+			m.ChannelID,
+			fmt.Sprintf(
+				":wave: Sorry, I wasn't able to to verify your credentials. This is likely due to the following permissisions issues:```%s```",
+				reasons.String(),
+			),
+		)
+		if derr != nil {
+			return gerrors.Augment(derr, "failed_to_send_to_discord_failure", nil)
+		}
+
+		return nil
+	}
+
+	_, err = s.ChannelMessageSend(
 		m.ChannelID,
 		fmt.Sprintf(":wave: Thanks! I've now added the exchange to your account. \n\n To see all exchanges registered use the command: ```!exchange list```"),
 	)

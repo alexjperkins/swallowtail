@@ -21,6 +21,8 @@ func (s *TradeEngineService) AddParticipantToTrade(
 		return nil, gerrors.BadParam("missing_param.actor_id", nil)
 	case !isActorValid(in.ActorId):
 		return nil, gerrors.Unauthenticated("failed_to_add_participant_to_trade.unauthorized", nil)
+	case in.UserId == "":
+		return nil, gerrors.BadParam("missing_param.user_id", nil)
 	case in.TradeId == "":
 		return nil, gerrors.BadParam("missing_param.trade_id", nil)
 	}
@@ -63,13 +65,15 @@ func (s *TradeEngineService) AddParticipantToTrade(
 
 	// Execute the trade.
 	exchangeTradeRsp, err := exchange.ExecuteFuturesTradeForParticipant(ctx, trade, in, primaryExchangeCredentials)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.execute_trade", errParams)
+	}
 
-	// Embelish the trade participant before persisting.
+	// Embelish the trade participant before marshaling & persisting.
 	in.Exchange = primaryExchangeCredentials.ExchangeType.String()
-	in.TradeId = exchangeTradeRsp.ExchangeTradeID
 	in.Size = float32(exchangeTradeRsp.NotionalSize)
 
-	tradeParticipant := marshaling.TradeParticipantProtoToDomain(in)
+	tradeParticipant := marshaling.TradeParticipantProtoToDomain(in, exchangeTradeRsp.ExchangeTradeID, exchangeTradeRsp.ExecutionTimestamp)
 	if err := dao.AddTradeParticpantToTrade(ctx, tradeParticipant); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.dao", errParams)
 	}
@@ -82,7 +86,7 @@ func (s *TradeEngineService) AddParticipantToTrade(
 
 	return &tradeengineproto.AddParticipantToTradeResponse{
 		ExchangeTradeId:    exchangeTradeRsp.ExchangeTradeID,
-		TradeParticipantId: existingTradeParticipant.TradeParticipentID,
+		TradeParticipantId: existingTradeParticipant.TradeParticipantID,
 		TradeId:            trade.TradeID,
 		NotionalSize:       float32(exchangeTradeRsp.NotionalSize),
 		Timestamp:          timestamppb.New(exchangeTradeRsp.ExecutionTimestamp),

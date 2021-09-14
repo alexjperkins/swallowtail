@@ -72,6 +72,33 @@ func ExchangeDomainToProto(in *domain.Exchange) (*accountproto.Exchange, error) 
 	}, nil
 }
 
+// ExchangeDomainToProtosUnmasked ...
+// NOTE: only use this on internal endpoints; we cannot allow keys to be leaked.
+func ExchangeDomainToProtosUnmasked(in *domain.Exchange) (*accountproto.Exchange, error) {
+	exchangeType, err := convertExchangeTypeToProto(in.ExchangeType)
+	if err != nil {
+		return nil, err
+	}
+
+	decryptedAPIKey, err := encryption.DecryptWithAES(in.APIKey, "passphrase")
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+	}
+
+	decryptedSecretKey, err := encryption.DecryptWithAES(in.SecretKey, "passphrase")
+	if err != nil {
+		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+	}
+
+	return &accountproto.Exchange{
+		ExchangeId:   in.ExchangeID,
+		ApiKey:       decryptedAPIKey,
+		SecretKey:    decryptedSecretKey,
+		ExchangeType: exchangeType,
+		IsActive:     in.IsActive,
+	}, nil
+}
+
 func convertExchangeTypeToProto(t string) (accountproto.ExchangeType, error) {
 	switch t {
 	case accountproto.ExchangeType_BINANCE.String():

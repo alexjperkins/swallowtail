@@ -10,7 +10,7 @@ import (
 )
 
 func notifyUserOnFailure(ctx context.Context, userID, tradeID string, err error) error {
-	header := fmt.Sprintf(":warning: <@%s>, I failed to fully place your Trade. Please manually check on the exchange :warning:\nIf the error is transient you can trade to place manually with the command.", userID)
+	header := fmt.Sprintf(":warning: <@%s>, I failed to fully place your Trade. Please manually check on the exchange :warning:\nIf the error is transient you can try to place manually with a command.", userID)
 	content := `
 TRADE ID: %s
 ERROR:    %v
@@ -37,7 +37,7 @@ EXCHANGE TRADE ID:    %s
 TRADE PARTICIPANT ID: %s
 ASSET:                %s
 EXCHANGE:             %s
-RISK:                 %v%%
+RISK (%):             %v
 SIZE:                 %v
 TIMESTAMP:            %v
 `
@@ -128,7 +128,7 @@ func notifyPulseChannelUserTradeSuccess(ctx context.Context, userID, tradeID str
 TRADE ID:  %s
 USER ID:   %s
 TIMESTAMP: %v
-RISK (%):  %v%%
+RISK (%):  %v
 `
 	formattedContent := fmt.Sprintf(content, tradeID, userID, time.Now().UTC().Truncate(time.Second), risk)
 
@@ -151,7 +151,7 @@ func notifyPulseChannelUserTradeFailure(ctx context.Context, userID, tradeID str
 TRADE ID:  %s
 USER ID:   %s
 TIMESTAMP: %v
-RISK (%):  %v%%
+RISK (%):  %v
 
 ERROR:     %v
 `

@@ -53,6 +53,10 @@ func executeBinanceFuturesTrade(
 			side = tradeengineproto.TRADE_SIDE_SHORT.Enum()
 		case "sell":
 			side = tradeengineproto.TRADE_SIDE_SELL.Enum()
+		default:
+			return nil, gerrors.Unimplemented("failed_to_execute_binance_futures_trade.unimplemented_trade_side", map[string]string{
+				"trade_side": trade.TradeSide,
+			})
 		}
 
 		ns, err := calculuateRiskFromBinanceAccount(ctx, credentials, trade.Entry, trade.StopLoss, float64(participant.Risk), side)

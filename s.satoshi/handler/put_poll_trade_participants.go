@@ -61,7 +61,6 @@ func (s *SatoshiService) PollTradeParticipants(
 		}
 
 		// TODO: Update trade status to polling.
-
 		for {
 			select {
 			case <-tPulse.C:
@@ -91,6 +90,10 @@ func (s *SatoshiService) PollTradeParticipants(
 							continue
 						}
 
+						// We set this to true, even if we fail; we may want to introduce some retry mechanics.
+						// But lets keep it simple for now.
+						tradeCache[userID] = true
+
 						// Calculate risk & attempt to execute trade.
 						risk := emojis.SatoshiRiskEmoji(reaction.GetReactionId()).AsRiskPercentage()
 						rsp, err := executeTradeForUser(newCtx, userID, in.TradeId, risk)
@@ -98,7 +101,7 @@ func (s *SatoshiService) PollTradeParticipants(
 							slog.Error(newCtx, "Failed to execute trade for user: %s; Error: %v", userID, err)
 
 							// Notify parties of failure.
-							if perr := notifyUserOnFailure(newCtx, userID, rsp.TradeId, err); perr != nil {
+							if perr := notifyUserOnFailure(newCtx, userID, in.TradeId, err); perr != nil {
 								slog.Error(newCtx, "Failed to notify user of successful trade: TradeID %s, UserID %s, Error: %s", in.TradeId, userID, perr)
 							}
 
@@ -108,8 +111,6 @@ func (s *SatoshiService) PollTradeParticipants(
 
 							continue
 						}
-
-						tradeCache[userID] = true
 
 						// Notify parties of success.
 						if err := notifyUserOnSuccess(newCtx, userID, rsp.TradeId, rsp.ExchangeTradeId, rsp.TradeParticipantId, rsp.Asset, rsp.Exchange, float64(risk), float64(rsp.NotionalSize), rsp.Timestamp.AsTime()); err != nil {

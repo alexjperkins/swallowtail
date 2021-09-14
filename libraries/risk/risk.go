@@ -16,10 +16,10 @@ func CalculateNotionalSizeFromPositionAndRisk(entry, stopLoss, risk, accountSize
 
 	notionalSize := maxRiskToLose / lossPerContract
 
-	switch side {
-	case tradeengineproto.TRADE_SIDE_LONG.Enum(), tradeengineproto.TRADE_SIDE_BUY.Enum():
+	switch side.String() {
+	case "LONG", "BUY":
 		return notionalSize, nil
-	case tradeengineproto.TRADE_SIDE_SHORT.Enum(), tradeengineproto.TRADE_SIDE_SELL.Enum():
+	case "SHORT", "SELL":
 		return -1 * notionalSize, nil
 	default:
 		return 0, gerrors.Unimplemented("failed_to_calculate_notional_size_from_risk.trade_side_unimplemented", map[string]string{

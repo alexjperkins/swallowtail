@@ -8,7 +8,7 @@ type Trade struct {
 	ActorID            string    `db:"actor_id"`
 	HumanizedActorName string    `db:"humanized_actor_name"`
 	ActorType          string    `db:"actor_type"`
-	IdempotencyKey     string    `db:"idempotecy_key"`
+	IdempotencyKey     string    `db:"idempotency_key"`
 	OrderType          string    `db:"order_type"`
 	TradeType          string    `db:"trade_type"`
 	Asset              string    `db:"asset"`
@@ -23,9 +23,9 @@ type Trade struct {
 	CurrentPrice       float64   `db:"current_price"`
 }
 
-// TradeParticipent ...
-type TradeParticipent struct {
-	TradeParticipentID string    `db:"trade_participant_id"`
+// TradeParticipant ...
+type TradeParticipant struct {
+	TradeParticipantID string    `db:"trade_participant_id"`
 	TradeID            string    `db:"trade_id"`
 	UserID             string    `db:"user_id"`
 	IsBot              bool      `db:"is_bot"`
