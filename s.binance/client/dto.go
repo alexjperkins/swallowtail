@@ -12,6 +12,7 @@ type Credentials struct {
 func (c *Credentials) AsHeaders() map[string]string {
 	return map[string]string{
 		"X-MBX-APIKEY": c.APIKey,
+		"Content-Type": "application/x-www-form-urlencoded",
 	}
 }
 
@@ -60,6 +61,8 @@ type ReadSpotAccountRequest struct{}
 
 type ReadSpotAccountResponse struct{}
 
+/// -- Perpetual Futures --- ///
+
 // ReadPerpetualFuturesAccountRequest ...
 type ReadPerpetualFuturesAccountRequest struct{}
 
@@ -78,6 +81,35 @@ type PerpetualFuturesAccountBalance struct {
 
 // ReadPerpetualFuturesAccountResponse an array of balances; identical to the Binance exchange API definition.
 type ReadPerpetualFuturesAccountResponse []*PerpetualFuturesAccountBalance
+
+// ExecutePerpetualFuturesTradeRequest...
+// https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
+type ExecutePerpetualFuturesTradeRequest struct {
+	// Required
+	Symbol string `json:"string"`
+	Side   string `json:"side"`
+	Type   string `json:"type"`
+	// ---
+	PositionSide     string  `json:"positionSide"` // "BOTH", "LONG", "SHORT"
+	TimeInForce      string  `json:"timeInForce"`
+	Quantity         float64 `json:"quantity"`
+	ReduceOnly       string  `json:"reduceOnly"` // "true" or "false"
+	Price            float64 `json:"price"`
+	NewClientOrderID string  `json:"newClientOrderId"`
+	StopPrice        float64 `json:"stopPrice"`
+	ClosePosition    string  `json:"closePosition"`
+	ActivationPrice  float64 `json:"activationPrice"`
+	CallbackRate     float64 `json:"callbackRate"` // Used with trailing stop
+	WorkingType      string  `json:"workingType"`  // "MARK_PRICE" or "CONTRACT_PRICE"
+	PriceProtect     string  `json:"priceProtect"`
+	NewOrderRespType string  `json:"newOrderRespType"` // "ACK" or "RESULT"
+}
+
+// ExecutePerpetualFuturesTradeResponse ...
+type ExecutePerpetualFuturesTradeResponse struct {
+	OrderID            int `json:"orderId"`
+	ExecutionTimestamp int `json:"updateTime"`
+}
 
 type VerifyCredentialsRequest struct {
 	Credentials *Credentials

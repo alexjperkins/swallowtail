@@ -32,6 +32,7 @@ service account {
   rpc ReadExchange (ReadExchangeRequest) returns (ReadExchangeResponse) {
   }
 
+  rpc ReadPrimaryExchangeByUserID (ReadPrimaryExchangeByUserIDRequest) returns (ReadPrimaryExchangeByUserIDResponse) {}
 }
 
 enum PagerType {
@@ -121,8 +122,9 @@ message Exchange {
     ExchangeType exchange_type = 1;
     string api_key = 2;
     string secret_key = 3;
-    bool is_active = 4;
-    string exchange_id = 5;
+    string sub_account = 4;
+    bool is_active = 5;
+    string exchange_id = 6;
 }
 
 message AddExchangeRequest {
@@ -151,4 +153,13 @@ message ReadExchangeRequest {
 
 message ReadExchangeResponse{
     Exchange exchange = 1;
+}
+
+message ReadPrimaryExchangeByUserIDRequest {
+    string user_id = 1;
+    string actor_id = 2;
+}
+
+message ReadPrimaryExchangeByUserIDResponse {
+    Exchange primary_exchange = 1;
 }

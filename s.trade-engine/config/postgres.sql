@@ -19,7 +19,7 @@ BEGIN
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 's_tradeengine_trade_status') THEN
-		CREATE TYPE s_tradeengine_trade_status AS ENUM ('PENDING', 'ACTIVE', 'COMPLETE', 'CANCELLED');
+		CREATE TYPE s_tradeengine_trade_status AS ENUM ('PENDING', 'POLLING', 'ACTIVE', 'COMPLETE', 'CANCELLED');
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 's_tradeengine_order_type') THEN
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trades (
 
 	current_price DECIMAL NOT NULL,
 
-	status s_tradeengine_trade_status NOT NULL DEFAULT 'PENDING',
+	status s_tradeengine_trade_status NOT NULL DEFAULT 'POLLING',
 
 	created TIME NOT NULL,
 	last_updated TIME NOT NULL,
@@ -70,13 +70,13 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trade_participants (
 	
 	is_bot BOOLEAN NOT NULL DEFAULT FALSE,
 
-	entry DECIMAL NOT NULL,
 	size DECIMAL NOT NULL,
-
+	risk DECIMAL NOT NULL,
+ 
 	exchange exchange NOT NULL,
 	exchange_order_id VARCHAR(256) UNIQUE NOT NULL,
 
-	status s_tradeengine_trade_status NOT NULL DEFAULT 'PENDING',
+	status s_tradeengine_trade_status NOT NULL DEFAULT 'ACTIVE',
 
 	executed TIME NOT NULL,
 

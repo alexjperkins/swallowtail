@@ -27,6 +27,7 @@ type AccountClient interface {
 	AddExchange(ctx context.Context, in *AddExchangeRequest, opts ...grpc.CallOption) (*AddExchangeResponse, error)
 	ListExchanges(ctx context.Context, in *ListExchangesRequest, opts ...grpc.CallOption) (*ListExchangesResponse, error)
 	ReadExchange(ctx context.Context, in *ReadExchangeRequest, opts ...grpc.CallOption) (*ReadExchangeResponse, error)
+	ReadPrimaryExchangeByUserID(ctx context.Context, in *ReadPrimaryExchangeByUserIDRequest, opts ...grpc.CallOption) (*ReadPrimaryExchangeByUserIDResponse, error)
 }
 
 type accountClient struct {
@@ -109,6 +110,15 @@ func (c *accountClient) ReadExchange(ctx context.Context, in *ReadExchangeReques
 	return out, nil
 }
 
+func (c *accountClient) ReadPrimaryExchangeByUserID(ctx context.Context, in *ReadPrimaryExchangeByUserIDRequest, opts ...grpc.CallOption) (*ReadPrimaryExchangeByUserIDResponse, error) {
+	out := new(ReadPrimaryExchangeByUserIDResponse)
+	err := c.cc.Invoke(ctx, "/account/ReadPrimaryExchangeByUserID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServer is the server API for Account service.
 // All implementations must embed UnimplementedAccountServer
 // for forward compatibility
@@ -123,6 +133,7 @@ type AccountServer interface {
 	AddExchange(context.Context, *AddExchangeRequest) (*AddExchangeResponse, error)
 	ListExchanges(context.Context, *ListExchangesRequest) (*ListExchangesResponse, error)
 	ReadExchange(context.Context, *ReadExchangeRequest) (*ReadExchangeResponse, error)
+	ReadPrimaryExchangeByUserID(context.Context, *ReadPrimaryExchangeByUserIDRequest) (*ReadPrimaryExchangeByUserIDResponse, error)
 	mustEmbedUnimplementedAccountServer()
 }
 
@@ -153,6 +164,9 @@ func (*UnimplementedAccountServer) ListExchanges(context.Context, *ListExchanges
 }
 func (*UnimplementedAccountServer) ReadExchange(context.Context, *ReadExchangeRequest) (*ReadExchangeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadExchange not implemented")
+}
+func (*UnimplementedAccountServer) ReadPrimaryExchangeByUserID(context.Context, *ReadPrimaryExchangeByUserIDRequest) (*ReadPrimaryExchangeByUserIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadPrimaryExchangeByUserID not implemented")
 }
 func (*UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
 
@@ -304,6 +318,24 @@ func _Account_ReadExchange_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Account_ReadPrimaryExchangeByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadPrimaryExchangeByUserIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).ReadPrimaryExchangeByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/account/ReadPrimaryExchangeByUserID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).ReadPrimaryExchangeByUserID(ctx, req.(*ReadPrimaryExchangeByUserIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Account_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "account",
 	HandlerType: (*AccountServer)(nil),
@@ -339,6 +371,10 @@ var _Account_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadExchange",
 			Handler:    _Account_ReadExchange_Handler,
+		},
+		{
+			MethodName: "ReadPrimaryExchangeByUserID",
+			Handler:    _Account_ReadPrimaryExchangeByUserID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

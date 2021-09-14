@@ -3,6 +3,7 @@ package marshaling
 import (
 	"swallowtail/s.trade-engine/domain"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
+	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -59,5 +60,18 @@ func TradeDomainToProto(domain *domain.Trade) *tradeengineproto.Trade {
 		CurrentPrice:       float32(domain.CurrentPrice),
 		Created:            timestamppb.New(domain.Created),
 		LastUpdated:        timestamppb.New(domain.LastUpdated),
+	}
+}
+
+// TradeParticipantProtoToDomain ...
+func TradeParticipantProtoToDomain(in *tradeengineproto.AddParticipantToTradeRequest, exchangeOrderID string, excutedTimestamp time.Time) *domain.TradeParticipant {
+	return &domain.TradeParticipant{
+		UserID:          in.UserId,
+		TradeID:         in.TradeId,
+		IsBot:           in.IsBot,
+		Size:            float64(in.Size),
+		Risk:            float64(in.Risk),
+		Exchange:        in.Exchange,
+		ExchangeOrderID: exchangeOrderID,
 	}
 }

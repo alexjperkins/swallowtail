@@ -75,7 +75,7 @@ func (s *AccountService) AddExchange(
 		return nil, gerrors.Augment(err, "failed_to_add_exchange_to_account.", errParams)
 	}
 
-	slog.Info(ctx, "Added new exchange to account, with verifiedc credentials", errParams)
+	slog.Info(ctx, "Added new exchange to account, with verified credentials", errParams)
 
 	// Mask keys before returning.
 	in.Exchange.ApiKey = util.MaskKey(in.Exchange.ApiKey, 4)

@@ -66,6 +66,7 @@ func (h *httpClient) Do(ctx context.Context, method, url string, reqBody, rspBod
 	if err := json.Unmarshal(rspBodyBytes, rspBody); err != nil {
 		return gerrors.FailedPrecondition("bad_request.unmarshal_error", errParams)
 	}
+
 	return nil
 }
 
@@ -91,6 +92,7 @@ func (h *httpClient) DoWithEphemeralHeaders(ctx context.Context, method, url str
 
 	defer rsp.Body.Close()
 	rspBodyBytes, err := ioutil.ReadAll(rsp.Body)
+
 	if err != nil {
 		return gerrors.Augment(err, "failed_to_read_response_body", errParams)
 	}
@@ -98,6 +100,7 @@ func (h *httpClient) DoWithEphemeralHeaders(ctx context.Context, method, url str
 	if err := json.Unmarshal(rspBodyBytes, rspBody); err != nil {
 		return gerrors.FailedPrecondition("bad_request.unmarshal_error", errParams)
 	}
+
 	return nil
 }
 
@@ -106,6 +109,7 @@ func (h *httpClient) doRawRequest(ctx context.Context, method, url string, body 
 		"method": method,
 		"url":    url,
 	}
+
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_execute_request", errParams)

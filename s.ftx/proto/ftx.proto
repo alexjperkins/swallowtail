@@ -7,7 +7,7 @@ option go_package = "./;ftxproto";
 service ftx {
     rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
 
-    rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
+    rpc GetFTXStatus (GetFTXStatusRequest) returns (GetFTXStatusResponse) {}
 }
 
 message ListAccountDepositsRequest {
@@ -16,6 +16,12 @@ message ListAccountDepositsRequest {
     int64 start = 2;
     // Seconds in unix time
     int64 end = 3;
+}
+
+message FTXCredentials {
+    string api_key = 1;
+    string secret_key = 2;
+    string subaccount = 3;
 }
 
 message ListAccountDepositsResponse {
@@ -35,9 +41,9 @@ message DepositRecord {
     string transaction_id = 10;
 }
 
-message GetStatusRequest {}
+message GetFTXStatusRequest {}
 
-message GetStatusResponse {
+message GetFTXStatusResponse {
     int64 server_time = 1;
     int64 request_latency = 2;
 }

@@ -41,9 +41,12 @@ func (s *SatoshiService) PollTradeParticipants(
 	}
 
 	// This is horrible code; but we don't yet have the infra in place to do any better.
-	// Ideally this should be asyncronous using some message queue using exactly-once semantics.
+	// Ideally this should be asynchronous using some message queue using exactly-once semantics.
 	go func() {
 		deadline := time.Now().UTC().Add(time.Duration(in.TimeoutInMinutes) * time.Minute)
+
+		// We create a new context object; otherwise the parent context would be cancel once the
+		// the response is returned to the callee.
 		newCtx := context.Background()
 		childCtx, cancel := context.WithDeadline(newCtx, deadline)
 		defer cancel()
@@ -57,6 +60,7 @@ func (s *SatoshiService) PollTradeParticipants(
 			slog.Error(childCtx, err.Error())
 		}
 
+		// TODO: Update trade status to polling.
 		for {
 			select {
 			case <-tPulse.C:
@@ -86,22 +90,48 @@ func (s *SatoshiService) PollTradeParticipants(
 							continue
 						}
 
+						// We set this to true, even if we fail; we may want to introduce some retry mechanics.
+						// But lets keep it simple for now.
+						tradeCache[userID] = true
+
+						// Calculate risk & attempt to execute trade.
 						risk := emojis.SatoshiRiskEmoji(reaction.GetReactionId()).AsRiskPercentage()
-						if err := executeTradeForUser(newCtx, userID, in.TradeId, risk); err != nil {
-							slog.Error(childCtx, "Failed to execute trade for user: %s", userID)
+						rsp, err := executeTradeForUser(newCtx, userID, in.TradeId, risk)
+						if err != nil {
+							slog.Error(newCtx, "Failed to execute trade for user: %s; Error: %v", userID, err)
+
+							// Notify parties of failure.
+							if perr := notifyUserOnFailure(newCtx, userID, in.TradeId, err); perr != nil {
+								slog.Error(newCtx, "Failed to notify user of successful trade: TradeID %s, UserID %s, Error: %s", in.TradeId, userID, perr)
+							}
+
+							if perr := notifyPulseChannelUserTradeFailure(newCtx, userID, in.TradeId, risk, err); perr != nil {
+								slog.Error(newCtx, "Failed to notify channel of successful trade: TradeID %s, UserID %s, Error: %v", in.TradeId, userID, perr)
+							}
+
 							continue
 						}
 
-						tradeCache[userID] = true
+						// Notify parties of success.
+						if err := notifyUserOnSuccess(newCtx, userID, rsp.TradeId, rsp.ExchangeTradeId, rsp.TradeParticipantId, rsp.Asset, rsp.Exchange, float64(risk), float64(rsp.NotionalSize), rsp.Timestamp.AsTime()); err != nil {
+							slog.Error(newCtx, "Failed to notify user of successful trade: TradeID: %v TradeParticipantId: %v", in.TradeId, rsp.TradeParticipantId)
+						}
 
-						if err := notifyPulseChannelUserTrade(childCtx, userID, in.TradeId, risk); err != nil {
+						if err := notifyPulseChannelUserTradeSuccess(newCtx, userID, in.TradeId, risk); err != nil {
 							slog.Error(newCtx, err.Error())
 						}
 					}
 				}
 
 			case <-childCtx.Done():
+				// TODO: update trade status to polling.
+
 				slog.Warn(newCtx, "Closing window for new trade participants for trade: %v", in.TradeId)
+
+				if err := notifyTradesChannelContextEnded(newCtx, in.TradeId); err != nil {
+					slog.Error(newCtx, err.Error())
+				}
+
 				if err := notifyPulseChannelEnd(newCtx, in.TradeId, deadline); err != nil {
 					slog.Error(newCtx, err.Error())
 				}

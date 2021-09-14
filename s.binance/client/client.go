@@ -46,6 +46,9 @@ type BinanceClient interface {
 	// ExecuteSpotTrade attempts to execute a spot trade on Binance.
 	ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error
 
+	// ExecutePerpetualFuturesTrade
+	ExecutePerpetualFuturesTrade(ctx context.Context, req *ExecutePerpetualFuturesTradeRequest, credentials *Credentials) (*ExecutePerpetualFuturesTradeResponse, error)
+
 	// Ping serves as a healthcheck to the Binance API.
 	Ping(context.Context) error
 
@@ -124,6 +127,13 @@ func ReadPerpetualFuturesAccount(ctx context.Context, req *ReadPerpetualFuturesA
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Read from binance perpetual futures account")
 	defer span.Finish()
 	return client.ReadPerpetualFuturesAccount(ctx, req, credentials)
+}
+
+// ExecutePerpetualFuturesTrade ...
+func ExecutePerpetualFuturesTrade(ctx context.Context, req *ExecutePerpetualFuturesTradeRequest, credentials *Credentials) (*ExecutePerpetualFuturesTradeResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Execute perpetual futures trade on binance")
+	defer span.Finish()
+	return client.ExecutePerpetualFuturesTrade(ctx, req, credentials)
 }
 
 // VerifyCredentials ...

@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FtxClient interface {
 	ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error)
-	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
+	GetFTXStatus(ctx context.Context, in *GetFTXStatusRequest, opts ...grpc.CallOption) (*GetFTXStatusResponse, error)
 }
 
 type ftxClient struct {
@@ -38,9 +38,9 @@ func (c *ftxClient) ListAccountDeposits(ctx context.Context, in *ListAccountDepo
 	return out, nil
 }
 
-func (c *ftxClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error) {
-	out := new(GetStatusResponse)
-	err := c.cc.Invoke(ctx, "/ftx/GetStatus", in, out, opts...)
+func (c *ftxClient) GetFTXStatus(ctx context.Context, in *GetFTXStatusRequest, opts ...grpc.CallOption) (*GetFTXStatusResponse, error) {
+	out := new(GetFTXStatusResponse)
+	err := c.cc.Invoke(ctx, "/ftx/GetFTXStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (c *ftxClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ..
 // for forward compatibility
 type FtxServer interface {
 	ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error)
-	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
+	GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error)
 	mustEmbedUnimplementedFtxServer()
 }
 
@@ -63,8 +63,8 @@ type UnimplementedFtxServer struct {
 func (*UnimplementedFtxServer) ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAccountDeposits not implemented")
 }
-func (*UnimplementedFtxServer) GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
+func (*UnimplementedFtxServer) GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFTXStatus not implemented")
 }
 func (*UnimplementedFtxServer) mustEmbedUnimplementedFtxServer() {}
 
@@ -90,20 +90,20 @@ func _Ftx_ListAccountDeposits_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Ftx_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStatusRequest)
+func _Ftx_GetFTXStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFTXStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FtxServer).GetStatus(ctx, in)
+		return srv.(FtxServer).GetFTXStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ftx/GetStatus",
+		FullMethod: "/ftx/GetFTXStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FtxServer).GetStatus(ctx, req.(*GetStatusRequest))
+		return srv.(FtxServer).GetFTXStatus(ctx, req.(*GetFTXStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -117,8 +117,8 @@ var _Ftx_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Ftx_ListAccountDeposits_Handler,
 		},
 		{
-			MethodName: "GetStatus",
-			Handler:    _Ftx_GetStatus_Handler,
+			MethodName: "GetFTXStatus",
+			Handler:    _Ftx_GetFTXStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

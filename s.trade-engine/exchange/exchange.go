@@ -2,25 +2,46 @@ package exchange
 
 import (
 	"context"
-	"strings"
+	"time"
+
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
+	binanceproto "swallowtail/s.binance/proto"
+	ftxproto "swallowtail/s.ftx/proto"
 	"swallowtail/s.trade-engine/domain"
-	"time"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-// ExecuteTrade ...
-func ExecuteTrade(ctx context.Context, trade *domain.Trade, requestTimestamp time.Time) error {
-	switch strings.ToUpper(trade.Exchange) {
-	case accountproto.ExchangeType_FTX.String():
-		return gerrors.Unimplemented("failed_to_execute_trade.exchange_not_supported", map[string]string{
-			"exchange": trade.Exchange,
+// ExchangeFuturesTradeResponse
+type FuturesTradeResponse struct {
+	ExchangeTradeID    string
+	NotionalSize       float64
+	ExecutionTimestamp time.Time
+}
+
+// ExecuteFuturesTradeForParticipant ...
+func ExecuteFuturesTradeForParticipant(
+	ctx context.Context,
+	trade *domain.Trade,
+	participant *tradeengineproto.AddParticipantToTradeRequest,
+	exchange *accountproto.Exchange,
+) (*FuturesTradeResponse, error) {
+	switch {
+	case exchange.ExchangeType == accountproto.ExchangeType_BINANCE:
+		return executeBinanceFuturesTrade(ctx, trade, participant, &binanceproto.Credentials{
+			ApiKey:    exchange.ApiKey,
+			SecretKey: exchange.SecretKey,
 		})
-	case accountproto.ExchangeType_BINANCE.String():
-		return executeBinanceTrade(ctx, trade, requestTimestamp)
+	case exchange.ExchangeType == accountproto.ExchangeType_FTX:
+		return executeFTXFuturesTrade(ctx, trade, participant, &ftxproto.FTXCredentials{
+			ApiKey:     exchange.ApiKey,
+			SecretKey:  exchange.SecretKey,
+			Subaccount: exchange.SubAccount,
+		})
 	default:
-		return gerrors.Unimplemented("failed_to_execute_trade.exchange_not_supported", map[string]string{
-			"exchange": trade.Exchange,
+		return nil, gerrors.Unimplemented("cannot_execute_trade.unimplemented_exchange", map[string]string{
+			"exchange": exchange.ExchangeType.String(),
 		})
+
 	}
 }

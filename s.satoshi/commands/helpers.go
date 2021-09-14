@@ -104,8 +104,10 @@ func calculateRisk(entry, stopLoss, accountSize, percentage float64) float64 {
 	case entry == stopLoss:
 		return 0.0
 	}
+
 	maxRiskToLose := percentage * accountSize
 	lossPerContract := entry - stopLoss
+
 	return maxRiskToLose / lossPerContract
 }
 

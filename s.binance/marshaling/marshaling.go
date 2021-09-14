@@ -59,23 +59,23 @@ func isSuccess(rsp *client.VerifyCredentialsResponse) (bool, string) {
 	reasons := []string{}
 
 	if !rsp.EnableReading {
-		reasons = append(reasons, "please enabled ability to read account")
+		reasons = append(reasons, "Please enable the ability to read account")
 	}
 
 	if !rsp.EnableFutures {
-		reasons = append(reasons, "please enable futures access")
+		reasons = append(reasons, "Please enable futures access")
 	}
 
 	if rsp.EnableWithdrawals {
-		reasons = append(reasons, "withdrawals enabled, please turn off")
+		reasons = append(reasons, "You have withdrawals enabled, please turn them off")
 	}
 
 	if !rsp.IPRestrict {
-		reasons = append(reasons, "no ip restrictions, please consider adding")
+		reasons = append(reasons, "You have no ip restrictions; please consider adding them")
 	}
 
 	if !rsp.EnableSpotAndMarginTrading {
-		reasons = append(reasons, "please enable spot access")
+		reasons = append(reasons, "Please enable spot access")
 	}
 
 	return rsp.EnableReading && rsp.EnableFutures && rsp.EnableSpotAndMarginTrading, strings.Join(reasons, ",")
