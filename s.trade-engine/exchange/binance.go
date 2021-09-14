@@ -83,6 +83,7 @@ func executeBinanceFuturesTrade(
 		Entry:        float32(trade.Entry),
 		StopLoss:     float32(trade.StopLoss),
 		Timestamp:    timestamppb.Now(),
+		Credentials:  credentials,
 	}).Send(ctx).Response()
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_execute_binance_futures_trade.binance", errParams)

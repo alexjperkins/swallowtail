@@ -128,6 +128,10 @@ func (s *SatoshiService) PollTradeParticipants(
 
 				slog.Warn(newCtx, "Closing window for new trade participants for trade: %v", in.TradeId)
 
+				if err := notifyTradesChannelContextEnded(newCtx, in.TradeId); err != nil {
+					slog.Error(newCtx, err.Error())
+				}
+
 				if err := notifyPulseChannelEnd(newCtx, in.TradeId, deadline); err != nil {
 					slog.Error(newCtx, err.Error())
 				}

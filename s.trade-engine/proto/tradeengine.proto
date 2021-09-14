@@ -48,6 +48,7 @@ enum TRADE_PAIR {
 enum ORDER_TYPE {
     LIMIT = 0;
     MARKET = 1;
+    STOP_MARKET = 2;
 }
 
 message Trade {

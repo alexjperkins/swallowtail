@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
 	"swallowtail/s.binance/client/signer"
 	"swallowtail/s.binance/domain"
 	"time"
 
+	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 )
 
@@ -42,13 +44,11 @@ func (c *binanceClient) ListAllAssetPairs(ctx context.Context) (*ListAllAssetPai
 }
 
 func (c *binanceClient) ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error {
-	// TODO
-	return nil
+	return gerrors.Unimplemented("unimplemented.execute_spot_trade", nil)
 }
 
 func (c *binanceClient) ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error) {
-	// TODO
-	return nil, nil
+	return nil, gerrors.Unimplemented("unimplemented.read_spot_account", nil)
 }
 
 func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, _ *ReadPerpetualFuturesAccountRequest, credentials *Credentials) (*ReadPerpetualFuturesAccountResponse, error) {
@@ -58,6 +58,22 @@ func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, _ *Read
 	if err := c.doWithSignature(ctx, http.MethodGet, url, "", nil, rspBody, credentials); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_read_perpetual_futures_account.client", nil)
 	}
+
+	return rspBody, nil
+}
+
+func (c *binanceClient) ExecutePerpetualFuturesTrade(ctx context.Context, req *ExecutePerpetualFuturesTradeRequest, credentials *Credentials) (*ExecutePerpetualFuturesTradeResponse, error) {
+	url := fmt.Sprintf("%s/%s", binanceFuturesURL, "order")
+	rspBody := &ExecutePerpetualFuturesTradeResponse{}
+
+	qs := buildQueryStringFromFuturesPerpetualTrade(req)
+
+	if err := c.doWithSignature(ctx, http.MethodPost, url, qs, nil, rspBody, credentials); err != nil {
+		slog.Warn(ctx, "Binance Perpetuals futures trade FAILED: %v", qs)
+		return nil, gerrors.Augment(err, "failed_to_read_perpetual_futures_account.client", nil)
+	}
+
+	slog.Info(ctx, "Binance Perpetuals futures trade executed: %v", qs)
 
 	return rspBody, nil
 }
@@ -153,4 +169,68 @@ func (c *binanceClient) signRequest(secret, queryString string, reqBody interfac
 	default:
 		return fmt.Sprintf("%s&timestamp=%d&signature=%s", queryString, now, hmac), nil
 	}
+}
+
+// Binance :)
+// TODO: this has to be fixed
+func buildQueryStringFromFuturesPerpetualTrade(req *ExecutePerpetualFuturesTradeRequest) string {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("symbol=%s", req.Symbol))
+	sb.WriteString(fmt.Sprintf("&side=%s", req.Side))
+	sb.WriteString(fmt.Sprintf("&type=%s", req.Type))
+
+	if req.PositionSide != "" {
+		sb.WriteString(fmt.Sprintf("&positionSide=%s", req.PositionSide))
+	}
+
+	if req.TimeInForce != "" {
+		sb.WriteString(fmt.Sprintf("&timeInForce=%s", req.TimeInForce))
+	}
+
+	if req.Quantity != 0 {
+		sb.WriteString(fmt.Sprintf("&quantity=%.1f", req.Quantity))
+	}
+
+	if req.ReduceOnly != "" {
+		sb.WriteString(fmt.Sprintf("&reduceOnly=%s", req.ReduceOnly))
+	}
+
+	if req.Price != 0 {
+		sb.WriteString(fmt.Sprintf("&price=%.3f", req.Price))
+	}
+
+	if req.NewClientOrderID != "" {
+		sb.WriteString(fmt.Sprintf("&newClientOrderId=%s", req.NewClientOrderID))
+	}
+
+	if req.StopPrice != 0 {
+		sb.WriteString(fmt.Sprintf("&stopPrice=%.3f", req.StopPrice))
+	}
+
+	if req.ClosePosition != "" {
+		sb.WriteString(fmt.Sprintf("&closePosition=%v", req.ClosePosition))
+	}
+
+	if req.ActivationPrice != 0 {
+		sb.WriteString(fmt.Sprintf("&activationPrice=%v", req.ActivationPrice))
+	}
+
+	if req.CallbackRate != 0 {
+		sb.WriteString(fmt.Sprintf("&callbackRate=%v", req.CallbackRate))
+	}
+
+	if req.WorkingType != "" {
+		sb.WriteString(fmt.Sprintf("&workingType=%s", req.WorkingType))
+	}
+
+	if req.PriceProtect != "" {
+		sb.WriteString(fmt.Sprintf("&priceProtect=%s", req.PriceProtect))
+	}
+
+	if req.NewOrderRespType != "" {
+		sb.WriteString(fmt.Sprintf("&newOrderRespType=%s", req.NewOrderRespType))
+	}
+
+	return sb.String()
 }

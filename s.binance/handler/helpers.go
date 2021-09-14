@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"strconv"
+	"strings"
 	"swallowtail/libraries/gerrors"
 	binanceclient "swallowtail/s.binance/client"
 	"swallowtail/s.binance/domain"
@@ -82,4 +83,33 @@ func isValidCredentials(credentials *binanceproto.Credentials, apiKeyOnly bool) 
 	default:
 		return nil
 	}
+}
+
+func validatePerpetualFuturesTrade(trade *binanceproto.ExecuteFuturesPerpetualsTradeRequest) error {
+	switch {
+	case trade.Entry <= 0:
+		return gerrors.BadParam("bad_param.entry_zero_or_below", nil)
+	case trade.StopLoss <= 0:
+		return gerrors.BadParam("bad_param.stop_loss_zero_or_below", nil)
+	case trade.NotionalSize <= 0:
+		return gerrors.BadParam("bad_param.notional_size_zero_or_below", nil)
+	}
+
+	switch strings.ToLower(trade.TradeSide) {
+	case "buy", "sell", "long", "short":
+	default:
+		return gerrors.BadParam("bad_param.invalid_trade_side", map[string]string{
+			"trade_side": trade.TradeSide,
+		})
+	}
+
+	switch strings.ToLower(trade.OrderType) {
+	case "limit", "market":
+	default:
+		return gerrors.BadParam("bad_param.invalid_order_type", map[string]string{
+			"order_type": trade.OrderType,
+		})
+	}
+
+	return nil
 }

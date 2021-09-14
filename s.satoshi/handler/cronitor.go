@@ -37,7 +37,7 @@ EXCHANGE TRADE ID:    %s
 TRADE PARTICIPANT ID: %s
 ASSET:                %s
 EXCHANGE:             %s
-RISK (%):             %v
+RISK (%%):            %v
 SIZE:                 %v
 TIMESTAMP:            %v
 `
@@ -47,6 +47,31 @@ TIMESTAMP:            %v
 		UserId:         userID,
 		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
 		IdempotencyKey: fmt.Sprintf("tradesuccess-%s-%s-%s", userID, tradeID, time.Now().UTC().Truncate(15*time.Minute)),
+	}).Send(ctx).Response(); err != nil {
+		return gerrors.Augment(err, "failed_to_notify_user", nil)
+	}
+
+	return nil
+}
+
+func notifyTradesChannelContextEnded(ctx context.Context, tradeID string) error {
+	now := time.Now().UTC()
+
+	header := ":octogonal_stop:   `TRADE CONTEXT ENDED`   :four_leaf_clover:"
+	content := `
+TRADE ID:  %s
+TIMESTAMP: %s
+
+The 15 minute context for this trade has now ended. If you still would like to place the trade, you can place manually with a command.
+
+!trade <trade_id> <risk>
+`
+	formattedContent := fmt.Sprintf(content, tradeID, now)
+
+	if _, err := (&discordproto.SendMsgToChannelRequest{
+		ChannelId:      discordproto.DiscordSatoshiTradesPulseChannel,
+		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
+		IdempotencyKey: fmt.Sprintf("tradeparticipantspolltradectxend-%s-%v", tradeID, time.Now().UTC().Truncate(time.Minute)),
 	}).Send(ctx).Response(); err != nil {
 		return gerrors.Augment(err, "failed_to_notify_user", nil)
 	}
@@ -128,7 +153,7 @@ func notifyPulseChannelUserTradeSuccess(ctx context.Context, userID, tradeID str
 TRADE ID:  %s
 USER ID:   %s
 TIMESTAMP: %v
-RISK (%):  %v
+RISK (%%):  %v
 `
 	formattedContent := fmt.Sprintf(content, tradeID, userID, time.Now().UTC().Truncate(time.Second), risk)
 
@@ -151,7 +176,7 @@ func notifyPulseChannelUserTradeFailure(ctx context.Context, userID, tradeID str
 TRADE ID:  %s
 USER ID:   %s
 TIMESTAMP: %v
-RISK (%):  %v
+RISK (%%): %v
 
 ERROR:     %v
 `
