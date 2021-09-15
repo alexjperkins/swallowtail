@@ -69,8 +69,10 @@ func (c *binanceClient) ExecutePerpetualFuturesTrade(ctx context.Context, req *E
 	qs := buildQueryStringFromFuturesPerpetualTrade(req)
 
 	if err := c.doWithSignature(ctx, http.MethodPost, url, qs, nil, rspBody, credentials); err != nil {
-		slog.Warn(ctx, "Binance Perpetuals futures trade FAILED: %v", qs)
-		return nil, gerrors.Augment(err, "failed_to_read_perpetual_futures_account.client", nil)
+		slog.Warn(ctx, "Binance Perpetuals futures trade failed: %v", qs)
+		return nil, gerrors.Augment(err, "failed_to_read_perpetual_futures_account.client", map[string]string{
+			"query_string": qs,
+		})
 	}
 
 	slog.Info(ctx, "Binance Perpetuals futures trade executed: %v", qs)
@@ -162,7 +164,7 @@ func (c *binanceClient) signRequest(secret, queryString string, reqBody interfac
 		return "", gerrors.Augment(err, "failed_to_sign_request", nil)
 	}
 
-	// return the new converted querystring with timestamp & signature appended.
+	// Return the new converted querystring with timestamp & signature appended.
 	switch {
 	case queryString == "":
 		return fmt.Sprintf("timestamp=%d&signature=%s", now, hmac), nil

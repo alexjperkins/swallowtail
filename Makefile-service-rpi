@@ -1,0 +1,71 @@
+SHELL=/bin/bash -O extglob -c
+
+ecr-registry := 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail
+binary := $(shell pwd | rev | cut -d '/' -f 1 | rev | sed 's/-//g' )
+fq-binary := swallowtail.$(binary)
+
+docker-tag ?= $(fq-binary)
+ecr-tag := $(ecr-registry):$(fq-binary)
+
+define DOCKERFILE_CONTENTS
+### --- Service --- ###
+FROM balenalib/raspberry-pi-alpine:latest
+MAINTAINER alexperkins.dev@gmail.com
+ADD $(fq-binary) /
+ADD ./config /$(binary)/config
+EXPOSE 8080
+RUN apk --no-cache add ca-certificates
+ENTRYPOINT ["/$(fq-binary)"]
+endef
+
+export DOCKERFILE_CONTENTS
+
+define DOCKERFILEIGNORE_CONTENTS
+**/*
+!$(fq-binary)
+!config/
+web
+endef
+export DOCKERFILEIGNORE_CONTENTS
+
+.PHONY: .dockerignore
+.dockerignore: Makefile
+	echo "$$DOCKERFILEIGNORE_CONTENTS" > .dockerignore
+
+.PHONY: Dockerfile
+Dockerfile: Makefile .dockerignore
+	echo "$$DOCKERFILE_CONTENTS" > Dockerfile
+
+.INTERMEDIATE: $(fq-binary)
+$(fq-binary): $(shell find . -type f -name "*.go")
+	go list -f '{{ join .Deps  "\n"}}' . | \
+		grep -vE "^swallowtail" | \
+		xargs go get -u
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -i -installsuffix docker -o $(fq-binary)
+
+.PHONY: docker
+.DELETE_ON_ERROR: docker
+docker: Dockerfile .dockerignore $(fq-binary)
+	docker build -t $(docker-tag) -t $(ecr-tag) .
+
+dockerx: Dockerfile .dockerignore $(fq-binary) ecrlogin
+	DOCKER_REGISTRY=638234331039.dkr.ecr.us-east-2.amazonaws.com && \
+	docker buildx use default && \
+		docker buildx build --platform linux/arm64 -t $(ecr-tag) .  -o type=image
+
+.PHONY: deps
+deps: 
+	@go list -f '{{ join .Deps  "\n"}}' . | \
+		grep -E "^swallowtail" | \
+		xargs go list -f '{{$$o:=.}}{{range .GoFiles}}{{$$o.Dir}}{{"."}}{{.}}{{"\n"}}{{end}}'
+
+.PHONY: name
+name:
+	@echo $(fq-binary)
+
+.PHONY: ecrlogin
+ecrlogin: 
+	aws --region us-east-2 ecr get-login-password | docker login --username AWS --password-stdin 638234331039.dkr.ecr.us-east-2.amazonaws.com
+
+ecrpush: ecrlogin
+	docker push $(ecr-tag)
