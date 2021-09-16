@@ -92,11 +92,11 @@ type ExecutePerpetualFuturesTradeRequest struct {
 	// ---
 	PositionSide     string  `json:"positionSide"` // "BOTH", "LONG", "SHORT"
 	TimeInForce      string  `json:"timeInForce"`
-	Quantity         float64 `json:"quantity"`
+	Quantity         string  `json:"quantity"`
 	ReduceOnly       string  `json:"reduceOnly"` // "true" or "false"
-	Price            float64 `json:"price"`
+	Price            string  `json:"price"`
 	NewClientOrderID string  `json:"newClientOrderId"`
-	StopPrice        float64 `json:"stopPrice"`
+	StopPrice        string  `json:"stopPrice"`
 	ClosePosition    string  `json:"closePosition"`
 	ActivationPrice  float64 `json:"activationPrice"`
 	CallbackRate     float64 `json:"callbackRate"` // Used with trailing stop
@@ -111,10 +111,12 @@ type ExecutePerpetualFuturesTradeResponse struct {
 	ExecutionTimestamp int `json:"updateTime"`
 }
 
+// VerifyCredentialsRequest ...
 type VerifyCredentialsRequest struct {
 	Credentials *Credentials
 }
 
+// VerifyCredentialsResponse ...
 type VerifyCredentialsResponse struct {
 	IPRestrict                     bool `json:"ipRestrict"`
 	CreateTime                     int  `json:"createTime"`
@@ -129,10 +131,40 @@ type VerifyCredentialsResponse struct {
 	TradingAuthorityExpirationTime int  `json:"tradingAuthorityExpirationTime"`
 }
 
+// GetStatusRequest ...
 type GetStatusRequest struct{}
 
+// GetStatusResponse ...
 type GetStatusResponse struct {
 	AssumedClockDrift time.Duration
 	ServerTime        int `json:"serverTime"`
 	ServerLatency     time.Duration
+}
+
+// GetFuturesExchangeInfoRequest ...
+type GetFuturesExchangeInfoRequest struct{}
+
+// GetFuturesExchangeInfoResponse ...
+type GetFuturesExchangeInfoResponse struct {
+	RateLimits []struct {
+		Interval      string `json:"interval"`
+		IntervalNum   int    `json:"intervalNum"`
+		Limit         int    `json:"limit"`
+		RateLimitType string `json:"rate_limit_type"`
+	} `json:"rate_limits"`
+	ServerTime int `json:"serverTime"`
+	Assets     []struct {
+		Asset           string `json:"asset"`
+		MarginAvailable bool   `json:"margainAvailable"`
+	} `json:"assets"`
+	Symbols []struct {
+		Symbol            string `json:"symbol"`
+		Pair              string `json:"pair"`
+		ContractType      string `json:"contractType"`
+		BaseAsset         string `json:"baseAsset"`
+		QuoteAsset        string `json:"quoteAsset"`
+		MarginAsset       string `json:"marginAsset"`
+		QuantityPrecision int    `json:"quantityPrecision"`
+		PricePrecision    int    `json:"pricePrecision"`
+	}
 }

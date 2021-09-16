@@ -57,7 +57,7 @@ $(fq-binary-arm): $(shell find . -type f -name "*.go")
 .PHONY: docker
 .DELETE_ON_ERROR: docker
 docker: Dockerfile .dockerignore $(fq-binary)
-	docker build -t $(ecr-tag) .
+	docker build -t $(fq-binary) -t $(ecr-tag) .
 
 .PHONY: dockerarm
 .DELETE_ON_ERROR: dockerarm

@@ -96,6 +96,7 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 		},
 	}).Send(ctx).Response()
 	if err != nil {
+		slog.Error(ctx, "Failed to add exchange, error: %v", err)
 		_, derr := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf(":wave: Sorry, I wasn't able to to add an exchange; please ping @ajperkins to investigate."),

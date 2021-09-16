@@ -25,7 +25,7 @@ func notifyUserOnFailure(ctx context.Context, userID, tradeID string, err error)
 	case gerrors.Is(err, gerrors.ErrUnknown):
 		errMsg = "Sorry I'm not quite sure what happened. Please ping @ajperkins to investigate."
 	case gerrors.Is(err, gerrors.ErrFailedPrecondition, "bad_request"):
-		errMsg = "Sorry, the request to the exchange was malformed. This shouldnt' happen, **please** ping @ajperkins to investigate."
+		errMsg = "Sorry, the request to the exchange was malformed. This can happen if the trade amount you place is too small, **please** ping @ajperkins to investigate if you don't believe this is the case."
 	case gerrors.Is(err, gerrors.ErrRateLimited):
 		errMsg = "Sorry, looks like I've been rate limited. Please try and place the trade manually again in a few seconds time."
 	default:

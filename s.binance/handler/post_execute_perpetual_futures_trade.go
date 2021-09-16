@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.binance/client"
+	"swallowtail/s.binance/exchangeinfo"
 	"swallowtail/s.binance/marshaling"
 	binanceproto "swallowtail/s.binance/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
@@ -38,12 +40,29 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.invalid_trade", errParams)
 	}
 
+	// Round the quantity to the minimum precision allowed on the exchange.
+	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(in.Asset)
+	if !ok {
+		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", errParams)
+	}
+
+	// Round the price to the minimum precision allowed on the exchange.
+	assetPricePrecision, ok := exchangeinfo.GetBaseAssetPricePrecision(in.Asset)
+	if !ok {
+		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", errParams)
+	}
+
+	// Convert floats to minimum precision rounded strings.
+	quantity := roundToPrecisionString(float64(in.NotionalSize), assetQuantityPrecision)
+	entryPrice := roundToPrecisionString(float64(in.Entry), assetPricePrecision)
+	stopLossPrice := roundToPrecisionString(float64(in.StopLoss), assetPricePrecision)
+
 	orders := []*client.ExecutePerpetualFuturesTradeRequest{}
 
 	// Add Stop Loss.
 	orders = append(orders, &client.ExecutePerpetualFuturesTradeRequest{
 		Symbol:           strings.ToUpper(fmt.Sprintf("%s%s", in.Asset, in.Pair)),
-		StopPrice:        float64(in.StopLoss),
+		StopPrice:        stopLossPrice,
 		Side:             "SELL",
 		Type:             tradeengineproto.ORDER_TYPE_STOP_MARKET.String(),
 		ClosePosition:    "true",
@@ -56,13 +75,13 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 		Symbol:           strings.ToUpper(fmt.Sprintf("%s%s", in.Asset, in.Pair)),
 		Side:             convertLongAndShort(in.TradeSide),
 		Type:             strings.ToUpper(in.OrderType),
-		Quantity:         float64(in.NotionalSize),
+		Quantity:         quantity,
 		NewOrderRespType: "ACK",
 	}
 
 	// Decorate entry if we have a LIMIT order.
 	if strings.ToUpper(in.OrderType) == tradeengineproto.ORDER_TYPE_LIMIT.String() {
-		entry.Price = float64(in.Entry)
+		entry.Price = entryPrice
 		entry.TimeInForce = "GTC"
 	}
 
@@ -81,8 +100,9 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 		rsp, err := client.ExecutePerpetualFuturesTrade(ctx, order, dtoCredentials)
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.order", map[string]string{
+				// TODO: this should be improved somewhat.
 				"is_stop_loss": strconv.FormatBool(order.ClosePosition == "true"),
-				"is_entry":     strconv.FormatBool(order.Price != 0),
+				"is_entry":     strconv.FormatBool(order.Quantity != ""),
 			})
 		}
 
@@ -94,23 +114,4 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 		ExchangeTradeId: exchangeID.String(),
 		Timestamp:       int64(maxTs),
 	}, nil
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
-}
-
-func convertLongAndShort(side string) string {
-	switch strings.ToLower(side) {
-	case "long":
-		return "BUY"
-	case "short":
-		return "SELL"
-	default:
-		return side
-	}
 }

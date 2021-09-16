@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS s_account_exchanges (
 	exchange_id uuid DEFAULT uuid_generate_v4(),
 	exchange exchange,
 
-	user_id VARCHAR(20),
+	user_id VARCHAR(20) NOT NULL,
 	
-	api_key VARCHAR(200),
-	secret_key VARCHAR(200),
-	subaccount VARCHAR(256),
+	api_key VARCHAR(200) NOT NULL,
+	secret_key VARCHAR(200) NOT NULL,
+	subaccount VARCHAR(256) NOT NULL DEFAULT 'UNKNOWN',
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),

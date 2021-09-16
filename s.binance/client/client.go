@@ -61,6 +61,9 @@ type BinanceClient interface {
 	// VerifyCredentials verifies the given credentials of the users.
 	VerifyCredentials(context.Context, *Credentials) (*VerifyCredentialsResponse, error)
 
+	// GetFuturesExchangeInfo returns the exchange information specifically for perpetual futures contracts.
+	GetFuturesExchangeInfo(context.Context, *GetFuturesExchangeInfoRequest) (*GetFuturesExchangeInfoResponse, error)
+
 	// GetStatus returns the statistics round the exchange server time & latency.
 	GetStatus(context.Context) (*GetStatusResponse, error)
 }
@@ -165,4 +168,11 @@ func GetStatus(ctx context.Context) (*GetStatusResponse, error) {
 	rsp.AssumedClockDrift = assumedClockDrift
 
 	return rsp, nil
+}
+
+// GetFuturesExchangeInfo ...
+func GetFuturesExchangeInfo(ctx context.Context, req *GetFuturesExchangeInfoRequest) (*GetFuturesExchangeInfoResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get Binance futures exchange info")
+	defer span.Finish()
+	return client.GetFuturesExchangeInfo(ctx, req)
 }
