@@ -23,7 +23,7 @@ func Init(ctx context.Context) error {
 		return err
 	}
 
-	slog.Info(ctx, "Gathered required futures exchange information: %v %v", quantityPrecisions, pricePrecisions)
+	slog.Info(ctx, "Gathered required futures exchange information")
 
 	// Start our refresh loop.
 	go refresh(ctx)
@@ -37,8 +37,10 @@ func refresh(ctx context.Context) {
 		select {
 		case <-t.C:
 			if err := gatherExchangeInfo(ctx); err != nil {
-				slog.Error(ctx, "Failed to refresh exchange info: Error: %v", err)
+				slog.Error(ctx, "Failed to refresh binance exchange info: Error: %v", err)
+				continue
 			}
+			slog.Info(ctx, "Refreshed binance info")
 		case <-ctx.Done():
 			return
 		}
