@@ -8,8 +8,6 @@ import (
 	"swallowtail/s.binance/exchangeinfo"
 	"swallowtail/s.binance/handler"
 	binanceproto "swallowtail/s.binance/proto"
-
-	"github.com/monzo/slog"
 )
 
 const (
@@ -25,8 +23,6 @@ func main() {
 	if err := client.Init(ctx); err != nil {
 		panic(err)
 	}
-
-	slog.Info(ctx, "HERE")
 
 	// Init exchange info.
 	if err := exchangeinfo.Init(ctx); err != nil {

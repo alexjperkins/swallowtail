@@ -113,8 +113,6 @@ func (c *binanceClient) GetFuturesExchangeInfo(ctx context.Context, req *GetFutu
 		})
 	}
 
-	slog.Info(ctx, "HERE", rspBody)
-
 	return rspBody, nil
 }
 
