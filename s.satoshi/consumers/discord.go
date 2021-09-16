@@ -169,6 +169,10 @@ func handleModMessages(
 					"total":    fmt.Sprintf("%v", len(parsedContent)),
 					"trade_id": trade.TradeId,
 				},
+				Poller: func(ctx context.Context, messageID string) error {
+					// Inject the trade ID.
+					return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
+				},
 			}
 
 			msgs = append(msgs, msg)
@@ -252,6 +256,10 @@ func handleSwingMessages(
 					"message":  fmt.Sprintf("%v", i),
 					"total":    fmt.Sprintf("%v", len(parsedContent)),
 					"trade_id": trade.TradeId,
+				},
+				Poller: func(ctx context.Context, messageID string) error {
+					// Inject the trade ID.
+					return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
 				},
 			}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
 	"swallowtail/s.binance/client/signer"
@@ -69,8 +68,10 @@ func (c *binanceClient) ExecutePerpetualFuturesTrade(ctx context.Context, req *E
 	qs := buildQueryStringFromFuturesPerpetualTrade(req)
 
 	if err := c.doWithSignature(ctx, http.MethodPost, url, qs, nil, rspBody, credentials); err != nil {
-		slog.Warn(ctx, "Binance Perpetuals futures trade FAILED: %v", qs)
-		return nil, gerrors.Augment(err, "failed_to_read_perpetual_futures_account.client", nil)
+		slog.Warn(ctx, "Binance Perpetuals futures trade failed: %v", qs)
+		return nil, gerrors.Augment(err, "failed_to_execute_perpetual_futures_trade.client", map[string]string{
+			"query_string": qs,
+		})
 	}
 
 	slog.Info(ctx, "Binance Perpetuals futures trade executed: %v", qs)
@@ -94,6 +95,19 @@ func (c *binanceClient) VerifyCredentials(ctx context.Context, credentials *Cred
 	rspBody := &VerifyCredentialsResponse{}
 
 	if err := c.doWithSignature(ctx, http.MethodGet, endpoint, "", nil, rspBody, credentials); err != nil {
+		return nil, gerrors.Augment(err, "client_request_failed.verify_credentials", map[string]string{
+			"endpoint": endpoint,
+		})
+	}
+
+	return rspBody, nil
+}
+
+func (c *binanceClient) GetFuturesExchangeInfo(ctx context.Context, req *GetFuturesExchangeInfoRequest) (*GetFuturesExchangeInfoResponse, error) {
+	endpoint := fmt.Sprintf("%s/exchangeInfo", binanceFuturesURL)
+	rspBody := &GetFuturesExchangeInfoResponse{}
+
+	if err := c.do(ctx, http.MethodGet, endpoint, "", nil, rspBody, nil); err != nil {
 		return nil, gerrors.Augment(err, "client_request_failed.verify_credentials", map[string]string{
 			"endpoint": endpoint,
 		})
@@ -162,75 +176,11 @@ func (c *binanceClient) signRequest(secret, queryString string, reqBody interfac
 		return "", gerrors.Augment(err, "failed_to_sign_request", nil)
 	}
 
-	// return the new converted querystring with timestamp & signature appended.
+	// Return the new converted querystring with timestamp & signature appended.
 	switch {
 	case queryString == "":
 		return fmt.Sprintf("timestamp=%d&signature=%s", now, hmac), nil
 	default:
 		return fmt.Sprintf("%s&timestamp=%d&signature=%s", queryString, now, hmac), nil
 	}
-}
-
-// Binance :)
-// TODO: this has to be fixed
-func buildQueryStringFromFuturesPerpetualTrade(req *ExecutePerpetualFuturesTradeRequest) string {
-	var sb strings.Builder
-
-	sb.WriteString(fmt.Sprintf("symbol=%s", req.Symbol))
-	sb.WriteString(fmt.Sprintf("&side=%s", req.Side))
-	sb.WriteString(fmt.Sprintf("&type=%s", req.Type))
-
-	if req.PositionSide != "" {
-		sb.WriteString(fmt.Sprintf("&positionSide=%s", req.PositionSide))
-	}
-
-	if req.TimeInForce != "" {
-		sb.WriteString(fmt.Sprintf("&timeInForce=%s", req.TimeInForce))
-	}
-
-	if req.Quantity != 0 {
-		sb.WriteString(fmt.Sprintf("&quantity=%.1f", req.Quantity))
-	}
-
-	if req.ReduceOnly != "" {
-		sb.WriteString(fmt.Sprintf("&reduceOnly=%s", req.ReduceOnly))
-	}
-
-	if req.Price != 0 {
-		sb.WriteString(fmt.Sprintf("&price=%.3f", req.Price))
-	}
-
-	if req.NewClientOrderID != "" {
-		sb.WriteString(fmt.Sprintf("&newClientOrderId=%s", req.NewClientOrderID))
-	}
-
-	if req.StopPrice != 0 {
-		sb.WriteString(fmt.Sprintf("&stopPrice=%.3f", req.StopPrice))
-	}
-
-	if req.ClosePosition != "" {
-		sb.WriteString(fmt.Sprintf("&closePosition=%v", req.ClosePosition))
-	}
-
-	if req.ActivationPrice != 0 {
-		sb.WriteString(fmt.Sprintf("&activationPrice=%v", req.ActivationPrice))
-	}
-
-	if req.CallbackRate != 0 {
-		sb.WriteString(fmt.Sprintf("&callbackRate=%v", req.CallbackRate))
-	}
-
-	if req.WorkingType != "" {
-		sb.WriteString(fmt.Sprintf("&workingType=%s", req.WorkingType))
-	}
-
-	if req.PriceProtect != "" {
-		sb.WriteString(fmt.Sprintf("&priceProtect=%s", req.PriceProtect))
-	}
-
-	if req.NewOrderRespType != "" {
-		sb.WriteString(fmt.Sprintf("&newOrderRespType=%s", req.NewOrderRespType))
-	}
-
-	return sb.String()
 }

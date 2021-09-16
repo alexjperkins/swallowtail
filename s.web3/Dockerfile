@@ -1,8 +1,0 @@
-### --- Service --- ###
-FROM alpine:latest
-MAINTAINER alexperkins.dev@gmail.com
-ADD swallowtail.s.web3 /
-ADD ./config /s.web3/config
-EXPOSE 8080
-RUN apk --no-cache add ca-certificates
-ENTRYPOINT ["/swallowtail.s.web3"]

@@ -1,7 +1,15 @@
 SHELL=/bin/bash -O extglob -c
+
+ecr-registry := 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail
+ecr-arm-registry := 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm
+
 binary := $(shell pwd | rev | cut -d '/' -f 1 | rev | sed 's/-//g' )
 fq-binary := swallowtail.$(binary)
+fq-binary-arm := swallowtail.$(binary).arm
+
 docker-tag ?= $(fq-binary)
+ecr-tag := $(ecr-registry):$(fq-binary)
+ecr-tag-arm := $(ecr-arm-registry):$(fq-binary).arm
 
 define DOCKERFILE_CONTENTS
 ### --- Service --- ###
@@ -39,11 +47,23 @@ $(fq-binary): $(shell find . -type f -name "*.go")
 		xargs go get -u
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -i -installsuffix docker -o $(fq-binary)
 
+.INTERMEDIATE: $(fq-binary-arm)
+$(fq-binary-arm): $(shell find . -type f -name "*.go")
+	go list -f '{{ join .Deps  "\n"}}' . | \
+		grep -vE "^swallowtail" | \
+		xargs go get -u
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -i -installsuffix docker -o $(fq-binary)
 
 .PHONY: docker
 .DELETE_ON_ERROR: docker
 docker: Dockerfile .dockerignore $(fq-binary)
-	docker build -t $(docker-tag) .
+	docker build -t $(fq-binary) -t $(ecr-tag) .
+
+.PHONY: dockerarm
+.DELETE_ON_ERROR: dockerarm
+dockerarm: Dockerfile .dockerignore $(fq-binary-arm)
+	docker buildx use default && \
+		docker buildx build --platform linux/arm64 -t $(ecr-tag-arm) . -o type=image --no-cache
 
 .PHONY: deps
 deps: 
@@ -54,3 +74,19 @@ deps:
 .PHONY: name
 name:
 	@echo $(fq-binary)
+
+.PHONY: ecrlogin
+ecrlogin: 
+	aws --region us-east-2 ecr get-login-password | docker login --username AWS --password-stdin $(ecr-registry)
+
+.PHONY: ecrpush
+ecrpush: ecrlogin
+	docker push $(ecr-tag)
+
+.PHONY: ecrloginarm
+ecrloginarm: 
+	aws --region us-east-2 ecr get-login-password | docker login --username AWS --password-stdin $(ecr-arm-registry)
+
+.PHONY: ecrpusharm
+ecrpusharm: ecrloginarm
+	docker push $(ecr-tag-arm)

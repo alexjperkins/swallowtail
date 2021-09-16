@@ -68,8 +68,18 @@ STOP LOSS:    %v
 		footer.WriteString(fmt.Sprintf("TP%v:          %v\n", i+1, tp))
 	}
 
+	riskMessage := `
+Please manage your risk accordingly. To **place** a trade react with one of the following emojis within **15 minutes**:
+
+1%:  :one:
+2%:  :two:
+5%:  :five:
+10%: :keycap_ten:
+
+Always manually check the trade has been put on correctly on your account. Don't assume it will work 100% of the time whilst in **Beta**.
+`
 	// Append where we parsed the trade from.
 	footer.WriteString(fmt.Sprintf("\nParsed From:\n%s", parsedFrom))
 
-	return fmt.Sprintf("%s%s```%s%s```", base, warning, formattedContent, footer.String())
+	return fmt.Sprintf("%s%s```%s%s```%s", base, warning, formattedContent, footer.String(), riskMessage)
 }

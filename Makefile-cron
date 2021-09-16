@@ -1,7 +1,17 @@
+SHELL=/bin/bash -O extglob -c
+
+ecr-registry := 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail
+ecr-arm-registry := 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm
+
 binary := $(shell pwd | rev | cut -d '/' -f 1 | rev)
 fq-binary := swallowtail.$(binary)
+fq-binary-arm := swallowtail.$(binary).arm
+
 docker-ports := $(shell cat ports 2> /dev/null || exit 0)
+
 docker-tag ?= $(fq-binary)
+ecr-tag := $(ecr-registry):$(fq-binary)
+ecr-tag-arm := $(ecr-arm-registry):$(fq-binary).arm
 
 define DOCKERFILE_CONTENTS
 FROM golang:1.17-alpine
@@ -37,7 +47,11 @@ Dockerfile: Makefile
 .PHONY: docker
 .DELETE_ON_ERROR: docker
 docker: Dockerfile .dockerignore
-	docker build  -t $(docker-tag) .
+	docker build -t $(docker-tag) -t $(ecr-tag) .
+
+dockerarm: Dockerfile .dockerignore
+	docker buildx use default && \
+		docker buildx build --platform linux/arm64 -t $(ecr-tag-arm) . -o type=image --no-cache
 
 .PHONY: name
 name:
@@ -46,3 +60,19 @@ name:
 .PHONY: deps
 deps:
 	@echo ""
+
+.PHONY: ecrlogin
+ecrlogin:
+	aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 638234331039.dkr.ecr.us-east-2.amazonaws.com
+
+.PHONY: ecrpush
+ecrpush:
+	docker push $(ecr-tag)
+
+.PHONY: ecrlogin
+ecrloginarm: 
+	aws --region us-east-2 ecr get-login-password | docker login --username AWS --password-stdin $(ecr-arm-registry)
+
+.PHONY: ecrpusharm
+ecrpusharm: ecrlogin
+	docker push $(ecr-tag-arm)
