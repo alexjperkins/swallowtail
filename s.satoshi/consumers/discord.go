@@ -292,50 +292,65 @@ func handleInternalCallsMessages(
 			return
 		}
 
-		// Attempt to parse a trade.
-		trade, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, mc.Content, mc, tradeengineproto.ACTOR_TYPE_INTERNAL)
+		parsedContent, err := getLatestChannelMessages(ctx, s, m.ChannelID)
 		if err != nil {
-			// No trade can be parsed; so lets continue.
-			slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, mc.Content)
+			slog.Error(ctx, "Failed to get latest mod message: %v", err)
 			return
 		}
 
-		now := time.Now().UTC()
-		idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
+		msgs := []*ConsumerMessage{}
+		for i, pc := range parsedContent {
+			// Attempt to parse a trade.
+			trade, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_INTERNAL)
+			if err != nil {
+				// No trade can be parsed; so lets continue.
+				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
+				return
+			}
 
-		// Sign our trade with the timestamp.
-		trade.IdempotencyKey = idempotencyKey
+			now := time.Now().UTC()
+			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
 
-		rsp, err := createTrade(ctx, trade)
-		if err != nil {
-			// Best effort for now.
-			slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+			// Sign our trade with the timestamp.
+			trade.IdempotencyKey = idempotencyKey
+
+			rsp, err := createTrade(ctx, trade)
+			if err != nil {
+				// Best effort for now.
+				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+			}
+
+			trade.TradeId = rsp.TradeId
+			trade.Created = rsp.Created
+			tradeContent := formatter.FormatTrade("SCG INTERNAL CALL", trade, pc.Content)
+
+			msg := &ConsumerMessage{
+				ConsumerID:       discordConsumerID,
+				DiscordChannelID: discordproto.DiscordSatoshiModTradesChannel,
+				Created:          time.Now(),
+				Message:          tradeContent,
+				Attachments:      m.Attachments,
+				IsActive:         isActive,
+				Metadata: map[string]string{
+					"trade_id": trade.TradeId,
+					"message":  fmt.Sprintf("%v", i),
+					"total":    fmt.Sprintf("%v", len(parsedContent)),
+				},
+				Poller: func(ctx context.Context, messageID string) error {
+					// Inject the trade ID.
+					return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
+				},
+			}
+
+			msgs = append(msgs, msg)
 		}
 
-		trade.TradeId = rsp.TradeId
-		trade.Created = rsp.Created
-		tradeContent := formatter.FormatTrade("SCG INTERNAL CALL", trade, mc.Content)
-
-		msg := &ConsumerMessage{
-			ConsumerID:       discordConsumerID,
-			DiscordChannelID: discordproto.DiscordSatoshiModTradesChannel,
-			Created:          time.Now(),
-			Message:          tradeContent,
-			Attachments:      m.Attachments,
-			IsActive:         isActive,
-			Metadata: map[string]string{
-				"trade_id": trade.TradeId,
-			},
-			Poller: func(ctx context.Context, messageID string) error {
-				// Inject the trade ID.
-				return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
-			},
-		}
-
-		select {
-		case c <- msg:
-		default:
-			slog.Warn(ctx, "Failed to publish satoshi swings msg; blocked channel")
+		for _, msg := range msgs {
+			select {
+			case c <- msg:
+			default:
+				slog.Warn(ctx, "Failed to publish satoshi swings msg; blocked channel")
+			}
 		}
 	}
 }
