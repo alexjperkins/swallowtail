@@ -10,7 +10,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
-	"github.com/monzo/terrors"
 )
 
 const (
@@ -62,7 +61,7 @@ func registerAccountHandler(ctx context.Context, tokens []string, s *discordgo.S
 		Password: password,
 	}).Send(ctx).Response()
 	switch {
-	case terrors.Is(err, terrors.ErrPreconditionFailed, "account-already-exists"):
+	case gerrors.Is(err, gerrors.ErrAlreadyExists, "account-already-exists"):
 		s.ChannelMessageSend(
 			m.ChannelID,
 			":wave: Hi, I've already got an account registered for you.  You're all good!",

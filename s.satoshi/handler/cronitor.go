@@ -59,7 +59,7 @@ EXCHANGE TRADE ID:    %s
 TRADE PARTICIPANT ID: %s
 ASSET:                %s
 EXCHANGE:             %s
-RISK (%%):            %v
+RISK (%%):             %v
 SIZE:                 %v
 TIMESTAMP:            %v
 `
@@ -198,7 +198,7 @@ func notifyPulseChannelUserTradeFailure(ctx context.Context, userID, tradeID str
 TRADE ID:  %s
 USER ID:   %s
 TIMESTAMP: %v
-RISK (%%): %v
+RISK (%%):  %v
 
 ERROR:     %v
 `
