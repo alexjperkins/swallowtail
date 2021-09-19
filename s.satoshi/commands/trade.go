@@ -18,7 +18,7 @@ const (
 )
 
 func init() {
-	register(accountCommandID, &Command{
+	register(tradeCommandID, &Command{
 		ID:                  tradeCommandID,
 		IsPrivate:           false,
 		MinimumNumberOfArgs: 1,
