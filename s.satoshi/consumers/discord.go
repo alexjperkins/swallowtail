@@ -150,8 +150,8 @@ func handleModMessages(
 
 			rsp, err := createTrade(ctx, trade)
 			if err != nil {
-				// Best effort for now.
 				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+				continue
 			}
 
 			trade.TradeId = rsp.TradeId
@@ -239,6 +239,7 @@ func handleSwingMessages(
 			if err != nil {
 				// Best effort for now.
 				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+				continue
 			}
 
 			trade.TradeId = rsp.TradeId
@@ -318,6 +319,7 @@ func handleInternalCallsMessages(
 			if err != nil {
 				// Best effort for now.
 				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+				continue
 			}
 
 			trade.TradeId = rsp.TradeId
