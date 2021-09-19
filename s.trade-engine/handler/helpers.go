@@ -8,7 +8,9 @@ import (
 
 func isActorValid(actorID string) bool {
 	switch actorID {
-	case tradeengineproto.TradeEngineActorSatoshiSystem, tradeengineproto.TradeEngineActorManual:
+	case tradeengineproto.TradeEngineActorSatoshiSystem,
+		tradeengineproto.TradeEngineActorManual,
+		tradeengineproto.TradeEngineActorSatoshiCommand:
 		return true
 	default:
 		return false
