@@ -33,7 +33,7 @@ func formatNonPublicMsg(userID string) string {
 	return fmt.Sprintf(":wave: <@%s>, Please DM satoshi this command instead, the response may contain sensitive information. Thanks", userID)
 }
 
-func formatFailureMsg(userID, failureMsg string, err error) string {
+func formatFailureMsg(userID, usage, failureMsg string, err error) string {
 	var errMsg = err.Error()
 	switch {
 	case gerrors.Is(err, gerrors.ErrUnimplemented):
@@ -41,7 +41,7 @@ func formatFailureMsg(userID, failureMsg string, err error) string {
 	}
 
 	return fmt.Sprintf(
-		":disappointed: Sorry <@%s>, I failed to execute that command.\n%s\n Error: %s\n.",
+		":disappointed: Sorry <@%s>, I failed to execute that command.\n%s\n Error: %s\n",
 		userID, failureMsg, errMsg,
 	)
 }

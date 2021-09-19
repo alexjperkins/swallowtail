@@ -12,7 +12,7 @@ import (
 
 const (
 	paymentCommandID = "payment"
-	paymentUsage     = `!payment <subcommand`
+	paymentUsage     = `!payment <subcommand>`
 )
 
 func init() {
