@@ -19,10 +19,10 @@ const (
 
 func init() {
 	register(accountCommandID, &Command{
-		ID:                  accountCommandID,
+		ID:                  tradeCommandID,
 		IsPrivate:           false,
 		MinimumNumberOfArgs: 1,
-		Usage:               accountUsage,
+		Usage:               tradeUsage,
 		Description:         "Command for managing satoshi account",
 		Handler:             tradeHandler,
 		Guide:               "https://scalloped-single-1bd.notion.site/Automated-trades-guide-69188bbfbb2f4b6f97b22d5cc2a5ee9e",
