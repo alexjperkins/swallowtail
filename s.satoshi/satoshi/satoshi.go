@@ -105,6 +105,7 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 				m, err := s.dc.Send(ctx, e.Message, e.DiscordChannelID)
 				if err != nil {
 					slog.Error(ctx, "Failed to send message via discord: %v", e.Message)
+					continue
 				}
 
 				if e.Poller == nil {

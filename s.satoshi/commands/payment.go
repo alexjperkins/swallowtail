@@ -29,7 +29,7 @@ func init() {
 				ID:                  "payment-register",
 				IsPrivate:           true,
 				MinimumNumberOfArgs: 1,
-				Usage:               `!payment <transaction_id>`,
+				Usage:               `!payment register <transaction_id>`,
 				Description:         "Registers a new payment to satoshi. It checks the transaction is correct & keeps a record of it.",
 				Handler:             registerPaymentHandler,
 				FailureMsg:          "Please check that you have an account registered; or maybe you've already paid for this month? ping @ajperkins if unsure",
