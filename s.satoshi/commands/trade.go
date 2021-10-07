@@ -23,7 +23,7 @@ func init() {
 		IsPrivate:           false,
 		MinimumNumberOfArgs: 1,
 		Usage:               tradeUsage,
-		Description:         "Command for managing satoshi account",
+		Description:         "Command for managing satoshi trades",
 		Handler:             tradeHandler,
 		Guide:               "https://scalloped-single-1bd.notion.site/Automated-trades-guide-69188bbfbb2f4b6f97b22d5cc2a5ee9e",
 		SubCommands: map[string]*Command{
