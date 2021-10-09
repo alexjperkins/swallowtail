@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	is_admin BOOLEAN DEFAULT FALSE,
 	is_futures_member BOOLEAN DEFAULT FALSE,
 
-	default_dca_strategy dca_strategy NOT NULL DEFAULT 'CONSTANT',
+	default_dca_strategy dca_strategy NOT NULL DEFAULT 'LINEAR',
 
 	PRIMARY KEY(user_id)
 );

@@ -6,4 +6,4 @@ BEGIN
 END
 $$;
 
-ALTER TABLE s_account_accounts ADD COLUMN default_dca_strategy dca_strategy NOT NULL DEFAULT 'CONSTANT';
+ALTER TABLE s_account_accounts ADD COLUMN default_dca_strategy dca_strategy NOT NULL DEFAULT 'LINEAR';

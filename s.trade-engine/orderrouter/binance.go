@@ -10,13 +10,18 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	riskutil "swallowtail/libraries/risk"
+	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
 	"swallowtail/s.trade-engine/domain"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-func calculuateNotionalSizesFromBinanceAccount(ctx context.Context, entries []float64, stopLoss, risk, accountSize float64, side *tradeengineproto.TRADE_SIDE) ([]float64, error) {
-	risks, err := riskutil.CalculateNotionalSizesFromPositionAndRisk(entries, stopLoss, risk, side)
+const (
+	defaultBinanceDCAOrders = 5
+)
+
+func calculuateNotionalSizesFromBinanceAccount(entries []float64, stopLoss, risk, accountSize float64, side *tradeengineproto.TRADE_SIDE, strategy *tradeengineproto.DCA_STRATEGY) ([]float64, error) {
+	risks, err := riskutil.CalculateNotionalSizesFromPositionAndRisk(entries, stopLoss, risk, defaultBinanceDCAOrders, side, strategy)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_calculate_risk_sizes.failed_to_calculate_notional_size_from_risk", nil)
 	}
@@ -39,6 +44,19 @@ func readBinancePerpetualFuturesAccountSize(ctx context.Context, credentials *bi
 	}
 
 	return float64(rsp.AvailableBalance), nil
+}
+
+func readAccountByUserID(ctx context.Context, userID string) (*accountproto.Account, error) {
+	rsp, err := (&accountproto.ReadAccountRequest{
+		UserId: userID,
+	}).Send(ctx).Response()
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_account_by_user_id", map[string]string{
+			"user_id": userID,
+		})
+	}
+
+	return rsp.Account, nil
 }
 
 func executeBinanceFuturesTrade(
@@ -68,12 +86,31 @@ func executeBinanceFuturesTrade(
 			})
 		}
 
-		accountSize, err := readBinancePerpetualFuturesAccountSize(ctx, credentials)
+		// Read binance perpetual futures account.
+		binanceAccountSize, err := readBinancePerpetualFuturesAccountSize(ctx, credentials)
 		if err != nil {
 			return nil, err
 		}
 
-		ns, err := calculuateNotionalSizesFromBinanceAccount(ctx, trade.Entries, trade.StopLoss, accountSize, float64(participant.Risk), side)
+		// Read account.
+		account, err := readAccountByUserID(ctx, participant.UserId)
+		if err != nil {
+			return nil, err
+		}
+
+		// Marshal default dca strategy.
+		var dcaStrategy *tradeengineproto.DCA_STRATEGY
+		switch account.DefaultDcaStrategy {
+		case tradeengineproto.DCA_STRATEGY_CONSTANT.String():
+			dcaStrategy = tradeengineproto.DCA_STRATEGY_CONSTANT.Enum()
+		case tradeengineproto.DCA_STRATEGY_LINEAR.String():
+			dcaStrategy = tradeengineproto.DCA_STRATEGY_LINEAR.Enum()
+		case tradeengineproto.DCA_STRATEGY_EXPONENTIAL.String():
+			dcaStrategy = tradeengineproto.DCA_STRATEGY_EXPONENTIAL.Enum()
+		}
+
+		// Calculate notional size of all orders.
+		ns, err := calculuateNotionalSizesFromBinanceAccount(trade.Entries, trade.StopLoss, binanceAccountSize, float64(participant.Risk), side, dcaStrategy)
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_execute_binance_futures_trade", map[string]string{
 				"side": side.String(),
@@ -89,7 +126,6 @@ func executeBinanceFuturesTrade(
 		"total_notional_size": fmt.Sprintf("%v", totalNotionalSize),
 		"total_risk":          fmt.Sprintf("%v", participant.Risk),
 	}
-
 	orders := make([]*binanceproto.PerpetualFuturesOrder, 0, len(trade.Entries)+1)
 
 	// Add stop loss order. We add this first for safety.
@@ -135,6 +171,7 @@ func executeBinanceFuturesTrade(
 			})
 		}
 
+		// Parse time in force.
 		var timeInForce binanceproto.BinanceTimeInForce
 		if orderType == binanceproto.BinanceOrderType_LIMIT {
 			timeInForce = binanceproto.BinanceTimeInForce_GTC
@@ -151,6 +188,7 @@ func executeBinanceFuturesTrade(
 		})
 	}
 
+	// Add take profit orders to trade.
 	for _, tp := range trade.TakeProfits {
 		orders = append(orders, &binanceproto.PerpetualFuturesOrder{
 			StopPrice:     float32(tp),
@@ -159,6 +197,7 @@ func executeBinanceFuturesTrade(
 		})
 	}
 
+	// Execute trade.
 	rsp, err := (&binanceproto.ExecuteFuturesPerpetualsTradeRequest{
 		Orders:      orders,
 		Timestamp:   timestamppb.Now(),
