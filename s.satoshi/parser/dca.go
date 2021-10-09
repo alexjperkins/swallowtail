@@ -69,7 +69,7 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 
 	currentPrice, err := fetchLatestPrice(ctx, ticker)
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_parse_default", nil)
+		return nil, gerrors.Augment(err, "failed_to_parse_dca", nil)
 	}
 
 	// Validate this is a DCA order; we do so by checking if we have `dca` in the content or we have at least
