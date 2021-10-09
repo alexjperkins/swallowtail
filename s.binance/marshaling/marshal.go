@@ -5,13 +5,14 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.binance/client"
 	"swallowtail/s.binance/exchangeinfo"
 	binanceproto "swallowtail/s.binance/proto"
-	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // CredentialsProtoToDTO ...
@@ -96,7 +97,7 @@ func ProtoOrderToExecutePerpetualsFutureTradeRequest(in *binanceproto.PerpetualF
 
 	// Parse reduce only.
 	reduceOnly := "false"
-	if !in.ClosePosition && (in.OrderType == binanceproto.BinanceOrderType_STOP_MARKET || in.OrderType == binanceproto.BinanceOrderType_TAKE_PROFIT_MARKET) {
+	if !in.ClosePosition && (in.OrderType == binanceproto.BinanceOrderType_BINANCE_STOP_MARKET || in.OrderType == binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT_MARKET) {
 		reduceOnly = "true"
 	}
 

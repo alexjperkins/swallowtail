@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 	"swallowtail/libraries/gerrors"
 	binanceclient "swallowtail/s.binance/client"
 	"swallowtail/s.binance/domain"
@@ -88,29 +87,30 @@ func isValidCredentials(credentials *binanceproto.Credentials, apiKeyOnly bool) 
 }
 
 func validatePerpetualFuturesTrade(trade *binanceproto.ExecuteFuturesPerpetualsTradeRequest) error {
-	switch {
-	case trade.Entry <= 0:
-		return gerrors.BadParam("bad_param.entry_zero_or_below", nil)
-	case trade.StopLoss <= 0:
-		return gerrors.BadParam("bad_param.stop_loss_zero_or_below", nil)
-	case trade.NotionalSize <= 0:
-		return gerrors.BadParam("bad_param.notional_size_zero_or_below", nil)
-	}
+	for _, order := range trade.Orders {
+		if order.Symbol == "" {
+			return gerrors.BadParam("missing_param.symbol", nil)
+		}
 
-	switch strings.ToLower(trade.TradeSide) {
-	case "buy", "sell", "long", "short":
-	default:
-		return gerrors.BadParam("bad_param.invalid_trade_side", map[string]string{
-			"trade_side": trade.TradeSide,
-		})
-	}
-
-	switch strings.ToLower(trade.OrderType) {
-	case "limit", "market":
-	default:
-		return gerrors.BadParam("bad_param.invalid_order_type", map[string]string{
-			"order_type": trade.OrderType,
-		})
+		switch order.OrderType {
+		case binanceproto.BinanceOrderType_BINANCE_LIMIT:
+			if order.Quantity <= 0 {
+				return gerrors.BadParam("bad_param.quantity_zero_or_below", nil)
+			}
+			if order.Price <= 0 {
+				return gerrors.BadParam("bad_param.price_zero_or_below", nil)
+			}
+			if order.TimeInForce == binanceproto.BinanceTimeInForce_BINANCE_NOT_REQUIRED {
+				return gerrors.BadParam("missing_param.time_in_force_required", nil)
+			}
+		case binanceproto.BinanceOrderType_BINANCE_STOP_MARKET, binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT_MARKET:
+			if order.StopPrice <= 0 {
+				return gerrors.BadParam("bad_param.stop_price_zero_or_below", nil)
+			}
+			if !order.ClosePosition {
+				return gerrors.BadParam("bad_param.stop_order_type_no_close_position", nil)
+			}
+		}
 	}
 
 	return nil
@@ -122,17 +122,6 @@ func max(a, b int) int {
 	}
 
 	return b
-}
-
-func convertLongAndShort(side string) string {
-	switch strings.ToLower(side) {
-	case "long":
-		return "BUY"
-	case "short":
-		return "SELL"
-	default:
-		return side
-	}
 }
 
 // NOTE: this **does** not account for large floats & can lead to overflow

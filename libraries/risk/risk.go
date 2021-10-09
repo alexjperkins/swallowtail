@@ -1,43 +1,74 @@
 package risk
 
 import (
+	"math"
 	"swallowtail/libraries/gerrors"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-// CalculateNotionalSizesFromPositionAndRisk returns an array of risk percentages to  place based on both the entry, position & total risk
-func CalculateNotionalSizesFromPositionAndRisk(
+// RiskCalculatedPosition
+type RiskCalculatedPosition struct {
+	Risk  float64
+	Price float64
+}
+
+// CalculatePositionsByRisk returns an array of risk percentages to  place based on both the entry, position & total risk
+func CalculatePositionsByRisk(
 	entries []float64,
 	stopLoss, totalRisk float64,
 	howMany int,
 	side *tradeengineproto.TRADE_SIDE,
 	strategy *tradeengineproto.DCA_STRATEGY,
-) ([]float64, error) {
+) ([]*RiskCalculatedPosition, error) {
 
-	risks := make([]float64, 0, len(entries))
+	risks := make([]*RiskCalculatedPosition, 0, len(entries))
 
-	// Calculate the given space we shall use for our risk coefficients
-	var space []float64
+	// Calculate position sizes
+	positions := make([]float64, 0, len(entries))
+	switch len(entries) {
+	case 0:
+		return nil, gerrors.FailedPrecondition("failed_to_calculate_notional_size_from_risk.missing_entries", nil)
+	case 1:
+		// If we only have one entry; then the risk size is 100% at that price.
+		return []*RiskCalculatedPosition{
+			{
+				Risk:  1.0,
+				Price: entries[0],
+			},
+		}, nil
+
+	default:
+		positionIncrement := float64(math.Abs(entries[len(entries)-1]-entries[0])) * 1.0 / float64(howMany)
+		for i := 0; i < howMany; i++ {
+			positions = append(positions, entries[0]+(float64(i)*positionIncrement))
+		}
+	}
+
+	// Calculate the given risk space we shall use for our risk coefficients
+	var riskSpace []float64
 	switch strategy {
 	case tradeengineproto.DCA_STRATEGY_CONSTANT.Enum():
 		for i := 0; i < howMany; i++ {
-			space = append(space, 1/float64(howMany))
+			riskSpace = append(riskSpace, 1/float64(howMany))
 		}
 	case tradeengineproto.DCA_STRATEGY_LINEAR.Enum():
-		space = summedLinspace(howMany, 1)
+		riskSpace = summedLinspace(howMany, 1)
 	case tradeengineproto.DCA_STRATEGY_EXPONENTIAL.Enum():
 		return nil, gerrors.Unimplemented("failed_to_calculate_notional_size_from_risk.exponential_dca_strategy_unimplemented", nil)
 	}
 
 	// Calculate risk array.
 	for i, entry := range entries {
-		coeff := space[i]
+		position, coeff := positions[i], riskSpace[i]
 		risk, err := calculateRisk(entry, stopLoss, totalRisk, coeff, side)
 		if err != nil {
 			return nil, err
 		}
 
-		risks = append(risks, risk)
+		risks = append(risks, &RiskCalculatedPosition{
+			Risk:  risk,
+			Price: position,
+		})
 	}
 
 	return risks, nil
@@ -67,11 +98,9 @@ func calculateRisk(entry float64, stopLoss, risk, coefficent float64, side *trad
 
 func summedLinspace(howMany int, total float64) []float64 {
 	var (
-		start float64 = 1.0
-		end   float64 = 2.0
-		t     float64
+		t          float64
+		start, end = 1.0, 3.0
 	)
-
 	vs := make([]float64, 0, howMany)
 	for i := 0; i < howMany; i++ {
 		fi := float64(i)

@@ -26,8 +26,9 @@ const (
 	DiscordSatoshiModMessagesChannel = "847954019758112808"
 	DiscordSatoshiSwingsChannel      = "847953925575671848"
 	DiscordSatoshiFuturesChannel     = "814146537088221284"
-	DiscordSatoshiModTradesChannel   = "883692707611050024"
-	DiscordSatoshiChallengesChannel  = "884524239410061323"
+	// DiscordSatoshiModTradesChannel   = "883692707611050024"
+	DiscordSatoshiModTradesChannel  = "896513299200479256" // TEST
+	DiscordSatoshiChallengesChannel = "884524239410061323"
 
 	// Satoshi Discord Pulse Channels
 	DiscordSatoshiAccountsPulseChannel = "883709489101033602"
@@ -37,7 +38,8 @@ const (
 	DiscordSatoshiTradesPulseChannel   = "886691622446829649"
 
 	// Internal Calls Channels
-	DiscordSatoshiInternalCallsChannel = "816797164000116778"
+	// DiscordSatoshiInternalCallsChannel = "816797164000116778"
+	DiscordSatoshiInternalCallsChannel = "896513299200479255" // TEST
 )
 
 const (

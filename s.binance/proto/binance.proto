@@ -19,36 +19,36 @@ service binance {
 }
 
 enum BinanceOrderType {
-    LIMIT = 0;
-    MARKET = 1;
-    STOP = 2;
-    TAKE_PROFIT = 3;
-    STOP_MARKET = 4;
-    TAKE_PROFIT_MARKET = 5;
+    BINANCE_LIMIT = 0;
+    BINANCE_MARKET = 1;
+    BINANCE_STOP = 2;
+    BINANCE_TAKE_PROFIT = 3;
+    BINANCE_STOP_MARKET = 4;
+    BINANCE_TAKE_PROFIT_MARKET = 5;
 }
 
 enum BinanceTradeSide {
-    BUY = 0;
-    SELL = 1;
+    BINANCE_BUY = 0;
+    BINANCE_SELL = 1;
 }
 
 enum BinanceTimeInForce {
-    NOT_REQUIRED = 0;
-    GTC = 1;
-    IOC = 2;
-    FOK = 3;
-    GTX = 4;
+    BINANCE_NOT_REQUIRED = 0;
+    BINANCE_GTC = 1;
+    BINANCE_IOC = 2;
+    BINANCE_FOK = 3;
+    BINANCE_GTX = 4;
 }
 
 enum BinanceWorkingType {
-    CONTRACT_PRICE = 0;
-    MARK_PRICE = 1;
+    BINANCE_CONTRACT_PRICE = 0;
+    BINANCE_MARK_PRICE = 1;
 }
 
 enum BinancePositionSide {
-    BOTH = 0;
-    LONG = 1;
-    SHORT = 2;
+    BINANCE_SIDE_BOTH = 0;
+    BINANCE_SIDE_BOTH_LONG = 1;
+    BINANCE_SIDE_SHORT = 2;
 }
 
 message PerpetualFuturesOrder {

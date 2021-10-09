@@ -53,7 +53,7 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 	for _, order := range orders {
 		rsp, err := client.ExecutePerpetualFuturesTrade(ctx, order, dtoCredentials)
 		if err != nil {
-			isStopLoss := order.OrderType == binanceproto.BinanceOrderType_STOP.String() || order.OrderType == binanceproto.BinanceOrderType_STOP_MARKET.String()
+			isStopLoss := order.OrderType == binanceproto.BinanceOrderType_BINANCE_STOP.String() || order.OrderType == binanceproto.BinanceOrderType_BINANCE_STOP_MARKET.String()
 			return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.order", map[string]string{
 				"is_stop_loss": strconv.FormatBool(isStopLoss),
 			})

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/risk"
 	riskutil "swallowtail/libraries/risk"
 	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
@@ -19,20 +20,6 @@ import (
 const (
 	defaultBinanceDCAOrders = 5
 )
-
-func calculuateNotionalSizesFromBinanceAccount(entries []float64, stopLoss, risk, accountSize float64, side *tradeengineproto.TRADE_SIDE, strategy *tradeengineproto.DCA_STRATEGY) ([]float64, error) {
-	risks, err := riskutil.CalculateNotionalSizesFromPositionAndRisk(entries, stopLoss, risk, defaultBinanceDCAOrders, side, strategy)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_calculate_risk_sizes.failed_to_calculate_notional_size_from_risk", nil)
-	}
-
-	notionalSizes := make([]float64, 0, len(entries))
-	for _, risk := range risks {
-		notionalSizes = append(notionalSizes, accountSize*risk)
-	}
-
-	return notionalSizes, nil
-}
 
 func readBinancePerpetualFuturesAccountSize(ctx context.Context, credentials *binanceproto.Credentials) (float64, error) {
 	rsp, err := (&binanceproto.ReadPerpetualFuturesAccountRequest{
@@ -65,8 +52,13 @@ func executeBinanceFuturesTrade(
 	participant *tradeengineproto.AddParticipantToTradeRequest,
 	credentials *binanceproto.Credentials,
 ) (*FuturesTradeResponse, error) {
+	// Read binance perpetual futures account.
+	binanceAccountSize, err := readBinancePerpetualFuturesAccountSize(ctx, credentials)
+	if err != nil {
+		return nil, err
+	}
 
-	var notionalSizes []float64
+	var positions []*risk.RiskCalculatedPosition
 	switch {
 	case participant.Risk != 0:
 		// Marshal side back into proto side.
@@ -86,12 +78,6 @@ func executeBinanceFuturesTrade(
 			})
 		}
 
-		// Read binance perpetual futures account.
-		binanceAccountSize, err := readBinancePerpetualFuturesAccountSize(ctx, credentials)
-		if err != nil {
-			return nil, err
-		}
-
 		// Read account.
 		account, err := readAccountByUserID(ctx, participant.UserId)
 		if err != nil {
@@ -109,23 +95,15 @@ func executeBinanceFuturesTrade(
 			dcaStrategy = tradeengineproto.DCA_STRATEGY_EXPONENTIAL.Enum()
 		}
 
-		// Calculate notional size of all orders.
-		ns, err := calculuateNotionalSizesFromBinanceAccount(trade.Entries, trade.StopLoss, binanceAccountSize, float64(participant.Risk), side, dcaStrategy)
+		// Calculate positins by risk & add as order.
+		positions, err := riskutil.CalculatePositionsByRisk(trade.Entries, trade.StopLoss, float64(participant.Risk), defaultBinanceDCAOrders, side, dcaStrategy)
 		if err != nil {
-			return nil, gerrors.Augment(err, "failed_to_execute_binance_futures_trade", map[string]string{
-				"side": side.String(),
-			})
+			return nil, gerrors.Augment(err, "failed_to_calculate_risk_sizes.failed_to_calculate_notional_size_from_risk", nil)
 		}
-		notionalSizes = ns
 	default:
 		return nil, gerrors.Unimplemented("failed_to_execute_binance_futures_trade.notional_size_calc_unimplimented", nil)
 	}
 
-	totalNotionalSize := sum(notionalSizes)
-	errParams := map[string]string{
-		"total_notional_size": fmt.Sprintf("%v", totalNotionalSize),
-		"total_risk":          fmt.Sprintf("%v", participant.Risk),
-	}
 	orders := make([]*binanceproto.PerpetualFuturesOrder, 0, len(trade.Entries)+1)
 
 	// Add stop loss order. We add this first for safety.
@@ -135,36 +113,43 @@ func executeBinanceFuturesTrade(
 	default:
 		orders = append(orders, &binanceproto.PerpetualFuturesOrder{
 			StopPrice:     float32(trade.StopLoss),
-			OrderType:     binanceproto.BinanceOrderType_STOP_MARKET,
+			OrderType:     binanceproto.BinanceOrderType_BINANCE_STOP_MARKET,
 			ClosePosition: true,
 		})
 	}
 
-	// Add entry positions as order.
-	for i, entry := range trade.Entries {
+	totalRisk := sumPositionsRisk(positions) * binanceAccountSize
+	errParams := map[string]string{
+		"total_notional_size":   fmt.Sprintf("%v", totalRisk*binanceAccountSize),
+		"risk":                  fmt.Sprintf("%v", participant.Risk),
+		"total_risk_of_account": fmt.Sprintf("%v", totalRisk),
+	}
+
+	// Add positions as order.
+	for i, riskedPosition := range positions {
 		// Parse order type.
 		var orderType binanceproto.BinanceOrderType
 		switch {
 		case trade.OrderType == tradeengineproto.ORDER_TYPE_MARKET.String():
-			orderType = binanceproto.BinanceOrderType_MARKET
+			orderType = binanceproto.BinanceOrderType_BINANCE_MARKET
 		case trade.OrderType == tradeengineproto.ORDER_TYPE_LIMIT.String():
-			orderType = binanceproto.BinanceOrderType_LIMIT
+			orderType = binanceproto.BinanceOrderType_BINANCE_LIMIT
 		case trade.OrderType == tradeengineproto.ORDER_TYPE_DCA_ALL_LIMIT.String():
-			orderType = binanceproto.BinanceOrderType_LIMIT
+			orderType = binanceproto.BinanceOrderType_BINANCE_LIMIT
 		case trade.OrderType == tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT.String() && i == len(trade.Entries)-1:
-			orderType = binanceproto.BinanceOrderType_MARKET
+			orderType = binanceproto.BinanceOrderType_BINANCE_MARKET
 		default:
 			slog.Warn(ctx, "Binance order router recieved trade with unrecognised order type: %s", trade.OrderType)
-			orderType = binanceproto.BinanceOrderType_LIMIT
+			orderType = binanceproto.BinanceOrderType_BINANCE_LIMIT
 		}
 
 		// Parse trade type.
 		var side binanceproto.BinanceTradeSide
 		switch trade.TradeSide {
 		case tradeengineproto.TRADE_SIDE_BUY.String(), tradeengineproto.TRADE_SIDE_LONG.String():
-			side = binanceproto.BinanceTradeSide_BUY
+			side = binanceproto.BinanceTradeSide_BINANCE_BUY
 		case tradeengineproto.TRADE_SIDE_SELL.String(), tradeengineproto.TRADE_SIDE_SHORT.String():
-			side = binanceproto.BinanceTradeSide_SELL
+			side = binanceproto.BinanceTradeSide_BINANCE_SELL
 		default:
 			return nil, gerrors.FailedPrecondition("failed_to_execute_binance_futures_trade.invalid_trade_side", map[string]string{
 				"side": trade.TradeSide,
@@ -173,29 +158,23 @@ func executeBinanceFuturesTrade(
 
 		// Parse time in force.
 		var timeInForce binanceproto.BinanceTimeInForce
-		if orderType == binanceproto.BinanceOrderType_LIMIT {
-			timeInForce = binanceproto.BinanceTimeInForce_GTC
+		if orderType == binanceproto.BinanceOrderType_BINANCE_LIMIT {
+			timeInForce = binanceproto.BinanceTimeInForce_BINANCE_GTC
 		}
 
 		orders = append(orders, &binanceproto.PerpetualFuturesOrder{
-			Price:        float32(entry),
+			Price:        float32(riskedPosition.Price),
 			OrderType:    orderType,
 			Side:         side,
-			Quantity:     float32(notionalSizes[i]),
+			Quantity:     float32(riskedPosition.Risk * binanceAccountSize),
 			Symbol:       fmt.Sprintf("%s%s", trade.Asset, trade.Pair),
 			TimeInForce:  timeInForce,
-			PositionSide: binanceproto.BinancePositionSide_BOTH,
+			PositionSide: binanceproto.BinancePositionSide_BINANCE_SIDE_BOTH,
 		})
 	}
 
 	// Add take profit orders to trade.
-	for _, tp := range trade.TakeProfits {
-		orders = append(orders, &binanceproto.PerpetualFuturesOrder{
-			StopPrice:     float32(tp),
-			OrderType:     binanceproto.BinanceOrderType_TAKE_PROFIT_MARKET,
-			ClosePosition: true,
-		})
-	}
+	// TODO; calculate risk.
 
 	// Execute trade.
 	rsp, err := (&binanceproto.ExecuteFuturesPerpetualsTradeRequest{
@@ -208,16 +187,16 @@ func executeBinanceFuturesTrade(
 	}
 
 	return &FuturesTradeResponse{
-		NotionalSize:           totalNotionalSize,
+		NotionalSize:           totalRisk * binanceAccountSize,
 		ExchangeTradeID:        rsp.ExchangeTradeId,
 		NumberOfExecutedOrders: int(rsp.NumberOfOrdersExecuted),
 	}, nil
 }
 
-func sum(vs []float64) float64 {
+func sumPositionsRisk(vs []*risk.RiskCalculatedPosition) float64 {
 	if len(vs) == 0 {
 		return 0
 	}
 
-	return vs[0] + sum(vs[1:])
+	return vs[0].Risk + sumPositionsRisk(vs[1:])
 }

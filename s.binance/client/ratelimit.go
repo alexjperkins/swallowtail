@@ -32,7 +32,7 @@ func (b *binanceRateLimiter) RefreshWait(header http.Header, statusCode int) {
 
 	howManyLeft, err := strconv.ParseInt(v, 64, 2)
 	if err != nil {
-		slog.Error(context.Background(), "Faield to parse binance rate limiter order count: %v", v)
+		slog.Error(context.Background(), "Failed to parse binance rate limiter order count: %v", v)
 		return
 	}
 
