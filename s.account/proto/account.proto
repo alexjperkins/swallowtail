@@ -58,6 +58,7 @@ message Account {
     google.protobuf.Timestamp created = 6;
     google.protobuf.Timestamp last_updated = 7;
     string primary_exchange = 8;
+    string default_dca_strategy = 9;
 }
 
 message ListAccountsRequest{

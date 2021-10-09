@@ -49,6 +49,14 @@ enum ORDER_TYPE {
     LIMIT = 0;
     MARKET = 1;
     STOP_MARKET = 2;
+    DCA_FIRST_MARKET_REST_LIMIT = 3;
+    DCA_ALL_LIMIT = 4;
+}
+
+enum DCA_STRATEGY {
+    CONSTANT = 0;
+    LINEAR  = 1;
+    EXPONENTIAL = 2;
 }
 
 message Trade {
@@ -61,7 +69,7 @@ message Trade {
     TRADE_TYPE trade_type = 6;
     string asset = 7;
     TRADE_PAIR pair = 8;
-    float entry = 9;
+    repeated float entries = 9;
     float stop_loss = 10;
     repeated float take_profits = 11;
     TRADE_STATUS status = 12;
@@ -88,6 +96,7 @@ message AddParticipantToTradeRequest {
     string exchange = 6;
     bool is_bot = 7;
     float risk = 8; 
+    DCA_STRATEGY dca_strategy = 9;
 }
 
 message AddParticipantToTradeResponse {
@@ -98,6 +107,7 @@ message AddParticipantToTradeResponse {
     google.protobuf.Timestamp timestamp = 5;
     string exchange = 6;
     string asset = 7;
+    int64 number_of_executed_orders = 8;
 }
 
 message ReadTradeByTradeIDRequest {

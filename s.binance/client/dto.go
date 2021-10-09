@@ -86,9 +86,9 @@ type ReadPerpetualFuturesAccountResponse []*PerpetualFuturesAccountBalance
 // https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
 type ExecutePerpetualFuturesTradeRequest struct {
 	// Required
-	Symbol string `json:"string"`
-	Side   string `json:"side"`
-	Type   string `json:"type"`
+	Symbol    string `json:"string"`
+	Side      string `json:"side"`
+	OrderType string `json:"type"`
 	// ---
 	PositionSide     string  `json:"positionSide"` // "BOTH", "LONG", "SHORT"
 	TimeInForce      string  `json:"timeInForce"`

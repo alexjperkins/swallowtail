@@ -105,7 +105,7 @@ func TestParseOrderType(t *testing.T) {
 		name              string
 		content           string
 		currentValue      float64
-		entry             float64
+		entries           []float64
 		side              tradeengineproto.TRADE_SIDE
 		expectedOrderType tradeengineproto.ORDER_TYPE
 	}{
@@ -114,7 +114,7 @@ func TestParseOrderType(t *testing.T) {
 			content: `LIMIT LONG BTC 45000 SL 49000
 			`,
 			currentValue:      50000,
-			entry:             45000,
+			entries:           []float64{45000},
 			side:              tradeengineproto.TRADE_SIDE_BUY,
 			expectedOrderType: tradeengineproto.ORDER_TYPE_LIMIT,
 		},
@@ -123,16 +123,16 @@ func TestParseOrderType(t *testing.T) {
 			content: `LONG BTC 50000 SL 49000
 			`,
 			currentValue:      50000,
-			entry:             49000,
+			entries:           []float64{49000},
 			side:              tradeengineproto.TRADE_SIDE_BUY,
 			expectedOrderType: tradeengineproto.ORDER_TYPE_MARKET,
 		},
 		{
-			name: "limit_order_higher_entry_buy_side",
+			name: "limit_order_higher_entries_buy_side",
 			content: `LIMIT LONG BTC 50000 SL 49000
 			`,
 			currentValue:      50000,
-			entry:             55000,
+			entries:           []float64{55000},
 			side:              tradeengineproto.TRADE_SIDE_BUY,
 			expectedOrderType: tradeengineproto.ORDER_TYPE_MARKET,
 		},
@@ -143,7 +143,7 @@ func TestParseOrderType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			orderType, _ := parseOrderType(tt.content, tt.currentValue, tt.entry, tt.side)
+			orderType, _ := parseOrderType(tt.content, tt.currentValue, tt.entries, tt.side)
 
 			assert.Equal(t, tt.expectedOrderType, orderType)
 		})

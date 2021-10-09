@@ -17,9 +17,8 @@ import (
 
 // getLatestPrice ...
 func getLatestPrice(ctx context.Context, asset string) (float64, error) {
-	var merr multierror.Error
-
 	// First try binance to get the latest price. Here we use a retry loop if we do get rate limited.
+	var merr multierror.Error
 outer:
 	for i := 0; i < 3; i++ {
 		rsp, err := (&binanceproto.GetLatestPriceRequest{

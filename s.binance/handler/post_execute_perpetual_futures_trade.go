@@ -8,10 +8,8 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.binance/client"
-	"swallowtail/s.binance/exchangeinfo"
 	"swallowtail/s.binance/marshaling"
 	binanceproto "swallowtail/s.binance/proto"
-	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 // ExecuteFuturesPerpetualsTrade ...
@@ -19,10 +17,8 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 	ctx context.Context, in *binanceproto.ExecuteFuturesPerpetualsTradeRequest,
 ) (*binanceproto.ExecuteFuturesPerpetualsTradeResponse, error) {
 	switch {
-	case in.Asset == "":
-		return nil, gerrors.BadParam("missing_param.asset", nil)
-	case in.Pair == "":
-		return nil, gerrors.BadParam("missing_param.pair", nil)
+	case len(in.GetOrders()) == 0:
+		return nil, gerrors.BadParam("missing_param.orders", nil)
 	}
 
 	// Validate credentials.
@@ -31,8 +27,7 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 	}
 
 	errParams := map[string]string{
-		"asset": in.Asset,
-		"pair":  in.Pair,
+		"num_orders": strconv.Itoa(len(in.Orders)),
 	}
 
 	// Validate the trade.
@@ -40,78 +35,38 @@ func (s *BinanceService) ExecuteFuturesPerpetualsTrade(
 		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.invalid_trade", errParams)
 	}
 
-	// Round the quantity to the minimum precision allowed on the exchange.
-	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(in.Asset)
-	if !ok {
-		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", errParams)
+	// Marshal orders.
+	orders, err := marshaling.ProtoOrdersToExecutePerpetualsFutureTradeRequest(in.Orders)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.invalid_order.marshaling", errParams)
 	}
 
-	// Round the price to the minimum precision allowed on the exchange.
-	assetPricePrecision, ok := exchangeinfo.GetBaseAssetPricePrecision(in.Asset)
-	if !ok {
-		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", errParams)
-	}
-
-	// Convert floats to minimum precision rounded strings.
-	quantity := roundToPrecisionString(float64(in.NotionalSize), assetQuantityPrecision)
-	entryPrice := roundToPrecisionString(float64(in.Entry), assetPricePrecision)
-	stopLossPrice := roundToPrecisionString(float64(in.StopLoss), assetPricePrecision)
-
-	orders := []*client.ExecutePerpetualFuturesTradeRequest{}
-
-	// Add Stop Loss.
-	orders = append(orders, &client.ExecutePerpetualFuturesTradeRequest{
-		Symbol:           strings.ToUpper(fmt.Sprintf("%s%s", in.Asset, in.Pair)),
-		StopPrice:        stopLossPrice,
-		Side:             "SELL",
-		Type:             tradeengineproto.ORDER_TYPE_STOP_MARKET.String(),
-		ClosePosition:    "true",
-		NewOrderRespType: "ACK",
-		WorkingType:      "MARK_PRICE",
-	})
-
-	// Add Entry.
-	entry := &client.ExecutePerpetualFuturesTradeRequest{
-		Symbol:           strings.ToUpper(fmt.Sprintf("%s%s", in.Asset, in.Pair)),
-		Side:             convertLongAndShort(in.TradeSide),
-		Type:             strings.ToUpper(in.OrderType),
-		Quantity:         quantity,
-		NewOrderRespType: "ACK",
-	}
-
-	// Decorate entry if we have a LIMIT order.
-	if strings.ToUpper(in.OrderType) == tradeengineproto.ORDER_TYPE_LIMIT.String() {
-		entry.Price = entryPrice
-		entry.TimeInForce = "GTC"
-	}
-
-	// Add entry to orders
-	orders = append(orders, entry)
-
-	// Marshal credentials
+	// Marshal credentials.
 	dtoCredentials := marshaling.CredentialsProtoToDTO(in.Credentials)
 
 	// Execute orders synchronously.
 	var (
-		exchangeID strings.Builder
-		maxTs      int
+		exchangeOrderIDs       strings.Builder
+		maxTs                  int
+		numberOfOrdersExecuted int64
 	)
 	for _, order := range orders {
 		rsp, err := client.ExecutePerpetualFuturesTrade(ctx, order, dtoCredentials)
 		if err != nil {
+			isStopLoss := order.OrderType == binanceproto.BinanceOrderType_STOP.String() || order.OrderType == binanceproto.BinanceOrderType_STOP_MARKET.String()
 			return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.order", map[string]string{
-				// TODO: this should be improved somewhat.
-				"is_stop_loss": strconv.FormatBool(order.ClosePosition == "true"),
-				"is_entry":     strconv.FormatBool(order.Quantity != ""),
+				"is_stop_loss": strconv.FormatBool(isStopLoss),
 			})
 		}
 
-		exchangeID.WriteString(fmt.Sprintf("%v,", rsp.OrderID))
+		exchangeOrderIDs.WriteString(fmt.Sprintf("%v,", rsp.OrderID))
 		maxTs = max(maxTs, rsp.ExecutionTimestamp)
+		numberOfOrdersExecuted++
 	}
 
 	return &binanceproto.ExecuteFuturesPerpetualsTradeResponse{
-		ExchangeTradeId: exchangeID.String(),
-		Timestamp:       int64(maxTs),
+		ExchangeTradeId:        exchangeOrderIDs.String(),
+		Timestamp:              int64(maxTs),
+		NumberOfOrdersExecuted: numberOfOrdersExecuted,
 	}, nil
 }

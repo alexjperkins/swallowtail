@@ -75,8 +75,8 @@ func gatherExchangeInfo(ctx context.Context) error {
 	defer mu.Unlock()
 
 	for _, s := range rsp.Symbols {
-		quantityPrecisions[s.BaseAsset] = s.QuantityPrecision
-		pricePrecisions[s.BaseAsset] = s.PricePrecision
+		quantityPrecisions[s.Symbol] = s.QuantityPrecision
+		pricePrecisions[s.Symbol] = s.PricePrecision
 	}
 
 	return nil

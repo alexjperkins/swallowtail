@@ -32,7 +32,7 @@ type FTXClient interface {
 // Init instantiates the FTX client singleton.
 func Init(ctx context.Context) error {
 	c := &ftxClient{
-		http:     transport.NewHTTPClient(30 * time.Second),
+		http:     transport.NewHTTPClient(30*time.Second, nil),
 		hostname: defaultHostname,
 	}
 

@@ -143,7 +143,7 @@ func handleModMessages(
 			}
 
 			now := time.Now().UTC()
-			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Hour))
+			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, entriesAsString(trade.Entries), trade.StopLoss, now.Truncate(time.Hour))
 
 			// Sign our trade with our idempotency key.
 			trade.IdempotencyKey = idempotencyKey
@@ -230,7 +230,7 @@ func handleSwingMessages(
 			}
 
 			now := time.Now().UTC()
-			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
+			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, entriesAsString(trade.Entries), trade.StopLoss, now.Truncate(time.Minute))
 
 			// Sign our trade with an idempotency key.
 			trade.IdempotencyKey = idempotencyKey
@@ -310,7 +310,7 @@ func handleInternalCallsMessages(
 			}
 
 			now := time.Now().UTC()
-			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, trade.Entry, trade.StopLoss, now.Truncate(time.Minute))
+			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, entriesAsString(trade.Entries), trade.StopLoss, now.Truncate(time.Minute))
 
 			// Sign our trade with the timestamp.
 			trade.IdempotencyKey = idempotencyKey
@@ -474,4 +474,12 @@ func containsRego1To10kChallenge(modUsername, content string) bool {
 // Formats a message for a standardized warning.
 func warning(greeting, content string) string {
 	return fmt.Sprintf(":rotating_light: %s :rotating_light:\n```%s```", greeting, content)
+}
+
+func entriesAsString(ff []float32) string {
+	var ss []string
+	for _, f := range ff {
+		ss = append(ss, fmt.Sprintf("%.5f", f))
+	}
+	return strings.Join(ss, ",")
 }
