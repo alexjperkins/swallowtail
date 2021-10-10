@@ -118,6 +118,10 @@ func (h *httpClient) doRawRequestWithRateLimit(ctx context.Context, method, url 
 
 	h.rateLimiter.Wait()
 	rsp, err := h.doRawRequest(ctx, method, url, body, headers)
+	if err != nil {
+		return nil, err
+	}
+
 	h.rateLimiter.RefreshWait(rsp.Header, rsp.StatusCode)
 	return rsp, err
 }

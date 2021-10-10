@@ -96,7 +96,7 @@ func executeBinanceFuturesTrade(
 		}
 
 		// Calculate positins by risk & add as order.
-		positions, err := riskutil.CalculatePositionsByRisk(trade.Entries, trade.StopLoss, float64(participant.Risk), defaultBinanceDCAOrders, side, dcaStrategy)
+		positions, err = riskutil.CalculatePositionsByRisk(trade.Entries, trade.StopLoss, float64(participant.Risk), defaultBinanceDCAOrders, side, dcaStrategy)
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_calculate_risk_sizes.failed_to_calculate_notional_size_from_risk", nil)
 		}

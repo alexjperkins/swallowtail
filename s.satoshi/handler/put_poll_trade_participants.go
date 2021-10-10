@@ -101,11 +101,13 @@ func (s *SatoshiService) PollTradeParticipants(
 							slog.Error(newCtx, "Failed to execute trade for user: %s; Error: %v", userID, err)
 
 							// Notify parties of failure.
-							if perr := notifyUserOnFailure(newCtx, userID, in.TradeId, int(rsp.NumberOfExecutedOrders), err); perr != nil {
+							// TODO: how many executed.
+							if perr := notifyUserOnFailure(newCtx, userID, in.TradeId, 0, err); perr != nil {
 								slog.Error(newCtx, "Failed to notify user of successful trade: TradeID %s, UserID %s, Error: %s", in.TradeId, userID, perr)
 							}
 
-							if perr := notifyPulseChannelUserTradeFailure(newCtx, userID, in.TradeId, risk, int(rsp.NumberOfExecutedOrders), err); perr != nil {
+							// TODO: how many executed.
+							if perr := notifyPulseChannelUserTradeFailure(newCtx, userID, in.TradeId, risk, 0, err); perr != nil {
 								slog.Error(newCtx, "Failed to notify channel of successful trade: TradeID %s, UserID %s, Error: %v", in.TradeId, userID, perr)
 							}
 
