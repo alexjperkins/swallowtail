@@ -12,12 +12,13 @@ import (
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-// ExchangeFuturesTradeResponse
+// FuturesTradeResponse ...
 type FuturesTradeResponse struct {
 	ExchangeTradeID        string
 	NotionalSize           float64
 	ExecutionTimestamp     time.Time
 	NumberOfExecutedOrders int
+	ExecutionAlgoStrategy  string
 }
 
 // ExecuteFuturesTradeForParticipant ...

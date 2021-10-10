@@ -93,5 +93,6 @@ func (s *TradeEngineService) AddParticipantToTrade(
 		Asset:                  trade.Asset,
 		Exchange:               tradeParticipant.Exchange,
 		NumberOfExecutedOrders: int64(exchangeTradeRsp.NumberOfExecutedOrders),
+		ExecutionAlgoStrategy:  exchangeTradeRsp.ExecutionAlgoStrategy,
 	}, nil
 }

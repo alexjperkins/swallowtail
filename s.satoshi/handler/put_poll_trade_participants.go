@@ -115,11 +115,11 @@ func (s *SatoshiService) PollTradeParticipants(
 						}
 
 						// Notify parties of success.
-						if err := notifyUserOnSuccess(newCtx, userID, rsp.TradeId, rsp.ExchangeTradeId, rsp.TradeParticipantId, rsp.Asset, rsp.Exchange, float64(risk), float64(rsp.NotionalSize), rsp.Timestamp.AsTime()); err != nil {
+						if err := notifyUserOnSuccess(newCtx, userID, rsp.TradeId, rsp.ExchangeTradeId, rsp.TradeParticipantId, rsp.Asset, rsp.Exchange, rsp.ExecutionAlgoStrategy, float64(risk), float64(rsp.NotionalSize), rsp.Timestamp.AsTime()); err != nil {
 							slog.Error(newCtx, "Failed to notify user of successful trade: TradeID: %v TradeParticipantId: %v", in.TradeId, rsp.TradeParticipantId)
 						}
 
-						if err := notifyPulseChannelUserTradeSuccess(newCtx, userID, in.TradeId, risk); err != nil {
+						if err := notifyPulseChannelUserTradeSuccess(newCtx, userID, in.TradeId, rsp.ExecutionAlgoStrategy, risk); err != nil {
 							slog.Error(newCtx, err.Error())
 						}
 					}
