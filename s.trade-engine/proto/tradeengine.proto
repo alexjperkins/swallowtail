@@ -108,6 +108,7 @@ message AddParticipantToTradeResponse {
     string exchange = 6;
     string asset = 7;
     int64 number_of_executed_orders = 8;
+    string execution_algo_strategy = 9;
 }
 
 message ReadTradeByTradeIDRequest {

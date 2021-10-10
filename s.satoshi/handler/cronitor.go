@@ -55,7 +55,7 @@ ERROR:    %v
 	return nil
 }
 
-func notifyUserOnSuccess(ctx context.Context, userID, tradeID, exchangeTradeID, tradeParticipantID, asset, exchange string, risk, size float64, timestamp time.Time) error {
+func notifyUserOnSuccess(ctx context.Context, userID, tradeID, exchangeTradeID, tradeParticipantID, asset, exchange, strategy string, risk, size float64, timestamp time.Time) error {
 	header := fmt.Sprintf(":wave: <@%s>, I have place your Trade with %v%% risk :rocket:", userID, risk)
 
 	content := `
@@ -64,11 +64,12 @@ EXCHANGE TRADE ID:    %s
 TRADE PARTICIPANT ID: %s
 ASSET:                %s
 EXCHANGE:             %s
+EXECUTION STRATEGY:   %v
 RISK (%%):             %v
 SIZE:                 %v
 TIMESTAMP:            %v
 `
-	formattedContent := fmt.Sprintf(content, tradeID, exchangeTradeID, tradeParticipantID, asset, exchange, risk, size, timestamp)
+	formattedContent := fmt.Sprintf(content, tradeID, exchangeTradeID, tradeParticipantID, asset, exchange, strategy, risk, size, timestamp)
 
 	if _, err := (&discordproto.SendMsgToPrivateChannelRequest{
 		UserId:         userID,
@@ -172,17 +173,18 @@ DEADLINE:  %v
 	return nil
 }
 
-func notifyPulseChannelUserTradeSuccess(ctx context.Context, userID, tradeID string, risk int) error {
+func notifyPulseChannelUserTradeSuccess(ctx context.Context, userID, tradeID, strategy string, risk int) error {
 	now := time.Now()
 
 	header := ":dove:   `CRONITOR: TRADE PARTICIPANTS NEW PARTICIPANT`   :money_mouth:"
 	content := `
-TRADE ID:  %s
-USER ID:   %s
-TIMESTAMP: %v
-RISK (%%):  %v
+TRADE ID:           %s
+USER ID:            %s
+TIMESTAMP:          %v
+EXECUTION STRATEGY: %v
+RISK (%%):           %v
 `
-	formattedContent := fmt.Sprintf(content, tradeID, userID, time.Now().UTC().Truncate(time.Second), risk)
+	formattedContent := fmt.Sprintf(content, tradeID, userID, time.Now().UTC().Truncate(time.Second), strategy, risk)
 
 	if _, err := (&discordproto.SendMsgToChannelRequest{
 		ChannelId:      discordproto.DiscordSatoshiTradesPulseChannel,

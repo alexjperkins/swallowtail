@@ -12,6 +12,7 @@ import (
 	"swallowtail/libraries/gerrors"
 	"time"
 
+	"github.com/monzo/slog"
 	"google.golang.org/grpc/codes"
 )
 
@@ -147,6 +148,12 @@ func (h *httpClient) doRawRequest(ctx context.Context, method, url string, body 
 	}
 
 	if err := validateStatusCode(rsp); err != nil {
+		// Best effort; here we attempt to read the response bytes.
+		defer rsp.Body.Close()
+		rspBodyBytes, _ := ioutil.ReadAll(rsp.Body)
+		slog.Error(ctx, "Failed request: Response: %+v, %s", rsp, string(rspBodyBytes))
+
+		errParams["error"] = string(rspBodyBytes)
 		return nil, gerrors.Augment(err, "failed_to_execute_request.status_code", errParams)
 	}
 

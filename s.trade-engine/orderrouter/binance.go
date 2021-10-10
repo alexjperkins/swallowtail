@@ -58,41 +58,41 @@ func executeBinanceFuturesTrade(
 		return nil, err
 	}
 
-	var positions []*risk.RiskCalculatedPosition
+	// Read account.
+	account, err := readAccountByUserID(ctx, participant.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	var positions []*risk.Position
 	switch {
 	case participant.Risk != 0:
 		// Marshal side back into proto side.
-		var side *tradeengineproto.TRADE_SIDE
+		var side tradeengineproto.TRADE_SIDE
 		switch strings.ToLower(trade.TradeSide) {
 		case "long":
-			side = tradeengineproto.TRADE_SIDE_LONG.Enum()
+			side = tradeengineproto.TRADE_SIDE_LONG
 		case "buy":
-			side = tradeengineproto.TRADE_SIDE_BUY.Enum()
+			side = tradeengineproto.TRADE_SIDE_BUY
 		case "short":
-			side = tradeengineproto.TRADE_SIDE_SHORT.Enum()
+			side = tradeengineproto.TRADE_SIDE_SHORT
 		case "sell":
-			side = tradeengineproto.TRADE_SIDE_SELL.Enum()
+			side = tradeengineproto.TRADE_SIDE_SELL
 		default:
 			return nil, gerrors.Unimplemented("failed_to_execute_binance_futures_trade.unimplemented_trade_side", map[string]string{
 				"trade_side": trade.TradeSide,
 			})
 		}
 
-		// Read account.
-		account, err := readAccountByUserID(ctx, participant.UserId)
-		if err != nil {
-			return nil, err
-		}
-
 		// Marshal default dca strategy.
-		var dcaStrategy *tradeengineproto.DCA_STRATEGY
+		var dcaStrategy tradeengineproto.DCA_STRATEGY
 		switch account.DefaultDcaStrategy {
 		case tradeengineproto.DCA_STRATEGY_CONSTANT.String():
-			dcaStrategy = tradeengineproto.DCA_STRATEGY_CONSTANT.Enum()
+			dcaStrategy = tradeengineproto.DCA_STRATEGY_CONSTANT
 		case tradeengineproto.DCA_STRATEGY_LINEAR.String():
-			dcaStrategy = tradeengineproto.DCA_STRATEGY_LINEAR.Enum()
+			dcaStrategy = tradeengineproto.DCA_STRATEGY_LINEAR
 		case tradeengineproto.DCA_STRATEGY_EXPONENTIAL.String():
-			dcaStrategy = tradeengineproto.DCA_STRATEGY_EXPONENTIAL.Enum()
+			dcaStrategy = tradeengineproto.DCA_STRATEGY_EXPONENTIAL
 		}
 
 		// Calculate positins by risk & add as order.
@@ -111,7 +111,18 @@ func executeBinanceFuturesTrade(
 	case 0:
 		slog.Warn(ctx, "Creating trade without a stop loss: [%v] %s", trade.ActorType, trade.ActorID)
 	default:
+		var side binanceproto.BinanceTradeSide
+
+		switch trade.TradeSide {
+		case tradeengineproto.TRADE_SIDE_BUY.String(), tradeengineproto.TRADE_SIDE_LONG.String():
+			side = binanceproto.BinanceTradeSide_BINANCE_SELL
+		case tradeengineproto.TRADE_SIDE_SELL.String(), tradeengineproto.TRADE_SIDE_SHORT.String():
+			side = binanceproto.BinanceTradeSide_BINANCE_BUY
+		}
+
 		orders = append(orders, &binanceproto.PerpetualFuturesOrder{
+			Side:          side,
+			Symbol:        fmt.Sprintf("%s%s", trade.Asset, trade.Pair),
 			StopPrice:     float32(trade.StopLoss),
 			OrderType:     binanceproto.BinanceOrderType_BINANCE_STOP_MARKET,
 			ClosePosition: true,
@@ -136,8 +147,10 @@ func executeBinanceFuturesTrade(
 			orderType = binanceproto.BinanceOrderType_BINANCE_LIMIT
 		case trade.OrderType == tradeengineproto.ORDER_TYPE_DCA_ALL_LIMIT.String():
 			orderType = binanceproto.BinanceOrderType_BINANCE_LIMIT
-		case trade.OrderType == tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT.String() && i == len(trade.Entries)-1:
+		case trade.OrderType == tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT.String() && i == len(positions)-1:
 			orderType = binanceproto.BinanceOrderType_BINANCE_MARKET
+		case trade.OrderType == tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT.String():
+			orderType = binanceproto.BinanceOrderType_BINANCE_LIMIT
 		default:
 			slog.Warn(ctx, "Binance order router recieved trade with unrecognised order type: %s", trade.OrderType)
 			orderType = binanceproto.BinanceOrderType_BINANCE_LIMIT
@@ -156,14 +169,20 @@ func executeBinanceFuturesTrade(
 			})
 		}
 
-		// Parse time in force.
+		// Parse time in force. Default is not required.
 		var timeInForce binanceproto.BinanceTimeInForce
 		if orderType == binanceproto.BinanceOrderType_BINANCE_LIMIT {
 			timeInForce = binanceproto.BinanceTimeInForce_BINANCE_GTC
 		}
 
+		// We only set the price to a nonzero value if we have the determined the order type to be `LIMIT`.
+		var price float32
+		if orderType == binanceproto.BinanceOrderType_BINANCE_LIMIT {
+			price = float32(riskedPosition.Price)
+		}
+
 		orders = append(orders, &binanceproto.PerpetualFuturesOrder{
-			Price:        float32(riskedPosition.Price),
+			Price:        price,
 			OrderType:    orderType,
 			Side:         side,
 			Quantity:     float32(riskedPosition.Risk * binanceAccountSize),
@@ -190,10 +209,11 @@ func executeBinanceFuturesTrade(
 		NotionalSize:           totalRisk * binanceAccountSize,
 		ExchangeTradeID:        rsp.ExchangeTradeId,
 		NumberOfExecutedOrders: int(rsp.NumberOfOrdersExecuted),
+		ExecutionAlgoStrategy:  account.DefaultDcaStrategy,
 	}, nil
 }
 
-func sumPositionsRisk(vs []*risk.RiskCalculatedPosition) float64 {
+func sumPositionsRisk(vs []*risk.Position) float64 {
 	if len(vs) == 0 {
 		return 0
 	}

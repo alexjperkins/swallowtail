@@ -45,6 +45,7 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 	for _, tpm := range possibleTakeProfitMarks {
 		if strings.Contains(content, tpm) {
 			takeProfitMark = tpm
+			break
 		}
 	}
 

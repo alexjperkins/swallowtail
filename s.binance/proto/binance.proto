@@ -47,7 +47,7 @@ enum BinanceWorkingType {
 
 enum BinancePositionSide {
     BINANCE_SIDE_BOTH = 0;
-    BINANCE_SIDE_BOTH_LONG = 1;
+    BINANCE_SIDE_LONG = 1;
     BINANCE_SIDE_SHORT = 2;
 }
 

@@ -88,33 +88,95 @@ func ProtoOrderToExecutePerpetualsFutureTradeRequest(in *binanceproto.PerpetualF
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", nil)
 	}
 
-	var ()
-
 	// Convert floats to minimum precision rounded strings.
 	quantity := roundToPrecisionString(float64(in.Quantity), assetQuantityPrecision)
 	price := roundToPrecisionString(float64(in.Price), assetPricePrecision)
 	stopPrice := roundToPrecisionString(float64(in.StopPrice), assetPricePrecision)
 
 	// Parse reduce only.
-	reduceOnly := "false"
+	var reduceOnly string
 	if !in.ClosePosition && (in.OrderType == binanceproto.BinanceOrderType_BINANCE_STOP_MARKET || in.OrderType == binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT_MARKET) {
 		reduceOnly = "true"
 	}
 
+	errParams := map[string]string{}
+
+	var side string
+	switch in.Side {
+	case binanceproto.BinanceTradeSide_BINANCE_BUY:
+		side = "BUY"
+	case binanceproto.BinanceTradeSide_BINANCE_SELL:
+		side = "SELL"
+	default:
+		errParams["side"] = side
+		return nil, gerrors.BadParam("failed_to_marshall_perpetuals_trade.invalid_order_type", errParams)
+	}
+
+	var orderType string
+	switch in.OrderType {
+	case binanceproto.BinanceOrderType_BINANCE_LIMIT:
+		orderType = "LIMIT"
+	case binanceproto.BinanceOrderType_BINANCE_MARKET:
+		orderType = "MARKET"
+	case binanceproto.BinanceOrderType_BINANCE_STOP_MARKET:
+		orderType = "STOP_MARKET"
+	case binanceproto.BinanceOrderType_BINANCE_STOP:
+		orderType = "STOP"
+	case binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT:
+		orderType = "TAKE_PROFIT"
+	case binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT_MARKET:
+		orderType = "TAKE_PROFIT_MARKET"
+	default:
+		errParams["order_type"] = orderType
+		return nil, gerrors.BadParam("failed_to_marshall_perpetuals_trade.invalid_order_type", errParams)
+	}
+
+	var positionSide string
+	switch in.PositionSide {
+	case binanceproto.BinancePositionSide_BINANCE_SIDE_BOTH:
+		positionSide = "BOTH"
+	case binanceproto.BinancePositionSide_BINANCE_SIDE_SHORT:
+		positionSide = "SHORT"
+	case binanceproto.BinancePositionSide_BINANCE_SIDE_LONG:
+		positionSide = "LONG"
+	}
+
+	var timeInForce string
+	switch in.TimeInForce {
+	case binanceproto.BinanceTimeInForce_BINANCE_GTC:
+		timeInForce = "GTC"
+	case binanceproto.BinanceTimeInForce_BINANCE_FOK:
+		timeInForce = "FOK"
+	case binanceproto.BinanceTimeInForce_BINANCE_GTX:
+		timeInForce = "GTX"
+	case binanceproto.BinanceTimeInForce_BINANCE_IOC:
+		timeInForce = "IOC"
+	default:
+		// Leave emtpy
+	}
+
+	var workingType string
+	switch in.WorkingType {
+	case binanceproto.BinanceWorkingType_BINANCE_CONTRACT_PRICE:
+		workingType = "CONTRACT_PRICE"
+	case binanceproto.BinanceWorkingType_BINANCE_MARK_PRICE:
+		workingType = "MARKET_PRICE"
+	}
+
 	return &client.ExecutePerpetualFuturesTradeRequest{
 		Symbol:           in.Symbol,
-		Side:             in.Side.String(),
-		OrderType:        in.OrderType.String(),
-		PositionSide:     in.PositionSide.String(),
-		TimeInForce:      in.TimeInForce.String(),
+		Side:             side,
+		OrderType:        orderType,
+		PositionSide:     positionSide,
+		TimeInForce:      timeInForce,
 		Price:            price,
 		StopPrice:        stopPrice,
 		Quantity:         quantity,
 		ReduceOnly:       reduceOnly,
 		ClosePosition:    strconv.FormatBool(in.ClosePosition),
-		WorkingType:      in.WorkingType.String(),
+		WorkingType:      workingType,
 		NewOrderRespType: "ACK",
-		PriceProtect:     "FALSE",
+		PriceProtect:     "false",
 	}, nil
 }
 
