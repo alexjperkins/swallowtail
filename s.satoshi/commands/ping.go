@@ -23,7 +23,7 @@ func init() {
 }
 
 func pingCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: Hello <@%s>, what can `sat v.2.0` do for you?", m.Author.ID)); err != nil {
+	if _, err := s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: Hello <@%s>, what can `sat v.2.1` do for you?", m.Author.ID)); err != nil {
 		return gerrors.Augment(err, "failed_to_ping_discord", nil)
 	}
 
