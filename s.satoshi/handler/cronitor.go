@@ -9,7 +9,7 @@ import (
 	discordproto "swallowtail/s.discord/proto"
 )
 
-func notifyUserOnFailure(ctx context.Context, userID, tradeID string, err error) error {
+func notifyUserOnFailure(ctx context.Context, userID, tradeID string, numberOfSuccessOrders int, err error) error {
 	var errMsg string
 	switch {
 	case gerrors.Is(err, gerrors.ErrUnauthenticated):
@@ -32,7 +32,12 @@ func notifyUserOnFailure(ctx context.Context, userID, tradeID string, err error)
 		errMsg = "Sorry, I'm not sure what happened there. Please ping @ajperkins for a hand."
 	}
 
-	header := fmt.Sprintf(":warning: <@%s>, I failed to fully place your Trade. Please manually check on the exchange :warning:\nIf the error is transient you can try to place manually with a command.", userID)
+	header := fmt.Sprintf(
+		":warning: <@%s>, I failed to fully place your Trade, %d were placed. Please manually check on the exchange :warning:\nIf the error is transient you may try to place manually with a command.",
+		userID,
+		numberOfSuccessOrders,
+	)
+
 	content := `
 TRADE ID: %s
 ERROR:    %v
@@ -190,19 +195,20 @@ RISK (%%):  %v
 	return nil
 }
 
-func notifyPulseChannelUserTradeFailure(ctx context.Context, userID, tradeID string, risk int, err error) error {
+func notifyPulseChannelUserTradeFailure(ctx context.Context, userID, tradeID string, risk, numberOfSuccessOrders int, err error) error {
 	now := time.Now()
 
 	header := ":rotating_light:   `CRONITOR: TRADE PARTICIPANTS TRADE FAILED`   :warning:"
 	content := `
-TRADE ID:  %s
-USER ID:   %s
-TIMESTAMP: %v
-RISK (%%):  %v
+TRADE ID:           %s
+USER ID:            %s
+TIMESTAMP:          %v
+RISK (%%):          %v
+SUCCESSFUL_ORDERS:  %d
 
-ERROR:     %v
+ERROR:              %v
 `
-	formattedContent := fmt.Sprintf(content, tradeID, userID, time.Now().UTC().Truncate(time.Second), risk, err)
+	formattedContent := fmt.Sprintf(content, tradeID, userID, time.Now().UTC().Truncate(time.Second), risk, numberOfSuccessOrders, err)
 
 	if _, err := (&discordproto.SendMsgToChannelRequest{
 		ChannelId:      discordproto.DiscordSatoshiTradesPulseChannel,

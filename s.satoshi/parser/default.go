@@ -8,7 +8,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 
 	"swallowtail/libraries/gerrors"
-	discordproto "swallowtail/s.discord/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -16,12 +15,6 @@ var (
 	// TODO: we need proper gRPC service testing.
 	fetchLatestPrice = getLatestPrice
 )
-
-func init() {
-	register(discordproto.DiscordMoonModMessagesChannel, &DefaultParser{})
-	register(discordproto.DiscordMoonSwingGroupChannel, &DefaultParser{})
-	register(discordproto.DiscordSatoshiInternalCallsChannel, &DefaultParser{})
-}
 
 // The default parser to parse trades from external mods.
 type DefaultParser struct{}
@@ -57,17 +50,31 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		})
 	}
 
-	currentPrice, err := fetchLatestPrice(ctx, ticker)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_parse_default", nil)
+	errParams := map[string]string{
+		"ticker": ticker,
 	}
 
-	entry, stopLoss, takeProfits, err := validatePosition(ticker, "USDT", currentPrice, possibleValues)
+	currentPrice, err := fetchLatestPrice(ctx, ticker)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_parse_default", errParams)
+	}
+
+	entries, stopLoss, takeProfits, err := validatePosition(currentPrice, possibleValues, false)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_parse_with_default_parser.validate_position", nil)
 	}
 
-	var orderType, _ = parseOrderType(content, currentPrice, entry, side)
+	if len(entries) != 1 {
+		errParams["entries"] = entriesAsString(entries)
+		return nil, gerrors.FailedPrecondition("failed_to_parse_with_default_parser.multiple_entries", errParams)
+	}
+
+	orderType, _ := parseOrderType(content, currentPrice, entries, side)
+
+	protoEntries := make([]float32, 0, len(entries))
+	for _, entry := range entries {
+		protoEntries = append(protoEntries, float32(entry))
+	}
 
 	protoTakeProfits := make([]float32, 0, len(takeProfits))
 	for _, tp := range takeProfits {
@@ -85,7 +92,7 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		TradeSide:          side,
 		Asset:              strings.ToUpper(ticker),
 		Pair:               tradeengineproto.TRADE_PAIR_USDT,
-		Entry:              float32(entry),
+		Entries:            protoEntries,
 		StopLoss:           float32(stopLoss),
 		TakeProfits:        protoTakeProfits,
 		CurrentPrice:       float32(currentPrice),

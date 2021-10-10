@@ -43,7 +43,7 @@ func CreateTrade(ctx context.Context, trade *domain.Trade) error {
 				trade_side,
 				asset,
 				pair,
-				entry,
+				entries,
 				stop_loss,
 				take_profits,
 				current_price,
@@ -65,7 +65,7 @@ func CreateTrade(ctx context.Context, trade *domain.Trade) error {
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		t.ActorID, t.HumanizedActorName, t.ActorType, t.IdempotencyKey, t.OrderType, t.TradeType, t.TradeSide, trade.Asset, t.Pair, t.Entry, t.StopLoss, t.TakeProfits, t.CurrentPrice, t.Status,
+		t.ActorID, t.HumanizedActorName, t.ActorType, t.IdempotencyKey, t.OrderType, t.TradeType, t.TradeSide, trade.Asset, t.Pair, t.Entries, t.StopLoss, t.TakeProfits, t.CurrentPrice, t.Status,
 		t.Created, t.LastUpdated,
 	)); err != nil {
 		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)

@@ -15,22 +15,29 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+type HTTPRateLimiter interface {
+	RefreshWait(header http.Header, statusCode int)
+	Wait()
+}
+
 type HttpClient interface {
 	Do(ctx context.Context, method, endpoint string, reqBody, rspBody interface{}) error
 	DoWithEphemeralHeaders(ctx context.Context, method, endpoint string, reqBody, rspBody interface{}, headers map[string]string) error
 }
 
-func NewHTTPClient(timeout time.Duration) HttpClient {
+func NewHTTPClient(timeout time.Duration, rateLimiter HTTPRateLimiter) HttpClient {
 	return &httpClient{
 		c: &http.Client{
 			Timeout: timeout,
 		},
+		rateLimiter: rateLimiter,
 	}
 }
 
 type httpClient struct {
-	c       *http.Client
-	headers map[string]string
+	c           *http.Client
+	headers     map[string]string
+	rateLimiter HTTPRateLimiter
 }
 
 func (h *httpClient) WithHeaders(headers map[string]string) {
@@ -85,7 +92,7 @@ func (h *httpClient) DoWithEphemeralHeaders(ctx context.Context, method, url str
 		body = bytes.NewReader(reqBodyBytes)
 	}
 
-	rsp, err := h.doRawRequest(ctx, method, url, body, headers)
+	rsp, err := h.doRawRequestWithRateLimit(ctx, method, url, body, headers)
 	if err != nil {
 		return err
 	}
@@ -102,6 +109,21 @@ func (h *httpClient) DoWithEphemeralHeaders(ctx context.Context, method, url str
 	}
 
 	return nil
+}
+
+func (h *httpClient) doRawRequestWithRateLimit(ctx context.Context, method, url string, body io.Reader, headers map[string]string) (*http.Response, error) {
+	if h.rateLimiter == nil {
+		return h.doRawRequest(ctx, method, url, body, headers)
+	}
+
+	h.rateLimiter.Wait()
+	rsp, err := h.doRawRequest(ctx, method, url, body, headers)
+	if err != nil {
+		return nil, err
+	}
+
+	h.rateLimiter.RefreshWait(rsp.Header, rsp.StatusCode)
+	return rsp, err
 }
 
 func (h *httpClient) doRawRequest(ctx context.Context, method, url string, body io.Reader, headers map[string]string) (*http.Response, error) {

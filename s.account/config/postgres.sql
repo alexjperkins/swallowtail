@@ -9,6 +9,10 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'exchange') THEN
 		CREATE TYPE exchange AS ENUM ('BINANCE', 'FTX');
 	END IF;
+
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dca_strategy') THEN
+		CREATE TYPE dca_strategy AS ENUM ('CONSTANT', 'LINEAR', 'EXPONENTIAL');
+	END IF;
 END
 $$;
 
@@ -32,6 +36,8 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 
 	is_admin BOOLEAN DEFAULT FALSE,
 	is_futures_member BOOLEAN DEFAULT FALSE,
+
+	default_dca_strategy dca_strategy NOT NULL DEFAULT 'LINEAR',
 
 	PRIMARY KEY(user_id)
 );

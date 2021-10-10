@@ -18,6 +18,53 @@ service binance {
     rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
 }
 
+enum BinanceOrderType {
+    BINANCE_LIMIT = 0;
+    BINANCE_MARKET = 1;
+    BINANCE_STOP = 2;
+    BINANCE_TAKE_PROFIT = 3;
+    BINANCE_STOP_MARKET = 4;
+    BINANCE_TAKE_PROFIT_MARKET = 5;
+}
+
+enum BinanceTradeSide {
+    BINANCE_BUY = 0;
+    BINANCE_SELL = 1;
+}
+
+enum BinanceTimeInForce {
+    BINANCE_NOT_REQUIRED = 0;
+    BINANCE_GTC = 1;
+    BINANCE_IOC = 2;
+    BINANCE_FOK = 3;
+    BINANCE_GTX = 4;
+}
+
+enum BinanceWorkingType {
+    BINANCE_CONTRACT_PRICE = 0;
+    BINANCE_MARK_PRICE = 1;
+}
+
+enum BinancePositionSide {
+    BINANCE_SIDE_BOTH = 0;
+    BINANCE_SIDE_BOTH_LONG = 1;
+    BINANCE_SIDE_SHORT = 2;
+}
+
+message PerpetualFuturesOrder {
+    BinanceTradeSide side = 1;
+    BinanceOrderType order_type = 2;
+    float quantity = 3;
+    string symbol = 4;
+    string pair = 5;
+    float price = 6;
+    float stop_price = 7;
+    BinanceTimeInForce time_in_force = 8;
+    BinanceWorkingType working_type = 9;
+    bool close_position = 10;
+    BinancePositionSide position_side = 11;
+}
+
 message AssetPair {
     string symbol = 1;
     string base_asset = 2;
@@ -33,20 +80,15 @@ message ListAllAssetPairsResponse {
 }
 
 message ExecuteFuturesPerpetualsTradeRequest {
-    string trade_side = 1;
-    string order_type = 2;
-    float notional_size = 3;
-    string asset = 4;
-    string pair = 5;
-    float entry = 6;
-    float stop_loss = 7;
-    google.protobuf.Timestamp timestamp = 8;
-    Credentials credentials = 9;
+    repeated PerpetualFuturesOrder orders = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    Credentials credentials = 3;
 }
 
 message ExecuteFuturesPerpetualsTradeResponse {
     string exchange_trade_id = 1;
     int64 timestamp = 2;
+    int64 number_of_orders_executed = 3;
 }
 
 message ReadPerpetualFuturesAccountRequest {

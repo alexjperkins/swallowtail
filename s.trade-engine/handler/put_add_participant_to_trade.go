@@ -7,8 +7,8 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.trade-engine/dao"
-	"swallowtail/s.trade-engine/exchange"
 	"swallowtail/s.trade-engine/marshaling"
+	"swallowtail/s.trade-engine/orderrouter"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -64,7 +64,7 @@ func (s *TradeEngineService) AddParticipantToTrade(
 	}
 
 	// Execute the trade.
-	exchangeTradeRsp, err := exchange.ExecuteFuturesTradeForParticipant(ctx, trade, in, primaryExchangeCredentials)
+	exchangeTradeRsp, err := orderrouter.ExecuteFuturesTradeForParticipant(ctx, trade, in, primaryExchangeCredentials)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.execute_trade", errParams)
 	}
@@ -85,12 +85,13 @@ func (s *TradeEngineService) AddParticipantToTrade(
 	}
 
 	return &tradeengineproto.AddParticipantToTradeResponse{
-		ExchangeTradeId:    exchangeTradeRsp.ExchangeTradeID,
-		TradeParticipantId: existingTradeParticipant.TradeParticipantID,
-		TradeId:            trade.TradeID,
-		NotionalSize:       float32(exchangeTradeRsp.NotionalSize),
-		Timestamp:          timestamppb.New(exchangeTradeRsp.ExecutionTimestamp),
-		Asset:              trade.Asset,
-		Exchange:           tradeParticipant.Exchange,
+		ExchangeTradeId:        exchangeTradeRsp.ExchangeTradeID,
+		TradeParticipantId:     existingTradeParticipant.TradeParticipantID,
+		TradeId:                trade.TradeID,
+		NotionalSize:           float32(exchangeTradeRsp.NotionalSize),
+		Timestamp:              timestamppb.New(exchangeTradeRsp.ExecutionTimestamp),
+		Asset:                  trade.Asset,
+		Exchange:               tradeParticipant.Exchange,
+		NumberOfExecutedOrders: int64(exchangeTradeRsp.NumberOfExecutedOrders),
 	}, nil
 }

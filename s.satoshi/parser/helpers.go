@@ -131,47 +131,63 @@ func withinRange(value, truth, rangeAsPercentage float64) bool {
 	}
 }
 
-func validatePosition(asset, pair string, truth float64, possibleValues []float64) (entry float64, stopLoss float64, takeProfits []float64, err error) {
-	switch {
-	case len(possibleValues) < 2:
-		return 0, 0, nil, gerrors.FailedPrecondition("failed_to_validate_position.not_enough_values", nil)
-	case len(possibleValues) > 1:
-		stopLoss = possibleValues[0]
-		entry = possibleValues[1]
-		fallthrough
-	case len(possibleValues) > 2:
-		takeProfits = possibleValues[2:]
+func validatePosition(currentValue float64, possibleValues []float64, isDCA bool) ([]float64, float64, []float64, error) {
+	// Validate we have at least the minimum number of values within the upside range; otherwise we can ignore.
+	var minimumNumberOfValues = 2
+	if isDCA {
+		minimumNumberOfValues = 3
 	}
 
-	errParams := map[string]string{
-		"asset":     asset,
-		"pair":      pair,
-		"stop_loss": fmt.Sprintf("%v", stopLoss),
-		"entry":     fmt.Sprintf("%v", entry),
+	if len(possibleValues) < minimumNumberOfValues {
+		return nil, 0, nil, gerrors.FailedPrecondition("failed_to_validate_position.not_enough_values_within_range", nil)
 	}
 
-	if !withinRange(stopLoss, truth, 50) {
+	if !withinRange(possibleValues[0], currentValue, 50) {
 		// If the first value we parse is way off; then we pop it off and attempt on the rest of the values.
 		// The assumption is that for any trade the entry, stop loss & take profits should be relatively close to
 		// the current value for perps
-		return validatePosition(asset, pair, truth, possibleValues[1:])
+		return validatePosition(currentValue, possibleValues[1:], isDCA)
 	}
 
-	if !withinRange(entry, truth, 50) {
-		return 0, 0, nil, gerrors.FailedPrecondition("failed_to_validate_position.bad_stop_loss", errParams)
+	var (
+		entries     = []float64{}
+		stopLoss    float64
+		takeProfits = []float64{}
+	)
+	switch {
+	case len(possibleValues) < minimumNumberOfValues:
+		return nil, 0, nil, gerrors.FailedPrecondition("failed_to_validate_position.not_enough_values", nil)
+	case len(possibleValues) >= minimumNumberOfValues:
+		stopLoss = possibleValues[0]
+		entries = append(entries, possibleValues[1:minimumNumberOfValues]...)
+		fallthrough
+	case len(possibleValues) > minimumNumberOfValues:
+		takeProfits = possibleValues[minimumNumberOfValues:]
+	}
+
+	errParams := map[string]string{
+		"stop_loss": fmt.Sprintf("%v", stopLoss),
+		"entry":     entriesAsString(entries),
+	}
+
+	// Validate entries are within the correct range.
+	for _, entry := range entries {
+		if !withinRange(entry, currentValue, 50) {
+			return nil, 0, nil, gerrors.FailedPrecondition("failed_to_validate_position.bad_stop_loss", errParams)
+		}
 	}
 
 	validTakeProfits := []float64{}
 	for _, tp := range takeProfits {
-		if withinRange(tp, truth, 300) {
+		if withinRange(tp, currentValue, 300) {
 			validTakeProfits = append(validTakeProfits, tp)
 		}
 	}
 
-	return entry, stopLoss, validTakeProfits, nil
+	return entries, stopLoss, validTakeProfits, nil
 }
 
-func parseOrderType(content string, currentValue, entry float64, side tradeengineproto.TRADE_SIDE) (tradeengineproto.ORDER_TYPE, bool) {
+func parseOrderType(content string, currentValue float64, entries []float64, side tradeengineproto.TRADE_SIDE) (tradeengineproto.ORDER_TYPE, bool) {
 	var containsLimit bool
 	for _, f := range strings.Fields(strings.ToLower(content)) {
 		if f == "limit" {
@@ -179,6 +195,17 @@ func parseOrderType(content string, currentValue, entry float64, side tradeengin
 		}
 	}
 
+	// If we have a DCA order; we determine the order side by the % of the last entry in value order.
+	if len(entries) > 1 {
+		lastEntry := entries[len(entries)-1]
+		if withinRange(lastEntry, currentValue, 2.5) {
+			return tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT, true
+		}
+
+		return tradeengineproto.ORDER_TYPE_DCA_ALL_LIMIT, true
+	}
+
+	entry := entries[0]
 	switch {
 	case !containsLimit:
 		return tradeengineproto.ORDER_TYPE_MARKET, true
@@ -195,4 +222,12 @@ func parseActor(actorID string) string {
 	// E.g Eli [Trades]
 	splits := strings.Split(actorID, "[")
 	return strings.ToUpper(splits[0])
+}
+
+func entriesAsString(ff []float64) string {
+	var ss []string
+	for _, f := range ff {
+		ss = append(ss, fmt.Sprintf("%.5f", f))
+	}
+	return strings.Join(ss, ",")
 }

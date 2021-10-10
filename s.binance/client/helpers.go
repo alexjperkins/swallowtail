@@ -12,7 +12,7 @@ func buildQueryStringFromFuturesPerpetualTrade(req *ExecutePerpetualFuturesTrade
 
 	sb.WriteString(fmt.Sprintf("symbol=%s", req.Symbol))
 	sb.WriteString(fmt.Sprintf("&side=%s", req.Side))
-	sb.WriteString(fmt.Sprintf("&type=%s", req.Type))
+	sb.WriteString(fmt.Sprintf("&type=%s", req.OrderType))
 
 	if req.PositionSide != "" {
 		sb.WriteString(fmt.Sprintf("&positionSide=%s", req.PositionSide))

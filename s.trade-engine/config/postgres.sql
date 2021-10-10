@@ -23,7 +23,7 @@ BEGIN
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 's_tradeengine_order_type') THEN
-		CREATE TYPE s_tradeengine_order_type AS ENUM ('LIMIT', 'MARKET');
+		CREATE TYPE s_tradeengine_order_type AS ENUM ('LIMIT', 'MARKET', 'STOP_MARKET', 'DCA_ALL_LIMIT', 'DCA_FIRST_MARKET_REST_LIMIT');
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 's_tradeengine_trade_side') THEN
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trades (
 	asset VARCHAR(8) NOT NULL,
 	pair VARCHAR(4) NOT NULL,
 
-	entry DECIMAL NOT NULL,
+	entries DECIMAL[] NOT NULL,
 	stop_loss DECIMAL NOT NULL,
 	take_profits DECIMAL[] NOT NULL,
 

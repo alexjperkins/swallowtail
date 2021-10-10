@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	registry = map[string]TradeParser{}
+	registry = make(map[string][]TradeParser)
 	mu       sync.RWMutex
 )
 
-func register(identifier string, parser TradeParser) {
+func register(identifier string, parser []TradeParser) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -25,7 +25,7 @@ func register(identifier string, parser TradeParser) {
 	slog.Info(nil, "Registered parser for: %s", identifier)
 }
 
-func getParserByIdentifier(identifier string) (TradeParser, bool) {
+func getParsersByIdentifier(identifier string) ([]TradeParser, bool) {
 	mu.RLock()
 	defer mu.RUnlock()
 

@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"swallowtail/libraries/gerrors"
-	"swallowtail/libraries/transport"
-	"swallowtail/s.binance/client/signer"
-	"swallowtail/s.binance/domain"
 	"time"
 
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/transport"
+	"swallowtail/s.binance/client/auth"
+	"swallowtail/s.binance/domain"
 )
 
 type binanceClient struct {
@@ -171,7 +172,7 @@ func (c *binanceClient) signRequest(secret, queryString string, reqBody interfac
 	now := time.Now().UnixNano() / 1_000_000
 
 	// sign the request
-	hmac, err := signer.Sha256HMAC(secret, queryString, now, reqBody)
+	hmac, err := auth.Sha256HMAC(secret, queryString, now, reqBody)
 	if err != nil {
 		return "", gerrors.Augment(err, "failed_to_sign_request", nil)
 	}

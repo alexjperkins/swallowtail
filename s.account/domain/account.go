@@ -16,4 +16,5 @@ type Account struct {
 	LowPriorityPager     string    `db:"low_priority_pager"`
 	IsAdmin              bool      `db:"is_admin"`
 	IsFuturesMember      bool      `db:"is_futures_member"`
+	DefaultDCAStrategy   string    `db:"default_dca_strategy"`
 }

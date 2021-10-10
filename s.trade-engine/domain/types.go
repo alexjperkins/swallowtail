@@ -13,7 +13,7 @@ type Trade struct {
 	TradeType          string    `db:"trade_type"`
 	Asset              string    `db:"asset"`
 	Pair               string    `db:"pair"`
-	Entry              float64   `db:"entry"`
+	Entries            []float64 `db:"entries"`
 	StopLoss           float64   `db:"stop_loss"`
 	TakeProfits        []float64 `db:"take_profits"`
 	Status             string    `db:"status"`
@@ -35,4 +35,5 @@ type TradeParticipant struct {
 	ExchangeOrderID    string    `db:"exchange_order_id"`
 	Status             string    `db:"status"`
 	ExecutedTimestamp  time.Time `db:"executed"`
+	DCAStrategy        string    `db:"dca_strategy"`
 }

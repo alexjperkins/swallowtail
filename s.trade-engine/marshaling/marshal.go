@@ -10,6 +10,11 @@ import (
 
 // TradeProtoToDomain converts our proto definition of a trade to the internal domain definition.
 func TradeProtoToDomain(proto *tradeengineproto.Trade) *domain.Trade {
+	entries := make([]float64, 0, len(proto.Entries))
+	for _, entry := range proto.Entries {
+		entries = append(entries, float64(entry))
+	}
+
 	tps := make([]float64, 0, len(proto.TakeProfits))
 	for _, tp := range proto.TakeProfits {
 		tps = append(tps, float64(tp))
@@ -26,7 +31,7 @@ func TradeProtoToDomain(proto *tradeengineproto.Trade) *domain.Trade {
 		TradeSide:          proto.TradeSide.String(),
 		Asset:              proto.Asset,
 		Pair:               proto.Pair.String(),
-		Entry:              float64(proto.Entry),
+		Entries:            entries,
 		StopLoss:           float64(proto.StopLoss),
 		TakeProfits:        tps,
 		CurrentPrice:       float64(proto.CurrentPrice),
@@ -38,6 +43,11 @@ func TradeProtoToDomain(proto *tradeengineproto.Trade) *domain.Trade {
 
 // TradeDomainToProto ...
 func TradeDomainToProto(domain *domain.Trade) *tradeengineproto.Trade {
+	entries := make([]float32, 0, len(domain.Entries))
+	for _, entry := range domain.Entries {
+		entries = append(entries, float32(entry))
+	}
+
 	tps := make([]float32, 0, len(domain.TakeProfits))
 	for _, tp := range domain.TakeProfits {
 		tps = append(tps, float32(tp))
@@ -53,7 +63,7 @@ func TradeDomainToProto(domain *domain.Trade) *tradeengineproto.Trade {
 		TradeSide:          tradeengineproto.TRADE_SIDE((tradeengineproto.TRADE_SIDE_value[domain.TradeSide])),
 		Asset:              domain.Asset,
 		Pair:               tradeengineproto.TRADE_PAIR((tradeengineproto.TRADE_PAIR_value[domain.Pair])),
-		Entry:              float32(domain.Entry),
+		Entries:            entries,
 		StopLoss:           float32(domain.StopLoss),
 		TakeProfits:        tps,
 		Status:             tradeengineproto.TRADE_STATUS((tradeengineproto.TRADE_STATUS_value[domain.Status])),

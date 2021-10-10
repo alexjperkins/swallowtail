@@ -63,10 +63,16 @@ func validateTrade(trade *tradeengineproto.Trade) error {
 		return gerrors.BadParam("missing_param.idempotency_key", nil)
 	case trade.ActorId == "":
 		return gerrors.BadParam("missing_param.actor_id", nil)
-	case trade.Entry == 0:
-		return gerrors.BadParam("missing_param.entry_cannot_be_zero", nil)
+	case len(trade.Entries) == 0:
+		return gerrors.BadParam("missing_param.entries", nil)
 	case trade.TradeType == tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS && trade.StopLoss == 0:
 		return gerrors.FailedPrecondition("missing_param.stoploss_cannot_be_zero_for_futures_perpetuals", nil)
+	}
+
+	for _, entry := range trade.Entries {
+		if entry == 0 {
+			return gerrors.BadParam("bad_param.zero_valued_entry", nil)
+		}
 	}
 
 	return nil

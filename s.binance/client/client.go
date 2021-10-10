@@ -71,7 +71,7 @@ type BinanceClient interface {
 // Init initializes the default binance client for this service.
 func Init(ctx context.Context) error {
 	c := &binanceClient{
-		http: transport.NewHTTPClient(30 * time.Second),
+		http: transport.NewHTTPClient(30*time.Second, &binanceRateLimiter{}),
 	}
 
 	if err := c.Ping(ctx); err != nil {

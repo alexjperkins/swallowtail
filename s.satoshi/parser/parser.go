@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/hashicorp/go-multierror"
 	"github.com/monzo/slog"
 )
 
@@ -58,14 +59,26 @@ func Init(ctx context.Context) error {
 
 // Parse ...
 func Parse(ctx context.Context, identifier, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error) {
-	parser, ok := getParserByIdentifier(identifier)
+	parsers, ok := getParsersByIdentifier(identifier)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_parse.parser_does_not_exist", nil)
 	}
 
 	cleanedContent := cleanContent(content)
 
-	return parser.Parse(ctx, cleanedContent, m, actorType)
+	var mErr error
+	for _, parser := range parsers {
+		trade, err := parser.Parse(ctx, cleanedContent, m, actorType)
+		if err != nil {
+			slog.Error(ctx, "Failed to parse trade: %v", err)
+			multierror.Append(mErr, err)
+			continue
+		}
+
+		return trade, nil
+	}
+
+	return nil, gerrors.Augment(mErr, "Failed to parse trades using any parser", nil)
 }
 
 func cleanContent(content string) string {
