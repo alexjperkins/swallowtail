@@ -26,9 +26,6 @@ func init() {
 		priceBotSymbols = coins.List()
 		sort.Strings(priceBotSymbols)
 	})
-	register(PriceBotConsumerID, PriceBotConsumer{
-		Active: true,
-	})
 }
 
 // PriceBotConsumer

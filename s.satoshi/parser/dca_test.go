@@ -133,6 +133,14 @@ func TestDCAParser(t *testing.T) {
 			`,
 			withErr: true,
 		},
+		{
+			name: "swings_single_entry",
+			content: `
+			entry now 3502
+			Stop 3407
+			target 3704.7 ETH
+			`,
+		},
 	}
 
 	originalBinanceAssetPairs := binanceAssetPairs
@@ -141,6 +149,7 @@ func TestDCAParser(t *testing.T) {
 		"lrc":  true,
 		"srm":  true,
 		"link": true,
+		"eth":  true,
 	}
 
 	originalFetcher := fetchLatestPrice
