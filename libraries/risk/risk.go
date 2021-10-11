@@ -110,7 +110,7 @@ func calculateRisk(entry float64, stopLoss, risk float64, side tradeengineproto.
 func summedLinspace(howMany int, total float64) []float64 {
 	var (
 		t          float64
-		start, end = 1.0, 3.0
+		start, end = 1.0, 2.0
 	)
 	vs := make([]float64, 0, howMany)
 	for i := 0; i < howMany; i++ {
