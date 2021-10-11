@@ -30,10 +30,14 @@ func CalculatePositionsByRisk(
 	case 0:
 		return nil, gerrors.FailedPrecondition("failed_to_calculate_notional_size_from_risk.missing_entries", nil)
 	case 1:
-		// If we only have one entry; then the risk size is 100% at that price.
+		r, err := calculateRisk(entries[0], stopLoss, totalRisk, side)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_calculate_notional_size_from_risk.risk_calc", nil)
+		}
+
 		return []*Position{
 			{
-				Risk:  1.0,
+				Risk:  r,
 				Price: entries[0],
 			},
 		}, nil
