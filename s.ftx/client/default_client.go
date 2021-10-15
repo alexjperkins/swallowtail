@@ -17,7 +17,7 @@ type ftxClient struct {
 }
 
 func (f *ftxClient) Ping(ctx context.Context) error {
-	err := f.do(ctx, http.MethodGet, "/api/stats/latency_stats", PingRequest{}, PingResponse{}, nil, nil)
+	err := f.do(ctx, http.MethodGet, "/api/stats/latency_stats", nil, nil, nil, nil)
 	switch {
 	case gerrors.Is(err, gerrors.ErrUnauthenticated):
 		return nil
@@ -26,6 +26,15 @@ func (f *ftxClient) Ping(ctx context.Context) error {
 	default:
 		return nil
 	}
+}
+
+func (f *ftxClient) GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, error) {
+	rsp := &GetStatusResponse{}
+	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/stats/latency_stats", req, rsp, nil, nil); err != nil {
+		return nil, gerrors.Augment(err, "failed_get_ftx_status", nil)
+	}
+
+	return rsp, nil
 }
 
 func (f *ftxClient) ListAccountDeposits(ctx context.Context, req *ListAccountDepositsRequest, pagination *PaginationFilter) (*ListAccountDepositsResponse, error) {

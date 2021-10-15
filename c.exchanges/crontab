@@ -1,2 +1,5 @@
 */5 * * * * sh /jobs/get_binance_exchange_status.sh
+
 */5 * * * * sh /jobs/get_bitfinex_exchange_status.sh
+
+*/5 * * * * sh /jobs/get_ftx_exchange_status.sh

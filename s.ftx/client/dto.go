@@ -59,12 +59,15 @@ func (p *PaginationFilter) ToQueryString() string {
 	return fmt.Sprintf("start_time=%d&end_time=%d", p.Start, p.End)
 }
 
-// PingRequest ...
-type PingRequest struct{}
+// GetStatusRequest ...
+type GetStatusRequest struct{}
 
-// PingResponse ...
-type PingResponse struct {
+// GetStatusResponse ...
+type GetStatusResponse struct {
 	Success bool `json:"success"`
+	Result  []struct {
+		P50Latency float64 `json:"p50"`
+	} `json:"result"`
 }
 
 // ListAccountDepositsRequest ...

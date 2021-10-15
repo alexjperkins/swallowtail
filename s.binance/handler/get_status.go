@@ -3,13 +3,14 @@ package handler
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.binance/client"
 	binanceproto "swallowtail/s.binance/proto"
 	discordproto "swallowtail/s.discord/proto"
-	"time"
-
-	"github.com/monzo/slog"
 )
 
 // GetStatus ...
@@ -18,7 +19,7 @@ func (s *BinanceService) GetStatus(
 ) (*binanceproto.GetStatusResponse, error) {
 	rsp, err := client.GetStatus(ctx)
 	if err != nil {
-		notifyPulseChannelFailure(ctx)
+		notifyExchangePulseChannelFailure(ctx)
 
 		return nil, gerrors.Augment(err, "failed_to_get_status", nil)
 	}
@@ -27,7 +28,7 @@ func (s *BinanceService) GetStatus(
 	latencyInMilliseconds := int(rsp.ServerLatency / time.Millisecond)
 	driftInMilliseconds := int(rsp.AssumedClockDrift / time.Millisecond)
 
-	notifyPulseChannelSuccess(ctx, rsp.ServerTime, latencyInMilliseconds, driftInMilliseconds)
+	notifyExchangePulseChannelSuccess(ctx, rsp.ServerTime, latencyInMilliseconds, driftInMilliseconds)
 
 	return &binanceproto.GetStatusResponse{
 		ServerTime:        int64(rsp.ServerTime),
@@ -36,7 +37,7 @@ func (s *BinanceService) GetStatus(
 	}, nil
 }
 
-func notifyPulseChannelFailure(ctx context.Context) error {
+func notifyExchangePulseChannelFailure(ctx context.Context) error {
 	header := ":rotating_lights:    `CRONITOR: BINANCE CONNECTIVITY DOWN`    :rotating_lights:"
 	content := `
 SUCCESS: FALSE
@@ -55,7 +56,7 @@ SUCCESS: FALSE
 	return nil
 }
 
-func notifyPulseChannelSuccess(ctx context.Context, serverTime, drift, latency int) error {
+func notifyExchangePulseChannelSuccess(ctx context.Context, serverTime, drift, latency int) error {
 	header := ":taxi:    `CRONITOR: EXCHANGE PULSE`    :taxi:"
 	content := `
 EXCHANGE:     BINANCE

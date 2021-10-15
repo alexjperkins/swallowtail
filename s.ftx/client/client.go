@@ -22,6 +22,9 @@ type FTXClient interface {
 	// Ping ...
 	Ping(ctx context.Context) error
 
+	// GetStatus ...
+	GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, error)
+
 	// ListAccountDeposits ...
 	ListAccountDeposits(ctx context.Context, req *ListAccountDepositsRequest, pagination *PaginationFilter) (*ListAccountDepositsResponse, error)
 
@@ -88,4 +91,11 @@ func GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundin
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Get funding rate FTX")
 	defer span.Finish()
 	return client.GetFundingRate(ctx, req)
+}
+
+// GetStatus ...
+func GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get status: FTX")
+	defer span.Finish()
+	return client.GetStatus(ctx, req)
 }

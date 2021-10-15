@@ -5,12 +5,12 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./;ftxproto";
 
 service ftx {
-    rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
-
     rpc GetFTXStatus (GetFTXStatusRequest) returns (GetFTXStatusResponse) {}
 
     rpc GetFTXFundingRates (GetFTXFundingRatesRequest) returns (GetFTXFundingRatesResponse) {}
-} 
+
+    rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
+}
 
 message ListAccountDepositsRequest {
     string actor_id = 1;
