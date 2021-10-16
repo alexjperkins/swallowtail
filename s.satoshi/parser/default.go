@@ -22,7 +22,9 @@ type DefaultParser struct{}
 // Parse attempts to parse some content into a `tradeengineproto.Trade`. If it fails it returns a `FailedPrecondition` gerror
 // that details why it was unable to.
 func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error) {
-	ticker := parseTicker(content)
+	tradeType := parseTradeType(content)
+
+	ticker, exchanges := parseTicker(content, tradeType)
 	if ticker == "" {
 		return nil, gerrors.FailedPrecondition("failed_to_parse_default.not_enough_information.missing_ticker", nil)
 	}
@@ -83,12 +85,17 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 
 	actor := parseActor(m.Author.Username)
 
+	protoExchanges := make([]string, 0, len(exchanges))
+	for _, exchange := range exchanges {
+		protoExchanges = append(protoExchanges, exchange.String())
+	}
+
 	return &tradeengineproto.Trade{
 		ActorId:            m.Author.ID,
 		HumanizedActorName: actor,
 		ActorType:          actorType,
 		OrderType:          orderType,
-		TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+		TradeType:          tradeType,
 		TradeSide:          side,
 		Asset:              strings.ToUpper(ticker),
 		Pair:               tradeengineproto.TRADE_PAIR_USDT,
@@ -96,5 +103,6 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		StopLoss:           float32(stopLoss),
 		TakeProfits:        protoTakeProfits,
 		CurrentPrice:       float32(currentPrice),
+		TradeableExchanges: protoExchanges,
 	}, nil
 }

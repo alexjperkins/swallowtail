@@ -29,7 +29,7 @@ func ExecuteFuturesTradeForParticipant(
 	exchange *accountproto.Exchange,
 ) (*FuturesTradeResponse, error) {
 	switch {
-	case exchange.ExchangeType == accountproto.ExchangeType_BINANCE:
+	case exchange.ExchangeType == accountproto.ExchangeType_BINANCE && trade.TradeType == tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS.String():
 		return executeBinanceFuturesTrade(ctx, trade, participant, &binanceproto.Credentials{
 			ApiKey:    exchange.ApiKey,
 			SecretKey: exchange.SecretKey,
@@ -41,9 +41,9 @@ func ExecuteFuturesTradeForParticipant(
 			Subaccount: exchange.SubAccount,
 		})
 	default:
-		return nil, gerrors.Unimplemented("cannot_execute_trade.unimplemented_exchange", map[string]string{
-			"exchange": exchange.ExchangeType.String(),
+		return nil, gerrors.Unimplemented("cannot_execute_trade.unimplemented", map[string]string{
+			"exchange":   exchange.ExchangeType.String(),
+			"trade_type": trade.TradeType,
 		})
-
 	}
 }

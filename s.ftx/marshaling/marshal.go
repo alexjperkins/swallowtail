@@ -107,6 +107,31 @@ func OrderProtoToDTO(order *ftxproto.FTXOrder) (*client.ExecuteOrderRequest, err
 	}, nil
 }
 
+// InstrumentsDTOToProtos ...
+func InstrumentsDTOToProtos(is []*client.Instrument) []*ftxproto.Instrument {
+	protos := make([]*ftxproto.Instrument, 0, len(is))
+	for _, i := range is {
+		protos = append(protos, InstrumentDTOToProto(i))
+	}
+
+	return protos
+}
+
+// InstrumentDTOToProto ...
+func InstrumentDTOToProto(i *client.Instrument) *ftxproto.Instrument {
+	return &ftxproto.Instrument{
+		Symbol:          i.Symbol,
+		PostOnly:        i.PostOnly,
+		Enabled:         i.Enabled,
+		MinimumTickSize: float32(i.MininumTickSize),
+		MinimumQuantity: float32(i.MininumQuantity),
+		Type:            i.Type,
+		Underlying:      i.Underlying,
+		BaseCurrency:    i.BaseCurrency,
+		QuoteCurrency:   i.QuoteCurrency,
+	}
+}
+
 // NOTE: this **does** not account for large floats & can lead to overflow
 // TODO: move to own library.
 func roundToPrecisionString(f float64, p int) string {

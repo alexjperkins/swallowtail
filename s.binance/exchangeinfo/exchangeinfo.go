@@ -32,7 +32,7 @@ func Init(ctx context.Context) error {
 }
 
 func refresh(ctx context.Context) {
-	t := time.NewTicker(24 * time.Hour)
+	t := time.NewTicker(23 * time.Hour)
 	for {
 		select {
 		case <-t.C:

@@ -3,18 +3,21 @@ package parser
 import (
 	"context"
 	"strings"
-	"swallowtail/libraries/gerrors"
-	binanceproto "swallowtail/s.binance/proto"
-	tradeengineproto "swallowtail/s.trade-engine/proto"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/go-multierror"
 	"github.com/monzo/slog"
+
+	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/util"
+	binanceproto "swallowtail/s.binance/proto"
+	ftxproto "swallowtail/s.ftx/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 var (
 	binanceAssetPairs = map[string]bool{}
+	ftxInstruments    = map[string]bool{}
 )
 
 // TradeParser ...
@@ -25,35 +28,54 @@ type TradeParser interface {
 // Init initializes the parser; we do this since we need to pull all the latest assets that are tradable.
 // Currently we use Binance.
 func Init(ctx context.Context) error {
-	// Build a list of asset pairs that have futures trading enabled.
-	var (
-		assetPairs []*binanceproto.AssetPair
-		err        error
-	)
-	for i := 0; i < 3; i++ {
-		rsp, retryErr := (&binanceproto.ListAllAssetPairsRequest{}).Send(context.Background()).Response()
-		if retryErr != nil {
-			slog.Info(ctx, "Failed to fetch all asset pairs on binance. Trying again...", err)
-			time.Sleep(2 * time.Second)
-			err = retryErr
-			continue
-		}
-
-		assetPairs = rsp.AssetPairs
-		break
+	// Fetch Binance info.
+	rsp, err := util.Retry(ctx, 3, func(ctx context.Context) (interface{}, error) {
+		return (&binanceproto.ListAllAssetPairsRequest{}).Send(context.Background()).Response()
+	})
+	if err != nil {
+		return gerrors.Augment(err, "failed_to_init_parser.fetch_binance_info", nil)
 	}
 
-	if len(assetPairs) == 0 && err != nil {
-		return gerrors.Augment(err, "failed_to_init_parser.failed_to_fetch_asset_pairs_from_binance", nil)
+	binanceInfo, ok := rsp.(*binanceproto.ListAllAssetPairsResponse)
+	if !ok {
+		return gerrors.Augment(err, "failed_to_init_parser.bad_list_all_asset_pairs_binance_response.type", nil)
 	}
 
-	for _, assetPair := range assetPairs {
+	if len(binanceInfo.AssetPairs) == 0 {
+		return gerrors.Augment(err, "failed_to_init_parser.no_binance_asset_pairs", nil)
+	}
+
+	slog.Trace(context.Background(), "Fetched all binance asset pairs for satoshi parser; total: %v", len(binanceAssetPairs))
+
+	// Fetch FTX info.
+	rsp, err = util.Retry(ctx, 3, func(ctx context.Context) (interface{}, error) {
+		return (&ftxproto.ListFTXInstrumentsRequest{}).Send(context.Background()).Response()
+	})
+	if err != nil {
+		return gerrors.Augment(err, "failed_to_init_parser.fetch_ftx_info", nil)
+	}
+
+	ftxInfo, ok := rsp.(*ftxproto.ListFTXInstrumentsResponse)
+	if !ok {
+		return gerrors.Augment(err, "failed_to_init_parser.bad_list_instruments_ftx_response.type", nil)
+	}
+
+	if len(ftxInfo.Instruments) == 0 {
+		return gerrors.Augment(err, "failed_to_init_parser.no_ftx_instruments", nil)
+	}
+
+	slog.Trace(context.Background(), "Fetched all ftx instruments for satoshi parser; total: %v", len(ftxInstruments))
+
+	for _, assetPair := range binanceInfo.AssetPairs {
 		// We may have some inconsistencies here since we're using all symbols; since some symbols
 		// May not be actively traded on Binance.
 		binanceAssetPairs[strings.ToLower(assetPair.BaseAsset)] = true
 	}
 
-	slog.Info(context.Background(), "Fetched all binance asset pairs for satoshi parser; total: %v", len(binanceAssetPairs))
+	for _, instrument := range ftxInfo.Instruments {
+		ftxInstruments[strings.ToLower(instrument.Symbol)] = true
+	}
+
 	return nil
 }
 

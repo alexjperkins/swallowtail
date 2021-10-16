@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trades (
 
 	status s_tradeengine_trade_status NOT NULL DEFAULT 'POLLING',
 
+	tradeable_exchanges VARCHAR(64)[] NOT NULL,
+
 	created TIME NOT NULL,
 	last_updated TIME NOT NULL,
 

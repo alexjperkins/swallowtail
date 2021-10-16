@@ -129,16 +129,12 @@ message ListFTXInstrumentsResponse{
 
 message Instrument {
     string symbol = 1;
-    string description = 2;
+    bool post_only = 2;
     bool enabled = 3;
     float minimum_tick_size = 4;
     float minimum_quantity = 5;
     string type = 6;
-    google.protobuf.Timestamp expiry = 7;
-    string underlying = 8;
-    bool expired = 9;
-    float volume = 10;
-    float volume_24h = 11;
-    string base_currency = 12;
-    string quote_currency = 13;
+    string underlying = 7;
+    string base_currency = 8;
+    string quote_currency = 9;
 }

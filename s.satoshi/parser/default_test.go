@@ -2,6 +2,7 @@ package parser
 
 import (
 	"context"
+	accountproto "swallowtail/s.account/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 	"testing"
 
@@ -48,6 +49,9 @@ func TestDefaultParser(t *testing.T) {
 				TakeProfits: []float32{
 					52000, 54000, 58000,
 				},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -76,6 +80,9 @@ func TestDefaultParser(t *testing.T) {
 				TakeProfits: []float32{
 					259.7,
 				},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -102,6 +109,9 @@ func TestDefaultParser(t *testing.T) {
 				Entries:            []float32{343},
 				StopLoss:           323,
 				TakeProfits:        []float32{},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -121,6 +131,9 @@ func TestDefaultParser(t *testing.T) {
 				Entries:            []float32{9.80},
 				StopLoss:           8.90,
 				TakeProfits:        []float32{13, 18},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -144,6 +157,9 @@ func TestDefaultParser(t *testing.T) {
 				Entries:            []float32{0.0402},
 				StopLoss:           0.0374,
 				TakeProfits:        []float32{},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -175,6 +191,9 @@ func TestDefaultParser(t *testing.T) {
 					43680,
 					42112,
 				},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -202,6 +221,9 @@ func TestDefaultParser(t *testing.T) {
 				Entries:            []float32{6.28},
 				StopLoss:           6.02,
 				TakeProfits:        []float32{},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -227,6 +249,9 @@ func TestDefaultParser(t *testing.T) {
 				Entries:            []float32{46.64},
 				StopLoss:           44.0,
 				TakeProfits:        []float32{50, 52, 55},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 	}

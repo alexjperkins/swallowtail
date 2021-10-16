@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	accountproto "swallowtail/s.account/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -49,6 +50,9 @@ func TestDCAParser(t *testing.T) {
 				TakeProfits: []float32{
 					52000, 54000, 58000,
 				},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -70,6 +74,9 @@ func TestDCAParser(t *testing.T) {
 				TakeProfits: []float32{
 					0.5,
 				},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -89,6 +96,9 @@ func TestDCAParser(t *testing.T) {
 				StopLoss:           7.80,
 				CurrentPrice:       8.1,
 				TakeProfits:        []float32{},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{
@@ -112,6 +122,9 @@ func TestDCAParser(t *testing.T) {
 				StopLoss:           27.66,
 				CurrentPrice:       26.0,
 				TakeProfits:        []float32{},
+				TradeableExchanges: []string{
+					accountproto.ExchangeType_BINANCE.String(),
+				},
 			},
 		},
 		{

@@ -1,10 +1,9 @@
 package handler
 
 import (
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.account/domain"
 	accountproto "swallowtail/s.account/proto"
-
-	"github.com/monzo/terrors"
 )
 
 func getIdentifierFromAccount(account *domain.Account, pagerType string) (string, error) {
@@ -18,23 +17,23 @@ func getIdentifierFromAccount(account *domain.Account, pagerType string) (string
 
 	case accountproto.PagerType_EMAIL.String():
 		if account.Email == "" {
-			return "", terrors.PreconditionFailed("account-email-missing", "Cannot page account via email; email not set", errParams)
+			return "", gerrors.FailedPrecondition("failed_to_get_identifier_from_account.email", errParams)
 		}
 		return account.Email, nil
 	case accountproto.PagerType_PHONE.String():
 		if account.PhoneNumber == "" {
-			return "", terrors.PreconditionFailed("account-phone-number-missing", "Cannot page account via phone number; phone number not set", errParams)
+			return "", gerrors.FailedPrecondition("failed_to_get_identifier_from_account.phone_number", errParams)
 		}
 		return account.PhoneNumber, nil
 	case accountproto.PagerType_SMS.String():
 		if account.PhoneNumber == "" {
-			return "", terrors.PreconditionFailed("account-phone-number-missing", "Cannot page account via sms; sms not set", errParams)
+			return "", gerrors.FailedPrecondition("failed_to_get_identifier_from_account.sms", errParams)
 		}
 		return account.PhoneNumber, nil
 	}
 
 	errParams["pager_type"] = pagerType
-	return "", terrors.PreconditionFailed("unknown-pager-type", "Cannot page account; unknown pager type", errParams)
+	return "", gerrors.FailedPrecondition("failed_to_get_identifier_from_account.unknown_pager_type", errParams)
 }
 
 func isValidActorID(actorID string) bool {
@@ -44,4 +43,16 @@ func isValidActorID(actorID string) bool {
 	default:
 		return false
 	}
+}
+
+func isValidActorUnmaskedRequest(actorID string, isRequestingUnmaskedCredentials bool) bool {
+	if !isRequestingUnmaskedCredentials {
+		return true
+	}
+
+	if actorID != accountproto.ActorSystemTradeEngine {
+		return false
+	}
+
+	return true
 }

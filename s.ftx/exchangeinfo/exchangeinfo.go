@@ -47,7 +47,7 @@ func gatherExchangeInfo(ctx context.Context) error {
 		err error
 	)
 	for i := 0; i < 3; i++ {
-		r, e := client.ListInstruments(ctx, &client.ListInstrumentsRequest{}, false)
+		r, e := client.ListInstruments(ctx, &client.ListInstrumentsRequest{})
 		if e != nil {
 			multierror.Append(err, e)
 			slog.Trace(ctx, "Failed to gather exchangeinfo, attempt [%v]; retrying...", i)
@@ -75,15 +75,15 @@ func gatherExchangeInfo(ctx context.Context) error {
 }
 
 func refresh(ctx context.Context) {
-	t := time.NewTicker(24 * time.Hour)
+	t := time.NewTicker(23 * time.Hour)
 	for {
 		select {
 		case <-t.C:
 			if err := gatherExchangeInfo(ctx); err != nil {
-				slog.Error(ctx, "Failed to refresh binance exchange info: Error: %v", err)
+				slog.Error(ctx, "Failed to refresh ftx exchange info: Error: %v", err)
 				continue
 			}
-			slog.Info(ctx, "Refreshed binance info")
+			slog.Info(ctx, "Refreshed ftx info")
 		case <-ctx.Done():
 			return
 		}

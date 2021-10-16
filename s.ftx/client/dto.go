@@ -3,50 +3,7 @@ package client
 import (
 	"fmt"
 	"time"
-
-	"swallowtail/s.ftx/client/auth"
 )
-
-// Credentials holds the credentials required for FTX.
-type Credentials struct {
-	APIKey     string
-	SecretKey  string
-	Subaccount string
-}
-
-// SignRequest signs a given request with the request body.
-func (c *Credentials) SignRequest(method, endpoint, timestamp string, body []byte) (string, error) {
-	signaturePayload := fmt.Sprintf("%s%s%s%s", timestamp, method, endpoint, body)
-	return auth.Sha256HMAC(c.SecretKey, signaturePayload)
-}
-
-// AsHeaders converts the credentials struct into the headers required to verify the user.
-// It uses the request body & the timestamp to sign the request.
-func (c *Credentials) AsHeaders(signature, timestamp string) map[string]string {
-	m := map[string]string{
-		"Content-Type": "application/json",
-		"FTX-KEY":      c.APIKey,
-		"FTX-SIGN":     signature,
-		"FTX-TS":       timestamp,
-	}
-
-	if c.Subaccount != "" {
-		m["FTX-SUBACCOUNT"] = c.Subaccount
-	}
-
-	return m
-}
-
-// SubaccountAsHeaders returns only the subaccount as headers; if it is not null.
-func (c *Credentials) SubaccountAsHeaders() map[string]string {
-	m := map[string]string{
-		"Content-Type": "application/json",
-	}
-	if c.Subaccount != "" {
-		m["FTX-SUBACCOUNT"] = c.Subaccount
-	}
-	return m
-}
 
 // PaginationFilter provides a pagination filter for all requests that require it.
 type PaginationFilter struct {
@@ -64,38 +21,38 @@ func (p *PaginationFilter) ToQueryString() string {
 type ExecuteOrderRequest struct {
 	Symbol            string `json:"symbol"`
 	Side              string `json:"side"`
-	Price             string `json:"price"`
 	Type              string `json:"type"`
 	Quantity          string `json:"quantity"`
-	ReduceOnly        bool   `json:"reduce_only"`
-	IOC               bool   `json:"ioc"`
-	PostOnly          bool   `json:"post_only"`
-	RejectOnPriceBand bool   `json:"reject_on_price_band"`
-	RetryUntilFilled  bool   `json:"retry_until_filled"`
-	TriggerPrice      string `json:"trigger_price"`
-	OrderPrice        string `json:"order_price"`
-	TrailValue        string `json:"trail_value"`
+	Price             string `json:"price,omitempty"`
+	ReduceOnly        bool   `json:"reduce_only,omitempty"`
+	IOC               bool   `json:"ioc,omitempty"`
+	PostOnly          bool   `json:"post_only,omitempty"`
+	RejectOnPriceBand bool   `json:"reject_on_price_band,omitempty"`
+	RetryUntilFilled  bool   `json:"retry_until_filled,omitempty"`
+	TriggerPrice      string `json:"trigger_price,omitempty"`
+	OrderPrice        string `json:"order_price,omitempty"`
+	TrailValue        string `json:"trail_value,omitempty"`
 }
 
 // ExecuteOrderResponse ...
 type ExecuteOrderResponse struct {
 	Success bool `json:"success"`
 	Result  struct {
-		CreatedAt     time.Time `json:"createdAt"`
-		FilledSize    float64   `json:"filledSize"`
-		Future        string    `json:"future"`
-		ID            int       `json:"id"`
-		Market        string    `json:"market"`
-		Price         float64   `json:"price"`
-		RemainingSize float64   `json:"remaining_size"`
-		Side          string    `json:"side"`
-		Quantity      float64   `json:"size"`
-		Status        string    `json:"status"`
-		Type          string    `json:"type"`
-		ReduceOnly    bool      `json:"reduce_only"`
-		IOC           bool      `json:"ioc"`
-		PostOnly      bool      `json:"post_only"`
-		ClientID      string    `json:"client_id"`
+		CreatedAt     time.Time `json:"createdAt,omitempty"`
+		FilledSize    float64   `json:"filledSize,omitempty"`
+		Future        string    `json:"future,omitempty"`
+		ID            int       `json:"id,omitempty"`
+		Market        string    `json:"market,omitempty"`
+		Price         float64   `json:"price,omitempty"`
+		RemainingSize float64   `json:"remaining_size,omitempty"`
+		Side          string    `json:"side,omitempty"`
+		Quantity      float64   `json:"size,omitempty"`
+		Status        string    `json:"status,omitempty"`
+		Type          string    `json:"type,omitempty"`
+		ReduceOnly    bool      `json:"reduce_only,omitempty"`
+		IOC           bool      `json:"ioc,omitempty"`
+		PostOnly      bool      `json:"post_only,omitempty"`
+		ClientID      string    `json:"client_id,omitempty"`
 	} `json:"result"`
 }
 
@@ -119,7 +76,7 @@ type ListAccountDepositsResponse struct {
 	Deposits []*DepositRecord `json:"result"`
 }
 
-// Deposit ...
+// DepositRecord ...
 type DepositRecord struct {
 	ID            int64     `json:"id"`
 	Coin          string    `json:"coin"`
@@ -163,22 +120,20 @@ type GetFundingRateResponse struct {
 }
 
 // ListInstrumentsRequest ...
-type ListInstrumentsRequest struct {
-}
-
-// ListFuturesInstrumentsResponse ...
-// https://docs.ftx.com/?python#futures
-type ListFuturesInstrumentsResponse struct {
-}
-
-// ListMarketsInstrumentsResponse ...
 // https://docs.ftx.com/?python#markets
-type ListMarketsInstrumentsResponse struct {
-}
+type ListInstrumentsRequest struct{}
 
 // Instrument ...
 type Instrument struct {
-	Symbol string `json:"symbol"`
+	Symbol          string  `json:"name"`
+	PostOnly        bool    `json:"postOnly"`
+	Enabled         bool    `json:"enabled"`
+	MininumTickSize float64 `json:"priceIncrement"`
+	MininumQuantity float64 `json:"sizeIncrement"`
+	Type            string  `json:"type"`
+	Underlying      string  `json:"underlying"`
+	BaseCurrency    string  `json:"baseCurrency,omitempty"`
+	QuoteCurrency   string  `json:"quoteCurrency,omitempty"`
 }
 
 // ListInstrumentsResponse ...

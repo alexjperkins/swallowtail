@@ -13,6 +13,10 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dca_strategy') THEN
 		CREATE TYPE dca_strategy AS ENUM ('CONSTANT', 'LINEAR', 'EXPONENTIAL');
 	END IF;
+
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'exchange_execution_strategy') THEN
+		CREATE TYPE exchange_execution_strategy AS ENUM ('PRIMARY_ONLY', 'ATTEMPT_ALL_REGISTERED')
+	END IF;
 END
 $$;
 
@@ -33,6 +37,7 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	last_payment_timestamp TIME NOT NULL DEFAULT now(),
 
 	primary_exchange exchange NOT NULL DEFAULT 'BINANCE',
+	default_exchange_execution_strategy exchange_execution_strategy NOT NULL DEFAULT 'PRIMARY_ONLY',
 
 	is_admin BOOLEAN DEFAULT FALSE,
 	is_futures_member BOOLEAN DEFAULT FALSE,

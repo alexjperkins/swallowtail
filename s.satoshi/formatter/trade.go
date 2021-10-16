@@ -50,6 +50,7 @@ TRADE SIDE:   %s
 ORDER TYPE:   %s
 MOD:          %s
 MOD TYPE:     %s
+EXCHANGES:    %s
 
 CURRENT_PRICE %v
 
@@ -69,6 +70,7 @@ STOP LOSS:    %v
 		trade.OrderType.String(),
 		trade.HumanizedActorName,
 		trade.ActorType.String(),
+		strings.Join(trade.TradeableExchanges, ", "),
 		trade.CurrentPrice,
 		trade.Entries[0],
 		trade.StopLoss,
@@ -126,6 +128,7 @@ TRADE SIDE:   %s
 ORDER TYPE:   %s
 MOD:          %s
 MOD TYPE:     %s
+EXCHANGES:    %s
 
 CURRENT_PRICE %v
 
@@ -146,6 +149,7 @@ STOP LOSS:    %v
 		trade.OrderType.String(),
 		trade.HumanizedActorName,
 		trade.ActorType.String(),
+		strings.Join(trade.TradeableExchanges, ", "),
 		trade.CurrentPrice,
 		sortedEntries[0],
 		sortedEntries[1],

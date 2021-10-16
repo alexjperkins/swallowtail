@@ -9,10 +9,11 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
+	"swallowtail/s.ftx/client/auth"
 )
 
 const (
-	// FTX API Version
+	// APIVersion defines the api version for the FTX exchange.
 	APIVersion = "/api/"
 )
 
@@ -42,7 +43,7 @@ func (f *ftxClient) GetStatus(ctx context.Context, req *GetStatusRequest) (*GetS
 	return rsp, nil
 }
 
-func (f *ftxClient) ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *Credentials) (*ExecuteOrderResponse, error) {
+func (f *ftxClient) ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *auth.Credentials) (*ExecuteOrderResponse, error) {
 	var endpoint = "orders"
 	switch req.Type {
 	case "stop", "trailingStop", "takeProfit":
@@ -71,7 +72,7 @@ func (f *ftxClient) ListAccountDeposits(ctx context.Context, req *ListAccountDep
 	return rsp, nil
 }
 
-func (f *ftxClient) VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *Credentials) (*VerifyCredentialsResponse, error) {
+func (f *ftxClient) VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *auth.Credentials) (*VerifyCredentialsResponse, error) {
 	rsp := &VerifyCredentialsResponse{}
 	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/account", req, rsp, nil, credentials); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_verify_credentials", map[string]string{
@@ -102,28 +103,10 @@ func (f *ftxClient) GetFundingRate(ctx context.Context, req *GetFundingRateReque
 
 func (f *ftxClient) ListInstruments(ctx context.Context, req *ListInstrumentsRequest, futuresOnly bool) (*ListInstrumentsResponse, error) {
 	// Determine the correct endpoint based on whether the caller requires `futuresOnly`.
-	var (
-		endpoint string
-		rsp      interface{}
-	)
-	switch {
-	case futuresOnly:
-		endpoint = "futures"
-		rsp = &ListFuturesInstrumentsResponse{}
-	default:
-		endpoint = "markets"
-		rsp = &ListMarketsInstrumentsResponse{}
-	}
-
-	if err := f.signBeforeDo(ctx, http.MethodGet, fmt.Sprintf("%s%s", APIVersion, endpoint), req, rsp, nil, nil); err != nil {
+	rsp := &ListInstrumentsResponse{}
+	if err := f.signBeforeDo(ctx, http.MethodGet, fmt.Sprintf("%s%s", APIVersion, "markets"), req, rsp, nil, nil); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_list_instruments", nil)
 	}
 
-	// Marshal into generic response.
-	switch {
-	case futuresOnly:
-		return &ListInstrumentsResponse{}, nil
-	default:
-		return &ListInstrumentsResponse{}, nil
-	}
+	return rsp, nil
 }

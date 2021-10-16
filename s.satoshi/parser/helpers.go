@@ -8,6 +8,7 @@ import (
 	"github.com/dlclark/regexp2"
 
 	"swallowtail/libraries/gerrors"
+	accountproto "swallowtail/s.account/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -41,7 +42,6 @@ func parseNumbersFromContent(content string) ([]float64, error) {
 		trimmed = strings.ReplaceAll(trimmed, ",", "")
 
 		f, err := strconv.ParseFloat(trimmed, 64)
-
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_capture_numbers.failed_to_parse_float", map[string]string{
 				"num_str": trimmed,
@@ -82,7 +82,7 @@ func parseSide(content string) (tradeengineproto.TRADE_SIDE, bool) {
 
 // containsTicker checks if the contain contains a ticker that is traded on Binance
 // it assumes that the content passed with be normalized to lowercase.
-func parseTicker(content string) string {
+func parseTicker(content string, tradeType tradeengineproto.TRADE_TYPE) (string, []accountproto.ExchangeType) {
 	tokens := strings.Fields(strings.ToLower(content))
 	for _, token := range tokens {
 		switch {
@@ -95,29 +95,54 @@ func parseTicker(content string) string {
 		case
 			strings.Contains(token, "usd"),
 			strings.Contains(token, "usdc"),
-			strings.Contains(token, "usdt"):
+			strings.Contains(token, "usdt"),
+			strings.Contains(token, "perp"),
+			strings.Contains(token, "-"):
 			// Here we clean up any possible stable coins ticker and run the parser on the cleaned field.
 			t := strings.ReplaceAll(token, "usdt", "")
 			t = strings.ReplaceAll(t, "usdc", "")
 			t = strings.ReplaceAll(t, "usd", "")
+			t = strings.ReplaceAll(t, "perp", "")
+			t = strings.ReplaceAll(t, "-", "")
 
-			if tt := parseTicker(t); tt != "" {
-				return tt
-			}
+			return parseTicker(t, tradeType)
 		case strings.Contains(token, "/"):
-			t := strings.ReplaceAll(token, "/", "")
-			if tt := parseTicker(t); tt != "" {
-				return tt
-			}
+			// Some mods format their trades as `BTC/USDT`.
+			s := strings.Split(token, "/")
+			return parseTicker(s[0], tradeType)
 		}
 
-		if _, ok := binanceAssetPairs[token]; ok {
-			// Remove any usdt if it's present.
-			return token
+		// Check if token matches a tradeable instrument across all exchanges.
+		// If it's on at least one; we return.
+		exchanges, ok := fetchAllExchangesTickerTradable(token, tradeType)
+		if ok {
+			return token, exchanges
 		}
 	}
 
-	return ""
+	return "", nil
+}
+
+func fetchAllExchangesTickerTradable(ticker string, tradeType tradeengineproto.TRADE_TYPE) ([]accountproto.ExchangeType, bool) {
+	var exchanges []accountproto.ExchangeType
+	if _, ok := binanceAssetPairs[ticker]; ok {
+		exchanges = append(exchanges, accountproto.ExchangeType_BINANCE)
+	}
+
+	//
+	var key string
+	switch tradeType {
+	case tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS:
+		key = fmt.Sprintf("%s-perp", ticker)
+	case tradeengineproto.TRADE_TYPE_SPOT:
+		key = fmt.Sprintf("%s/usdt", ticker)
+	}
+
+	if _, ok := ftxInstruments[key]; ok {
+		exchanges = append(exchanges, accountproto.ExchangeType_FTX)
+	}
+
+	return exchanges, len(exchanges) > 0
 }
 
 func withinRange(value, truth, rangeAsPercentage float64) bool {
@@ -232,4 +257,13 @@ func entriesAsString(ff []float64) string {
 		ss = append(ss, fmt.Sprintf("%.5f", f))
 	}
 	return strings.Join(ss, ",")
+}
+
+func parseTradeType(content string) tradeengineproto.TRADE_TYPE {
+	switch {
+	case strings.Contains(content, "spot"):
+		return tradeengineproto.TRADE_TYPE_SPOT
+	default:
+		return tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS
+	}
 }

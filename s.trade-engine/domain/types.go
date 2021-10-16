@@ -21,6 +21,7 @@ type Trade struct {
 	LastUpdated        time.Time `db:"last_updated"`
 	TradeSide          string    `db:"trade_side"`
 	CurrentPrice       float64   `db:"current_price"`
+	TradeableExchanges []string  `db:"tradeable_exchanges"`
 }
 
 // TradeParticipant ...

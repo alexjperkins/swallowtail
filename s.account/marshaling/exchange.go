@@ -4,6 +4,7 @@ import (
 	"github.com/monzo/terrors"
 
 	"swallowtail/libraries/encryption"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
 	"swallowtail/s.account/domain"
 	accountproto "swallowtail/s.account/proto"
@@ -14,12 +15,12 @@ func ExchangeProtoToDomain(userID string, exchange *accountproto.Exchange) (*dom
 	// TODO: we need a proper passphrase here.
 	encryptedAPIKey, err := encryption.EncryptWithAES([]byte(exchange.ApiKey), "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal proto to domaexchange; encryption of api key failed", nil)
+		return nil, gerrors.Augment(err, "failed-to-marshal-proto-to-domain.bad-api-key", nil)
 	}
 
 	encryptedSecretKey, err := encryption.EncryptWithAES([]byte(exchange.SecretKey), "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal proto to domaexchange; encryption of api key failed", nil)
+		return nil, gerrors.Augment(err, "failed-to-marshal-proto-to-domain.bad-secret-key", nil)
 	}
 
 	return &domain.Exchange{
@@ -32,8 +33,8 @@ func ExchangeProtoToDomain(userID string, exchange *accountproto.Exchange) (*dom
 }
 
 // ExchangeDomainToProtos ...
-func ExchangeDomainToProtos(ins []*domain.Exchange) ([]*accountproto.Exchange, error) {
-	protos := []*accountproto.Exchange{}
+func ExchangeDomainsToProtos(ins []*domain.Exchange) ([]*accountproto.Exchange, error) {
+	protos := make([]*accountproto.Exchange, 0, len(ins))
 	for _, in := range ins {
 		proto, err := ExchangeDomainToProto(in)
 		if err != nil {
@@ -73,8 +74,24 @@ func ExchangeDomainToProto(in *domain.Exchange) (*accountproto.Exchange, error) 
 }
 
 // ExchangeDomainToProtosUnmasked ...
+func ExchangeDomainsToProtosUnmasked(ins []*domain.Exchange) ([]*accountproto.Exchange, error) {
+	protos := make([]*accountproto.Exchange, 0, len(ins))
+
+	for _, in := range ins {
+		proto, err := ExchangeDomainToProtoUnmasked(in)
+		if err != nil {
+			return nil, err
+		}
+
+		protos = append(protos, proto)
+	}
+
+	return protos, nil
+}
+
+// ExchangeDomainToProtoUnmasked ...
 // NOTE: only use this on internal endpoints; we cannot allow keys to be leaked.
-func ExchangeDomainToProtosUnmasked(in *domain.Exchange) (*accountproto.Exchange, error) {
+func ExchangeDomainToProtoUnmasked(in *domain.Exchange) (*accountproto.Exchange, error) {
 	exchangeType, err := convertExchangeTypeToProto(in.ExchangeType)
 	if err != nil {
 		return nil, err

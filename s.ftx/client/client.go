@@ -3,18 +3,20 @@ package client
 import (
 	"context"
 	"net/url"
-	"swallowtail/libraries/gerrors"
-	"swallowtail/libraries/transport"
-	"swallowtail/libraries/util"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+
+	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/transport"
+	"swallowtail/libraries/util"
+	"swallowtail/s.ftx/client/auth"
 )
 
 var (
 	defaultHostname           = "https://ftx.com"
 	client                    FTXClient
-	depositAccountCredentials *Credentials
+	depositAccountCredentials *auth.Credentials
 )
 
 // FTXClient defines the client side contract of the FTX REST API
@@ -29,10 +31,10 @@ type FTXClient interface {
 	ListAccountDeposits(ctx context.Context, req *ListAccountDepositsRequest, pagination *PaginationFilter) (*ListAccountDepositsResponse, error)
 
 	// VerifyCredentials ...
-	VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *Credentials) (*VerifyCredentialsResponse, error)
+	VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *auth.Credentials) (*VerifyCredentialsResponse, error)
 
 	// ExecuteOrder ...
-	ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *Credentials) (*ExecuteOrderResponse, error)
+	ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *auth.Credentials) (*ExecuteOrderResponse, error)
 
 	// ListInstruments ...
 	ListInstruments(ctx context.Context, req *ListInstrumentsRequest, futuresOnly bool) (*ListInstrumentsResponse, error)
@@ -60,7 +62,7 @@ func Init(ctx context.Context) error {
 		return gerrors.FailedPrecondition("failed_to_init_ftx_client.deposit_account_credentials_not_set", nil)
 	}
 
-	depositAccountCredentials = &Credentials{
+	depositAccountCredentials = &auth.Credentials{
 		APIKey:     apiKey,
 		SecretKey:  secretKey,
 		Subaccount: url.PathEscape(subaccount),
@@ -85,7 +87,7 @@ func ListAccountDeposits(ctx context.Context, req *ListAccountDepositsRequest, p
 }
 
 // VerifyCredentials ...
-func VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *Credentials) (*VerifyCredentialsResponse, error) {
+func VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *auth.Credentials) (*VerifyCredentialsResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Verify FTX credentials deposits")
 	defer span.Finish()
 	return client.VerifyCredentials(ctx, req, credentials)
@@ -107,15 +109,16 @@ func GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, 
 }
 
 // ExecuteOrder ...
-func ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *Credentials) (*ExecuteOrderResponse, error) {
+func ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *auth.Credentials) (*ExecuteOrderResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Execute Order")
 	defer span.Finish()
 	return client.ExecuteOrder(ctx, req, credentials)
 }
 
 // ListInstruments ...
-func ListInstruments(ctx context.Context, req *ListInstrumentsRequest, futuresOnly bool) (*ListInstrumentsResponse, error) {
+func ListInstruments(ctx context.Context, req *ListInstrumentsRequest) (*ListInstrumentsResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "List instruments")
 	defer span.Finish()
-	return client.ListInstruments(ctx, req, futuresOnly)
+	// NOTE: git merge issues; futues only still required?
+	return client.ListInstruments(ctx, req, true)
 }
