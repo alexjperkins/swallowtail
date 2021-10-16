@@ -1,6 +1,9 @@
 package marshaling
 
 import (
+	"fmt"
+	"math"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/s.ftx/client"
 	ftxproto "swallowtail/s.ftx/proto"
 
@@ -29,4 +32,88 @@ func DepositsDTOToProto(deposits []*client.DepositRecord) []*ftxproto.DepositRec
 	}
 
 	return protos
+}
+
+func OrdersProtoToDTO(orders []*ftxproto.FTXOrder) ([]*client.ExecuteOrderRequest, error) {
+	protos := make([]*client.ExecuteOrderRequest, 0, len(orders))
+	for _, o := range orders {
+		proto, err := OrderProtoToDTO(o)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_marshal_orders_to_dto", nil)
+		}
+
+		protos = append(protos, proto)
+	}
+
+	return protos, nil
+}
+
+func OrderProtoToDTO(order *ftxproto.FTXOrder) (*client.ExecuteOrderRequest, error) {
+	var side string
+	switch order.Side {
+	case ftxproto.FTX_SIDE_FTX_SIDE_BUY:
+		side = "buy"
+	case ftxproto.FTX_SIDE_FTX_SIDE_SELL:
+		side = "sell"
+	default:
+		return nil, gerrors.FailedPrecondition("unrecognized_side", map[string]string{
+			"side": order.Side.String(),
+		})
+	}
+
+	var tradeType string
+	switch order.Type {
+	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_LIMIT:
+		tradeType = "limit"
+	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_MARKET:
+		tradeType = "markte"
+	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_TAKE_PROFIT:
+		tradeType = "takeProfit"
+	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_STOP:
+		tradeType = "stop"
+	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_TRALING_STOP:
+		tradeType = "trailingStop"
+	default:
+		return nil, gerrors.FailedPrecondition("unrecognized_type", map[string]string{
+			"type": order.Type.String(),
+		})
+	}
+
+	var (
+		price        string
+		quantity     string
+		triggerPrice string
+		orderPrice   string
+		trailValue   string
+	)
+
+	if order.Price > 0 {
+
+	}
+
+	return &client.ExecuteOrderRequest{
+		Side:              side,
+		Type:              tradeType,
+		Price:             price,
+		TriggerPrice:      triggerPrice,
+		OrderPrice:        orderPrice,
+		TrailValue:        trailValue,
+		Quantity:          quantity,
+		ReduceOnly:        order.ReduceOnly,
+		IOC:               order.Ioc,
+		PostOnly:          order.PostOnly,
+		RejectOnPriceBand: order.RejectOnPriceBand,
+		RetryUntilFilled:  order.RetryUntilFilled,
+	}, nil
+}
+
+// NOTE: this **does** not account for large floats & can lead to overflow
+// TODO: move to own library.
+func roundToPrecisionString(f float64, p int) string {
+	if f == 0 {
+		return ""
+	}
+
+	format := fmt.Sprintf("%%.%vf", p)
+	return fmt.Sprintf(format, math.Round(f*(math.Pow10(p)))/math.Pow10(p))
 }

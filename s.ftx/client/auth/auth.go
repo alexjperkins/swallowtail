@@ -1,4 +1,4 @@
-package signer
+package auth
 
 import (
 	"crypto/hmac"

@@ -66,7 +66,6 @@ func gatherExchangeInfo(ctx context.Context) error {
 	if err != nil {
 		return gerrors.Augment(err, "failed_to_init_exchange_info", nil)
 	}
-
 	if rsp == nil {
 		return gerrors.Augment(err, "failed_to_init_exchange_info.empty_response", nil)
 	}

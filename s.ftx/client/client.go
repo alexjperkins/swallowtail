@@ -31,6 +31,12 @@ type FTXClient interface {
 	// VerifyCredentials ...
 	VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *Credentials) (*VerifyCredentialsResponse, error)
 
+	// ExecuteOrder ...
+	ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *Credentials) (*ExecuteOrderResponse, error)
+
+	// ListInstruments ...
+	ListInstruments(ctx context.Context, req *ListInstrumentsRequest, futuresOnly bool) (*ListInstrumentsResponse, error)
+
 	// GetFundingRate ...
 	GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error)
 }
@@ -98,4 +104,18 @@ func GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Get status: FTX")
 	defer span.Finish()
 	return client.GetStatus(ctx, req)
+}
+
+// ExecuteOrder ...
+func ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *Credentials) (*ExecuteOrderResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Execute Order")
+	defer span.Finish()
+	return client.ExecuteOrder(ctx, req, credentials)
+}
+
+// ListInstruments ...
+func ListInstruments(ctx context.Context, req *ListInstrumentsRequest, futuresOnly bool) (*ListInstrumentsResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "List instruments")
+	defer span.Finish()
+	return client.ListInstruments(ctx, req, futuresOnly)
 }

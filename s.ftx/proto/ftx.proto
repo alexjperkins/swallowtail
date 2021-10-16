@@ -10,6 +10,30 @@ service ftx {
     rpc GetFTXFundingRates (GetFTXFundingRatesRequest) returns (GetFTXFundingRatesResponse) {}
 
     rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
+
+    rpc ExecuteOrder (ExecuteOrderRequest) returns (ExecuteOrderResponse) {}
+
+    rpc ListFTXInstruments (ListFTXInstrumentsRequest) returns (ListFTXInstrumentsResponse) {}
+} 
+
+enum FTX_SIDE {
+    FTX_SIDE_BUY = 0;
+    FTX_SIDE_SELL = 1;
+}
+
+enum FTX_TRADE_TYPE {
+    FTX_TRADE_TYPE_LIMIT = 0;
+    FTX_TRADE_TYPE_MARKET = 1;
+    FTX_TRADE_TYPE_STOP = 2;
+    FTX_TRADE_TYPE_TRALING_STOP = 3;
+    FTX_TRADE_TYPE_TAKE_PROFIT = 4;
+}
+
+enum FTX_CONTRACT_TYPE {
+    FTX_CONTRACT_TYPE_SPOT = 0;
+    FTX_CONTRACT_TYPE_FUTURE = 1;
+    FTX_CONTRACT_TYPE_PERPETUAL = 2;
+    FTX_CONTRACT_TYPE_MOVE = 3;
 }
 
 message ListAccountDepositsRequest {
@@ -65,4 +89,56 @@ message FTXFundingRatesInfo {
 
 message GetFTXFundingRatesResponse {
     repeated FTXFundingRatesInfo funding_rates = 1;
+}
+
+message FTXOrder {
+    string symbol = 1;
+    FTX_SIDE side = 2;
+    float price = 3;
+    FTX_TRADE_TYPE type = 4;
+    float quantity = 5;
+    bool reduce_only = 6;
+    bool ioc = 7;
+    bool post_only = 8;
+    bool reject_on_price_band = 9;
+    bool retry_until_filled = 10;
+    float trigger_price = 11;
+    float order_price = 12;
+    float trail_value = 13;
+}
+
+message ExecuteOrderRequest {
+    repeated FTXOrder orders = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    FTXCredentials credentials = 3;
+}
+
+message ExecuteOrderResponse {
+    repeated string exchange_order_ids = 1;
+    int64 timestamp = 2;
+    int64 number_of_orders_executed = 3;
+}
+
+message ListFTXInstrumentsRequest {
+    repeated FTX_CONTRACT_TYPE contract_types = 1;
+}
+
+message ListFTXInstrumentsResponse{
+    repeated Instrument instruments = 1;
+}
+
+message Instrument {
+    string symbol = 1;
+    string description = 2;
+    bool enabled = 3;
+    float minimum_tick_size = 4;
+    float minimum_quantity = 5;
+    string type = 6;
+    google.protobuf.Timestamp expiry = 7;
+    string underlying = 8;
+    bool expired = 9;
+    float volume = 10;
+    float volume_24h = 11;
+    string base_currency = 12;
+    string quote_currency = 13;
 }

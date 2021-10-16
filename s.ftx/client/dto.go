@@ -2,8 +2,9 @@ package client
 
 import (
 	"fmt"
-	"swallowtail/s.ftx/client/signer"
 	"time"
+
+	"swallowtail/s.ftx/client/auth"
 )
 
 // Credentials holds the credentials required for FTX.
@@ -16,7 +17,7 @@ type Credentials struct {
 // SignRequest signs a given request with the request body.
 func (c *Credentials) SignRequest(method, endpoint, timestamp string, body []byte) (string, error) {
 	signaturePayload := fmt.Sprintf("%s%s%s%s", timestamp, method, endpoint, body)
-	return signer.Sha256HMAC(c.SecretKey, signaturePayload)
+	return auth.Sha256HMAC(c.SecretKey, signaturePayload)
 }
 
 // AsHeaders converts the credentials struct into the headers required to verify the user.
@@ -57,6 +58,45 @@ type PaginationFilter struct {
 // ToQueryString ...
 func (p *PaginationFilter) ToQueryString() string {
 	return fmt.Sprintf("start_time=%d&end_time=%d", p.Start, p.End)
+}
+
+// ExecuteOrderRequest ...
+type ExecuteOrderRequest struct {
+	Symbol            string `json:"symbol"`
+	Side              string `json:"side"`
+	Price             string `json:"price"`
+	Type              string `json:"type"`
+	Quantity          string `json:"quantity"`
+	ReduceOnly        bool   `json:"reduce_only"`
+	IOC               bool   `json:"ioc"`
+	PostOnly          bool   `json:"post_only"`
+	RejectOnPriceBand bool   `json:"reject_on_price_band"`
+	RetryUntilFilled  bool   `json:"retry_until_filled"`
+	TriggerPrice      string `json:"trigger_price"`
+	OrderPrice        string `json:"order_price"`
+	TrailValue        string `json:"trail_value"`
+}
+
+// ExecuteOrderResponse ...
+type ExecuteOrderResponse struct {
+	Success bool `json:"success"`
+	Result  struct {
+		CreatedAt     time.Time `json:"createdAt"`
+		FilledSize    float64   `json:"filledSize"`
+		Future        string    `json:"future"`
+		ID            int       `json:"id"`
+		Market        string    `json:"market"`
+		Price         float64   `json:"price"`
+		RemainingSize float64   `json:"remaining_size"`
+		Side          string    `json:"side"`
+		Quantity      float64   `json:"size"`
+		Status        string    `json:"status"`
+		Type          string    `json:"type"`
+		ReduceOnly    bool      `json:"reduce_only"`
+		IOC           bool      `json:"ioc"`
+		PostOnly      bool      `json:"post_only"`
+		ClientID      string    `json:"client_id"`
+	} `json:"result"`
 }
 
 // GetStatusRequest ...
@@ -120,4 +160,28 @@ type FundingRateInfo struct {
 type GetFundingRateResponse struct {
 	FundingRates []*FundingRateInfo `json:"result"`
 	Success      bool               `json:"success"`
+}
+
+// ListInstrumentsRequest ...
+type ListInstrumentsRequest struct {
+}
+
+// ListFuturesInstrumentsResponse ...
+// https://docs.ftx.com/?python#futures
+type ListFuturesInstrumentsResponse struct {
+}
+
+// ListMarketsInstrumentsResponse ...
+// https://docs.ftx.com/?python#markets
+type ListMarketsInstrumentsResponse struct {
+}
+
+// Instrument ...
+type Instrument struct {
+	Symbol string `json:"symbol"`
+}
+
+// ListInstrumentsResponse ...
+type ListInstrumentsResponse struct {
+	Instruments []*Instrument
 }
