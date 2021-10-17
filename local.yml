@@ -160,3 +160,9 @@ services:
     image: swallowtail.c.satoshi
     profiles:
       - backend
+
+  swallowtail.c.marketdata:
+    hostname: swallowtail-c-marketdata
+    image: swallowtail.c.marketdata
+    profiles:
+      - backend

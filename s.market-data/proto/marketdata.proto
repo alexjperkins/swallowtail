@@ -3,9 +3,13 @@ syntax = "proto3";
 option go_package = "./;marketdataproto";
 
 service marketdata {
-  rpc GetExchangeFundingRates (GetExchangeFundingRatesRequest) returns (GetExchangeFundingRatesResponse)  {
-  }
+  rpc GetExchangeFundingRates (GetExchangeFundingRatesRequest) returns (GetExchangeFundingRatesResponse)  {}
+
+  rpc PublishLatestPriceInformation (PublishLatestPriceInformationRequest) returns (PublishLatestPriceInformationResponse) {}
+
+  rpc PublishVolatilityInformation (PublishVolatilityInformationRequest) returns (PublishVolatilityInformationResponse) {}
 }
+ 
 
 message GetExchangeFundingRatesRequest {
     string asset = 1;
@@ -19,3 +23,11 @@ message ExchangeFundingRate {
     string exchange = 1;
     float funding_rate = 2;
 }
+
+message PublishLatestPriceInformationRequest {}
+
+message PublishLatestPriceInformationResponse {}
+
+message PublishVolatilityInformationRequest {}
+
+message PublishVolatilityInformationResponse {}

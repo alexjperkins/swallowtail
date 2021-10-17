@@ -10,14 +10,10 @@ import (
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 	coingecko "github.com/superoo7/go-gecko/v3"
-
-	"swallowtail/libraries/gerrors"
-	"swallowtail/s.coingecko/cache"
 )
 
 type coingeckoClient struct {
 	cli     *coingecko.Client
-	cache   cache.CoingeckoCache
 	coins   map[string]string
 	coinsMu sync.RWMutex
 }
@@ -47,66 +43,17 @@ func (c *coingeckoClient) GetAllCoinIDs(ctx context.Context) ([]*CoingeckoListCo
 	return coins, nil
 }
 
-func (c *coingeckoClient) GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
-	id, err := c.getIDFromSymbol(symbol)
+func (c *coingeckoClient) GetCoinInfoByID(ctx context.Context, id string) (*CoinRecord, error) {
+	coin, err := c.cli.CoinsID(strings.ToLower(id), true, false, true, false, false, false)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return c.GetCurrentPriceFromID(ctx, id, assetPair)
-}
-
-func (c *coingeckoClient) GetCurrentPriceFromID(ctx context.Context, id, assetPair string) (float64, error) {
-	// First check the cache, if price exists for id, then check if it has expired.
-	value, hasExpired, _ := c.cache.Get(id)
-
-	if value == nil || hasExpired {
-		// Get the latest price.
-		ssp, err := c.cli.SimpleSinglePrice(strings.ToLower(id), strings.ToLower(assetPair))
-		if err != nil {
-			return 0, gerrors.Augment(err, "failed_to_get_current_price", map[string]string{
-				"coingecko_id": id,
-				"asset_pair":   assetPair,
-			})
-		}
-
-		// Update cache with latest price.
-		price := float64(ssp.MarketPrice)
-		c.cache.Set(id, price)
-
-		slog.Trace(ctx, "Updated coingecko price cache for [%s] with price %v.", id, price)
-
-		return price, nil
-	}
-
-	// Convert cache value to a price. We can use floats, since for this purpose we don't need accuracy.
-	price, ok := value.(float64)
-	if !ok {
-		return 0, gerrors.FailedPrecondition("failed_to_convert_cached_price_to_float", map[string]string{
-			"id": id,
-		})
-	}
-
-	// It hasn't expired; lets return the price.
-	return price, nil
-}
-
-func (c *coingeckoClient) GetATHFromSymbol(ctx context.Context, symbol string) (float64, error) {
-	id, err := c.getIDFromSymbol(symbol)
-	if err != nil {
-		return 0, err
-	}
-
-	return c.GetATHFromID(ctx, id)
-}
-
-func (c *coingeckoClient) GetATHFromID(ctx context.Context, id string) (float64, error) {
-	coinID, err := c.cli.CoinsID(strings.ToLower(id), true, false, true, false, false, false)
-	if err != nil {
-		return 0, err
-	}
-
-	return coinID.MarketData.ATH["usd"], nil
+	return &CoinRecord{
+		LatestPrice:              coin.MarketData.CurrentPrice,
+		PriceChangePercentage24h: coin.MarketData.PriceChangePercentage24hInCurrency,
+		ATH:                      coin.MarketData.ATH,
+	}, nil
 }
 
 func (c *coingeckoClient) Ping(ctx context.Context) error {
@@ -160,7 +107,6 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 				// to retrieve our list of coin id's. This service doesn't work without them. We should panic.
 				panic("Failed to retreive set of coin id's from coingecko")
 			}
-
 		case <-ctx.Done():
 			slog.Info(ctx, "Coingecko refresh token context cancelled: %v", ctx.Err())
 			return
@@ -173,7 +119,7 @@ func (c *coingeckoClient) RefreshCoins(ctx context.Context) {
 	}
 }
 
-func (c *coingeckoClient) getIDFromSymbol(symbol string) (string, error) {
+func (c *coingeckoClient) GetIDFromSymbol(symbol string) (string, error) {
 	c.coinsMu.RLock()
 	defer c.coinsMu.RUnlock()
 

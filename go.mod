@@ -6,6 +6,8 @@ require (
 	cloud.google.com/go v0.94.1 // indirect
 	github.com/99designs/gqlgen v0.13.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
+	github.com/ReneKroon/ttlcache v1.7.0 // indirect
+	github.com/ReneKroon/ttlcache/v2 v2.8.1 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/bwmarrin/discordgo v0.23.2
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
