@@ -28,6 +28,7 @@ message GetAssetLatestPriceByIDResponse {
     string coingecko_coin_id = 1;
     string asset_symbol = 2;
     float latest_price = 3;
+    float percentage_price_change_24h = 4;
 }
 
 message GetAssetLatestPriceBySymbolRequest {
@@ -39,6 +40,7 @@ message GetAssetLatestPriceBySymbolResponse{
     string coingecko_coin_id = 1;
     string asset_symbol = 2;
     float latest_price = 3;
+    float percentage_price_change_24h = 4;
 }
 
 message GetATHBySymbolRequest {

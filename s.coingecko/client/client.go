@@ -80,7 +80,7 @@ func Init(ctx context.Context) error {
 }
 
 // GetCurrentPriceFromSymbol ...
-func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
+func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (float64, float64, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko by symbol")
 	defer span.Finish()
 
@@ -94,30 +94,35 @@ func GetCurrentPriceFromSymbol(ctx context.Context, symbol, assetPair string) (f
 
 	coinID, err := client.GetIDFromSymbol(symbol)
 	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_get_current_price_from_symbol", errParams)
+		return 0, 0, gerrors.Augment(err, "failed_to_get_current_price_from_symbol", errParams)
 	}
 
 	v, err := ttlcache.Get(coinID)
 	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_get_current_price_from_symbol", errParams)
+		return 0, 0, gerrors.Augment(err, "failed_to_get_current_price_from_symbol", errParams)
 	}
 
 	record, ok := v.(*CoinRecord)
 	if !ok {
 		slog.Warn(ctx, "Bad type coin gecko cache; failed to type assert", errParams)
-		return 0, gerrors.FailedPrecondition("failed_to_get_current_price_from_symbol.bad_record", errParams)
+		return 0, 0, gerrors.FailedPrecondition("failed_to_get_current_price_from_symbol.bad_record", errParams)
 	}
 
 	latestPrice, ok := record.LatestPrice[assetPair]
 	if !ok {
-		return 0, gerrors.BadParam("failed_to_get_current_price_from_symbol.bad_asset_pair", errParams)
+		return 0, 0, gerrors.BadParam("failed_to_get_current_price_from_symbol.bad_asset_pair.latest_price", errParams)
 	}
 
-	return latestPrice, nil
+	percentagePriceChange24h, ok := record.PriceChangePercentage24h[assetPair]
+	if !ok {
+		return 0, 0, gerrors.BadParam("failed_to_get_current_price_from_symbol.bad_asset_pair.24h_change", errParams)
+	}
+
+	return latestPrice, percentagePriceChange24h, nil
 }
 
 // GetCurrentPriceFromID ...
-func GetCurrentPriceFromID(ctx context.Context, coinID, assetPair string) (float64, error) {
+func GetCurrentPriceFromID(ctx context.Context, coinID, assetPair string) (float64, float64, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Get current price from coingecko by id")
 	defer span.Finish()
 
@@ -131,21 +136,26 @@ func GetCurrentPriceFromID(ctx context.Context, coinID, assetPair string) (float
 
 	v, err := ttlcache.Get(coinID)
 	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_get_current_price_from_id", errParams)
+		return 0, 0, gerrors.Augment(err, "failed_to_get_current_price_from_id", errParams)
 	}
 
 	record, ok := v.(*CoinRecord)
 	if !ok {
 		slog.Warn(ctx, "Bad type coin gecko cache; failed to type assert", errParams)
-		return 0, gerrors.FailedPrecondition("failed_to_get_current_price_from_id.bad_record", errParams)
+		return 0, 0, gerrors.FailedPrecondition("failed_to_get_current_price_from_id.bad_record", errParams)
 	}
 
 	latestPrice, ok := record.LatestPrice[assetPair]
 	if !ok {
-		return 0, gerrors.BadParam("failed_to_get_current_price_from_id.bad_asset_pair", errParams)
+		return 0, 0, gerrors.BadParam("failed_to_get_current_price_from_id.bad_asset_pair", errParams)
 	}
 
-	return latestPrice, nil
+	percentagePriceChange24h, ok := record.PriceChangePercentage24h[assetPair]
+	if !ok {
+		return 0, 0, gerrors.BadParam("failed_to_get_current_price_from_id.bad_asset_pair.24h_change", errParams)
+	}
+
+	return latestPrice, percentagePriceChange24h, nil
 }
 
 // GetATHFromSymbol ...
