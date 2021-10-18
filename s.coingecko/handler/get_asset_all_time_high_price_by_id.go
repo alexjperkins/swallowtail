@@ -22,13 +22,14 @@ func (s *CoingeckoService) GetATHByID(
 		"coingecko_coin_id": in.CoingeckoCoinId,
 	}
 
-	allTimeHighPrice, err := client.GetATHFromID(ctx, in.GetCoingeckoCoinId())
+	allTimeHighPrice, currentPrice, err := client.GetATHFromID(ctx, in.GetCoingeckoCoinId(), in.AssetPair)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to get all time high price by id via coingecko", errParams)
 	}
 
 	return &coingeckoproto.GetATHByIDResponse{
 		AllTimeHighPrice: float32(allTimeHighPrice),
+		CurrentPrice:     float32(currentPrice),
 		CoingeckoCoinId:  in.CoingeckoCoinId,
 	}, nil
 }

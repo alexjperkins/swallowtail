@@ -24,13 +24,14 @@ func (s *CoingeckoService) GetAssetLatestPriceByID(
 		"coingecko_coin_id": in.CoingeckoCoinId,
 	}
 
-	allTimeHighPrice, err := client.GetCurrentPriceFromID(ctx, in.GetCoingeckoCoinId(), in.AssetPair)
+	latestPrice, percentagePriceChange24h, err := client.GetCurrentPriceFromID(ctx, in.GetCoingeckoCoinId(), in.AssetPair)
 	if err != nil {
 		return nil, terrors.Augment(err, "Failed to get latest price by asset symbol via coingecko", errParams)
 	}
 
 	return &coingeckoproto.GetAssetLatestPriceByIDResponse{
-		LatestPrice:     float32(allTimeHighPrice),
-		CoingeckoCoinId: in.CoingeckoCoinId,
+		LatestPrice:               float32(latestPrice),
+		PercentagePriceChange_24H: float32(percentagePriceChange24h),
+		CoingeckoCoinId:           in.CoingeckoCoinId,
 	}, nil
 }

@@ -12,9 +12,11 @@ build:
 	cd s.payments && sudo make docker && cd .. && \
 	cd s.ftx && sudo make docker && cd .. && \
 	cd s.trade-engine && sudo make docker && cd .. && \
+	cd s.market-data &&  sudo make && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.exchanges &&  sudo make && cd .. && \
-	cd c.satoshi &&  sudo make && cd ..
+	cd c.satoshi &&  sudo make && cd .. && \
+	cd c.market-data &&  sudo make && cd ..
 
 backend:
 	cd s.satoshi &&  sudo make docker &&  cd .. && \
@@ -26,9 +28,11 @@ backend:
 	cd s.payments && sudo make docker && cd .. && \
 	cd s.ftx && sudo make docker && cd .. && \
 	cd s.trade-engine && sudo make docker && cd .. && \
+	cd s.market-data && sudo make docker && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.exchanges &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
+	cd c.market-data &&  sudo make && cd .. && \
 	docker-compose -f local.yml --profile backend up --build
 
 run:
@@ -76,6 +80,10 @@ trade-engine:
 	cd s.trade-engine &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.tradeengine
 
+market-data:
+	cd s.market-data &&  sudo make docker && cd .. && \
+	docker-compose -f local.yml up --build swallowtail.s.marketdata
+
 cronpayments:
 	cd c.payments &&  sudo make && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.c.payments
@@ -87,6 +95,10 @@ cronexchanges:
 cronsatoshi:
 	cd c.satoshi &&  sudo make && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.c.satoshi
+
+cronmarketdata:
+	cd c.marketdata &&  sudo make && cd .. && \
+	docker-compose -f local.yml up --build swallowtail.c.marketdata
 
 clean:
 	# NOTE: this removes all volumes.
@@ -116,6 +128,8 @@ ecrpush: ecrlogin
 	cd s.payments && sudo make ecrpush && cd .. && \
 	cd s.ftx && sudo make ecrpush && cd .. && \
 	cd s.trade-engine && sudo make ecrpush && cd .. && \
+	cd s.market-data && sudo make ecrpush && cd .. && \
 	cd c.payments && sudo make ecrpush && cd .. && \
 	cd c.exchanges &&  sudo make ecrpush && cd .. && \
-	cd c.satoshi &&  sudo make ecrpush && cd ..
+	cd c.satoshi &&  sudo make ecrpush && cd .. && \
+	cd c.market-data &&  sudo make ecrpush && cd ..

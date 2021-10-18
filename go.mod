@@ -6,6 +6,8 @@ require (
 	cloud.google.com/go v0.94.1 // indirect
 	github.com/99designs/gqlgen v0.13.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
+	github.com/ReneKroon/ttlcache v1.7.0 // indirect
+	github.com/ReneKroon/ttlcache/v2 v2.9.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/bwmarrin/discordgo v0.23.2
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
@@ -49,7 +51,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/monzo/slog v0.0.0-20210125103028-f7973b45249d
-	github.com/monzo/terrors v0.0.0-20210913110404-18e3626e3653
+	github.com/monzo/terrors v0.0.0-20211018135141-bff28203d17a
 	github.com/monzo/typhon v0.0.0-20210504124246-de98301f3821
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/opencontainers/runc v1.0.0-rc95 // indirect
@@ -76,12 +78,13 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel v0.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20211008194852-3b03d305991f
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.56.0 // indirect
-	google.golang.org/genproto v0.0.0-20211008145708-270636b82663 // indirect
+	google.golang.org/genproto v0.0.0-20211018162055-cf77aa76bad2 // indirect
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
