@@ -12,11 +12,11 @@ const (
 const (
 	// Satoshi Discord Channel IDs
 	DiscordSatoshiTwitterChannel = "816794087868465163"
-	// DiscordSatoshiAlertsChannel  = "816794120851816479"
-	DiscordSatoshiAlertsChannel = "896513299515047942"
+	DiscordSatoshiAlertsChannel  = "816794120851816479"
+	// DiscordSatoshiAlertsChannel = "896513299515047942"
 
-	// DiscordSatoshiTestingChannel   = "817513133274824715"
 	DiscordSatoshiTestingChannel = "896513299796090881"
+	// DiscordSatoshiTestingChannel   = "817513133274824715" // TEST
 
 	DiscordSatoshiWhaleChannel     = "817789196319195166"
 	DiscordSatoshiTradersChannel   = "817789261415448606"
@@ -24,8 +24,8 @@ const (
 	DiscordSatoshiExchangesChannel = "818909423530541116"
 	DiscordSatoshiProjectsChannel  = "826528849374216192"
 
-	// DiscordSatoshiPriceBotChannel  = "831234720943702066"
-	DiscordSatoshiPriceBotChannel = "896513299515047938"
+	DiscordSatoshiPriceBotChannel = "831234720943702066"
+	// DiscordSatoshiPriceBotChannel = "896513299515047938" // TEST
 
 	DiscordSatoshiGeneralChannel = "814144802458828852"
 
