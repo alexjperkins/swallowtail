@@ -2,22 +2,23 @@ package commands
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
+	"sort"
+	"strings"
+	"sync"
 	"time"
 
-	discordproto "swallowtail/s.discord/proto"
-	"swallowtail/s.satoshi/coins"
-	"swallowtail/s.satoshi/pricebot"
+	"swallowtail/libraries/gerrors"
+	coingeckoproto "swallowtail/s.coingecko/proto"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/monzo/slog"
 )
 
 const (
 	priceCommandID    = "price"
-	priceCommandUsage = `!price <[symbols... | all ]>`
-)
-
-var (
-	priceBotSvc pricebot.PriceBotService
+	priceCommandUsage = `!price <[symbols, ...]>`
 )
 
 func init() {
@@ -25,17 +26,8 @@ func init() {
 		ID:          priceCommandID,
 		Usage:       priceCommandUsage,
 		Handler:     priceCommand,
-		Description: "Fetches the latest price from coingecko for the symbols provided. Pass `all` to republish the pricebot.",
-		SubCommands: map[string]*Command{
-			"all": {
-				ID:                  "price-all",
-				MinimumNumberOfArgs: 0,
-				Usage:               `!price all`,
-				Handler:             allPriceCommand,
-			},
-		},
+		Description: "Fetches the latest price from coingecko for the symbols provided.",
 	})
-	priceBotSvc = pricebot.NewService(context.Background())
 }
 
 func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
@@ -43,22 +35,75 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 	defer cancel()
 
 	symbols := tokens
-	pricesMsg := priceBotSvc.GetPricesAsFormattedString(ctx, symbols, false)
 
-	// Best Effort.
-	_, err := s.ChannelMessageSend(m.ChannelID, pricesMsg)
-	return err
-}
+	var (
+		cache = make(map[string]*coingeckoproto.GetAssetLatestPriceBySymbolResponse)
+		wg    sync.WaitGroup
+		mu    sync.Mutex
+	)
+	for _, symbol := range symbols {
+		symbol := symbol
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-func allPriceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
+			rsp, err := (&coingeckoproto.GetAssetLatestPriceBySymbolRequest{
+				AssetSymbol: symbol,
+				AssetPair:   "usd",
+			}).SendWithTimeout(ctx, 1*time.Minute).Response()
+			if err != nil {
+				slog.Warn(ctx, "Failed to fetch coingecko price for price command", map[string]string{
+					"symbol": symbol,
+				})
+			}
 
-	symbols := coins.List()
-	pricesMsg := priceBotSvc.GetPricesAsFormattedString(ctx, symbols, true)
+			mu.Lock()
+			defer mu.Unlock()
+			cache[symbol] = rsp
+		}()
 
-	// Best Effort
-	s.ChannelMessageSend(discordproto.DiscordSatoshiPriceBotChannel, pricesMsg)
+	}
+	if len(cache) == 0 {
+		// Best Effort
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s> Sorry, i wasn't able to get price info for any coins :disappointed:", m.Author.ID))
+		return nil
+	}
+
+	var keys = make([]string, 0, len(cache))
+	for k := range cache {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var sb strings.Builder
+	for _, k := range keys {
+		v, ok := cache[k]
+		if !ok {
+			// We're being overly defensive here.
+			continue
+		}
+
+		var emoji string
+		switch {
+		case v.PercentagePriceChange_24H > 0:
+			emoji = "green_square"
+		case v.PercentagePriceChange_24H < 0:
+			emoji = "red_square"
+		default:
+			emoji = "black_large_square"
+		}
+
+		sb.WriteString(fmt.Sprintf("%s `[%s] %fUSDT 24h: %f%%`", emoji, k, v.LatestPrice, v.PercentagePriceChange_24H))
+	}
+
+	if _, err := s.ChannelMessageSend(m.ChannelID, sb.String()); err != nil {
+		return gerrors.Augment(err, "failed_to_execute_price_command", nil)
+	}
 
 	return nil
+}
+
+func jitter() time.Duration {
+	rand.Seed(time.Now().UnixNano())
+	return time.Duration(rand.Intn(5)) * time.Second
 }

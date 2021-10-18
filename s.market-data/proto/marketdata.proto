@@ -8,6 +8,9 @@ service marketdata {
   rpc PublishLatestPriceInformation (PublishLatestPriceInformationRequest) returns (PublishLatestPriceInformationResponse) {}
 
   rpc PublishVolatilityInformation (PublishVolatilityInformationRequest) returns (PublishVolatilityInformationResponse) {}
+
+  rpc PublishATHInformation (PublishATHInformationRequest) returns (PublishATHInformationResponse) {}
+
 }
  
 
@@ -31,3 +34,7 @@ message PublishLatestPriceInformationResponse {}
 message PublishVolatilityInformationRequest {}
 
 message PublishVolatilityInformationResponse {}
+
+message PublishATHInformationRequest {}
+
+message PublishATHInformationResponse {}

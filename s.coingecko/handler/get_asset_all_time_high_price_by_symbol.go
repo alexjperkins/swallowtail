@@ -27,7 +27,7 @@ func (s *CoingeckoService) GetATHBySymbol(
 		"asset_symbol": in.AssetSymbol,
 	}
 
-	allTimeHighPrice, err := client.GetATHFromSymbol(ctx, in.GetAssetSymbol())
+	allTimeHighPrice, currentPrice, err := client.GetATHFromSymbol(ctx, in.GetAssetSymbol(), in.AssetPair)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_get_latest_price_from_coingecko", errParams)
 	}
@@ -35,5 +35,6 @@ func (s *CoingeckoService) GetATHBySymbol(
 	return &coingeckoproto.GetATHBySymbolResponse{
 		AllTimeHighPrice: float32(allTimeHighPrice),
 		AssetSymbol:      in.AssetSymbol,
+		CurrentPrice:     float32(currentPrice),
 	}, nil
 }

@@ -1,7 +1,7 @@
 #/bin/sh -x
 
-# Runs get Binance exchange status.
-echo Calling s.binance via gRPC. Gets Exchange Status.
+# Publishes latest price information.
+echo Calling s.market-data via gRPC. Publishes latest price information.
 
 exec grpcurl -plaintext -d \
 	'{}' \

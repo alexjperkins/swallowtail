@@ -159,7 +159,7 @@ func GetCurrentPriceFromID(ctx context.Context, coinID, assetPair string) (float
 }
 
 // GetATHFromSymbol ...
-func GetATHFromSymbol(ctx context.Context, symbol, assetPair string) (float64, error) {
+func GetATHFromSymbol(ctx context.Context, symbol, assetPair string) (float64, float64, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Get ath price from coingecko")
 	defer span.Finish()
 
@@ -173,30 +173,35 @@ func GetATHFromSymbol(ctx context.Context, symbol, assetPair string) (float64, e
 
 	coinID, err := client.GetIDFromSymbol(symbol)
 	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_get_ath_from_symbol", errParams)
+		return 0, 0, gerrors.Augment(err, "failed_to_get_ath_from_symbol", errParams)
 	}
 
 	v, err := ttlcache.Get(coinID)
 	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_get_ath_from_symbol", errParams)
+		return 0, 0, gerrors.Augment(err, "failed_to_get_ath_from_symbol", errParams)
 	}
 
 	record, ok := v.(*CoinRecord)
 	if !ok {
 		slog.Warn(ctx, "Bad type coin gecko cache; failed to type assert", errParams)
-		return 0, gerrors.FailedPrecondition("failed_to_get_ath_from_symbo.bad_record", errParams)
+		return 0, 0, gerrors.FailedPrecondition("failed_to_get_ath_from_symbo.bad_record", errParams)
 	}
 
 	ath, ok := record.ATH[assetPair]
 	if !ok {
-		return 0, gerrors.BadParam("failed_to_get_ath_from_symbol.bad_asset_pair", errParams)
+		return 0, 0, gerrors.BadParam("failed_to_get_ath_from_symbol.bad_asset_pair.ath", errParams)
 	}
 
-	return ath, nil
+	currentPrice, ok := record.LatestPrice[assetPair]
+	if !ok {
+		return 0, 0, gerrors.BadParam("failed_to_get_ath_from_symbiol.bad_asset_pair.latest_price", errParams)
+	}
+
+	return ath, currentPrice, nil
 }
 
 // GetATHFromID ...
-func GetATHFromID(ctx context.Context, coinID, assetPair string) (float64, error) {
+func GetATHFromID(ctx context.Context, coinID, assetPair string) (float64, float64, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Get ath price from coingecko")
 	defer span.Finish()
 
@@ -210,19 +215,24 @@ func GetATHFromID(ctx context.Context, coinID, assetPair string) (float64, error
 
 	v, err := ttlcache.Get(coinID)
 	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_get_ath_from_id", errParams)
+		return 0, 0, gerrors.Augment(err, "failed_to_get_ath_from_id", errParams)
 	}
 
 	record, ok := v.(*CoinRecord)
 	if !ok {
 		slog.Warn(ctx, "Bad type coin gecko cache; failed to type assert", errParams)
-		return 0, gerrors.FailedPrecondition("failed_to_get_ath_from_symbo.bad_record", errParams)
+		return 0, 0, gerrors.FailedPrecondition("failed_to_get_ath_from_symbo.bad_record", errParams)
 	}
 
 	ath, ok := record.ATH[assetPair]
 	if !ok {
-		return 0, gerrors.BadParam("failed_to_get_ath_from_id.bad_asset_pair", errParams)
+		return 0, 0, gerrors.BadParam("failed_to_get_ath_from_id.bad_asset_pair.ath", errParams)
 	}
 
-	return ath, nil
+	latestPrice, ok := record.LatestPrice[assetPair]
+	if !ok {
+		return 0, 0, gerrors.BadParam("failed_to_get_ath_from_id.bad_asset_pair.latest_price", errParams)
+	}
+
+	return ath, latestPrice, nil
 }

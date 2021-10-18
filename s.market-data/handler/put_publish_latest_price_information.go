@@ -20,12 +20,15 @@ var (
 	latestPriceAssets = assets.LatestPriceAssets
 )
 
-// LatestPriceInfo ...
-type LatestPriceInfo struct {
+// Asset Info ...
+// TODO: move
+type AssetInfo struct {
 	Symbol                   string
 	AssetPair                string
 	LatestPrice              float64
 	PriceChangePercentage24h float64
+	Group                    string
+	ATH                      float64
 }
 
 // PublishLatestPriceInformation ...
@@ -35,7 +38,7 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 	slog.Trace(ctx, "Market data publishing latest prices")
 
 	var (
-		assetInfo = make([]*LatestPriceInfo, 0, len(latestPriceAssets))
+		assetInfo = make([]*AssetInfo, 0, len(latestPriceAssets))
 		wg        sync.WaitGroup
 		mu        sync.RWMutex
 	)
@@ -45,7 +48,7 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			time.Sleep(jitter(0, 119))
+			time.Sleep(jitter(0, 59))
 
 			latestPrice, err := fetchLatestPriceFromCoingecko(ctx, asset.Symbol, asset.AssetPair)
 			if err != nil {
@@ -55,7 +58,7 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 
 			mu.Lock()
 			defer mu.Unlock()
-			assetInfo = append(assetInfo, &LatestPriceInfo{
+			assetInfo = append(assetInfo, &AssetInfo{
 				Symbol:      asset.Symbol,
 				AssetPair:   asset.AssetPair,
 				LatestPrice: latestPrice,
@@ -85,12 +88,11 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 		}
 	}
 
+	// Format content.
 	var (
 		sb  strings.Builder
 		now = time.Now().UTC().Truncate(time.Hour)
 	)
-
-	// Format content.
 	sb.WriteString(fmt.Sprintf(":robot:    Market Data: Hourly Update: %v    :dove:\n", now))
 	for _, asset := range assetInfo {
 		var emoji = ":black_square_large:"
