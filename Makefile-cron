@@ -3,7 +3,7 @@ SHELL=/bin/bash -O extglob -c
 ecr-registry := 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail
 ecr-arm-registry := 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm
 
-binary := $(shell pwd | rev | cut -d '/' -f 1 | rev)
+binary := $(shell pwd | rev | cut -d '/' -f 1 | rev | sed 's/-//g')
 fq-binary := swallowtail.$(binary)
 fq-binary-arm := swallowtail.$(binary).arm
 

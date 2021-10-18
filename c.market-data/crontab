@@ -1,3 +1,3 @@
-0 * * * * sh /jobs/put_publish_latest_price_information.sh
+*/1 * * * * sh /jobs/put_publish_latest_price_information.sh
 */15 * * * * sh /jobs/put_publish_ath_information.sh
 */15 * * * * sh /jobs/put_publish_volatility.sh

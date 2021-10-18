@@ -54,18 +54,22 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 			if err != nil {
 				slog.Warn(ctx, "Failed to fetch coingecko price for price command", map[string]string{
 					"symbol": symbol,
+					"error":  err.Error(),
 				})
+				return
 			}
 
 			mu.Lock()
 			defer mu.Unlock()
 			cache[symbol] = rsp
 		}()
-
 	}
+
+	wg.Wait()
+
 	if len(cache) == 0 {
 		// Best Effort
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s> Sorry, i wasn't able to get price info for any coins :disappointed:", m.Author.ID))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: <@%s> Sorry, i wasn't able to get price info for any symbols [%s]:disappointed:", m.Author.ID, strings.Join(symbols, ",")))
 		return nil
 	}
 
@@ -86,14 +90,14 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 		var emoji string
 		switch {
 		case v.PercentagePriceChange_24H > 0:
-			emoji = "green_square"
+			emoji = ":green_square:"
 		case v.PercentagePriceChange_24H < 0:
-			emoji = "red_square"
+			emoji = ":red_square:"
 		default:
-			emoji = "black_large_square"
+			emoji = ":black_large_square:"
 		}
 
-		sb.WriteString(fmt.Sprintf("%s `[%s] %fUSDT 24h: %f%%`", emoji, k, v.LatestPrice, v.PercentagePriceChange_24H))
+		sb.WriteString(fmt.Sprintf("%s `[%s] %.3f USDT 24h: %.2f%%\n`", emoji, k, v.LatestPrice, v.PercentagePriceChange_24H))
 	}
 
 	if _, err := s.ChannelMessageSend(m.ChannelID, sb.String()); err != nil {

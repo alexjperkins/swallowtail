@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -50,7 +51,7 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 			defer wg.Done()
 			time.Sleep(jitter(0, 59))
 
-			latestPrice, err := fetchLatestPriceFromCoingecko(ctx, asset.Symbol, asset.AssetPair)
+			latestPrice, change24h, err := fetchLatestPriceFromCoingecko(ctx, asset.Symbol, asset.AssetPair)
 			if err != nil {
 				slog.Warn(ctx, "Failed to fetch latest price from coingecko: %v: %s%s", err, asset.Symbol, asset.AssetPair)
 				return
@@ -59,9 +60,10 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 			mu.Lock()
 			defer mu.Unlock()
 			assetInfo = append(assetInfo, &AssetInfo{
-				Symbol:      asset.Symbol,
-				AssetPair:   asset.AssetPair,
-				LatestPrice: latestPrice,
+				Symbol:                   asset.Symbol,
+				AssetPair:                asset.AssetPair,
+				LatestPrice:              latestPrice,
+				PriceChangePercentage24h: change24h,
 			})
 		}()
 	}
@@ -80,11 +82,21 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 		}
 	})
 
-	var indent int
+	// TODO: this is the most efficient implementation & we duplicate work here; we should look to improve.
+	// But since we poll this endpoint once an hour - it's not the end of the world.
+	var (
+		indent      int
+		priceIndent int
+	)
 	for _, asset := range assetInfo {
 		l := len(fmt.Sprintf("%s%s", asset.Symbol, asset.AssetPair))
 		if l > indent {
 			indent = l
+		}
+
+		pl := len(fmt.Sprintf("%.3f", asset.LatestPrice))
+		if pl > priceIndent {
+			priceIndent = pl
 		}
 	}
 
@@ -93,7 +105,7 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 		sb  strings.Builder
 		now = time.Now().UTC().Truncate(time.Hour)
 	)
-	sb.WriteString(fmt.Sprintf(":robot:    Market Data: Hourly Update: %v    :dove:\n", now))
+	sb.WriteString(fmt.Sprintf(":robot:    `Market Data: Hourly Update: %v`    :dove:\n", now))
 	for _, asset := range assetInfo {
 		var emoji = ":black_square_large:"
 		switch {
@@ -103,7 +115,18 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 			emoji = ":red_square:"
 		}
 
-		sb.WriteString(fmt.Sprintf("\n%s%s %s:%s %v 24h: %s%%", asset.Symbol, asset.AssetPair, emoji, strings.Repeat(" ", indent+1), asset.LatestPrice, asset.PriceChangePercentage24h))
+		sb.WriteString(
+			fmt.Sprintf(
+				"\n%s `[%s%s]:%s %.3f %s 24h: %.2f%%`",
+				emoji,
+				strings.ToUpper(asset.Symbol),
+				strings.ToUpper(asset.AssetPair),
+				strings.Repeat(" ", indent+1+(indent-len(fmt.Sprintf("%s%s", asset.Symbol, asset.AssetPair)))),
+				asset.LatestPrice,
+				strings.Repeat(" ", priceIndent+(priceIndent-len(fmt.Sprintf("%.3f", asset.LatestPrice)))),
+				asset.PriceChangePercentage24h,
+			),
+		)
 	}
 
 	content := sb.String()
@@ -113,8 +136,12 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 	if err := publishToDiscord(ctx, sb.String(), discordproto.DiscordSatoshiPriceBotChannel, idempotencyKey); err != nil {
 		slog.Error(ctx, "Failed to publish latest price info to discord", map[string]string{
 			"idempotency_key": idempotencyKey,
+			"error":           err.Error(),
+			"len":             strconv.Itoa(len(content)),
 		})
 	}
+
+	slog.Trace(ctx, "Market data published latest prices")
 
 	return &marketdataproto.PublishLatestPriceInformationResponse{}, nil
 }

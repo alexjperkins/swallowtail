@@ -137,6 +137,18 @@ services:
     profiles:
       - backend
 
+  swallowtail.s.marketdata:
+    hostname: swallowtail-s-marketdata
+    image: swallowtail.s.marketdata
+    ports:
+      - "8010:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
   ### -- Crons --- ###
 
   swallowtail.c.payments:

@@ -82,27 +82,12 @@ var (
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},
 		{
-			Symbol:           "liq",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "bop",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
 			Symbol:           "step",
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},
 		{
 			Symbol:           "dot",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingMedium,
-		},
-		{
-			Symbol:           "ksm",
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingMedium,
 		},
@@ -127,32 +112,7 @@ var (
 			VolatilityRating: AssetVolatiltyRatingMedium,
 		},
 		{
-			Symbol:           "comp",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingMedium,
-		},
-		{
-			Symbol:           "doge",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
 			Symbol:           "ftm",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "matic",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "ocean",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "rsr",
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},
@@ -167,77 +127,12 @@ var (
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},
 		{
-			Symbol:           "theta",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "tomo",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
 			Symbol:           "uni",
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingMedium,
 		},
 		{
-			Symbol:           "fet",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "htr",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "noia",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "akt",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "omg",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
 			Symbol:           "woo",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "fida",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "mngo",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "enj",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "sand",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "api3",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "band",
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},
@@ -253,11 +148,6 @@ var (
 		},
 		{
 			Symbol:           "luna",
-			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
-		},
-		{
-			Symbol:           "mir",
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},
