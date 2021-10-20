@@ -140,6 +140,14 @@ func TestDCAParser(t *testing.T) {
 			Stop 3407
 			target 3704.7 ETH
 			`,
+			withErr: true,
+		},
+		{
+			name: "swings_full_example",
+			content: `
+bluntz/hfsp [crypto-scalp-trade-ideas-89]: trade idea scalp long btc/usd   scalp longiong btc again here on this little 15min timeframe dip we are still reduced to scalps at these levels as we need larger dips to position for any kind of longer timeframe core longs plus we are already long btc from 40k   entry 66100  stop 65148  target 68669   2.58rr   everyone  [attachments]  https://cdn.discordapp.com/attachments/671977297829429255/900478428711624775/unknown.png
+			`,
+			withErr: true,
 		},
 	}
 

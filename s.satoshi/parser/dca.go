@@ -21,9 +21,11 @@ var (
 	possibleTakeProfitMarks = []string{
 		"profit",
 		"tp",
+		"target",
 	}
 )
 
+// DCAParser ...
 type DCAParser struct{}
 
 func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error) {
@@ -55,22 +57,17 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 		stopLossContent   string
 		takeProfitContent string
 	)
-	if stopLossContent != "" {
+	if stopLossMark != "" {
 		stopLossSplits := strings.SplitAfter(content, stopLossMark)
 		entriesContent = strings.ReplaceAll(stopLossSplits[0], "-", " ")
 
 		switch {
-		case takeProfitContent != "":
+		case takeProfitMark != "":
 			takeProfitSplits := strings.Split(stopLossSplits[1], takeProfitMark)
 			stopLossContent, takeProfitContent = takeProfitSplits[0], strings.ReplaceAll(takeProfitSplits[1], "-", "")
 		default:
 			stopLossContent = stopLossSplits[1]
 		}
-	}
-
-	currentPrice, err := fetchLatestPrice(ctx, ticker)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_parse_dca", nil)
 	}
 
 	// Validate this is a DCA order; we do so by checking if we have `dca` in the content or we have at least
@@ -84,7 +81,7 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 		}
 
 		if len(entries) < 2 {
-			return nil, gerrors.Augment(err, "failed_to_parse_dca.not_enough_entries", map[string]string{
+			return nil, gerrors.FailedPrecondition("failed_to_parse_dca.not_enough_entries", map[string]string{
 				"entries": entriesAsString(entries),
 			})
 		}
@@ -96,6 +93,11 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 	}
 
 	side, _ := parseSide(content)
+
+	currentPrice, err := fetchLatestPrice(ctx, ticker)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_parse_dca", nil)
+	}
 
 	switch {
 	case side == tradeengineproto.TRADE_SIDE_LONG:

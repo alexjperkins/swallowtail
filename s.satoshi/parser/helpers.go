@@ -101,12 +101,14 @@ func parseTicker(content string) string {
 			t = strings.ReplaceAll(t, "usdc", "")
 			t = strings.ReplaceAll(t, "usd", "")
 
-			return parseTicker(t)
-
+			if tt := parseTicker(t); tt != "" {
+				return tt
+			}
 		case strings.Contains(token, "/"):
-			// Some mods format their trades as `BTC/USDT`.
-			s := strings.Split(token, "/")
-			return parseTicker(s[0])
+			t := strings.ReplaceAll(token, "/", "")
+			if tt := parseTicker(t); tt != "" {
+				return tt
+			}
 		}
 
 		if _, ok := binanceAssetPairs[token]; ok {

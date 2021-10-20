@@ -21,7 +21,7 @@ long btc 44.4  dca til 43.9 sl 43599 high risk
 ---NEW---
 long btc 44.4 @​everyone dca til 43.9 sl 43399 high risk edit1 updated sl
 			`,
-			expectedCleanedContent: ` long btc 44.4 @​everyone dca til 43.9 sl 43399 high risk edit1 updated sl`,
+			expectedCleanedContent: ` long btc 44.4 everyone dca til 43.9 sl 43399 high risk edit1 updated sl`,
 		},
 		{
 			name: "dollar_signs",
