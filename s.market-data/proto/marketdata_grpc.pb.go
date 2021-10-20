@@ -18,6 +18,9 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MarketdataClient interface {
 	GetExchangeFundingRates(ctx context.Context, in *GetExchangeFundingRatesRequest, opts ...grpc.CallOption) (*GetExchangeFundingRatesResponse, error)
+	PublishLatestPriceInformation(ctx context.Context, in *PublishLatestPriceInformationRequest, opts ...grpc.CallOption) (*PublishLatestPriceInformationResponse, error)
+	PublishVolatilityInformation(ctx context.Context, in *PublishVolatilityInformationRequest, opts ...grpc.CallOption) (*PublishVolatilityInformationResponse, error)
+	PublishATHInformation(ctx context.Context, in *PublishATHInformationRequest, opts ...grpc.CallOption) (*PublishATHInformationResponse, error)
 }
 
 type marketdataClient struct {
@@ -37,11 +40,41 @@ func (c *marketdataClient) GetExchangeFundingRates(ctx context.Context, in *GetE
 	return out, nil
 }
 
+func (c *marketdataClient) PublishLatestPriceInformation(ctx context.Context, in *PublishLatestPriceInformationRequest, opts ...grpc.CallOption) (*PublishLatestPriceInformationResponse, error) {
+	out := new(PublishLatestPriceInformationResponse)
+	err := c.cc.Invoke(ctx, "/marketdata/PublishLatestPriceInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *marketdataClient) PublishVolatilityInformation(ctx context.Context, in *PublishVolatilityInformationRequest, opts ...grpc.CallOption) (*PublishVolatilityInformationResponse, error) {
+	out := new(PublishVolatilityInformationResponse)
+	err := c.cc.Invoke(ctx, "/marketdata/PublishVolatilityInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *marketdataClient) PublishATHInformation(ctx context.Context, in *PublishATHInformationRequest, opts ...grpc.CallOption) (*PublishATHInformationResponse, error) {
+	out := new(PublishATHInformationResponse)
+	err := c.cc.Invoke(ctx, "/marketdata/PublishATHInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MarketdataServer is the server API for Marketdata service.
 // All implementations must embed UnimplementedMarketdataServer
 // for forward compatibility
 type MarketdataServer interface {
 	GetExchangeFundingRates(context.Context, *GetExchangeFundingRatesRequest) (*GetExchangeFundingRatesResponse, error)
+	PublishLatestPriceInformation(context.Context, *PublishLatestPriceInformationRequest) (*PublishLatestPriceInformationResponse, error)
+	PublishVolatilityInformation(context.Context, *PublishVolatilityInformationRequest) (*PublishVolatilityInformationResponse, error)
+	PublishATHInformation(context.Context, *PublishATHInformationRequest) (*PublishATHInformationResponse, error)
 	mustEmbedUnimplementedMarketdataServer()
 }
 
@@ -51,6 +84,15 @@ type UnimplementedMarketdataServer struct {
 
 func (*UnimplementedMarketdataServer) GetExchangeFundingRates(context.Context, *GetExchangeFundingRatesRequest) (*GetExchangeFundingRatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExchangeFundingRates not implemented")
+}
+func (*UnimplementedMarketdataServer) PublishLatestPriceInformation(context.Context, *PublishLatestPriceInformationRequest) (*PublishLatestPriceInformationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublishLatestPriceInformation not implemented")
+}
+func (*UnimplementedMarketdataServer) PublishVolatilityInformation(context.Context, *PublishVolatilityInformationRequest) (*PublishVolatilityInformationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublishVolatilityInformation not implemented")
+}
+func (*UnimplementedMarketdataServer) PublishATHInformation(context.Context, *PublishATHInformationRequest) (*PublishATHInformationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublishATHInformation not implemented")
 }
 func (*UnimplementedMarketdataServer) mustEmbedUnimplementedMarketdataServer() {}
 
@@ -76,6 +118,60 @@ func _Marketdata_GetExchangeFundingRates_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Marketdata_PublishLatestPriceInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishLatestPriceInformationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MarketdataServer).PublishLatestPriceInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/marketdata/PublishLatestPriceInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MarketdataServer).PublishLatestPriceInformation(ctx, req.(*PublishLatestPriceInformationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Marketdata_PublishVolatilityInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishVolatilityInformationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MarketdataServer).PublishVolatilityInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/marketdata/PublishVolatilityInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MarketdataServer).PublishVolatilityInformation(ctx, req.(*PublishVolatilityInformationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Marketdata_PublishATHInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishATHInformationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MarketdataServer).PublishATHInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/marketdata/PublishATHInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MarketdataServer).PublishATHInformation(ctx, req.(*PublishATHInformationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Marketdata_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "marketdata",
 	HandlerType: (*MarketdataServer)(nil),
@@ -83,6 +179,18 @@ var _Marketdata_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetExchangeFundingRates",
 			Handler:    _Marketdata_GetExchangeFundingRates_Handler,
+		},
+		{
+			MethodName: "PublishLatestPriceInformation",
+			Handler:    _Marketdata_PublishLatestPriceInformation_Handler,
+		},
+		{
+			MethodName: "PublishVolatilityInformation",
+			Handler:    _Marketdata_PublishVolatilityInformation_Handler,
+		},
+		{
+			MethodName: "PublishATHInformation",
+			Handler:    _Marketdata_PublishATHInformation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
