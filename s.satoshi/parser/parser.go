@@ -70,15 +70,20 @@ func Parse(ctx context.Context, identifier, content string, m *discordgo.Message
 	for _, parser := range parsers {
 		trade, err := parser.Parse(ctx, cleanedContent, m, actorType)
 		if err != nil {
-			slog.Error(ctx, "Failed to parse trade: %v", err)
-			multierror.Append(mErr, err)
+			slog.Error(ctx, "Failed to parse trade: %v %v", err, cleanedContent)
+			mErr = multierror.Append(mErr, err)
 			continue
 		}
 
 		return trade, nil
 	}
 
-	return nil, gerrors.Augment(mErr, "Failed to parse trades using any parser", nil)
+	if mErr != nil {
+		return nil, gerrors.Augment(mErr, "Failed to parse trades using any parser", nil)
+	}
+
+	slog.Error(ctx, "Invalid parse of message; empty error & empty trade.")
+	return nil, gerrors.FailedPrecondition("invalid_state.no_trade_parsed_without_error", nil)
 }
 
 func cleanContent(content string) string {
@@ -92,10 +97,15 @@ func cleanContent(content string) string {
 	c = strings.ReplaceAll(c, "\n", " ")
 	c = strings.ReplaceAll(c, "\t", " ")
 	c = strings.TrimSpace(c)
+	// Remove all odd & even number of spaces.
+	c = strings.ReplaceAll(c, "   ", " ")
 	c = strings.ReplaceAll(c, "  ", " ")
 
+	// Remove discord tags.
+	c = strings.ReplaceAll(c, "@", "")
+	c = strings.ReplaceAll(c, "​", "")
+
 	// TODO: Remove Attachments
-	// TODO: Remove --- in reply too ---
 
 	// Normalize
 	c = strings.ToLower(c)

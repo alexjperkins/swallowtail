@@ -63,6 +63,7 @@ message PerpetualFuturesOrder {
     BinanceWorkingType working_type = 9;
     bool close_position = 10;
     BinancePositionSide position_side = 11;
+    bool reduce_only = 12;
 }
 
 message AssetPair {

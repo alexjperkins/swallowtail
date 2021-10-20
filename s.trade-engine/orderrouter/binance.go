@@ -21,31 +21,6 @@ const (
 	defaultBinanceDCAOrders = 5
 )
 
-func readBinancePerpetualFuturesAccountSize(ctx context.Context, credentials *binanceproto.Credentials) (float64, error) {
-	rsp, err := (&binanceproto.ReadPerpetualFuturesAccountRequest{
-		ActorId:     binanceproto.BinanceAccountActorTradeEngineSystem,
-		Credentials: credentials,
-	}).Send(ctx).Response()
-	if err != nil {
-		return 0, gerrors.Augment(err, "failed_to_read_binance_perpetual_futures_account", nil)
-	}
-
-	return float64(rsp.AvailableBalance), nil
-}
-
-func readAccountByUserID(ctx context.Context, userID string) (*accountproto.Account, error) {
-	rsp, err := (&accountproto.ReadAccountRequest{
-		UserId: userID,
-	}).Send(ctx).Response()
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_read_account_by_user_id", map[string]string{
-			"user_id": userID,
-		})
-	}
-
-	return rsp.Account, nil
-}
-
 func executeBinanceFuturesTrade(
 	ctx context.Context,
 	trade *domain.Trade,
@@ -95,15 +70,31 @@ func executeBinanceFuturesTrade(
 			dcaStrategy = tradeengineproto.DCA_STRATEGY_EXPONENTIAL
 		}
 
+		var entries = trade.Entries
+		switch trade.OrderType {
+		case tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT.String(), tradeengineproto.ORDER_TYPE_MARKET.String():
+			instrument := fmt.Sprintf("%s%s", trade.Asset, trade.Pair)
+			currentPrice, err := getLatestPriceFromBinance(ctx, instrument)
+			switch {
+			case err != nil:
+				slog.Error(ctx, "Failed to get the latest price for %s on binance; using all entries passed", instrument)
+			default:
+				// Set the entry for market order to the latest price so we can get the best risk possible.
+				entries[len(entries)-1] = currentPrice
+			}
+		}
+
 		// Calculate positins by risk & add as order.
-		positions, err = riskutil.CalculatePositionsByRisk(trade.Entries, trade.StopLoss, float64(participant.Risk), defaultBinanceDCAOrders, side, dcaStrategy)
+		ps, err := riskutil.CalculatePositionsByRisk(trade.Entries, trade.StopLoss, float64(participant.Risk), defaultBinanceDCAOrders, side, dcaStrategy)
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_calculate_risk_sizes.failed_to_calculate_notional_size_from_risk", nil)
 		}
+		positions = append(positions, ps...)
 	default:
 		return nil, gerrors.Unimplemented("failed_to_execute_binance_futures_trade.notional_size_calc_unimplimented", nil)
 	}
 
+	totalRisk := sumPositionsRisk(positions) * binanceAccountSize
 	orders := make([]*binanceproto.PerpetualFuturesOrder, 0, len(trade.Entries)+1)
 
 	// Add stop loss order. We add this first for safety.
@@ -129,7 +120,6 @@ func executeBinanceFuturesTrade(
 		})
 	}
 
-	totalRisk := sumPositionsRisk(positions) * binanceAccountSize
 	errParams := map[string]string{
 		"total_notional_size":   fmt.Sprintf("%v", totalRisk*binanceAccountSize),
 		"risk":                  fmt.Sprintf("%v", participant.Risk),
@@ -219,4 +209,29 @@ func sumPositionsRisk(vs []*risk.Position) float64 {
 	}
 
 	return vs[0].Risk + sumPositionsRisk(vs[1:])
+}
+
+func readBinancePerpetualFuturesAccountSize(ctx context.Context, credentials *binanceproto.Credentials) (float64, error) {
+	rsp, err := (&binanceproto.ReadPerpetualFuturesAccountRequest{
+		ActorId:     binanceproto.BinanceAccountActorTradeEngineSystem,
+		Credentials: credentials,
+	}).Send(ctx).Response()
+	if err != nil {
+		return 0, gerrors.Augment(err, "failed_to_read_binance_perpetual_futures_account", nil)
+	}
+
+	return float64(rsp.AvailableBalance), nil
+}
+
+func readAccountByUserID(ctx context.Context, userID string) (*accountproto.Account, error) {
+	rsp, err := (&accountproto.ReadAccountRequest{
+		UserId: userID,
+	}).Send(ctx).Response()
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_account_by_user_id", map[string]string{
+			"user_id": userID,
+		})
+	}
+
+	return rsp.Account, nil
 }

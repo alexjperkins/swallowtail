@@ -107,7 +107,14 @@ func validatePerpetualFuturesTrade(trade *binanceproto.ExecuteFuturesPerpetualsT
 			if order.StopPrice <= 0 {
 				return gerrors.BadParam("bad_param.stop_price_zero_or_below", nil)
 			}
+			if order.ClosePosition && order.ReduceOnly {
+				return gerrors.BadParam("bad_param.extra_param_reduce_only", nil)
+			}
+			if order.ReduceOnly && order.Quantity <= 0 {
+				return gerrors.BadParam("bad_param.invalid_quantity", nil)
+			}
 			if !order.ClosePosition {
+				// This is for safety whilst we have discrentionary traders only.
 				return gerrors.BadParam("bad_param.stop_order_type_no_close_position", nil)
 			}
 		}
