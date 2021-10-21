@@ -64,7 +64,10 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 		switch {
 		case takeProfitMark != "":
 			takeProfitSplits := strings.Split(stopLossSplits[1], takeProfitMark)
-			stopLossContent, takeProfitContent = takeProfitSplits[0], strings.ReplaceAll(takeProfitSplits[1], "-", "")
+			stopLossContent = takeProfitSplits[0]
+			if len(takeProfitSplits) > 1 {
+				takeProfitContent = strings.ReplaceAll(takeProfitSplits[1], "-", "")
+			}
 		default:
 			stopLossContent = stopLossSplits[1]
 		}
