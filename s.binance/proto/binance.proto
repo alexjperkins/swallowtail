@@ -13,6 +13,8 @@ service binance {
 
     rpc ReadPerpetualFuturesAccount (ReadPerpetualFuturesAccountRequest) returns (ReadPerpetualFuturesAccountResponse) {}
 
+    rpc GetFundingRate (GetFundingRateRequest) returns (GetFundingRateResponse) {}
+
     rpc VerifyCredentials (VerifyCredentialsRequest) returns (VerifyCredentialsResponse) {}
 
     rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
@@ -111,6 +113,22 @@ message GetLatestPriceRequest{
 message GetLatestPriceResponse{
     float price = 1;
     int64 timestamp = 2;
+}
+
+message GetFundingRateRequest {
+    string symbol = 1;
+    int64 start_time = 2;
+    int64 end_time = 3;
+}
+
+message FundingRateInfo {
+    string symbol = 1;
+    float funding_rate = 2;
+    float funding_rate_time = 3;
+}
+
+message GetFundingRateResponse {
+    repeated FundingRateInfo funding_rates = 1;
 }
 
 message Credentials {

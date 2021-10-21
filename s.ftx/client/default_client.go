@@ -52,6 +52,10 @@ func (f *ftxClient) VerifyCredentials(ctx context.Context, req *VerifyCredential
 	return rsp, nil
 }
 
+func (f *ftxClient) GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error) {
+	return nil, gerrors.Unimplemented("failed_to_get_funding_rate.unimplemented", nil)
+}
+
 func (f *ftxClient) do(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *Credentials) error {
 	url := fmt.Sprintf("%s%s", f.hostname, buildEndpoint(endpoint, pagination))
 

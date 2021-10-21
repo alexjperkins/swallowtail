@@ -168,3 +168,20 @@ type GetFuturesExchangeInfoResponse struct {
 		PricePrecision    int    `json:"pricePrecision"`
 	}
 }
+
+// GetFundingRatesRequest ...
+type GetFundingRateRequest struct {
+	Symbol    string `json:"symbol"`
+	StartTime int    `json:"startTime"`
+	EndTime   int    `json:"endTime"`
+}
+
+// FundingRateInfo ...
+type FundingRateInfo struct {
+	Symbol      string  `json:"symbol"`
+	FundingRate float64 `fundingRate`
+	FundingTime int     `fundingTime`
+}
+
+// GetFundingRatesResponse ...
+type GetFundingRateResponse []*FundingRateInfo

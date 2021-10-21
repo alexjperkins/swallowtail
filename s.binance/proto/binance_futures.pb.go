@@ -353,3 +353,76 @@ func (r *ReadPerpetualFuturesAccountRequest) SendWithTimeout(ctx context.Context
 		resultc: resultc,
 	}
 }
+
+// --- Read Funding Rate --- //
+
+type GetFundingRateFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *GetFundingRateResponse
+	ctx     context.Context
+}
+
+func (a *GetFundingRateFuture) Response() (*GetFundingRateResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_funding_rate", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *GetFundingRateRequest) Send(ctx context.Context) *GetFundingRateFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *GetFundingRateRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *GetFundingRateFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *GetFundingRateResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-binance:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_binance_connection_failed", nil)
+		return &GetFundingRateFuture{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewBinanceClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.GetFundingRate(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_get_funding_rate", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &GetFundingRateFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}

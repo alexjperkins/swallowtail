@@ -18,12 +18,12 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Init Dao
+	// Init Dao.
 	if err := dao.Init(ctx, svcName); err != nil {
 		panic(err)
 	}
 
-	// Init Mariana Server
+	// Init Mariana Server.
 	srv := mariana.Init(svcName)
 	accountproto.RegisterAccountServer(srv.Grpc(), &handler.AccountService{})
 	srv.Run(ctx)

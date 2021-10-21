@@ -21,6 +21,7 @@ type BinanceClient interface {
 	ExecuteFuturesPerpetualsTrade(ctx context.Context, in *ExecuteFuturesPerpetualsTradeRequest, opts ...grpc.CallOption) (*ExecuteFuturesPerpetualsTradeResponse, error)
 	GetLatestPrice(ctx context.Context, in *GetLatestPriceRequest, opts ...grpc.CallOption) (*GetLatestPriceResponse, error)
 	ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerpetualFuturesAccountRequest, opts ...grpc.CallOption) (*ReadPerpetualFuturesAccountResponse, error)
+	GetFundingRate(ctx context.Context, in *GetFundingRateRequest, opts ...grpc.CallOption) (*GetFundingRateResponse, error)
 	VerifyCredentials(ctx context.Context, in *VerifyCredentialsRequest, opts ...grpc.CallOption) (*VerifyCredentialsResponse, error)
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 }
@@ -69,6 +70,15 @@ func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, in *Rea
 	return out, nil
 }
 
+func (c *binanceClient) GetFundingRate(ctx context.Context, in *GetFundingRateRequest, opts ...grpc.CallOption) (*GetFundingRateResponse, error) {
+	out := new(GetFundingRateResponse)
+	err := c.cc.Invoke(ctx, "/binance/GetFundingRate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *binanceClient) VerifyCredentials(ctx context.Context, in *VerifyCredentialsRequest, opts ...grpc.CallOption) (*VerifyCredentialsResponse, error) {
 	out := new(VerifyCredentialsResponse)
 	err := c.cc.Invoke(ctx, "/binance/VerifyCredentials", in, out, opts...)
@@ -95,6 +105,7 @@ type BinanceServer interface {
 	ExecuteFuturesPerpetualsTrade(context.Context, *ExecuteFuturesPerpetualsTradeRequest) (*ExecuteFuturesPerpetualsTradeResponse, error)
 	GetLatestPrice(context.Context, *GetLatestPriceRequest) (*GetLatestPriceResponse, error)
 	ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest) (*ReadPerpetualFuturesAccountResponse, error)
+	GetFundingRate(context.Context, *GetFundingRateRequest) (*GetFundingRateResponse, error)
 	VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error)
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	mustEmbedUnimplementedBinanceServer()
@@ -115,6 +126,9 @@ func (*UnimplementedBinanceServer) GetLatestPrice(context.Context, *GetLatestPri
 }
 func (*UnimplementedBinanceServer) ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest) (*ReadPerpetualFuturesAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadPerpetualFuturesAccount not implemented")
+}
+func (*UnimplementedBinanceServer) GetFundingRate(context.Context, *GetFundingRateRequest) (*GetFundingRateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFundingRate not implemented")
 }
 func (*UnimplementedBinanceServer) VerifyCredentials(context.Context, *VerifyCredentialsRequest) (*VerifyCredentialsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyCredentials not implemented")
@@ -200,6 +214,24 @@ func _Binance_ReadPerpetualFuturesAccount_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Binance_GetFundingRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFundingRateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BinanceServer).GetFundingRate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/binance/GetFundingRate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BinanceServer).GetFundingRate(ctx, req.(*GetFundingRateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Binance_VerifyCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(VerifyCredentialsRequest)
 	if err := dec(in); err != nil {
@@ -255,6 +287,10 @@ var _Binance_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadPerpetualFuturesAccount",
 			Handler:    _Binance_ReadPerpetualFuturesAccount_Handler,
+		},
+		{
+			MethodName: "GetFundingRate",
+			Handler:    _Binance_GetFundingRate_Handler,
 		},
 		{
 			MethodName: "VerifyCredentials",

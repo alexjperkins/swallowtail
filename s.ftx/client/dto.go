@@ -97,3 +97,23 @@ type VerifyCredentialsRequest struct{}
 type VerifyCredentialsResponse struct {
 	Success bool `json:"success"`
 }
+
+// GetFundingRateRequest ...
+type GetFundingRateRequest struct {
+	Instrument string `json:"future"`
+	StartTime  int    `json:"start_time"`
+	EndTime    int    `json:"end_time"`
+}
+
+// FundingRateInfo ...
+type FundingRateInfo struct {
+	Instrument string  `json:"future"`
+	Rate       float64 `json:"rate"`
+	Time       string  `json:"time"`
+}
+
+// GetFundingRateResponse ...
+type GetFundingRateResponse struct {
+	FundingRates []*FundingRateInfo `json:"result"`
+	Success      bool               `json:"success"`
+}

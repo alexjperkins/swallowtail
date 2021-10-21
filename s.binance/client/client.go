@@ -58,11 +58,13 @@ type BinanceClient interface {
 	// ReadPerpetualFuturesAccount reads from the users perpetual futures account.
 	ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest, *Credentials) (*ReadPerpetualFuturesAccountResponse, error)
 
-	// VerifyCredentials verifies the given credentials of the users.
-	VerifyCredentials(context.Context, *Credentials) (*VerifyCredentialsResponse, error)
-
 	// GetFuturesExchangeInfo returns the exchange information specifically for perpetual futures contracts.
 	GetFuturesExchangeInfo(context.Context, *GetFuturesExchangeInfoRequest) (*GetFuturesExchangeInfoResponse, error)
+
+	GetFundingRate(context.Context, *GetFundingRateRequest) (*GetFundingRateResponse, error)
+
+	// VerifyCredentials verifies the given credentials of the users.
+	VerifyCredentials(context.Context, *Credentials) (*VerifyCredentialsResponse, error)
 
 	// GetStatus returns the statistics round the exchange server time & latency.
 	GetStatus(context.Context) (*GetStatusResponse, error)
@@ -175,4 +177,11 @@ func GetFuturesExchangeInfo(ctx context.Context, req *GetFuturesExchangeInfoRequ
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Get Binance futures exchange info")
 	defer span.Finish()
 	return client.GetFuturesExchangeInfo(ctx, req)
+}
+
+// GetFundingRate ...
+func GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get Binance futures funding rate")
+	defer span.Finish()
+	return client.GetFundingRate(ctx, req)
 }

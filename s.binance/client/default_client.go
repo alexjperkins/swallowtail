@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
-	"swallowtail/s.binance/client/auth"
 	"swallowtail/s.binance/domain"
 )
 
@@ -119,8 +117,8 @@ func (c *binanceClient) GetFuturesExchangeInfo(ctx context.Context, req *GetFutu
 
 func (c *binanceClient) GetStatus(ctx context.Context) (*GetStatusResponse, error) {
 	endpoint := fmt.Sprintf("%s/time", binanceAPIUrl)
-	rspBody := &GetStatusResponse{}
 
+	rspBody := &GetStatusResponse{}
 	if err := c.http.Do(ctx, http.MethodGet, endpoint, nil, rspBody); err != nil {
 		return nil, gerrors.Augment(err, "client_request_failed.get_status.time", map[string]string{
 			"endpoint": endpoint,
@@ -133,55 +131,20 @@ func (c *binanceClient) GetStatus(ctx context.Context) (*GetStatusResponse, erro
 	return rspBody, nil
 }
 
-func (c *binanceClient) do(ctx context.Context, method, endpoint, queryString string, reqBody, rspBody interface{}, credentials *Credentials) error {
-	formattedEndpoint := fmt.Sprintf("%s?%s", endpoint, queryString)
-	if credentials == nil {
-		return c.http.Do(ctx, method, formattedEndpoint, reqBody, rspBody)
+func (c *binanceClient) GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error) {
+	endpoint := fmt.Sprintf("%s/fundingRate?symbol=%s", binanceFuturesURL, req.Symbol)
+
+	if req.StartTime != 0 {
+		endpoint = fmt.Sprintf("%s&startTime=%d", endpoint, req.StartTime)
+	}
+	if req.EndTime != 0 {
+		endpoint = fmt.Sprintf("%s&endTime=%d", endpoint, req.EndTime)
 	}
 
-	return c.http.DoWithEphemeralHeaders(ctx, method, formattedEndpoint, reqBody, rspBody, credentials.AsHeaders())
-}
-
-func (c *binanceClient) doWithSignature(ctx context.Context, method, endpoint, queryString string, reqBody, rspBody interface{}, credentials *Credentials) error {
-	errParams := map[string]string{
-		"method":   method,
-		"endpoint": endpoint,
+	rspBody := &GetFundingRateResponse{}
+	if err := c.http.Do(ctx, http.MethodHead, endpoint, nil, rspBody); err != nil {
+		return nil, gerrors.Augment(err, "client_request_failed.get_funding_rates", nil)
 	}
 
-	// First check that credentials have indeed been passed correctly.
-	switch {
-	case credentials == nil:
-		return gerrors.FailedPrecondition("cannot_sign_binance_request.nil_credentials", errParams)
-	case credentials.SecretKey == "":
-		return gerrors.FailedPrecondition("cannot_sign_binance_request.empty_secret_key", errParams)
-	}
-
-	// Sign our request with the secret key passed.
-	signedRequest, err := c.signRequest(credentials.SecretKey, queryString, reqBody)
-	if err != nil {
-		return gerrors.Augment(err, "failed_do_request.signature_failure", errParams)
-	}
-
-	formattedEndpoint := fmt.Sprintf("%s?%s", endpoint, signedRequest)
-
-	return c.http.DoWithEphemeralHeaders(ctx, method, formattedEndpoint, reqBody, rspBody, credentials.AsHeaders())
-}
-
-func (c *binanceClient) signRequest(secret, queryString string, reqBody interface{}) (string, error) {
-	// converts to unix nano time to that of millisecond precision; this is all that we need.
-	now := time.Now().UnixNano() / 1_000_000
-
-	// sign the request
-	hmac, err := auth.Sha256HMAC(secret, queryString, now, reqBody)
-	if err != nil {
-		return "", gerrors.Augment(err, "failed_to_sign_request", nil)
-	}
-
-	// Return the new converted querystring with timestamp & signature appended.
-	switch {
-	case queryString == "":
-		return fmt.Sprintf("timestamp=%d&signature=%s", now, hmac), nil
-	default:
-		return fmt.Sprintf("%s&timestamp=%d&signature=%s", queryString, now, hmac), nil
-	}
+	return rspBody, nil
 }

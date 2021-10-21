@@ -8,7 +8,9 @@ service ftx {
     rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
 
     rpc GetFTXStatus (GetFTXStatusRequest) returns (GetFTXStatusResponse) {}
-}
+
+    rpc GetFTXFundingRate (GetFTXFundingRateRequest) returns (GetFTXFundingRateResponse) {}
+} 
 
 message ListAccountDepositsRequest {
     string actor_id = 1;
@@ -46,4 +48,18 @@ message GetFTXStatusRequest {}
 message GetFTXStatusResponse {
     int64 server_time = 1;
     int64 request_latency = 2;
+}
+
+message GetFTXFundingRateRequest {
+    string symbol = 1;
+}
+
+message FTXFundingRatesInfo {
+    string instrument = 1;
+    float rate = 2;
+    string time = 3;
+}
+
+message GetFTXFundingRateResponse {
+    repeated FTXFundingRatesInfo funding_rates = 1;
 }
