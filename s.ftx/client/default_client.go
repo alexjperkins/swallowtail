@@ -53,7 +53,21 @@ func (f *ftxClient) VerifyCredentials(ctx context.Context, req *VerifyCredential
 }
 
 func (f *ftxClient) GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error) {
-	return nil, gerrors.Unimplemented("failed_to_get_funding_rate.unimplemented", nil)
+	var pagination *PaginationFilter
+	switch {
+	case req.StartTime != 0, req.EndTime != 0:
+		pagination = &PaginationFilter{
+			Start: int64(req.StartTime),
+			End:   int64(req.EndTime),
+		}
+	}
+
+	rsp := &GetFundingRateResponse{}
+	if err := f.do(ctx, http.MethodGet, "funding_rates", req, rsp, pagination, nil); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_get_funding_rate", nil)
+	}
+
+	return rsp, nil
 }
 
 func (f *ftxClient) do(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *Credentials) error {

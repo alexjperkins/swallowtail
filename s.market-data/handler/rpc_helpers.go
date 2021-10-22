@@ -8,6 +8,7 @@ import (
 	binanceproto "swallowtail/s.binance/proto"
 	coingeckoproto "swallowtail/s.coingecko/proto"
 	discordproto "swallowtail/s.discord/proto"
+	ftxproto "swallowtail/s.ftx/proto"
 	marketdataproto "swallowtail/s.market-data/proto"
 
 	"github.com/monzo/slog"
@@ -78,5 +79,18 @@ func getFundingRateFromBinance(ctx context.Context, symbol string) (float64, err
 }
 
 func getFundingRateFromFTX(ctx context.Context, symbol string) (float64, error) {
-	return 0, gerrors.Unimplemented("failed_to_get_funding_rate_from_ftx.unimplemented", nil)
+	rsp, err := (&ftxproto.GetFTXFundingRatesRequest{
+		Symbol: symbol,
+		Limit:  1,
+	}).Send(ctx).Response()
+	if err != nil {
+		return 0, gerrors.Augment(err, "failed_to_get_funding_rate_from_ftx", nil)
+	}
+
+	if len(rsp.FundingRates) == 0 {
+		slog.Warn(ctx, "No data for funding rates passed: %s", symbol)
+		return 0.0, nil
+	}
+
+	return float64(rsp.FundingRates[0].FundingRate), nil
 }

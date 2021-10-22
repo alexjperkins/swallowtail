@@ -103,6 +103,7 @@ type GetFundingRateRequest struct {
 	Instrument string `json:"future"`
 	StartTime  int    `json:"start_time"`
 	EndTime    int    `json:"end_time"`
+	Limit      int    `json:"limit"`
 }
 
 // FundingRateInfo ...

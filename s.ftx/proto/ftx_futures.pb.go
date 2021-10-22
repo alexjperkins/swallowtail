@@ -76,16 +76,16 @@ func (r *ListAccountDepositsRequest) SendWithTimeout(ctx context.Context, timeou
 	}
 }
 
-// --- Get FTX Funding Rate --- //
+// --- Get FTX Funding Rates --- //
 
-type GetFTXFundingRateFuture struct {
+type GetFTXFundingRatesFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *GetFTXFundingRateResponse
+	resultc chan *GetFTXFundingRatesResponse
 	ctx     context.Context
 }
 
-func (a *GetFTXFundingRateFuture) Response() (*GetFTXFundingRateResponse, error) {
+func (a *GetFTXFundingRatesFuture) Response() (*GetFTXFundingRatesResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
 			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "get_ftx_funding_rate", err)
@@ -102,18 +102,18 @@ func (a *GetFTXFundingRateFuture) Response() (*GetFTXFundingRateResponse, error)
 	}
 }
 
-func (r *GetFTXFundingRateRequest) Send(ctx context.Context) *GetFTXFundingRateFuture {
+func (r *GetFTXFundingRatesRequest) Send(ctx context.Context) *GetFTXFundingRatesFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *GetFTXFundingRateRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *GetFTXFundingRateFuture {
+func (r *GetFTXFundingRatesRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *GetFTXFundingRatesFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *GetFTXFundingRateResponse, 1)
+	resultc := make(chan *GetFTXFundingRatesResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-ftx:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s_ftx_connection_failed", nil)
-		return &GetFTXFundingRateFuture{
+		return &GetFTXFundingRatesFuture{
 			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
@@ -125,7 +125,7 @@ func (r *GetFTXFundingRateRequest) SendWithTimeout(ctx context.Context, timeout 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.GetFTXFundingRate(ctx, r)
+		rsp, err := c.GetFTXFundingRates(ctx, r)
 		if err != nil {
 			errc <- gerrors.Augment(err, "failed_get_ftx_funding_rate", nil)
 			return
@@ -133,7 +133,7 @@ func (r *GetFTXFundingRateRequest) SendWithTimeout(ctx context.Context, timeout 
 		resultc <- rsp
 	}()
 
-	return &GetFTXFundingRateFuture{
+	return &GetFTXFundingRatesFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

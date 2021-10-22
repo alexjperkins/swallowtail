@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion6
 type FtxClient interface {
 	ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error)
 	GetFTXStatus(ctx context.Context, in *GetFTXStatusRequest, opts ...grpc.CallOption) (*GetFTXStatusResponse, error)
-	GetFTXFundingRate(ctx context.Context, in *GetFTXFundingRateRequest, opts ...grpc.CallOption) (*GetFTXFundingRateResponse, error)
+	GetFTXFundingRates(ctx context.Context, in *GetFTXFundingRatesRequest, opts ...grpc.CallOption) (*GetFTXFundingRatesResponse, error)
 }
 
 type ftxClient struct {
@@ -48,9 +48,9 @@ func (c *ftxClient) GetFTXStatus(ctx context.Context, in *GetFTXStatusRequest, o
 	return out, nil
 }
 
-func (c *ftxClient) GetFTXFundingRate(ctx context.Context, in *GetFTXFundingRateRequest, opts ...grpc.CallOption) (*GetFTXFundingRateResponse, error) {
-	out := new(GetFTXFundingRateResponse)
-	err := c.cc.Invoke(ctx, "/ftx/GetFTXFundingRate", in, out, opts...)
+func (c *ftxClient) GetFTXFundingRates(ctx context.Context, in *GetFTXFundingRatesRequest, opts ...grpc.CallOption) (*GetFTXFundingRatesResponse, error) {
+	out := new(GetFTXFundingRatesResponse)
+	err := c.cc.Invoke(ctx, "/ftx/GetFTXFundingRates", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *ftxClient) GetFTXFundingRate(ctx context.Context, in *GetFTXFundingRate
 type FtxServer interface {
 	ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error)
 	GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error)
-	GetFTXFundingRate(context.Context, *GetFTXFundingRateRequest) (*GetFTXFundingRateResponse, error)
+	GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error)
 	mustEmbedUnimplementedFtxServer()
 }
 
@@ -77,8 +77,8 @@ func (*UnimplementedFtxServer) ListAccountDeposits(context.Context, *ListAccount
 func (*UnimplementedFtxServer) GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFTXStatus not implemented")
 }
-func (*UnimplementedFtxServer) GetFTXFundingRate(context.Context, *GetFTXFundingRateRequest) (*GetFTXFundingRateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFTXFundingRate not implemented")
+func (*UnimplementedFtxServer) GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFTXFundingRates not implemented")
 }
 func (*UnimplementedFtxServer) mustEmbedUnimplementedFtxServer() {}
 
@@ -122,20 +122,20 @@ func _Ftx_GetFTXStatus_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Ftx_GetFTXFundingRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFTXFundingRateRequest)
+func _Ftx_GetFTXFundingRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFTXFundingRatesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FtxServer).GetFTXFundingRate(ctx, in)
+		return srv.(FtxServer).GetFTXFundingRates(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ftx/GetFTXFundingRate",
+		FullMethod: "/ftx/GetFTXFundingRates",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FtxServer).GetFTXFundingRate(ctx, req.(*GetFTXFundingRateRequest))
+		return srv.(FtxServer).GetFTXFundingRates(ctx, req.(*GetFTXFundingRatesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -153,8 +153,8 @@ var _Ftx_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Ftx_GetFTXStatus_Handler,
 		},
 		{
-			MethodName: "GetFTXFundingRate",
-			Handler:    _Ftx_GetFTXFundingRate_Handler,
+			MethodName: "GetFTXFundingRates",
+			Handler:    _Ftx_GetFTXFundingRates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
