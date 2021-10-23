@@ -9,7 +9,7 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-// --- GetAssetLatestPriceBySymbol --- //
+// --- Get Asset Latest Price By Symbol --- //
 type GetAssetLatestPriceBySymbolFuture struct {
 	closer  func() error
 	errc    chan error
@@ -46,9 +46,14 @@ func (r *GetAssetLatestPriceBySymbolRequest) SendWithTimeout(ctx context.Context
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s-coingecko_connection_failed", nil)
 		return &GetAssetLatestPriceBySymbolFuture{
-			ctx:     ctx,
-			errc:    errc,
-			closer:  conn.Close,
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
 			resultc: resultc,
 		}
 	}
@@ -113,9 +118,14 @@ func (r *GetATHBySymbolRequest) SendWithTimeout(ctx context.Context, timeout tim
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s-coingecko_connection_failed", nil)
 		return &GetATHBySymbolFuture{
-			ctx:     ctx,
-			errc:    errc,
-			closer:  conn.Close,
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					conn.Close()
+				}
+				return nil
+			},
 			resultc: resultc,
 		}
 	}

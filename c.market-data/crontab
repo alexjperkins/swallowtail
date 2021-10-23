@@ -1,4 +1,11 @@
+# Once an hour, on the hour.
 0 * * * * sh /jobs/put_publish_latest_price_information.sh
+
+# Every hour, on the 15th minute of said hour.
 15 */8 * * * sh /jobs/put_publish_funding_rates_information.sh
+
+# Every 15 minutes.
 */15 * * * * sh /jobs/put_publish_ath_information.sh
-*/15 * * * * sh /jobs/put_publish_volatility.sh
+
+# Every 15 minutes.
+*/15 * * * * sh /jobs/put_publish_volatility_information.sh

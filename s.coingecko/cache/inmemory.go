@@ -20,6 +20,7 @@ func NewInMemoryCache(ttl time.Duration, loader func(key string) (interface{}, t
 	c.c.SetCacheSizeLimit(1024)
 	c.c.SetLoaderFunction(loader)
 	c.c.SetTTL(ttl)
+	c.c.SkipTTLExtensionOnHit(true)
 
 	return c
 }
