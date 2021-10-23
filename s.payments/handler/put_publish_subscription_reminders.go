@@ -13,7 +13,6 @@ import (
 func (s *PaymentsService) PublishSubscriptionReminder(
 	ctx context.Context, in *paymentsproto.PublishSubscriptionReminderRequest,
 ) (*paymentsproto.PublishSubscriptionReminderResponse, error) {
-	// TODO validate the day.
 	switch {
 	case in.ActorId == "":
 		return nil, gerrors.BadParam("missing_param.actor_id", nil)
@@ -36,7 +35,7 @@ func (s *PaymentsService) PublishSubscriptionReminder(
 	var reminder string
 	switch in.ReminderType {
 	case paymentsproto.SubscriptionReminderType_MINUS_54_HOURS:
-		reminder = "tomorrow before midnight"
+		reminder = "tomorrow before 5 minutes before midnight"
 	case paymentsproto.SubscriptionReminderType_MINUS_4_HOURS:
 		reminder = "in 4 hours"
 	case paymentsproto.SubscriptionReminderType_MINUS_1_HOUR:
