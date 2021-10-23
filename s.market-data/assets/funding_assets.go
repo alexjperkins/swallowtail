@@ -2,6 +2,7 @@ package assets
 
 import accountproto "swallowtail/s.account/proto"
 
+// FundingRateAsset ...
 type FundingRateAsset struct {
 	Symbol   string
 	Exchange accountproto.ExchangeType
@@ -10,6 +11,14 @@ type FundingRateAsset struct {
 var (
 	// FundingRateAssets ...
 	FundingRateAssets = []*FundingRateAsset{
+		{
+			Symbol:   "AVAX-PERP",
+			Exchange: accountproto.ExchangeType_FTX,
+		},
+		{
+			Symbol:   "AVAXUSDT",
+			Exchange: accountproto.ExchangeType_BINANCE,
+		},
 		{
 			Symbol:   "BTC-PERP",
 			Exchange: accountproto.ExchangeType_FTX,
@@ -24,6 +33,14 @@ var (
 		},
 		{
 			Symbol:   "ETHUSDT",
+			Exchange: accountproto.ExchangeType_BINANCE,
+		},
+		{
+			Symbol:   "LUNA-PERP",
+			Exchange: accountproto.ExchangeType_FTX,
+		},
+		{
+			Symbol:   "LUNAUSDT",
 			Exchange: accountproto.ExchangeType_BINANCE,
 		},
 		{
