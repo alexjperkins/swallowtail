@@ -10,8 +10,8 @@ import (
 
 // GetFundingRates ...
 func (*BinanceService) GetFundingRates(
-	ctx context.Context, in *binanceproto.GetFundingRateRequest,
-) (*binanceproto.GetFundingRateResponse, error) {
+	ctx context.Context, in *binanceproto.GetFundingRatesRequest,
+) (*binanceproto.GetFundingRatesResponse, error) {
 	switch {
 	case in.Symbol == "":
 		return nil, gerrors.BadParam("missing_param.symbols", nil)
@@ -27,21 +27,26 @@ func (*BinanceService) GetFundingRates(
 		Symbol:    in.Symbol,
 		StartTime: int(in.StartTime),
 		EndTime:   int(in.EndTime),
+		Limit:     int(in.Limit),
 	})
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_get_funding_rates", errParams)
 	}
 
 	protos := make([]*binanceproto.FundingRateInfo, 0, len(*rsp))
-	for _, fr := range *rsp {
+	for _, fri := range *rsp {
+		fr, err := strconv.ParseFloat(fri.FundingRate, 32)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_get_funding_rates", errParams)
+		}
 		protos = append(protos, &binanceproto.FundingRateInfo{
-			Symbol:          fr.Symbol,
-			FundingRate:     float32(fr.FundingRate),
-			FundingRateTime: float32(fr.FundingTime),
+			Symbol:          fri.Symbol,
+			FundingRate:     float32(fr),
+			FundingRateTime: float32(fri.FundingTime),
 		})
 	}
 
-	return &binanceproto.GetFundingRateResponse{
+	return &binanceproto.GetFundingRatesResponse{
 		FundingRates: protos,
 	}, nil
 }

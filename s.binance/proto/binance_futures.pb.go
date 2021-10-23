@@ -354,16 +354,16 @@ func (r *ReadPerpetualFuturesAccountRequest) SendWithTimeout(ctx context.Context
 	}
 }
 
-// --- Read Funding Rate --- //
+// --- Read Funding Rates --- //
 
-type GetFundingRateFuture struct {
+type GetFundingRatesFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *GetFundingRateResponse
+	resultc chan *GetFundingRatesResponse
 	ctx     context.Context
 }
 
-func (a *GetFundingRateFuture) Response() (*GetFundingRateResponse, error) {
+func (a *GetFundingRatesFuture) Response() (*GetFundingRatesResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
 			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_funding_rate", err)
@@ -380,18 +380,18 @@ func (a *GetFundingRateFuture) Response() (*GetFundingRateResponse, error) {
 	}
 }
 
-func (r *GetFundingRateRequest) Send(ctx context.Context) *GetFundingRateFuture {
+func (r *GetFundingRatesRequest) Send(ctx context.Context) *GetFundingRatesFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *GetFundingRateRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *GetFundingRateFuture {
+func (r *GetFundingRatesRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *GetFundingRatesFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *GetFundingRateResponse, 1)
+	resultc := make(chan *GetFundingRatesResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-binance:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s_binance_connection_failed", nil)
-		return &GetFundingRateFuture{
+		return &GetFundingRatesFuture{
 			ctx:  ctx,
 			errc: errc,
 			closer: func() error {
@@ -408,15 +408,15 @@ func (r *GetFundingRateRequest) SendWithTimeout(ctx context.Context, timeout tim
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.GetFundingRate(ctx, r)
+		rsp, err := c.GetFundingRates(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_get_funding_rate", nil)
+			errc <- gerrors.Augment(err, "failed_to_get_funding_rate", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
-	return &GetFundingRateFuture{
+	return &GetFundingRatesFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

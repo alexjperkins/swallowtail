@@ -61,8 +61,9 @@ func fetchATHInfoFromCoingecko(ctx context.Context, symbol, assetPair string) (f
 }
 
 func getFundingRateFromBinance(ctx context.Context, symbol string) (float64, error) {
-	rsp, err := (&binanceproto.GetFundingRateRequest{
+	rsp, err := (&binanceproto.GetFundingRatesRequest{
 		Symbol: symbol,
+		Limit:  1,
 	}).Send(ctx).Response()
 	if err != nil {
 		return 0, gerrors.Augment(err, "failed_to_get_funding_rate_from_binance", map[string]string{

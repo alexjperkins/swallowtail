@@ -7,8 +7,8 @@ import (
 	ftxproto "swallowtail/s.ftx/proto"
 )
 
-// GetFundingRate ...
-func (s *FTXService) GetFundingRate(
+// GetFTXFundingRates ...
+func (s *FTXService) GetFTXFundingRates(
 	ctx context.Context,
 	in *ftxproto.GetFTXFundingRatesRequest,
 ) (*ftxproto.GetFTXFundingRatesResponse, error) {

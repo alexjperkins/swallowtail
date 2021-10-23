@@ -1,3 +1,4 @@
 0 * * * * sh /jobs/put_publish_latest_price_information.sh
+* * * * * sh /jobs/put_publish_funding_rates_information.sh
 */15 * * * * sh /jobs/put_publish_ath_information.sh
 */15 * * * * sh /jobs/put_publish_volatility.sh

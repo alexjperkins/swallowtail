@@ -35,8 +35,8 @@ type FundingRateInfo struct {
 	FundingRate float64
 }
 
-// PublishFundingRateInformation ...
-func (s *MarketDataService) PublishFundingRateInformation(
+// PublishFundingRatesInformation ...
+func (s *MarketDataService) PublishFundingRatesInformation(
 	ctx context.Context, in *marketdataproto.PublishFundingRatesInformationRequest,
 ) (*marketdataproto.PublishFundingRatesInformationResponse, error) {
 	slog.Trace(ctx, "Market data publishing funding rates information")
@@ -64,7 +64,7 @@ func (s *MarketDataService) PublishFundingRateInformation(
 
 			fundingRate, err := handler(ctx, asset.Symbol)
 			if err != nil {
-				slog.Error(ctx, "Failed to get funding rate from: %v for %s", asset.Exchange, asset.Symbol)
+				slog.Error(ctx, "Failed to get funding rate from: %v for %s: %v", asset.Exchange, asset.Symbol, err)
 				return
 			}
 
@@ -83,6 +83,9 @@ func (s *MarketDataService) PublishFundingRateInformation(
 	sort.Slice(fundingRates, func(i, j int) bool {
 		if fundingRates[i].Symbol < fundingRates[j].Symbol {
 			return true
+		}
+		if fundingRates[i].Symbol > fundingRates[j].Symbol {
+			return false
 		}
 
 		return fundingRates[i].Exchange < fundingRates[j].Exchange
@@ -105,23 +108,14 @@ func (s *MarketDataService) PublishFundingRateInformation(
 	now := time.Now().UTC().Truncate(time.Hour)
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(":robot:    Hourly Funding Rates [%v]    :orangutan:", now))
+	sb.WriteString(fmt.Sprintf(":robot:    `Market Data: Hourly Funding Rates [%v]`    :orangutan:\n", now))
 
-	var prevSymbol string
 	for _, fr := range fundingRates {
-		switch {
-		case prevSymbol == "":
-			prevSymbol = fr.Symbol
-		case prevSymbol != fr.Symbol:
-			sb.WriteString("\n")
-			prevSymbol = fr.Symbol
-		}
-
 		var emoji string
 		switch {
-		case fr.FundingRate > 0:
+		case fr.FundingRate*100 > 0.01:
 			emoji = ":red_circle:"
-		case fr.FundingRate < 0:
+		case fr.FundingRate*100 < -0.01:
 			emoji = ":green_circle:"
 		default:
 			emoji = ":orange_circle:"
@@ -129,13 +123,13 @@ func (s *MarketDataService) PublishFundingRateInformation(
 
 		sb.WriteString(
 			fmt.Sprintf(
-				"%s %s%s: %s %s %.3f\n",
+				"\n%s `[%s]:    %s %s %s %.4f`",
 				emoji,
-				strings.ToTitle(fr.Exchange.String()),
-				strings.Repeat(" ", exchangeIndent-len(fr.Exchange.String())),
 				fr.Symbol,
 				strings.Repeat(" ", symbolsIndent-len(fr.Symbol)),
-				fr.FundingRate,
+				strings.ToTitle(fr.Exchange.String()),
+				strings.Repeat(" ", exchangeIndent-len(fr.Exchange.String())),
+				fr.FundingRate*100,
 			),
 		)
 	}

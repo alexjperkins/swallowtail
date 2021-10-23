@@ -63,7 +63,7 @@ func (f *ftxClient) GetFundingRate(ctx context.Context, req *GetFundingRateReque
 	}
 
 	rsp := &GetFundingRateResponse{}
-	if err := f.do(ctx, http.MethodGet, "funding_rates", req, rsp, pagination, nil); err != nil {
+	if err := f.do(ctx, http.MethodGet, fmt.Sprintf("/api/funding_rates?future=%s", req.Instrument), req, rsp, pagination, nil); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_get_funding_rate", nil)
 	}
 

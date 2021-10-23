@@ -141,8 +141,12 @@ func (c *binanceClient) GetFundingRate(ctx context.Context, req *GetFundingRateR
 		endpoint = fmt.Sprintf("%s&endTime=%d", endpoint, req.EndTime)
 	}
 
+	if req.Limit != 0 {
+		endpoint = fmt.Sprintf("%s&limit=%d", endpoint, req.Limit)
+	}
+
 	rspBody := &GetFundingRateResponse{}
-	if err := c.http.Do(ctx, http.MethodHead, endpoint, nil, rspBody); err != nil {
+	if err := c.http.Do(ctx, http.MethodGet, endpoint, nil, rspBody); err != nil {
 		return nil, gerrors.Augment(err, "client_request_failed.get_funding_rates", nil)
 	}
 
