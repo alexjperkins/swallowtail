@@ -82,6 +82,79 @@ func (r *SendMsgToChannelRequest) SendWithTimeout(ctx context.Context, timeout t
 	}
 }
 
+// --- Send Batch Msg To Channel --- //
+type SendBatchMsgToChannelFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *SendBatchMsgToChannelResponse
+	ctx     context.Context
+}
+
+func (a *SendBatchMsgToChannelFuture) Response() (*SendBatchMsgToChannelResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "send_batch_msg_to_channel", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *SendBatchMsgToChannelRequest) Send(ctx context.Context) *SendBatchMsgToChannelFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *SendBatchMsgToChannelRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *SendBatchMsgToChannelFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *SendBatchMsgToChannelResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-discord:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_discord_connection_failed", nil)
+		return &SendBatchMsgToChannelFuture{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn == nil {
+					return nil
+				}
+				return conn.Close()
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewDiscordClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.SendBatchMsgToChannel(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_send_batch_msg_to_channel", nil)
+			return
+		}
+
+		resultc <- rsp
+	}()
+
+	return &SendBatchMsgToChannelFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
 // --- SendMsgToPrivateChannel --- //
 
 type SendMsgToPrivateChannelFuture struct {

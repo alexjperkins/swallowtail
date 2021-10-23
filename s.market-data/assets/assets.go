@@ -151,5 +151,35 @@ var (
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},
+		{
+			Symbol:           "liq",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "fab",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "bop",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "sol",
+			AssetPair:        "btc",
+			VolatilityRating: AssetVolatiltyRatingMedium,
+		},
+		{
+			Symbol:           "sol",
+			AssetPair:        "eth",
+			VolatilityRating: AssetVolatiltyRatingMedium,
+		},
+		{
+			Symbol:           "axs",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
 	}
 )
