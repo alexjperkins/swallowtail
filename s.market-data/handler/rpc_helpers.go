@@ -48,7 +48,7 @@ func fetchLatestPriceFromCoingecko(ctx context.Context, symbol, assetPair string
 	rsp, err := (&coingeckoproto.GetAssetLatestPriceBySymbolRequest{
 		AssetSymbol: symbol,
 		AssetPair:   assetPair,
-	}).SendWithTimeout(ctx, 2*time.Minute).Response()
+	}).SendWithTimeout(ctx, 5*time.Minute).Response()
 	if err != nil {
 		return 0, 0, gerrors.Augment(err, "failed_to_fetch_latest_price_from_coingecko", map[string]string{
 			"symbol":     symbol,
