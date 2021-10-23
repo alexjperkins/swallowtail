@@ -27,6 +27,9 @@ type FTXClient interface {
 
 	// VerifyCredentials ...
 	VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *Credentials) (*VerifyCredentialsResponse, error)
+
+	// GetFundingRate ...
+	GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error)
 }
 
 // Init instantiates the FTX client singleton.
@@ -78,4 +81,11 @@ func VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, crede
 	defer span.Finish()
 	return client.VerifyCredentials(ctx, req, credentials)
 
+}
+
+// GetFundingRate ...
+func GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get funding rate FTX")
+	defer span.Finish()
+	return client.GetFundingRate(ctx, req)
 }

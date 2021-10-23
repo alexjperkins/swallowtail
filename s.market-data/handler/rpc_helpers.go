@@ -4,9 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
+	binanceproto "swallowtail/s.binance/proto"
 	coingeckoproto "swallowtail/s.coingecko/proto"
 	discordproto "swallowtail/s.discord/proto"
+	ftxproto "swallowtail/s.ftx/proto"
 	marketdataproto "swallowtail/s.market-data/proto"
 )
 
@@ -40,7 +44,7 @@ func fetchLatestPriceFromCoingecko(ctx context.Context, symbol, assetPair string
 	return float64(rsp.LatestPrice), float64(rsp.PercentagePriceChange_24H), nil
 }
 
-//
+// fetchATHInfoFromCoingecko ...
 func fetchATHInfoFromCoingecko(ctx context.Context, symbol, assetPair string) (float64, float64, error) {
 	rsp, err := (&coingeckoproto.GetATHBySymbolRequest{
 		AssetSymbol: symbol,
@@ -54,4 +58,40 @@ func fetchATHInfoFromCoingecko(ctx context.Context, symbol, assetPair string) (f
 	}
 
 	return float64(rsp.AllTimeHighPrice), float64(rsp.CurrentPrice), nil
+}
+
+func getFundingRateFromBinance(ctx context.Context, symbol string) (float64, error) {
+	rsp, err := (&binanceproto.GetFundingRatesRequest{
+		Symbol: symbol,
+		Limit:  1,
+	}).Send(ctx).Response()
+	if err != nil {
+		return 0, gerrors.Augment(err, "failed_to_get_funding_rate_from_binance", map[string]string{
+			"symbol": symbol,
+		})
+	}
+
+	if len(rsp.FundingRates) == 0 {
+		slog.Warn(ctx, "No data for funding rates passed: %s", symbol)
+		return 0.0, nil
+	}
+
+	return float64(rsp.FundingRates[0].FundingRate), nil
+}
+
+func getFundingRateFromFTX(ctx context.Context, symbol string) (float64, error) {
+	rsp, err := (&ftxproto.GetFTXFundingRatesRequest{
+		Symbol: symbol,
+		Limit:  1,
+	}).Send(ctx).Response()
+	if err != nil {
+		return 0, gerrors.Augment(err, "failed_to_get_funding_rate_from_ftx", nil)
+	}
+
+	if len(rsp.FundingRates) == 0 {
+		slog.Warn(ctx, "No data for funding rates passed: %s", symbol)
+		return 0.0, nil
+	}
+
+	return float64(rsp.FundingRates[0].FundingRate), nil
 }

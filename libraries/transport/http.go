@@ -72,7 +72,7 @@ func (h *httpClient) Do(ctx context.Context, method, url string, reqBody, rspBod
 	}
 
 	if err := json.Unmarshal(rspBodyBytes, rspBody); err != nil {
-		return gerrors.FailedPrecondition("bad_request.unmarshal_error", errParams)
+		return gerrors.Augment(err, "bad_request.unmarshal_error", errParams)
 	}
 
 	return nil

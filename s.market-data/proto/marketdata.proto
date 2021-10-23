@@ -9,6 +9,7 @@ service marketdata {
 
   rpc PublishATHInformation (PublishATHInformationRequest) returns (PublishATHInformationResponse) {}
 
+  rpc PublishFundingRatesInformation (PublishFundingRatesInformationRequest) returns (PublishFundingRatesInformationResponse) {}
 }
  
 message PublishLatestPriceInformationRequest {}
@@ -22,3 +23,7 @@ message PublishVolatilityInformationResponse {}
 message PublishATHInformationRequest {}
 
 message PublishATHInformationResponse {}
+
+message PublishFundingRatesInformationRequest {}
+
+message PublishFundingRatesInformationResponse {}
