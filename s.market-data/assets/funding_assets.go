@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"math"
 	accountproto "swallowtail/s.account/proto"
 	"sync"
 )
@@ -11,11 +12,23 @@ type FundingRateAsset struct {
 	Exchange accountproto.ExchangeType
 }
 
+// FundingRateExchangeInfo ...
+type FundingRateExchangeInfo struct {
+	HigherBound float64
+	LowerBound  float64
+}
+
 var (
-	coeffMu                         sync.RWMutex
-	fundingRateExchangeCoefficients = map[accountproto.ExchangeType]float64{
-		accountproto.ExchangeType_BINANCE: 0.1,
-		accountproto.ExchangeType_FTX:     1.0,
+	coeffMu                 sync.RWMutex
+	fundingRateExchangeData = map[accountproto.ExchangeType]*FundingRateExchangeInfo{
+		accountproto.ExchangeType_BINANCE: {
+			HigherBound: 0.4,
+			LowerBound:  0.025,
+		},
+		accountproto.ExchangeType_FTX: {
+			HigherBound: 0.01,
+			LowerBound:  0.0,
+		},
 	}
 )
 
@@ -66,13 +79,16 @@ var (
 )
 
 // GetFundingRateCoefficientByExchange ...
-func GetFundingRateCoefficientByExchange(exchange accountproto.ExchangeType) float64 {
+func GetFundingRateCoefficientByExchange(exchange accountproto.ExchangeType) *FundingRateExchangeInfo {
 	coeffMu.RLock()
 	defer coeffMu.RUnlock()
 
-	if v, ok := fundingRateExchangeCoefficients[exchange]; ok {
+	if v, ok := fundingRateExchangeData[exchange]; ok {
 		return v
 	}
 
-	return 1.0
+	return &FundingRateExchangeInfo{
+		HigherBound: math.MaxFloat64,
+		LowerBound:  -math.MaxFloat64,
+	}
 }

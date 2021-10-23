@@ -112,13 +112,13 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 
 	for _, fr := range fundingRates {
 		var (
-			coeff = assets.GetFundingRateCoefficientByExchange(fr.Exchange)
-			emoji string
+			exchangeInfo = assets.GetFundingRateCoefficientByExchange(fr.Exchange)
+			emoji        string
 		)
 		switch {
-		case fr.FundingRate*coeff > 0.01:
+		case fr.FundingRate > exchangeInfo.HigherBound:
 			emoji = ":red_circle:"
-		case fr.FundingRate*coeff < -0.01:
+		case fr.FundingRate < exchangeInfo.LowerBound:
 			emoji = ":green_circle:"
 		default:
 			emoji = ":orange_circle:"
