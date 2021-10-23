@@ -127,7 +127,7 @@ func (r *GetFTXFundingRatesRequest) SendWithTimeout(ctx context.Context, timeout
 	go func() {
 		rsp, err := c.GetFTXFundingRates(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_get_ftx_funding_rate", nil)
+			errc <- gerrors.Augment(err, "failed_to_get_ftx_funding_rate", nil)
 			return
 		}
 		resultc <- rsp

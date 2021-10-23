@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.market-data/assets"
 	marketdataproto "swallowtail/s.market-data/proto"
-
-	"github.com/monzo/slog"
 )
 
 var (

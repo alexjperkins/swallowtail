@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	binanceproto "swallowtail/s.binance/proto"
 	coingeckoproto "swallowtail/s.coingecko/proto"
 	discordproto "swallowtail/s.discord/proto"
 	ftxproto "swallowtail/s.ftx/proto"
 	marketdataproto "swallowtail/s.market-data/proto"
-
-	"github.com/monzo/slog"
 )
 
 // publishToDiscord ...

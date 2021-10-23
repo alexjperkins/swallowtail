@@ -3,9 +3,10 @@ package client
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.binance/client/auth"
-	"time"
 )
 
 func (c *binanceClient) do(ctx context.Context, method, endpoint, queryString string, reqBody, rspBody interface{}, credentials *Credentials) error {
