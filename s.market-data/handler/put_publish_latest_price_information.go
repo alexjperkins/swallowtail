@@ -133,7 +133,7 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 	idempotencyKey := fmt.Sprintf("%s-%s-%s", "marketdataprice", util.Sha256Hash(content), now)
 
 	// Publish latest price information to discord.
-	if err := publishToDiscord(ctx, sb.String(), discordproto.DiscordSatoshiPriceBotChannel, idempotencyKey); err != nil {
+	if err := batchPublishToDiscord(ctx, sb.String(), discordproto.DiscordSatoshiPriceBotChannel, idempotencyKey); err != nil {
 		slog.Error(ctx, "Failed to publish latest price info to discord", map[string]string{
 			"idempotency_key": idempotencyKey,
 			"error":           err.Error(),

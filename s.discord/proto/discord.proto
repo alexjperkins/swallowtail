@@ -5,6 +5,8 @@ option go_package = "./;discordproto";
 service discord {
   rpc SendMsgToChannel (SendMsgToChannelRequest) returns (SendMsgToChannelResponse);
 
+  rpc SendBatchMsgToChannel(SendBatchMsgToChannelRequest) returns (SendBatchMsgToChannelResponse);
+
   rpc SendMsgToPrivateChannel (SendMsgToPrivateChannelRequest) returns (SendMsgToPrivateChannelResponse);
 
   rpc ReadUserRoles (ReadUserRolesRequest) returns (ReadUserRolesResponse);
@@ -25,6 +27,17 @@ message SendMsgToChannelRequest {
 }
 
 message SendMsgToChannelResponse {}
+
+message SendBatchMsgToChannelRequest {
+    string channel_id = 1;
+    string sender_id = 2;
+    string content = 3;
+    string idempotency_key = 4;
+    bool force = 5;
+    string separator = 6;
+}
+
+message SendBatchMsgToChannelResponse {}
 
 message SendMsgToPrivateChannelRequest {
     string user_id = 1;

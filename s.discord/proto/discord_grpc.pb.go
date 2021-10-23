@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DiscordClient interface {
 	SendMsgToChannel(ctx context.Context, in *SendMsgToChannelRequest, opts ...grpc.CallOption) (*SendMsgToChannelResponse, error)
+	SendBatchMsgToChannel(ctx context.Context, in *SendBatchMsgToChannelRequest, opts ...grpc.CallOption) (*SendBatchMsgToChannelResponse, error)
 	SendMsgToPrivateChannel(ctx context.Context, in *SendMsgToPrivateChannelRequest, opts ...grpc.CallOption) (*SendMsgToPrivateChannelResponse, error)
 	ReadUserRoles(ctx context.Context, in *ReadUserRolesRequest, opts ...grpc.CallOption) (*ReadUserRolesResponse, error)
 	UpdateUserRoles(ctx context.Context, in *UpdateUserRolesRequest, opts ...grpc.CallOption) (*UpdateUserRolesResponse, error)
@@ -36,6 +37,15 @@ func NewDiscordClient(cc grpc.ClientConnInterface) DiscordClient {
 func (c *discordClient) SendMsgToChannel(ctx context.Context, in *SendMsgToChannelRequest, opts ...grpc.CallOption) (*SendMsgToChannelResponse, error) {
 	out := new(SendMsgToChannelResponse)
 	err := c.cc.Invoke(ctx, "/discord/SendMsgToChannel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *discordClient) SendBatchMsgToChannel(ctx context.Context, in *SendBatchMsgToChannelRequest, opts ...grpc.CallOption) (*SendBatchMsgToChannelResponse, error) {
+	out := new(SendBatchMsgToChannelResponse)
+	err := c.cc.Invoke(ctx, "/discord/SendBatchMsgToChannel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +102,7 @@ func (c *discordClient) ReadMessageReactions(ctx context.Context, in *ReadMessag
 // for forward compatibility
 type DiscordServer interface {
 	SendMsgToChannel(context.Context, *SendMsgToChannelRequest) (*SendMsgToChannelResponse, error)
+	SendBatchMsgToChannel(context.Context, *SendBatchMsgToChannelRequest) (*SendBatchMsgToChannelResponse, error)
 	SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgToPrivateChannelResponse, error)
 	ReadUserRoles(context.Context, *ReadUserRolesRequest) (*ReadUserRolesResponse, error)
 	UpdateUserRoles(context.Context, *UpdateUserRolesRequest) (*UpdateUserRolesResponse, error)
@@ -106,6 +117,9 @@ type UnimplementedDiscordServer struct {
 
 func (*UnimplementedDiscordServer) SendMsgToChannel(context.Context, *SendMsgToChannelRequest) (*SendMsgToChannelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMsgToChannel not implemented")
+}
+func (*UnimplementedDiscordServer) SendBatchMsgToChannel(context.Context, *SendBatchMsgToChannelRequest) (*SendBatchMsgToChannelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendBatchMsgToChannel not implemented")
 }
 func (*UnimplementedDiscordServer) SendMsgToPrivateChannel(context.Context, *SendMsgToPrivateChannelRequest) (*SendMsgToPrivateChannelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMsgToPrivateChannel not implemented")
@@ -142,6 +156,24 @@ func _Discord_SendMsgToChannel_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DiscordServer).SendMsgToChannel(ctx, req.(*SendMsgToChannelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Discord_SendBatchMsgToChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendBatchMsgToChannelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiscordServer).SendBatchMsgToChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/discord/SendBatchMsgToChannel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiscordServer).SendBatchMsgToChannel(ctx, req.(*SendBatchMsgToChannelRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -243,6 +275,10 @@ var _Discord_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendMsgToChannel",
 			Handler:    _Discord_SendMsgToChannel_Handler,
+		},
+		{
+			MethodName: "SendBatchMsgToChannel",
+			Handler:    _Discord_SendBatchMsgToChannel_Handler,
 		},
 		{
 			MethodName: "SendMsgToPrivateChannel",
