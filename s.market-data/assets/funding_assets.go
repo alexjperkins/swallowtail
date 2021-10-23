@@ -1,12 +1,23 @@
 package assets
 
-import accountproto "swallowtail/s.account/proto"
+import (
+	accountproto "swallowtail/s.account/proto"
+	"sync"
+)
 
 // FundingRateAsset ...
 type FundingRateAsset struct {
 	Symbol   string
 	Exchange accountproto.ExchangeType
 }
+
+var (
+	coeffMu                         sync.RWMutex
+	fundingRateExchangeCoefficients = map[accountproto.ExchangeType]float64{
+		accountproto.ExchangeType_BINANCE: 0.1,
+		accountproto.ExchangeType_FTX:     1.0,
+	}
+)
 
 var (
 	// FundingRateAssets ...
@@ -53,3 +64,15 @@ var (
 		},
 	}
 )
+
+// GetFundingRateCoefficientByExchange ...
+func GetFundingRateCoefficientByExchange(exchange accountproto.ExchangeType) float64 {
+	coeffMu.RLock()
+	defer coeffMu.RUnlock()
+
+	if v, ok := fundingRateExchangeCoefficients[exchange]; ok {
+		return v
+	}
+
+	return 1.0
+}

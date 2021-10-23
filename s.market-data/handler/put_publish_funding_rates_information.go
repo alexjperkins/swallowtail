@@ -73,7 +73,7 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 			fundingRates = append(fundingRates, &FundingRateInfo{
 				Exchange:    asset.Exchange,
 				Symbol:      asset.Symbol,
-				FundingRate: fundingRate,
+				FundingRate: fundingRate * 100,
 			})
 		}()
 	}
@@ -111,11 +111,14 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 	sb.WriteString(fmt.Sprintf(":robot:    `Market Data: Hourly Funding Rates [%v]`    :orangutan:\n", now))
 
 	for _, fr := range fundingRates {
-		var emoji string
+		var (
+			coeff = assets.GetFundingRateCoefficientByExchange(fr.Exchange)
+			emoji string
+		)
 		switch {
-		case fr.FundingRate*100 > 0.01:
+		case fr.FundingRate*coeff > 0.01:
 			emoji = ":red_circle:"
-		case fr.FundingRate*100 < -0.01:
+		case fr.FundingRate*coeff < -0.01:
 			emoji = ":green_circle:"
 		default:
 			emoji = ":orange_circle:"
@@ -129,7 +132,7 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 				strings.Repeat(" ", symbolsIndent-len(fr.Symbol)),
 				strings.ToTitle(fr.Exchange.String()),
 				strings.Repeat(" ", exchangeIndent-len(fr.Exchange.String())),
-				fr.FundingRate*100,
+				fr.FundingRate,
 			),
 		)
 	}
