@@ -17,6 +17,11 @@ const (
 	accountUsage     = `!account <subcommand>`
 )
 
+const (
+	binanceReferralLink = "https://www.binance.com/en/futures/ref/swallowtail"
+	ftxReferralLink     = "https://ftx.com/#a=9169159"
+)
+
 func init() {
 	register(accountCommandID, &Command{
 		ID:                  accountCommandID,
@@ -78,7 +83,15 @@ func registerAccountHandler(ctx context.Context, tokens []string, s *discordgo.S
 		return nil
 	}
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(":wave: I have registered your account with email: `%s`", email))
+	s.ChannelMessageSend(
+		m.ChannelID,
+		fmt.Sprintf(
+			":wave: I have registered your account with email: `%s`.\n\nRef Links\n Binance: %s\nFTX: %s",
+			email,
+			binanceReferralLink,
+			ftxReferralLink,
+		),
+	)
 	return nil
 }
 
