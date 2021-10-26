@@ -5,5 +5,6 @@ var (
 		"universe-token": true,
 		"step-hero-soul": true,
 		"fitmin":         true,
+		"liquidus":       true,
 	}
 )

@@ -21,6 +21,7 @@ func (a AssetVolatiltyRating) PercentageTriggerValue() float64 {
 	}
 }
 
+// AssetPair defines an asset.
 type AssetPair struct {
 	Symbol           string
 	AssetPair        string
@@ -178,6 +179,51 @@ var (
 		},
 		{
 			Symbol:           "axs",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "doge",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "samo",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "scrt",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "one",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "frkt",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "htr",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingHigh,
+		},
+		{
+			Symbol:           "crv",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingMedium,
+		},
+		{
+			Symbol:           "comp",
+			AssetPair:        "usd",
+			VolatilityRating: AssetVolatiltyRatingMedium,
+		},
+		{
+			Symbol:           "cheems",
 			AssetPair:        "usd",
 			VolatilityRating: AssetVolatiltyRatingHigh,
 		},

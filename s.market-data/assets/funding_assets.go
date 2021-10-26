@@ -75,6 +75,30 @@ var (
 			Symbol:   "SOLUSDT",
 			Exchange: accountproto.ExchangeType_BINANCE,
 		},
+		{
+			Symbol:   "FTMUSDT",
+			Exchange: accountproto.ExchangeType_BINANCE,
+		},
+		{
+			Symbol:   "FTM-PERP",
+			Exchange: accountproto.ExchangeType_FTX,
+		},
+		{
+			Symbol:   "ATOMUSDT",
+			Exchange: accountproto.ExchangeType_BINANCE,
+		},
+		{
+			Symbol:   "ATOM-PERP",
+			Exchange: accountproto.ExchangeType_FTX,
+		},
+		{
+			Symbol:   "ALGOUSDT",
+			Exchange: accountproto.ExchangeType_BINANCE,
+		},
+		{
+			Symbol:   "ALGO-PERP",
+			Exchange: accountproto.ExchangeType_FTX,
+		},
 	}
 )
 
