@@ -99,6 +99,14 @@ var (
 			Symbol:   "ALGO-PERP",
 			Exchange: accountproto.ExchangeType_FTX,
 		},
+		{
+			Symbol:   "1000SHIBUSDT",
+			Exchange: accountproto.ExchangeType_FTX,
+		},
+		{
+			Symbol:   "SHIB-PERP",
+			Exchange: accountproto.ExchangeType_FTX,
+		},
 	}
 )
 
