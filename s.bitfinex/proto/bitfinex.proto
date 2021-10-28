@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option go_package = "./;bitfinexproto";
+
+service bitfinex {
+    rpc GetBitfinexStatus (GetBitfinexStatusRequest) returns (GetBitfinexStatusResponse) {}
+}
+
+message GetBitfinexStatusRequest {}
+
+message GetBitfinexStatusResponse {
+    bool operational = 1;
+    int64 server_latency_ms = 2;
+}
