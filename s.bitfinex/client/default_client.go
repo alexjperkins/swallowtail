@@ -37,3 +37,21 @@ func (b *bitfinexClient) GetStatus(ctx context.Context, req *dto.GetStatusReques
 		Operative: rsp.Operative(),
 	}, nil
 }
+
+func (b *bitfinexClient) GetFundingRates(ctx context.Context, req *dto.GetFundingRatesRequest) (*dto.GetFundingRatesResponse, error) {
+	rsp := &dto.GetFundingRatesProxyResponse{}
+	if err := b.http.Do(ctx, http.MethodGet, fmt.Sprintf("%s/%s/status/deriv:%s/hist", bitfinexURL, bitfinexAPIVersion, req.Symbol), nil, rsp); err != nil {
+		return nil, gerrors.Augment(err, "failed_get_funding_rate", map[string]string{
+			"symbol": req.Symbol,
+		})
+	}
+
+	return &dto.GetFundingRatesResponse{
+		Symbol: req.Symbol,
+		FundingRates: []*dto.FundingRateInfo{
+			{
+				FundingRate: rsp.CurrentFundingRate(),
+			},
+		},
+	}, nil
+}

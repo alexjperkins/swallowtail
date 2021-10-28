@@ -8,8 +8,9 @@ import (
 
 // FundingRateAsset ...
 type FundingRateAsset struct {
-	Symbol   string
-	Exchange accountproto.ExchangeType
+	Symbol          string
+	Exchange        accountproto.ExchangeType
+	HumanizedSymbol string
 }
 
 // FundingRateExchangeInfo ...
@@ -98,6 +99,11 @@ var (
 		{
 			Symbol:   "ALGO-PERP",
 			Exchange: accountproto.ExchangeType_FTX,
+		},
+		{
+			Symbol:          "tBTCF0:USTF0",
+			Exchange:        accountproto.ExchangeType_BITFINEX,
+			HumanizedSymbol: "BTCUSD",
 		},
 	}
 )

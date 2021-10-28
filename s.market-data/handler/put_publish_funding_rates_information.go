@@ -30,9 +30,10 @@ var (
 
 // FundingRateInfo ...
 type FundingRateInfo struct {
-	Exchange    accountproto.ExchangeType
-	Symbol      string
-	FundingRate float64
+	Exchange        accountproto.ExchangeType
+	Symbol          string
+	HumanizedSymbol string
+	FundingRate     float64
 }
 
 // PublishFundingRatesInformation ...
@@ -60,6 +61,8 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 				handler = getFundingRateFromBinance
 			case accountproto.ExchangeType_FTX:
 				handler = getFundingRateFromFTX
+			case accountproto.ExchangeType_BITFINEX:
+				handler = getFundingRateFromBitfinex
 			}
 
 			fundingRate, err := handler(ctx, asset.Symbol)
@@ -71,9 +74,10 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 			mu.Lock()
 			defer mu.Unlock()
 			fundingRates = append(fundingRates, &FundingRateInfo{
-				Exchange:    asset.Exchange,
-				Symbol:      asset.Symbol,
-				FundingRate: fundingRate * 100,
+				Exchange:        asset.Exchange,
+				Symbol:          asset.Symbol,
+				HumanizedSymbol: asset.HumanizedSymbol,
+				FundingRate:     fundingRate * 100,
 			})
 		}()
 	}
@@ -124,12 +128,17 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 			emoji = ":orange_circle:"
 		}
 
+		symbol := fr.Symbol
+		if fr.HumanizedSymbol != "" {
+			symbol = fr.HumanizedSymbol
+		}
+
 		sb.WriteString(
 			fmt.Sprintf(
 				"\n%s `[%s]:    %s %s %s %.4f`",
 				emoji,
 				fr.Symbol,
-				strings.Repeat(" ", symbolsIndent-len(fr.Symbol)),
+				strings.Repeat(" ", symbolsIndent-len(symbol)),
 				strings.ToTitle(fr.Exchange.String()),
 				strings.Repeat(" ", exchangeIndent-len(fr.Exchange.String())),
 				fr.FundingRate,

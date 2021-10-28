@@ -7,7 +7,7 @@ BEGIN
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'exchange') THEN
-		CREATE TYPE exchange AS ENUM ('BINANCE', 'FTX');
+		CREATE TYPE exchange AS ENUM ('BINANCE', 'FTX', 'DERIBIT', 'BITFINEX');
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dca_strategy') THEN
