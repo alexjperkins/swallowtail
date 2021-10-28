@@ -149,6 +149,18 @@ services:
     profiles:
       - backend
 
+  swallowtail.s.bitfinex:
+    hostname: swallowtail-s-bitfinex
+    image: swallowtail.s.bitfinex
+    ports:
+      - "8011:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
   ### -- Crons --- ###
 
   swallowtail.c.payments:
