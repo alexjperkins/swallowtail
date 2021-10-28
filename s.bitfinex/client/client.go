@@ -20,6 +20,7 @@ var (
 type BitfinexClient interface {
 	Ping(ctx context.Context) error
 	GetStatus(ctx context.Context, req *dto.GetStatusRequest) (*dto.GetStatusResponse, error)
+	GetFundingRates(ctx context.Context, req *dto.GetFundingRatesRequest) (*dto.GetFundingRatesResponse, error)
 }
 
 // Init initializes the default bitfinex client.
@@ -54,4 +55,11 @@ func GetStatus(ctx context.Context, req *dto.GetStatusRequest) (*dto.GetStatusRe
 	rsp.ServerLatency = int(time.Since(then) / time.Millisecond)
 
 	return rsp, nil
+}
+
+// GetFundingRates ...
+func GetFundingRates(ctx context.Context, req *dto.GetFundingRatesRequest) (*dto.GetFundingRatesResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Get bitfinex exchange status")
+	defer span.Finish()
+	return client.GetFundingRates(ctx, req)
 }

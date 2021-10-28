@@ -118,6 +118,8 @@ message PageAccountResponse {}
 enum ExchangeType {
     BINANCE = 0;
     FTX = 1;
+    DERIBIT = 2;
+    BITFINEX = 3;
 }
 
 message Exchange {

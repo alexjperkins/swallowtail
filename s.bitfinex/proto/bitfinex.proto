@@ -4,6 +4,8 @@ option go_package = "./;bitfinexproto";
 
 service bitfinex {
     rpc GetBitfinexStatus (GetBitfinexStatusRequest) returns (GetBitfinexStatusResponse) {}
+
+    rpc GetBitfinexFundingRates (GetBitfinexFundingRatesRequest) returns (GetBitfinexFundingRatesResponse) {}
 }
 
 message GetBitfinexStatusRequest {}
@@ -11,4 +13,18 @@ message GetBitfinexStatusRequest {}
 message GetBitfinexStatusResponse {
     bool operational = 1;
     int64 server_latency_ms = 2;
+}
+
+message GetBitfinexFundingRatesRequest { 
+    string symbol = 1;
+    int64 limit = 2;
+}
+
+message BitfinexFundingRateInfo {
+    float funding_rate = 1;
+}
+
+message GetBitfinexFundingRatesResponse {
+    string symbol = 1;
+    repeated BitfinexFundingRateInfo funding_rates = 2;
 }

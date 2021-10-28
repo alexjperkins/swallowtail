@@ -99,6 +99,10 @@ var (
 			Symbol:   "ALGO-PERP",
 			Exchange: accountproto.ExchangeType_FTX,
 		},
+		{
+			Symbol:   "BTC",
+			Exchange: accountproto.ExchangeType_BITFINEX,
+		},
 	}
 )
 

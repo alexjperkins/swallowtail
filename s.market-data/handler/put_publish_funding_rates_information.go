@@ -60,6 +60,8 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 				handler = getFundingRateFromBinance
 			case accountproto.ExchangeType_FTX:
 				handler = getFundingRateFromFTX
+			case accountproto.ExchangeType_BITFINEX:
+				handler = getFundingRateFromBitfinex
 			}
 
 			fundingRate, err := handler(ctx, asset.Symbol)
