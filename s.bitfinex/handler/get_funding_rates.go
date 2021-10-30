@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"strconv"
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.bitfinex/client"
@@ -11,8 +10,8 @@ import (
 	bitfinexproto "swallowtail/s.bitfinex/proto"
 )
 
-// GetFundingRate fetches the funding rates from Bitfinex by `symbol` & `limit`.
-func (s *BitfinexService) GetFundingRate(
+// GetBitfinexFundingRates fetches the funding rates from Bitfinex by `symbol` & `limit`.
+func (s *BitfinexService) GetBitfinexFundingRates(
 	ctx context.Context, in *bitfinexproto.GetBitfinexFundingRatesRequest,
 ) (*bitfinexproto.GetBitfinexFundingRatesResponse, error) {
 	// Validation.
@@ -23,17 +22,16 @@ func (s *BitfinexService) GetFundingRate(
 
 	errParams := map[string]string{
 		"symbol": in.Symbol,
-		"limit":  strconv.Itoa(int(in.Limit)),
 	}
 
 	// Get funding rate.
-	rsp, err := client.GetFundingRates(ctx, &dto.GetFundingRatesRequest{})
+	rsp, err := client.GetFundingRates(ctx, &dto.GetFundingRatesRequest{
+		Symbol: in.Symbol,
+	})
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_get_funding_rates", errParams)
 	}
 
 	// Marshal to proto.
-	proto := marshaling.GetFundingRatesDTOToProto(rsp)
-
-	return proto, nil
+	return marshaling.GetFundingRatesDTOToProto(rsp), nil
 }
