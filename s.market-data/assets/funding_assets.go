@@ -30,6 +30,10 @@ var (
 			HigherBound: 0.01,
 			LowerBound:  0.0,
 		},
+		accountproto.ExchangeType_BITFINEX: {
+			HigherBound: 0.01,
+			LowerBound:  -0.01,
+		},
 	}
 )
 
@@ -104,6 +108,11 @@ var (
 			Symbol:          "tBTCF0:USTF0",
 			Exchange:        accountproto.ExchangeType_BITFINEX,
 			HumanizedSymbol: "BTCUSD",
+		},
+		{
+			Symbol:          "tETHF0:USTF0",
+			Exchange:        accountproto.ExchangeType_BITFINEX,
+			HumanizedSymbol: "ETHUSD",
 		},
 	}
 )
