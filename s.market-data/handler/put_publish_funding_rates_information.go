@@ -85,14 +85,31 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 	wg.Wait()
 
 	sort.Slice(fundingRates, func(i, j int) bool {
-		if fundingRates[i].Symbol < fundingRates[j].Symbol {
+		fi, fj := fundingRates[i], fundingRates[j]
+
+		var si, sj string
+		switch {
+		case fi.HumanizedSymbol != "":
+			si = fi.HumanizedSymbol
+		default:
+			si = fi.Symbol
+		}
+
+		switch {
+		case fj.HumanizedSymbol != "":
+			sj = fj.HumanizedSymbol
+		default:
+			sj = fj.Symbol
+		}
+
+		if si < sj {
 			return true
 		}
-		if fundingRates[i].Symbol > fundingRates[j].Symbol {
+		if si > sj {
 			return false
 		}
 
-		return fundingRates[i].Exchange < fundingRates[j].Exchange
+		return fi.Exchange < fj.Exchange
 	})
 
 	var exchangeIndent int
@@ -104,8 +121,13 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 
 	var symbolsIndent int
 	for _, fr := range fundingRates {
-		if len(fr.Symbol) > symbolsIndent {
-			symbolsIndent = len(fr.Symbol)
+		symbol := fr.Symbol
+		if fr.HumanizedSymbol != "" {
+			symbol = fr.HumanizedSymbol
+		}
+
+		if len(symbol) > symbolsIndent {
+			symbolsIndent = len(symbol)
 		}
 	}
 
@@ -137,10 +159,10 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 			fmt.Sprintf(
 				"\n%s `[%s]:    %s %s %s %.4f`",
 				emoji,
-				fr.Symbol,
-				strings.Repeat(" ", symbolsIndent-len(symbol)),
+				symbol,
+				addPadding(symbolsIndent-len(symbol)),
 				strings.ToTitle(fr.Exchange.String()),
-				strings.Repeat(" ", exchangeIndent-len(fr.Exchange.String())),
+				addPadding(exchangeIndent-len(fr.Exchange.String())),
 				fr.FundingRate,
 			),
 		)
@@ -154,4 +176,12 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 	}
 
 	return &marketdataproto.PublishFundingRatesInformationResponse{}, nil
+}
+
+func addPadding(howMuch int) string {
+	if howMuch < 1 {
+		return ""
+	}
+
+	return strings.Repeat(" ", howMuch)
 }

@@ -15,8 +15,8 @@ import (
 	discordproto "swallowtail/s.discord/proto"
 )
 
-// GetStatus ...
-func (s *BitfinexService) GetStatus(
+// GetBitfinexStatus ...
+func (s *BitfinexService) GetBitfinexStatus(
 	ctx context.Context, in *bitfinexproto.GetBitfinexStatusRequest,
 ) (*bitfinexproto.GetBitfinexStatusResponse, error) {
 	// Get Bitfinex status.

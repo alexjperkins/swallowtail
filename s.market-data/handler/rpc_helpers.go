@@ -115,7 +115,6 @@ func getFundingRateFromFTX(ctx context.Context, symbol string) (float64, error) 
 func getFundingRateFromBitfinex(ctx context.Context, symbol string) (float64, error) {
 	rsp, err := (&bitfinexproto.GetBitfinexFundingRatesRequest{
 		Symbol: symbol,
-		Limit:  1,
 	}).Send(ctx).Response()
 	if err != nil {
 		return 0, gerrors.Augment(err, "failed_to_get_funding_rate_from_bitfinex", nil)

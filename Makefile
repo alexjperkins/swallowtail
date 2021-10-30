@@ -30,7 +30,7 @@ backend:
 	cd s.ftx && sudo make docker && cd .. && \
 	cd s.trade-engine && sudo make docker && cd .. && \
 	cd s.market-data && sudo make docker && cd .. && \
-	cd s.bitfinex &&  sudo make && cd .. && \
+	cd s.bitfinex && sudo make && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.exchanges &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
