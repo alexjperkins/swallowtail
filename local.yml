@@ -161,6 +161,18 @@ services:
     profiles:
       - backend
 
+  swallowtail.s.solananfts:
+    hostname: swallowtail-s-solananfts
+    image: swallowtail.s.solananfts
+    ports:
+      - "8012:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
   ### -- Crons --- ###
 
   swallowtail.c.payments:
