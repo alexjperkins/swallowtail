@@ -31,8 +31,8 @@ var (
 			LowerBound:  0.0,
 		},
 		accountproto.ExchangeType_BITFINEX: {
-			HigherBound: 0.01,
-			LowerBound:  -0.01,
+			HigherBound: 0.025,
+			LowerBound:  -0.005,
 		},
 	}
 )
