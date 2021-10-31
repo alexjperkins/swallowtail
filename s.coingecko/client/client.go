@@ -7,19 +7,21 @@ import (
 
 	"github.com/monzo/slog"
 	"github.com/opentracing/opentracing-go"
-	coingecko "github.com/superoo7/go-gecko/v3"
 
 	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/ratelimit"
 	"swallowtail/s.coingecko/cache"
+
+	coingecko "github.com/superoo7/go-gecko/v3"
 )
 
 var (
 	client      CoinGeckoClient
 	ttlcache    cache.CoingeckoCache
-	rateLimiter *RateLimiter
+	rateLimiter ratelimit.RateLimiter
 )
 
-// CoinInfo ...
+// CoinRecord stores necessary information per coin.
 type CoinRecord struct {
 	LatestPrice              map[string]float64
 	PriceChangePercentage24h map[string]float64
@@ -58,8 +60,8 @@ func Init(ctx context.Context) error {
 	}
 	client = c
 
-	// Initialize rate limiter.
-	rateLimiter = NewRateLimiter(ctx)
+	// Initialize rate limiter with sensible default of 50 requests per minute.
+	rateLimiter = ratelimit.NewLinearBackpressureRateLimiter(ctx, time.Minute, 50)
 
 	// Initialize cache.
 	ttlcache = cache.NewInMemoryCache(5*time.Minute, func(key string) (interface{}, time.Duration, error) {
