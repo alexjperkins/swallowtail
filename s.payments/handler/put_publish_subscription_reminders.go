@@ -51,7 +51,7 @@ func (s *PaymentsService) PublishSubscriptionReminder(
 	if _, err := (&discordproto.SendMsgToChannelRequest{
 		Content:        formatReminderMsg(reminder),
 		SenderId:       "system:payments",
-		ChannelId:      discordproto.DiscordSatoshiPaymentsPulseChannel,
+		ChannelId:      discordproto.DiscordSatoshiFuturesChannel,
 		IdempotencyKey: idempotencyKey,
 		Force:          in.Force,
 	}).Send(ctx).Response(); err != nil {
