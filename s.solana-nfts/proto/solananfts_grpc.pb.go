@@ -3,7 +3,10 @@
 package solananftsproto
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -14,6 +17,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SolananftsClient interface {
+	ReadSolanaPriceStatisticsByCollectionID(ctx context.Context, in *ReadSolanaPriceStatisticsByCollectionIDRequest, opts ...grpc.CallOption) (*ReadSolanaPriceStatisticsByCollectionIDResponse, error)
 }
 
 type solananftsClient struct {
@@ -24,10 +28,20 @@ func NewSolananftsClient(cc grpc.ClientConnInterface) SolananftsClient {
 	return &solananftsClient{cc}
 }
 
+func (c *solananftsClient) ReadSolanaPriceStatisticsByCollectionID(ctx context.Context, in *ReadSolanaPriceStatisticsByCollectionIDRequest, opts ...grpc.CallOption) (*ReadSolanaPriceStatisticsByCollectionIDResponse, error) {
+	out := new(ReadSolanaPriceStatisticsByCollectionIDResponse)
+	err := c.cc.Invoke(ctx, "/solananfts/ReadSolanaPriceStatisticsByCollectionID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SolananftsServer is the server API for Solananfts service.
 // All implementations must embed UnimplementedSolananftsServer
 // for forward compatibility
 type SolananftsServer interface {
+	ReadSolanaPriceStatisticsByCollectionID(context.Context, *ReadSolanaPriceStatisticsByCollectionIDRequest) (*ReadSolanaPriceStatisticsByCollectionIDResponse, error)
 	mustEmbedUnimplementedSolananftsServer()
 }
 
@@ -35,16 +49,42 @@ type SolananftsServer interface {
 type UnimplementedSolananftsServer struct {
 }
 
+func (*UnimplementedSolananftsServer) ReadSolanaPriceStatisticsByCollectionID(context.Context, *ReadSolanaPriceStatisticsByCollectionIDRequest) (*ReadSolanaPriceStatisticsByCollectionIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadSolanaPriceStatisticsByCollectionID not implemented")
+}
 func (*UnimplementedSolananftsServer) mustEmbedUnimplementedSolananftsServer() {}
 
 func RegisterSolananftsServer(s *grpc.Server, srv SolananftsServer) {
 	s.RegisterService(&_Solananfts_serviceDesc, srv)
 }
 
+func _Solananfts_ReadSolanaPriceStatisticsByCollectionID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadSolanaPriceStatisticsByCollectionIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SolananftsServer).ReadSolanaPriceStatisticsByCollectionID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/solananfts/ReadSolanaPriceStatisticsByCollectionID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SolananftsServer).ReadSolanaPriceStatisticsByCollectionID(ctx, req.(*ReadSolanaPriceStatisticsByCollectionIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Solananfts_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "solananfts",
 	HandlerType: (*SolananftsServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "s.solana-nfts/proto/solananfts.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ReadSolanaPriceStatisticsByCollectionID",
+			Handler:    _Solananfts_ReadSolanaPriceStatisticsByCollectionID_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "s.solana-nfts/proto/solananfts.proto",
 }
