@@ -83,15 +83,11 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 
 			rsp, err := getSolanaNFTFloorPrice(ctx, nft.CollectionID, nft.Vendor)
 			if err != nil {
-				slog.Error(ctx, "Failed to get floor price for solana NFT: %s from %s", nft.CollectionID, nft.Vendor)
+				slog.Error(ctx, "Failed to get floor price for solana NFT: %s from %s: Error: %v", nft.CollectionID, nft.Vendor, err)
 				return
 			}
 
-			mu.Lock()
-			defer mu.Unlock()
-
 			// We have a limit of one so this is what we expect. But lets be defensive.
-
 			var solanaNftInfo *SolanaNFTInfo
 			switch len(rsp) {
 			case 0:
@@ -161,6 +157,11 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 			// Set prices from cache.
 			solanaNftInfo.Price4H = price4h
 			solanaNftInfo.Price24H = price24h
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			nfts = append(nfts, solanaNftInfo)
 		}()
 	}
 
@@ -224,12 +225,12 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 
 		sb.WriteString(
 			fmt.Sprintf(
-				"\n[%s %s]:%s %s%s %.2fSOL 4h %.2fSOL %s 24h %.2f %s",
-				nft.HumanizedCollectionID,
+				"\n%s` [%s]:%s %s%s %.2fSOL 4h %.2fSOL` %s `24h %.2f` %s",
 				nft.Emoji,
-				addPadding(collectionIDIndent),
+				nft.HumanizedCollectionID,
+				addPadding(collectionIDIndent-len(nft.HumanizedCollectionID)+1),
 				nft.Vendor,
-				addPadding(vendorIndent),
+				addPadding(vendorIndent-len(nft.Vendor)+1),
 				nft.Price,
 				nft.Price4H,
 				emoji4h,
@@ -246,5 +247,5 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 		})
 	}
 
-	return nil, nil
+	return &marketdataproto.PublishSolanaNFTPriceInformationResponse{}, nil
 }

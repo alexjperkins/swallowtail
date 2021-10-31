@@ -39,6 +39,8 @@ func Init(ctx context.Context) error {
 		return gerrors.Augment(err, "failed_to_establish_connection_to_all_vendor_clients", nil)
 	}
 
+	client = c
+
 	return nil
 }
 
@@ -81,11 +83,11 @@ func GetVendorPriceStatisticsByCollectionID(ctx context.Context, vendor solananf
 	switch sorting {
 	case solananftsproto.SolanaNFTSortDirection_ASCENDING:
 		sort.Slice(rsp.Stats, func(i int, j int) bool {
-			return rsp.Stats[i].Price < rsp.Stats[j].Price
+			return rsp.Stats[i].Price > rsp.Stats[j].Price
 		})
 	default:
 		sort.Slice(rsp.Stats, func(i int, j int) bool {
-			return rsp.Stats[i].Price > rsp.Stats[j].Price
+			return rsp.Stats[i].Price < rsp.Stats[j].Price
 		})
 	}
 

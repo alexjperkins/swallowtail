@@ -31,6 +31,9 @@ func (m *magicEdenClient) GetMagicEdenPriceStatisticsByCollectionID(
 ) (*dto.GetMagicEdenPriceStatisticsByCollectionIDResponse, error) {
 	endpoint := buildURL(req.CollectionID)
 
+	// Rate limit.
+	m.rateLimiter.Throttle()
+
 	rsp := &dto.GetMagicEdenPriceStatisticsByCollectionIDResponse{}
 	if err := m.http.Do(ctx, http.MethodGet, endpoint, nil, rsp); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_get_price_statistics_magic_eden", nil)

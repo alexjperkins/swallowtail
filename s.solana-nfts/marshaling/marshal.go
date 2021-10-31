@@ -6,7 +6,18 @@ import (
 )
 
 // PriceStatisticDTOToProtos ...
-func PriceStatisticDTOToProtos(in *dto.GetVendorPriceStatisticsByCollectionIDResponse) []*solananftsproto.PriceStatistic {
-	var protos []*solananftsproto.PriceStatistic
+func PriceStatisticDTOToProtos(in *dto.GetVendorPriceStatisticsByCollectionIDResponse, vendor solananftsproto.SolanaNFTVendor) []*solananftsproto.PriceStatistic {
+	var protos = make([]*solananftsproto.PriceStatistic, 0, len(in.Stats))
+	for _, stat := range in.Stats {
+		protos = append(protos, &solananftsproto.PriceStatistic{
+			Price:         float32(stat.Price),
+			Id:            stat.ID,
+			LastSoldPrice: float32(stat.LastSoldPrice),
+			Name:          stat.Name,
+			ForSale:       stat.IsForSale,
+			Vendor:        vendor,
+		})
+	}
+
 	return protos
 }

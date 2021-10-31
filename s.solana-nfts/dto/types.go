@@ -5,15 +5,18 @@ type GetVendorPriceStatisticsByCollectionIDRequest struct {
 	CollectionID string
 }
 
+// VendorPriceStatistic ...
+type VendorPriceStatistic struct {
+	Name          string  `json:"name"`
+	ID            string  `json:"id"`
+	Price         float64 `json:"price"`
+	LastSoldPrice float64 `json:"last_sold_price"`
+	IsForSale     bool    `json:"is_for_sale"`
+}
+
 // GetVendorPriceStatisticsByCollectionIDResponse ...
 type GetVendorPriceStatisticsByCollectionIDResponse struct {
-	Stats []*struct {
-		Name          string  `json:"name"`
-		ID            string  `json:"id"`
-		Price         float64 `json:"price"`
-		LastSoldPrice float64 `json:"last_sold_price"`
-		IsForSale     bool    `json:"is_for_sale"`
-	} `json:"stats"`
+	Stats []*VendorPriceStatistic `json:"stats"`
 }
 
 // SolanartPriceStatistic ...
@@ -29,8 +32,8 @@ type SolanartPriceStatistic struct {
 	Attributes    string  `json:"attributes,omitempty"`
 	Skin          string  `json:"skin,omitempty"`
 	Type          string  `json:"type,omitempty"`
-	Ranking       string  `json:"ranking,omitempty"`
-	LastSoldPrice int     `json:"lastSoldPrice,omitempty"`
+	Ranking       float64 `json:"ranking,omitempty"`
+	LastSoldPrice float64 `json:"lastSoldPrice,omitempty"`
 }
 
 // GetSolanartPriceStatisticsByCollectionIDResponse ...

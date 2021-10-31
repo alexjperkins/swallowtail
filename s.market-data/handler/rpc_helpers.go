@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/monzo/slog"
-	"google.golang.org/protobuf/internal/version"
 
 	"swallowtail/libraries/gerrors"
 	binanceproto "swallowtail/s.binance/proto"
@@ -137,10 +136,10 @@ func getSolanaNFTFloorPrice(ctx context.Context, collectionID string, vendor sol
 		Order:         solananftsproto.SolanaNFTSortDirection_DESCENDING,
 		Limit:         1,
 		SearchContext: solananftsproto.SearchContextMarketData,
-	}).Send(ctx).Response()
+	}).SendWithTimeout(ctx, 1*time.Minute).Response()
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_get_solana_nft_floor_price", map[string]string{
-			"vendor":        version.String(),
+			"vendor":        vendor.String(),
 			"collection_id": collectionID,
 		})
 	}

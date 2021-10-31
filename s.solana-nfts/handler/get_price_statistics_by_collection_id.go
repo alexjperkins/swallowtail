@@ -46,7 +46,7 @@ func (s *SolanaNFTsService) ReadSolanaPriceStatisticsByCollectionID(
 	}
 
 	// Marshal.
-	protos := marshaling.PriceStatisticDTOToProtos(rsp)
+	protos := marshaling.PriceStatisticDTOToProtos(rsp, in.Vendor)
 	return &solananftsproto.ReadSolanaPriceStatisticsByCollectionIDResponse{
 		VendorStats: protos,
 	}, nil

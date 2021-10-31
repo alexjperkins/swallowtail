@@ -7,6 +7,15 @@ const (
 
 const (
 	SolanartCollectionIDGalacticGeckoSpaceGarage = "galacticgeckospacegarage"
+	SolanartCollectionIDDegenerateApeAcademy     = "degenape"
+	SolanartCollectionIDGloomPunk                = "gloompunk"
+	SolanartCollectionIDSolarmy2D                = "solarmy2d"
+	SolanartCollectionIDSolarmy3D                = "solarmy3d"
+	SolanartCollectionIDThugBirdz                = "thugbirdz"
+	SolanartCollectionIDBabyApes                 = "babyapes"
+	SolanartCollectionIDTurtles                  = "turtles"
+	SolanartCollectionIDTheTower                 = "thetower"
+	SolanartCollectionIDFrakt                    = "frakt"
 )
 
 const (
@@ -25,7 +34,17 @@ func IsValidCollectionIDByVendor(vendor SolanaNFTVendor, collectionID string) bo
 		}
 	case SolanaNFTVendor_SOLANART:
 		switch collectionID {
-		case SolanartCollectionIDGalacticGeckoSpaceGarage:
+		case
+			SolanartCollectionIDGalacticGeckoSpaceGarage,
+			SolanartCollectionIDGloomPunk,
+			SolanartCollectionIDBabyApes,
+			SolanartCollectionIDSolarmy2D,
+			SolanartCollectionIDSolarmy3D,
+			SolanartCollectionIDThugBirdz,
+			SolanartCollectionIDFrakt,
+			SolanartCollectionIDTurtles,
+			SolanartCollectionIDTheTower,
+			SolanartCollectionIDDegenerateApeAcademy:
 			return true
 		default:
 			return false

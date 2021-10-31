@@ -37,6 +37,9 @@ func (s *solanartClient) GetSolanartPriceStatisticsByCollectionID(
 ) (*dto.GetSolanartPriceStatisticsByCollectionIDResponse, error) {
 	endpoint := fmt.Sprintf("%s/nft_for_sale?collection=%s", solanartURL, req.CollectionID)
 
+	// Rate limit.
+	s.rateLimiter.Throttle()
+
 	rsp := &dto.GetSolanartPriceStatisticsByCollectionIDResponse{}
 	if err := s.http.Do(ctx, http.MethodGet, endpoint, nil, rsp); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_get_solanart_price_statistics", nil)
