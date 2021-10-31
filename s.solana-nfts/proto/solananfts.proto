@@ -12,14 +12,14 @@ enum SolanaNFTSortDirection{
 }
 
 enum SolanaNFTVendor {
-    SOLANART = 0;
+    UNKNOWN = 0;
     MAGIC_EDEN = 1;
+    SOLANART = 2;
 }
 
 message ReadSolanaPriceStatisticsByCollectionIDRequest {
     string collection_id = 1;
-    // If empty then we retrieve all vendors.
-    repeated SolanaNFTVendor filter_by_vendors = 2;
+    SolanaNFTVendor vendor = 2;
     int64 limit = 3;
     SolanaNFTSortDirection order = 4;
     string search_context = 5;
@@ -32,13 +32,10 @@ message PriceStatistic {
     repeated string attributes = 4;
     string name = 5;
     bool for_sale = 6;
+    SolanaNFTVendor vendor = 7;
 }
 
-message VendorPriceStatistics {
-    SolanaNFTVendor vendor = 1;
-    repeated PriceStatistic stats = 2;
-}
 
 message ReadSolanaPriceStatisticsByCollectionIDResponse {
-    repeated VendorPriceStatistics vendor_stats = 1;
+    repeated PriceStatistic vendor_stats = 1;
 }

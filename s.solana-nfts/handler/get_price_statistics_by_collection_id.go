@@ -11,49 +11,43 @@ import (
 	solananftsproto "swallowtail/s.solana-nfts/proto"
 )
 
-var (
-	defaultVendors = []solananftsproto.SolanaNFTVendor{
-		solananftsproto.SolanaNFTVendor_MAGIC_EDEN,
-		solananftsproto.SolanaNFTVendor_SOLANART,
-	}
-)
-
 // ReadSolanaPriceStatisticsByCollectionID ...
 func (s *SolanaNFTsService) ReadSolanaPriceStatisticsByCollectionID(
 	ctx context.Context, in *solananftsproto.ReadSolanaPriceStatisticsByCollectionIDRequest,
 ) (*solananftsproto.ReadSolanaPriceStatisticsByCollectionIDResponse, error) {
-	var vendors = defaultVendors
+	// Validation.
 	switch {
 	case in.CollectionId == "":
 		return nil, gerrors.BadParam("missing_param.collection_id", nil)
 	case in.SearchContext == "":
 		return nil, gerrors.BadParam("missing_param.search_context", nil)
-	case len(in.FilterByVendors) != 0:
-		vendors = in.FilterByVendors
+	case in.Vendor == solananftsproto.SolanaNFTVendor_UNKNOWN:
+		return nil, gerrors.BadParam("missing_param.vendor", nil)
+	case !solananftsproto.IsValidCollectionIDByVendor(in.Vendor, in.CollectionId):
+		return nil, gerrors.BadParam("bad_param.collection_id.not_valid_for_vendor", map[string]string{
+			"collection_id": in.CollectionId,
+			"vendor":        in.Vendor.String(),
+		})
 	}
 
 	errParams := map[string]string{
 		"collection_id": in.CollectionId,
 		"limit":         strconv.Itoa(int(in.Limit)),
 		"order":         in.Order.String(),
+		"vendor":        in.Vendor.String(),
 	}
 
-	// Collect and marshal stats.
-	vendorStatsProtos := []*solananftsproto.VendorPriceStatistics{}
-	for _, vendor := range vendors {
-		rsp, err := client.GetVendorPriceStatisticsByCollectionID(ctx, vendor, &dto.GetVendorPriceStatisticsByCollectionIDRequest{
-			CollectionID: in.CollectionId,
-		}, in.Order, int(in.Limit))
-		if err != nil {
-			return nil, gerrors.Augment(err, "failed_to_get_vendor_statistics", errParams)
-		}
-
-		vendorStatsProto := marshaling.VendorPriceStatisticsDTOToProto(rsp)
-
-		vendorStatsProtos = append(vendorStatsProtos, vendorStatsProto)
+	// Collect stats.
+	rsp, err := client.GetVendorPriceStatisticsByCollectionID(ctx, in.Vendor, &dto.GetVendorPriceStatisticsByCollectionIDRequest{
+		CollectionID: in.CollectionId,
+	}, in.Order, int(in.Limit))
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_get_vendor_statistics", errParams)
 	}
 
+	// Marshal.
+	protos := marshaling.PriceStatisticDTOToProtos(rsp)
 	return &solananftsproto.ReadSolanaPriceStatisticsByCollectionIDResponse{
-		VendorStats: vendorStatsProtos,
+		VendorStats: protos,
 	}, nil
 }

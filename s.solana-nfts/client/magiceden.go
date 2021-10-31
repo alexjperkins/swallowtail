@@ -8,7 +8,6 @@ import (
 	"swallowtail/libraries/ratelimit"
 	"swallowtail/libraries/transport"
 	"swallowtail/s.solana-nfts/dto"
-	solananftsproto "swallowtail/s.solana-nfts/proto"
 )
 
 type magicEdenClient struct {
@@ -17,11 +16,12 @@ type magicEdenClient struct {
 }
 
 func (m *magicEdenClient) Ping(ctx context.Context) error {
-	if _, err := m.GetMagicEdenPriceStatisticsByCollectionID(ctx, &dto.GetVendorPriceStatisticsByCollectionIDRequest{
-		CollectionID: solananftsproto.MagicEndCollectionIDGloomPunks,
-	}); err != nil {
-		return gerrors.Augment(err, "failed_to_establish_connection_magic_eden", nil)
-	}
+	// TODO
+	//if _, err := m.GetMagicEdenPriceStatisticsByCollectionID(ctx, &dto.GetVendorPriceStatisticsByCollectionIDRequest{
+	//	CollectionID: solananftsproto.MagicEndCollectionIDGloomPunks,
+	//}); err != nil {
+	//	return gerrors.Augment(err, "failed_to_establish_connection_magic_eden", nil)
+	//}
 
 	return nil
 }

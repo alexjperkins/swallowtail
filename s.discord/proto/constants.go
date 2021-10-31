@@ -27,6 +27,9 @@ const (
 	DiscordSatoshiPriceBotChannel = "831234720943702066"
 	// DiscordSatoshiPriceBotChannel = "896513299515047938" // TEST
 
+	// DiscordSatoshiNFTBotChannel = "904326840175435879"
+	DiscordSatoshiNFTBotChannel = "904472101971439637" // TEST
+
 	DiscordSatoshiGeneralChannel = "814144802458828852"
 
 	// Futures channels

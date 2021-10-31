@@ -4,6 +4,9 @@
 # Every hour, on the 15th minute of said hour.
 15 * * * * sh /jobs/put_publish_funding_rates_information.sh
 
+# Every hour, on the hour
+* * * * * sh /jobs/put_publish_solana_price_information.sh
+
 # Every 15 minutes.
 */15 * * * * sh /jobs/put_publish_ath_information.sh
 

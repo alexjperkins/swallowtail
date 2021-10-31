@@ -5,7 +5,8 @@ import (
 	solananftsproto "swallowtail/s.solana-nfts/proto"
 )
 
-// VendorPriceStatisticsDTOToProto ...
-func VendorPriceStatisticsDTOToProto(in *dto.GetVendorPriceStatisticsByCollectionIDResponse) *solananftsproto.VendorPriceStatistics {
-	return &solananftsproto.VendorPriceStatistics{}
+// PriceStatisticDTOToProtos ...
+func PriceStatisticDTOToProtos(in *dto.GetVendorPriceStatisticsByCollectionIDResponse) []*solananftsproto.PriceStatistic {
+	var protos []*solananftsproto.PriceStatistic
+	return protos
 }
