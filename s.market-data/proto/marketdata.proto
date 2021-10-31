@@ -10,6 +10,8 @@ service marketdata {
   rpc PublishATHInformation (PublishATHInformationRequest) returns (PublishATHInformationResponse) {}
 
   rpc PublishFundingRatesInformation (PublishFundingRatesInformationRequest) returns (PublishFundingRatesInformationResponse) {}
+
+  rpc PublishSolanaNFTPriceInformation (PublishSolanaNFTPriceInformationRequest) returns (PublishSolanaNFTPriceInformationResponse) {}
 }
  
 message PublishLatestPriceInformationRequest {}
@@ -27,3 +29,7 @@ message PublishATHInformationResponse {}
 message PublishFundingRatesInformationRequest {}
 
 message PublishFundingRatesInformationResponse {}
+
+message PublishSolanaNFTPriceInformationRequest {}
+
+message PublishSolanaNFTPriceInformationResponse {}

@@ -21,6 +21,7 @@ type MarketdataClient interface {
 	PublishVolatilityInformation(ctx context.Context, in *PublishVolatilityInformationRequest, opts ...grpc.CallOption) (*PublishVolatilityInformationResponse, error)
 	PublishATHInformation(ctx context.Context, in *PublishATHInformationRequest, opts ...grpc.CallOption) (*PublishATHInformationResponse, error)
 	PublishFundingRatesInformation(ctx context.Context, in *PublishFundingRatesInformationRequest, opts ...grpc.CallOption) (*PublishFundingRatesInformationResponse, error)
+	PublishSolanaNFTPriceInformation(ctx context.Context, in *PublishSolanaNFTPriceInformationRequest, opts ...grpc.CallOption) (*PublishSolanaNFTPriceInformationResponse, error)
 }
 
 type marketdataClient struct {
@@ -67,6 +68,15 @@ func (c *marketdataClient) PublishFundingRatesInformation(ctx context.Context, i
 	return out, nil
 }
 
+func (c *marketdataClient) PublishSolanaNFTPriceInformation(ctx context.Context, in *PublishSolanaNFTPriceInformationRequest, opts ...grpc.CallOption) (*PublishSolanaNFTPriceInformationResponse, error) {
+	out := new(PublishSolanaNFTPriceInformationResponse)
+	err := c.cc.Invoke(ctx, "/marketdata/PublishSolanaNFTPriceInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MarketdataServer is the server API for Marketdata service.
 // All implementations must embed UnimplementedMarketdataServer
 // for forward compatibility
@@ -75,6 +85,7 @@ type MarketdataServer interface {
 	PublishVolatilityInformation(context.Context, *PublishVolatilityInformationRequest) (*PublishVolatilityInformationResponse, error)
 	PublishATHInformation(context.Context, *PublishATHInformationRequest) (*PublishATHInformationResponse, error)
 	PublishFundingRatesInformation(context.Context, *PublishFundingRatesInformationRequest) (*PublishFundingRatesInformationResponse, error)
+	PublishSolanaNFTPriceInformation(context.Context, *PublishSolanaNFTPriceInformationRequest) (*PublishSolanaNFTPriceInformationResponse, error)
 	mustEmbedUnimplementedMarketdataServer()
 }
 
@@ -93,6 +104,9 @@ func (*UnimplementedMarketdataServer) PublishATHInformation(context.Context, *Pu
 }
 func (*UnimplementedMarketdataServer) PublishFundingRatesInformation(context.Context, *PublishFundingRatesInformationRequest) (*PublishFundingRatesInformationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublishFundingRatesInformation not implemented")
+}
+func (*UnimplementedMarketdataServer) PublishSolanaNFTPriceInformation(context.Context, *PublishSolanaNFTPriceInformationRequest) (*PublishSolanaNFTPriceInformationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublishSolanaNFTPriceInformation not implemented")
 }
 func (*UnimplementedMarketdataServer) mustEmbedUnimplementedMarketdataServer() {}
 
@@ -172,6 +186,24 @@ func _Marketdata_PublishFundingRatesInformation_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Marketdata_PublishSolanaNFTPriceInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishSolanaNFTPriceInformationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MarketdataServer).PublishSolanaNFTPriceInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/marketdata/PublishSolanaNFTPriceInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MarketdataServer).PublishSolanaNFTPriceInformation(ctx, req.(*PublishSolanaNFTPriceInformationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Marketdata_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "marketdata",
 	HandlerType: (*MarketdataServer)(nil),
@@ -191,6 +223,10 @@ var _Marketdata_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PublishFundingRatesInformation",
 			Handler:    _Marketdata_PublishFundingRatesInformation_Handler,
+		},
+		{
+			MethodName: "PublishSolanaNFTPriceInformation",
+			Handler:    _Marketdata_PublishSolanaNFTPriceInformation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

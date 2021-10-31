@@ -13,6 +13,7 @@ import (
 	discordproto "swallowtail/s.discord/proto"
 	ftxproto "swallowtail/s.ftx/proto"
 	marketdataproto "swallowtail/s.market-data/proto"
+	solananftsproto "swallowtail/s.solana-nfts/proto"
 )
 
 // publishToDiscord ...
@@ -126,4 +127,23 @@ func getFundingRateFromBitfinex(ctx context.Context, symbol string) (float64, er
 	}
 
 	return float64(rsp.FundingRates[0].FundingRate), nil
+}
+
+func getSolanaNFTFloorPrice(ctx context.Context, collectionID string, vendor solananftsproto.SolanaNFTVendor) ([]*solananftsproto.PriceStatistic, error) {
+	rsp, err := (&solananftsproto.ReadSolanaPriceStatisticsByCollectionIDRequest{
+		CollectionId:  collectionID,
+		Vendor:        vendor,
+		Order:         solananftsproto.SolanaNFTSortDirection_DESCENDING,
+		Limit:         1,
+		SearchContext: solananftsproto.SearchContextMarketData,
+	}).SendWithTimeout(ctx, 1*time.Minute).Response()
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_get_solana_nft_floor_price", map[string]string{
+			"vendor":        vendor.String(),
+			"collection_id": collectionID,
+		})
+	}
+
+	return rsp.VendorStats, nil
+
 }

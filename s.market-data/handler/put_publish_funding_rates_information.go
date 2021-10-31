@@ -177,11 +177,3 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 
 	return &marketdataproto.PublishFundingRatesInformationResponse{}, nil
 }
-
-func addPadding(howMuch int) string {
-	if howMuch < 1 {
-		return ""
-	}
-
-	return strings.Repeat(" ", howMuch)
-}
