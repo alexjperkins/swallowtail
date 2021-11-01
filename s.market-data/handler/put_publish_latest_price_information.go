@@ -22,7 +22,6 @@ var (
 )
 
 // Asset Info ...
-// TODO: move
 type AssetInfo struct {
 	Symbol                   string
 	AssetPair                string
@@ -64,6 +63,7 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 				AssetPair:                asset.AssetPair,
 				LatestPrice:              latestPrice,
 				PriceChangePercentage24h: change24h,
+				Group:                    asset.Grouping.String(),
 			})
 		}()
 	}
@@ -73,6 +73,8 @@ func (s *MarketDataService) PublishLatestPriceInformation(
 	// Sort our asset info alphabetically.
 	sort.Slice(assetInfo, func(i, j int) bool {
 		switch {
+		case assetInfo[i].Group < assetInfo[j].Group:
+			return true
 		case assetInfo[i].Symbol < assetInfo[j].Symbol:
 			return true
 		case assetInfo[i].Symbol == assetInfo[j].Symbol:
