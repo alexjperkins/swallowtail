@@ -93,7 +93,7 @@ func GetVendorPriceStatisticsByCollectionID(ctx context.Context, vendor solananf
 
 	// Apply limit.
 	if limit > 0 {
-		rsp.Stats = rsp.Stats[0:1]
+		rsp.Stats = rsp.Stats[0:limit]
 	}
 
 	return rsp, nil
