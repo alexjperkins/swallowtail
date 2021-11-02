@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bwmarrin/discordgo"
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
 	accountproto "swallowtail/s.account/proto"
-
-	"github.com/bwmarrin/discordgo"
-	"github.com/monzo/slog"
 )
 
 const (
