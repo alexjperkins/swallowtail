@@ -27,6 +27,17 @@ var (
 		"geckos":    solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarage,
 		"daa":       solananftsproto.SolanartCollectionIDDegenerateApeAcademy,
 		"thugbirdz": solananftsproto.SolanartCollectionIDThugBirdz,
+		"gloompunk": solananftsproto.SolanartCollectionIDGloomPunk,
+		"frakt":     solananftsproto.SolanartCollectionIDFrakt,
+	}
+
+	collectionEmoji = map[string]string{
+		solananftsproto.SolanartCollectionIDBabyApes:                 ":monkey_face:",
+		solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarage: ":lizard:",
+		solananftsproto.SolanartCollectionIDDegenerateApeAcademy:     ":monkey:",
+		solananftsproto.SolanartCollectionIDThugBirdz:                ":bird:",
+		solananftsproto.SolanartCollectionIDGloomPunk:                ":woman_artist:",
+		solananftsproto.SolanartCollectionIDFrakt:                    ":art:",
 	}
 )
 
@@ -47,12 +58,73 @@ func init() {
 				Handler:             scattergraphNFTHandler,
 				FailureMsg:          "Please check the vendor & the collection id are correct. No spaces!",
 			},
+			"stats": {
+				ID:                  "nft-stats",
+				MinimumNumberOfArgs: 2,
+				Usage:               "!nft stats <collection> <vendor>",
+				Description:         "Prints a stats of all nfts in a collection",
+				Handler:             priceStatsNFTHandler,
+				FailureMsg:          "Please check the vendor & the collection id are correct. No spaces!",
+			},
 		},
 	})
 }
 
 func nftHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
 	return gerrors.Unimplemented("parent_command_unimplemented.nft", nil)
+}
+
+func priceStatsNFTHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	cID, v := tokens[0], tokens[1]
+
+	// Parse fields.
+	vendor, err := convertVendor(v)
+	if err != nil {
+		return gerrors.Augment(err, "Failed to create scattergraph; bad vendor", nil)
+	}
+
+	collectionID, err := convertCollectionID(cID)
+	if err != nil {
+		return gerrors.Augment(err, "Failed to create scattergraph; bad collection", nil)
+	}
+
+	errParams := map[string]string{
+		"collection_id": collectionID,
+		"vendor":        vendor.String(),
+	}
+
+	// Gather collection.
+	rsp, err := (&solananftsproto.ReadSolanaPriceStatisticsByCollectionIDRequest{
+		CollectionId:  collectionID,
+		Vendor:        vendor,
+		SearchContext: solananftsproto.SearchContextMarketData,
+	}).Send(ctx).Response()
+	if err != nil {
+		return gerrors.Augment(err, "failed_to_get_price_stats.nft", errParams)
+	}
+
+	// Validation.
+	if len(rsp.VendorStats) < 1 {
+		return gerrors.NotFound("failed_to_get_price_stats.empty_collection", errParams)
+	}
+
+	// Gather stats.
+	floorPrice := rsp.VendorStats[0].Price
+	p90Index := int(math.Ceil(float64(len(rsp.VendorStats))*0.9) - 1)
+
+	var totalPrice float64
+	for _, item := range rsp.VendorStats[:p90Index] {
+		totalPrice += float64(item.Price)
+	}
+
+	emoji := collectionEmoji[collectionID]
+	content := fmt.Sprintf("%s `[%s] Floor: %.2f SOL      Average90: %.2f SOL`", emoji, collectionID, floorPrice, totalPrice/float64(p90Index))
+
+	if _, err := s.ChannelMessageSend(m.ChannelID, content); err != nil {
+		slog.Error(ctx, "Failed to send soana floor price stats to discord", errParams)
+	}
+
+	return nil
 }
 
 func scattergraphNFTHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
