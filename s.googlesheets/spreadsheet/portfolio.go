@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultPortfolioRowRange          = "C8:L100"
+	defaultPortfolioRowRange          = "B8:L100"
 	defaultPortfolioMetatdataRange    = "D2:D4"
 	defaultPortfolioTradeHistoryRange = "Q8:W100"
 )

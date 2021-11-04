@@ -17,6 +17,7 @@ type PortfolioMetadata struct {
 
 type PortfolioRow struct {
 	Index         int
+	Size          string
 	Ticker        string
 	AssetPair     string
 	AverageEntry  float64
