@@ -71,7 +71,7 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 			// Parse funding rate if we can. Best effort.
 			var fundingRate float64
 			rsp, _ := (&binanceproto.GetFundingRatesRequest{
-				Symbol: symbol,
+				Symbol: fmt.Sprintf("%sUSDT", strings.ToUpper(symbol)),
 				Limit:  1,
 			}).SendWithTimeout(ctx, 1*time.Minute).Response()
 			if rsp != nil && len(rsp.GetFundingRates()) > 0 {
