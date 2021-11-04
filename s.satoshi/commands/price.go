@@ -83,6 +83,7 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 			cache[symbol] = &InstrumentInfo{
 				CurrentPrice:              float64(cgRsp.LatestPrice),
 				PercentagePriceChange_24H: float64(cgRsp.PercentagePriceChange_24H),
+				FundingRate:               fundingRate,
 			}
 		}()
 	}
