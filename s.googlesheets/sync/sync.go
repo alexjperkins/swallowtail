@@ -20,7 +20,7 @@ func Init(ctx context.Context) error {
 	for id, syncer := range registry {
 		e := syncer.Refresh(ctx)
 		if e != nil {
-			multierror.Append(err, e)
+			err = multierror.Append(err, e)
 		}
 
 		slog.Debug(ctx, "Syncer: %s initialized", id)
