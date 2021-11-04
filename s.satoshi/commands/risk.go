@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"swallowtail/libraries/gerrors"
 
 	"github.com/bwmarrin/discordgo"
@@ -40,7 +41,7 @@ func riskCalculator(ctx context.Context, tokens []string, s *discordgo.Session, 
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse accountSize: %v into a float, please check.", m.Author.Username, tokens[3]))
 		return gerrors.Augment(err, "bad_param.failed_to_parse.account_size", nil)
 	}
-	percentage, err := strconv.ParseFloat(tokens[3], 64)
+	percentage, err := strconv.ParseFloat(strings.ReplaceAll(tokens[3], "%", ""), 64)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Hi @%s, couldn't parse percentage: %v into a float, please check.", m.Author.Username, tokens[4]))
 		return gerrors.Augment(err, "bad_param.failed_to_parse.percentage", nil)

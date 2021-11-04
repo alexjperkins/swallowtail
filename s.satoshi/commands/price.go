@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"swallowtail/libraries/gerrors"
+	binanceproto "swallowtail/s.binance/proto"
 	coingeckoproto "swallowtail/s.coingecko/proto"
 
 	"github.com/bwmarrin/discordgo"
@@ -30,6 +31,14 @@ func init() {
 	})
 }
 
+type InstrumentInfo struct {
+	CurrentPrice              float64
+	FundingRate               float64
+	Symbol                    string
+	AssetPair                 string
+	PercentagePriceChange_24H float64
+}
+
 func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -37,7 +46,7 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 	symbols := tokens
 
 	var (
-		cache = make(map[string]*coingeckoproto.GetAssetLatestPriceBySymbolResponse)
+		cache = make(map[string]*InstrumentInfo)
 		wg    sync.WaitGroup
 		mu    sync.Mutex
 	)
@@ -47,7 +56,7 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 		go func() {
 			defer wg.Done()
 
-			rsp, err := (&coingeckoproto.GetAssetLatestPriceBySymbolRequest{
+			cgRsp, err := (&coingeckoproto.GetAssetLatestPriceBySymbolRequest{
 				AssetSymbol: symbol,
 				AssetPair:   "usd",
 			}).SendWithTimeout(ctx, 1*time.Minute).Response()
@@ -59,9 +68,22 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 				return
 			}
 
+			// Parse funding rate if we can. Best effort.
+			var fundingRate float64
+			rsp, _ := (&binanceproto.GetFundingRatesRequest{
+				Symbol: symbol,
+				Limit:  1,
+			}).SendWithTimeout(ctx, 1*time.Minute).Response()
+			if rsp != nil && len(rsp.GetFundingRates()) > 0 {
+				fundingRate = float64(rsp.GetFundingRates()[0].FundingRate)
+			}
+
 			mu.Lock()
 			defer mu.Unlock()
-			cache[symbol] = rsp
+			cache[symbol] = &InstrumentInfo{
+				CurrentPrice:              float64(cgRsp.LatestPrice),
+				PercentagePriceChange_24H: float64(cgRsp.PercentagePriceChange_24H),
+			}
 		}()
 	}
 
@@ -97,7 +119,7 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 			emoji = ":black_large_square:"
 		}
 
-		sb.WriteString(fmt.Sprintf("%s `[%s] %.3f USDT 24h: %.2f%%\n`", emoji, k, v.LatestPrice, v.PercentagePriceChange_24H))
+		sb.WriteString(fmt.Sprintf("%s `[%s] %.3f USDT 24h: %.2f%% Funding Rate: %.4f\n`", emoji, k, v.CurrentPrice, v.PercentagePriceChange_24H, v.FundingRate))
 	}
 
 	if _, err := s.ChannelMessageSend(m.ChannelID, sb.String()); err != nil {
