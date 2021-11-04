@@ -140,11 +140,11 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 	sleepFor := time.Duration(rand.Float64()*defaultMaxJitterRange) * defaultJitterUnit
 	time.Sleep(sleepFor)
 
-	t := time.NewTicker(1 * time.Minute)
+	t := time.NewTicker(2*time.Minute + 30*time.Second)
 	for {
 		select {
 		case <-t.C:
-			// Fetch rows
+			// Fetch rows.
 			rows, err := p.Spreadsheet.Rows(ctx, spreadsheetID, sheetID)
 			if err != nil {
 				if gerr := pageAccount(ctx, userID, fmt.Sprintf("Failed to parse row: Error %v", err.Error()), spreadsheetID); gerr != nil {
@@ -175,10 +175,9 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 					switch {
 					case
 						gerrors.Is(err, gerrors.ErrDeadlineExceeded):
-						// This is fine; we can retry on the next attempt.
 						return
 					case err != nil:
-						// We failed lets page the user.
+						slog.Error(ctx, "Failed to get asset: %s for user %s", row.Ticker)
 						if gerr := pageAccount(ctx, userID, fmt.Sprintf("Failed to retrieve price for asset with ticker: %s row: %v", row.Ticker, row.Index), spreadsheetID); gerr != nil {
 							slog.Warn(ctx, "Failed to page account: %v", gerr)
 						}
@@ -193,6 +192,22 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 				}()
 			}
 			wg.Wait()
+
+			// Fetch metadata & calculate total worth.
+			m, err := p.Spreadsheet.Metadata(ctx, spreadsheetID, sheetID)
+			if err != nil {
+				if gerr := pageAccount(ctx, userID, "Apologies, I wasn't able to parse the metadata in your portfolio tracker; please check it's correct", spreadsheetID); gerr != nil {
+					slog.Error(ctx, "Failed to parse account: %v", gerr)
+				}
+				// We can't go any further; lets skip.
+				continue
+			}
+			totalWorth, err := calculateTotalWorth(ctx, rows, m.AssetPair)
+
+			// Update the size of our row.
+			for _, row := range rows {
+				row.Size = fmt.Sprintf("%.2f%%", (row.CurrentPrice/totalWorth)*100)
+			}
 
 			// Upate all rows with our latest price.
 			err = p.Spreadsheet.UpdateRows(ctx, spreadsheetID, sheetID, rows)
@@ -222,25 +237,9 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 				}
 			}
 
-			// Update metadata
-			m, err := p.Spreadsheet.Metadata(ctx, spreadsheetID, sheetID)
-			if err != nil {
-				if gerr := pageAccount(ctx, userID, "Apologies, I wasn't able to parse the metadata in your portfolio tracker; please check it's correct", spreadsheetID); gerr != nil {
-					slog.Error(ctx, "Failed to parse account: %v", gerr)
-				}
-				// We can't go any further; lets skip.
-				continue
-			}
-
-			// Calculate our total worth
+			// Update metadata.
 			m.TotalPNL = calculateTotalPNL(rows) + historicalPNL
-
-			m.TotalWorth, err = calculateTotalWorth(ctx, rows, m.AssetPair)
-			if err != nil {
-				slog.Error(ctx, "Failed to update googlesheet metadata", map[string]string{
-					"error_msg": err.Error(),
-				})
-			}
+			m.TotalWorth = totalWorth
 
 			err = p.Spreadsheet.UpdateMetadata(ctx, spreadsheetID, sheetID, m)
 			if err != nil {
@@ -254,6 +253,8 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 				"user_id":  userID,
 				"sheet_id": sheetID,
 			})
+
+			// Fill out sizes.
 
 		case <-ctx.Done():
 			return

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/monzo/slog"
-
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
 	coingeckoproto "swallowtail/s.coingecko/proto"
@@ -34,7 +32,6 @@ func pageAccount(ctx context.Context, userID, msg, spreadsheetID string) error {
 		Content:  wrappedMsg,
 		Priority: accountproto.PagerPriority_HIGH,
 	}).Send(ctx).Response(); err != nil {
-		slog.Warn(ctx, "Failed to send: %v to %v", msg, userID)
 		return gerrors.Augment(err, "Failed to page account", map[string]string{
 			"user_id": userID,
 		})
