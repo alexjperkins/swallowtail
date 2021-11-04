@@ -120,7 +120,7 @@ func priceCommand(ctx context.Context, tokens []string, s *discordgo.Session, m 
 			emoji = ":black_large_square:"
 		}
 
-		sb.WriteString(fmt.Sprintf("%s `[%s] %.3f USDT 24h: %.2f%% Funding Rate: %.4f\n`", emoji, k, v.CurrentPrice, v.PercentagePriceChange_24H, v.FundingRate))
+		sb.WriteString(fmt.Sprintf("%s `[%s] %.3f USDT 24h: %.2f%%  Funding Rate: %.4f%%\n`", emoji, k, v.CurrentPrice, v.PercentagePriceChange_24H, v.FundingRate*100))
 	}
 
 	if _, err := s.ChannelMessageSend(m.ChannelID, sb.String()); err != nil {
