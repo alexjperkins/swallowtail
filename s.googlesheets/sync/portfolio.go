@@ -206,7 +206,7 @@ func (p *PortfolioSyncer) sync(ctx context.Context, userID, spreadsheetID, sheet
 
 			// Update the size of our row.
 			for _, row := range rows {
-				row.Size = fmt.Sprintf("%.2f%%", (row.CurrentPrice/totalWorth)*100)
+				row.Size = fmt.Sprintf("%.2f%%", (row.CurrentValue/totalWorth)*100)
 			}
 
 			// Upate all rows with our latest price.
