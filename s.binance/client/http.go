@@ -45,7 +45,7 @@ func (c *binanceClient) doWithSignature(ctx context.Context, method, endpoint, q
 
 func (c *binanceClient) signRequest(secret, queryString string, reqBody interface{}) (string, error) {
 	// converts to unix nano time to that of millisecond precision; this is all that we need.
-	now := time.Now().UnixNano() / 1_000_000
+	now := time.Now().UTC().UnixNano() / 1_000_000
 
 	// sign the request
 	hmac, err := auth.Sha256HMAC(secret, queryString, now, reqBody)
