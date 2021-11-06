@@ -41,9 +41,18 @@ func CalculatePositionsByRisk(
 				Price: entries[0],
 			},
 		}, nil
-
 	default:
-		positionIncrement := float64(math.Abs(entries[len(entries)-1]-entries[0])) * 1.0 / (float64(howMany) - 1.0)
+		var sideCoeff float64
+		switch side {
+		case tradeengineproto.TRADE_SIDE_BUY, tradeengineproto.TRADE_SIDE_LONG:
+			sideCoeff = 1.0
+		case tradeengineproto.TRADE_SIDE_SELL, tradeengineproto.TRADE_SIDE_SHORT:
+			sideCoeff = -1.0
+		default:
+			sideCoeff = 1.0
+		}
+
+		positionIncrement := float64(math.Abs(entries[len(entries)-1]-entries[0])) * 1.0 / (float64(howMany) - 1.0) * sideCoeff
 		for i := 0; i < howMany; i++ {
 			positions = append(positions, entries[0]+(float64(i)*positionIncrement))
 		}
