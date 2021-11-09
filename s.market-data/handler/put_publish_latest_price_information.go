@@ -9,19 +9,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/util"
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.market-data/assets"
 	marketdataproto "swallowtail/s.market-data/proto"
-
-	"github.com/monzo/slog"
 )
 
 var (
 	latestPriceAssets = assets.LatestPriceAssets
 )
 
-// Asset Info ...
+// AssetInfo ...
 type AssetInfo struct {
 	Symbol                   string
 	AssetPair                string
@@ -29,6 +29,23 @@ type AssetInfo struct {
 	PriceChangePercentage24h float64
 	Group                    string
 	ATH                      float64
+}
+
+//AssetInfoList ...
+type AssetInfoList []*AssetInfo
+
+func (a AssetInfoList) Len() int      { return len(a) }
+func (a AssetInfoList) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a AssetInfoList) Less(i, j int) bool {
+	if a[i].Group == a[j].Group {
+		if a[i].Symbol == a[j].Symbol {
+			return a[i].AssetPair < a[j].AssetPair
+		}
+
+		return a[i].Symbol < a[j].Symbol
+	}
+
+	return a[i].Group < a[j].Group
 }
 
 // PublishLatestPriceInformation ...
