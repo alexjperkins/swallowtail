@@ -14,7 +14,7 @@ build:
 	cd s.trade-engine && sudo make docker && cd .. && \
 	cd s.market-data &&  sudo make && cd .. && \
 	cd s.bitfinex &&  sudo make && cd .. && \
-	cd s.solana-nfts &&  sudo make && cd .. && \
+	cd s.solana-nfts && sudo make && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.exchanges &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
@@ -32,7 +32,7 @@ backend:
 	cd s.trade-engine && sudo make docker && cd .. && \
 	cd s.market-data && sudo make docker && cd .. && \
 	cd s.bitfinex && sudo make && cd .. && \
-	cd s.solana-nfts &&  sudo make && cd .. && \
+	cd s.solana-nfts && sudo make && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.exchanges &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \

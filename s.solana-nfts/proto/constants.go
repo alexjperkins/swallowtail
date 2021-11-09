@@ -16,6 +16,8 @@ const (
 	SolanartCollectionIDTurtles                  = "turtles"
 	SolanartCollectionIDTheTower                 = "thetower"
 	SolanartCollectionIDFrakt                    = "frakt"
+	SolanartCollectionIDShadowySuperCoder        = "shadowysupercoder"
+	SolanartCollectionIDGuardians                = "guardians"
 )
 
 const (
@@ -44,6 +46,8 @@ func IsValidCollectionIDByVendor(vendor SolanaNFTVendor, collectionID string) bo
 			SolanartCollectionIDFrakt,
 			SolanartCollectionIDTurtles,
 			SolanartCollectionIDTheTower,
+			SolanartCollectionIDShadowySuperCoder,
+			SolanartCollectionIDGuardians,
 			SolanartCollectionIDDegenerateApeAcademy:
 			return true
 		default:

@@ -225,7 +225,7 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 
 		sb.WriteString(
 			fmt.Sprintf(
-				"\n%s` [%s]:%s %s%s %.2fSOL 4h %.2fSOL` %s `24h %.2fSOL` %s",
+				"\n%s` [%s]:%s %s%s CURRENT: %.2f SOL 4h: %.2f SOL` %s `24h: %.2f SOL` %s `# LISTED: %d`",
 				nft.Emoji,
 				nft.HumanizedCollectionID,
 				addPadding(collectionIDIndent-len(nft.HumanizedCollectionID)+1),
@@ -236,6 +236,7 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 				emoji4h,
 				nft.Price24H,
 				emoji24h,
+				len(nfts),
 			),
 		)
 	}

@@ -72,5 +72,17 @@ var (
 			HumanizedCollectionID: "The Tower DAO",
 			Emoji:                 ":tokyo_tower:",
 		},
+		{
+			CollectionID:          solananftsproto.SolanartCollectionIDShadowySuperCoder,
+			Vendor:                solananftsproto.SolanaNFTVendor_SOLANART,
+			HumanizedCollectionID: "Shadowy Super Coders",
+			Emoji:                 ":computer:",
+		},
+		{
+			CollectionID:          solananftsproto.SolanartCollectionIDGuardians,
+			Vendor:                solananftsproto.SolanaNFTVendor_SOLANART,
+			HumanizedCollectionID: "Guardians",
+			Emoji:                 ":robot:",
+		},
 	}
 )
