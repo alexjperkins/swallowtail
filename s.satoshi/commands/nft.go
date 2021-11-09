@@ -23,12 +23,14 @@ const (
 
 var (
 	collections = map[string]string{
-		"babyapes":  solananftsproto.SolanartCollectionIDBabyApes,
-		"geckos":    solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarage,
-		"daa":       solananftsproto.SolanartCollectionIDDegenerateApeAcademy,
-		"thugbirdz": solananftsproto.SolanartCollectionIDThugBirdz,
-		"gloompunk": solananftsproto.SolanartCollectionIDGloomPunk,
-		"frakt":     solananftsproto.SolanartCollectionIDFrakt,
+		"babyapes":          solananftsproto.SolanartCollectionIDBabyApes,
+		"geckos":            solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarage,
+		"daa":               solananftsproto.SolanartCollectionIDDegenerateApeAcademy,
+		"thugbirdz":         solananftsproto.SolanartCollectionIDThugBirdz,
+		"gloompunk":         solananftsproto.SolanartCollectionIDGloomPunk,
+		"frakt":             solananftsproto.SolanartCollectionIDFrakt,
+		"shadowysupercoder": solananftsproto.SolanartCollectionIDShadowySuperCoder,
+		"guardians":         solananftsproto.SolanartCollectionIDGuardians,
 	}
 
 	collectionEmoji = map[string]string{
@@ -38,6 +40,8 @@ var (
 		solananftsproto.SolanartCollectionIDThugBirdz:                ":bird:",
 		solananftsproto.SolanartCollectionIDGloomPunk:                ":woman_artist:",
 		solananftsproto.SolanartCollectionIDFrakt:                    ":art:",
+		solananftsproto.SolanartCollectionIDShadowySuperCoder:        ":computer:",
+		solananftsproto.SolanartCollectionIDGuardians:                ":robot:",
 	}
 )
 
@@ -118,7 +122,7 @@ func priceStatsNFTHandler(ctx context.Context, tokens []string, s *discordgo.Ses
 	}
 
 	emoji := collectionEmoji[collectionID]
-	content := fmt.Sprintf("%s `[%s] Floor: %.2f SOL      Average90: %.2f SOL`", emoji, collectionID, floorPrice, totalPrice/float64(p90Index))
+	content := fmt.Sprintf("%s `[%s] Floor: %.2f SOL  Average P90: %.2f SOL  LISTED: %d`", emoji, collectionID, floorPrice, totalPrice/float64(p90Index), len(rsp.VendorStats))
 
 	if _, err := s.ChannelMessageSend(m.ChannelID, content); err != nil {
 		slog.Error(ctx, "Failed to send soana floor price stats to discord", errParams)
@@ -148,6 +152,12 @@ func scattergraphNFTHandler(ctx context.Context, tokens []string, s *discordgo.S
 		SearchContext: solananftsproto.SearchContextMarketData,
 		Limit:         50,
 	}).Send(ctx).Response()
+	if err != nil {
+		return gerrors.Augment(err, "Failed to create scattergraph: bad request", map[string]string{
+			"collection_id": collectionID,
+		})
+
+	}
 
 	items := rsp.VendorStats
 

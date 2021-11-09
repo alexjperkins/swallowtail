@@ -2,12 +2,13 @@ package parser
 
 import (
 	"context"
-	tradeengineproto "swallowtail/s.trade-engine/proto"
 	"testing"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 func TestDCAParser(t *testing.T) {
