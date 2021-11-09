@@ -72,9 +72,6 @@ func (s *MarketDataService) PublishVolatilityInformation(
 
 			diff := (latestPrice - f) / f
 
-			// TODO: remove
-			slog.Warn(ctx, "VOL: SYMBOL: %s, LATEST: %f, PREV %f, DIFF: %f: TRIGGER: %f", asset.Symbol, latestPrice, previousPrice, diff, asset.VolatilityRating.PercentageTriggerValue())
-
 			var increasing bool
 			switch {
 			case abs(diff) < asset.VolatilityRating.PercentageTriggerValue():
