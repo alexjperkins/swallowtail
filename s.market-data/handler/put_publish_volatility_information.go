@@ -42,11 +42,13 @@ func (s *MarketDataService) PublishVolatilityInformation(
 
 		go func() {
 			defer wg.Done()
+			time.Sleep(jitter(0, 59))
 
 			// Fetch the latest price.
 			latestPrice, _, err := fetchLatestPriceFromCoingecko(ctx, asset.Symbol, asset.AssetPair)
 			if err != nil {
 				slog.Error(ctx, "Failed to get latest price for %s%s to determine volatility", asset.Symbol, asset.AssetPair)
+				return
 			}
 
 			key := fmt.Sprintf("%s%s", asset.Symbol, asset.AssetPair)
@@ -65,6 +67,7 @@ func (s *MarketDataService) PublishVolatilityInformation(
 			f, ok := previousPrice.(float64)
 			if !ok {
 				slog.Error(ctx, "Invalid type in volatility cache: expected: float64, got: %T", previousPrice)
+				return
 			}
 
 			diff := (latestPrice - f) / f
@@ -95,6 +98,7 @@ func (s *MarketDataService) PublishVolatilityInformation(
 
 			if err := volatilityCache.Set(key, latestPrice); err != nil {
 				slog.Error(ctx, "Failed to set volatility cache: %s%s", asset.Symbol, asset.AssetPair)
+				return
 			}
 		}()
 	}
