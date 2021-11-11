@@ -75,7 +75,7 @@ func (s *MarketDataService) PublishVolatilityInformation(
 				return
 			}
 
-			diff := ((latestPrice - f) / f) * 100
+			diff := ((latestPrice - f) / f)
 			slog.Trace(ctx, "[%s] Volatility [%d] over trigger [%d]", asset.Symbol, asset.VolatilityRating.PercentageTriggerValue(), diff)
 
 			var increasing bool
