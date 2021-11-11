@@ -38,16 +38,21 @@ func (s *MarketDataService) PublishVolatilityInformation(
 	var wg sync.WaitGroup
 	for _, asset := range volatilityAssets {
 		asset := asset
-		wg.Add(1)
 
+		// If the asset is extremely volatile we skip as to not spam the bot alerts channel on discord.
+		if asset.VolatilityRating == assets.AssetVolatiltyRatingExtreme {
+			continue
+		}
+
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			time.Sleep(jitter(0, 59))
+			time.Sleep(jitter(0, 29))
 
 			// Fetch the latest price.
 			latestPrice, _, err := fetchLatestPriceFromCoingecko(ctx, asset.Symbol, asset.AssetPair)
 			if err != nil {
-				slog.Error(ctx, "Failed to get latest price for %s%s to determine volatility", asset.Symbol, asset.AssetPair)
+				slog.Error(ctx, "Failed to get latest price for %s%s to determine volatility: Error: %v", asset.Symbol, asset.AssetPair, err)
 				return
 			}
 
@@ -70,7 +75,8 @@ func (s *MarketDataService) PublishVolatilityInformation(
 				return
 			}
 
-			diff := (latestPrice - f) / f
+			diff := ((latestPrice - f) / f) * 100
+			slog.Trace(ctx, "[%s] Volatility [%d] over trigger [%d]", asset.Symbol, asset.VolatilityRating.PercentageTriggerValue(), diff)
 
 			var increasing bool
 			switch {
@@ -90,7 +96,7 @@ func (s *MarketDataService) PublishVolatilityInformation(
 				ChannelId:      discordproto.DiscordSatoshiAlertsChannel,
 				SenderId:       marketdataproto.MarketDataSystemActor,
 			}).Send(ctx).Response(); err != nil {
-				slog.Error(ctx, "Failed to notify discord of volatility info for: %s%s", asset.Symbol, asset.AssetPair, map[string]string{
+				slog.Error(ctx, "Failed to notify discord of volatility info for: %s%s: Error %v", asset.Symbol, asset.AssetPair, err, map[string]string{
 					"idempotency_key": idempotencyKey,
 					"error":           err.Error(),
 				})
