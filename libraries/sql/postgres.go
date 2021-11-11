@@ -4,16 +4,24 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
 	"sync"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/hashicorp/go-multierror"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 	"github.com/opentracing/opentracing-go"
+)
+
+const (
+	maxConnectionAttempts = 5
 )
 
 var (
@@ -48,12 +56,14 @@ func NewPostgresSQL(ctx context.Context, applySchema bool, serviceName string) (
 		return nil, terrors.Augment(err, "Failed to establish connection to postgresql database", errParams)
 	}
 
-	if err := pool.Ping(ctx); err != nil {
-		return nil, terrors.Augment(err, "Failed to reach to database: opts", errParams)
+	// Attempt connection with retry.
+	if err := pingWithRetry(ctx, pool); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_establish_connection_to_postgres", errParams)
 	}
 
 	slog.Debug(ctx, "Established connection to postgres database", errParams)
 
+	// Apply schema.
 	if applySchema {
 		err = CreateSchema(ctx, pool, serviceName)
 		if err != nil {
@@ -103,4 +113,27 @@ func (p *psql) Transaction(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Postgres transaction.")
 	defer span.Finish()
 	return p.p.BeginTx(ctx, txOptions)
+}
+
+func pingWithRetry(ctx context.Context, pool *pgxpool.Pool) error {
+	var (
+		cErr error
+		boff = backoff.NewExponentialBackOff()
+	)
+	for i := 0; i < maxConnectionAttempts; i++ {
+		if err := pool.Ping(ctx); err != nil {
+			cErr = multierror.Append(err)
+			d := boff.NextBackOff()
+			slog.Trace(ctx, "Failed to connect to postgres instance, retrying...", map[string]string{
+				"attempt":        strconv.Itoa(i),
+				"sleep_duration": d.String(),
+			})
+			time.Sleep(d)
+		}
+	}
+	if cErr != nil {
+		return gerrors.Augment(cErr, "failed_to_establish_connection_to_postgres_instance.after_retries", nil)
+	}
+
+	return nil
 }
