@@ -18,11 +18,12 @@ import (
 
 // publishToDiscord ...
 func publishToDiscord(ctx context.Context, content, channel, idempotencyKey string) error {
-	if _, err := (&discordproto.SendMsgToChannelRequest{
+	if _, err := (&discordproto.SendBatchMsgToChannelRequest{
 		Content:        content,
 		ChannelId:      channel,
 		IdempotencyKey: idempotencyKey,
 		SenderId:       marketdataproto.MarketDataSystemActor,
+		Separator:      "\n",
 	}).Send(ctx).Response(); err != nil {
 		return gerrors.Augment(err, "failed_to_publish_msg_to_discord", nil)
 	}
