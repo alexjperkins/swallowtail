@@ -6,6 +6,7 @@ const (
 	AssetVolatiltyRatingLow AssetVolatiltyRating = iota
 	AssetVolatiltyRatingMedium
 	AssetVolatiltyRatingHigh
+	AssetVolatiltyRatingExtreme
 )
 
 func (a AssetVolatiltyRating) PercentageTriggerValue() float64 {
@@ -180,13 +181,13 @@ var (
 		{
 			Symbol:           "liq",
 			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
+			VolatilityRating: AssetVolatiltyRatingExtreme,
 			Grouping:         AssetGroupSolanaEcosystem,
 		},
 		{
 			Symbol:           "fab",
 			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
+			VolatilityRating: AssetVolatiltyRatingExtreme,
 			Grouping:         AssetGroupSolanaEcosystem,
 		},
 		{
@@ -216,19 +217,19 @@ var (
 		{
 			Symbol:           "doge",
 			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
+			VolatilityRating: AssetVolatiltyRatingExtreme,
 			Grouping:         AssetGroupDogcoin,
 		},
 		{
 			Symbol:           "samo",
 			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
+			VolatilityRating: AssetVolatiltyRatingExtreme,
 			Grouping:         AssetGroupDogcoin,
 		},
 		{
 			Symbol:           "floki",
 			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
+			VolatilityRating: AssetVolatiltyRatingExtreme,
 			Grouping:         AssetGroupDogcoin,
 		},
 		{
@@ -246,7 +247,7 @@ var (
 		{
 			Symbol:           "frkt",
 			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
+			VolatilityRating: AssetVolatiltyRatingExtreme,
 		},
 		{
 			Symbol:           "htr",
@@ -269,7 +270,7 @@ var (
 		{
 			Symbol:           "cheems",
 			AssetPair:        "usd",
-			VolatilityRating: AssetVolatiltyRatingHigh,
+			VolatilityRating: AssetVolatiltyRatingExtreme,
 			Grouping:         AssetGroupDogcoin,
 		},
 		{
