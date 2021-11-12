@@ -16,7 +16,8 @@ type VendorPriceStatistic struct {
 
 // GetVendorPriceStatisticsByCollectionIDResponse ...
 type GetVendorPriceStatisticsByCollectionIDResponse struct {
-	Stats []*VendorPriceStatistic `json:"stats"`
+	Stats       []*VendorPriceStatistic `json:"stats"`
+	TotalListed int                     `json:"total_listed"`
 }
 
 // SolanartPriceStatistic ...
