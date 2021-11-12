@@ -19,7 +19,7 @@ func formatContent(ctx context.Context, username, timestamp, content string) str
 		timestamp = ts.Truncate(time.Minute).String()
 	}
 
-	header := fmt.Sprintf(":doco: `MOD MESSAGE:` %s   :brain:", username)
+	header := fmt.Sprintf(":dove: `MOD MESSAGE:` %s   :brain:", username)
 	tpl := `
 Timestamp:    %v
 
