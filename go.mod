@@ -56,10 +56,10 @@ require (
 	golang.org/x/net v0.0.0-20211111160137-58aab5ef257a // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211111213525-f221eed1c01e // indirect
+	golang.org/x/sys v0.0.0-20211112164355-7580c6e521dc // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.60.0
-	google.golang.org/genproto v0.0.0-20211111162719-482062a4217b // indirect
+	google.golang.org/genproto v0.0.0-20211112145013-271947fe86fd // indirect
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect

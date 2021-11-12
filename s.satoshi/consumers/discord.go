@@ -63,17 +63,6 @@ func (dc DiscordConsumer) IsActive() bool {
 	return dc.Active
 }
 
-func formatContent(ctx context.Context, username, timestamp, content string) string {
-	ts, err := time.Parse(time.RFC3339, timestamp)
-	switch {
-	case err != nil:
-		slog.Warn(ctx, "Failed to parse timestamp; setting as original: %s, err: %v", timestamp, err)
-	default:
-		timestamp = ts.Truncate(time.Minute).String()
-	}
-	return fmt.Sprintf("%s[%v]:\n```%s```", username, timestamp, content)
-}
-
 func handleModMessages(
 	ctx context.Context, c chan *ConsumerMessage, isActive bool,
 ) func(s *discordgo.Session, m *discordgo.MessageCreate) {
