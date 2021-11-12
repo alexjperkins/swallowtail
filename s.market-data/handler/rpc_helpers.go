@@ -130,7 +130,7 @@ func getFundingRateFromBitfinex(ctx context.Context, symbol string) (float64, er
 	return float64(rsp.FundingRates[0].FundingRate), nil
 }
 
-func getSolanaNFTFloorPrice(ctx context.Context, collectionID string, vendor solananftsproto.SolanaNFTVendor) ([]*solananftsproto.PriceStatistic, error) {
+func getSolanaNFTFloorPrice(ctx context.Context, collectionID string, vendor solananftsproto.SolanaNFTVendor) (*solananftsproto.ReadSolanaPriceStatisticsByCollectionIDResponse, error) {
 	rsp, err := (&solananftsproto.ReadSolanaPriceStatisticsByCollectionIDRequest{
 		CollectionId:  collectionID,
 		Vendor:        vendor,
@@ -145,6 +145,5 @@ func getSolanaNFTFloorPrice(ctx context.Context, collectionID string, vendor sol
 		})
 	}
 
-	return rsp.VendorStats, nil
-
+	return rsp, nil
 }

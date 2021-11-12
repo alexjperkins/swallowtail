@@ -49,5 +49,6 @@ func (s *SolanaNFTsService) ReadSolanaPriceStatisticsByCollectionID(
 	protos := marshaling.PriceStatisticDTOToProtos(rsp, in.Vendor)
 	return &solananftsproto.ReadSolanaPriceStatisticsByCollectionIDResponse{
 		VendorStats: protos,
+		TotalListed: int64(rsp.TotalListed),
 	}, nil
 }

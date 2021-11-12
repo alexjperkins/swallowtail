@@ -91,6 +91,9 @@ func GetVendorPriceStatisticsByCollectionID(ctx context.Context, vendor solananf
 		})
 	}
 
+	// Set total listed.
+	rsp.TotalListed = len(rsp.Stats)
+
 	// Apply limit.
 	if limit > 0 {
 		rsp.Stats = rsp.Stats[0:limit]

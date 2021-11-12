@@ -38,4 +38,5 @@ message PriceStatistic {
 
 message ReadSolanaPriceStatisticsByCollectionIDResponse {
     repeated PriceStatistic vendor_stats = 1;
+    int64 total_listed = 2;
 }

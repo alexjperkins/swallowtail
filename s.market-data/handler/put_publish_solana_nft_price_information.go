@@ -26,6 +26,7 @@ type SolanaNFTInfo struct {
 	Emoji                 string
 	Price4H               float64
 	Price24H              float64
+	TotalListed           int
 }
 
 var (
@@ -87,15 +88,17 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 				return
 			}
 
+			stats := rsp.VendorStats
+
 			// We have a limit of one so this is what we expect. But lets be defensive.
 			var solanaNftInfo *SolanaNFTInfo
-			switch len(rsp) {
+			switch len(stats) {
 			case 0:
 				return
 			default:
 			}
 
-			r := rsp[0]
+			r := stats[0]
 			solanaNftInfo = &SolanaNFTInfo{
 				Price:                 float64(r.Price),
 				CollectionID:          nft.CollectionID,
@@ -103,6 +106,7 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 				VendorID:              r.Id,
 				Vendor:                r.Vendor.String(),
 				Emoji:                 nft.Emoji,
+				TotalListed:           int(rsp.TotalListed),
 			}
 
 			var (
@@ -236,7 +240,7 @@ func (s *MarketDataService) PublishSolanaNFTPriceInformation(
 				emoji4h,
 				nft.Price24H,
 				emoji24h,
-				len(nfts),
+				nft.TotalListed,
 			),
 		)
 	}
