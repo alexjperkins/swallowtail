@@ -6,18 +6,19 @@ const (
 )
 
 const (
-	SolanartCollectionIDGalacticGeckoSpaceGarage = "galacticgeckospacegarage"
-	SolanartCollectionIDDegenerateApeAcademy     = "degenape"
-	SolanartCollectionIDGloomPunk                = "gloompunk"
-	SolanartCollectionIDSolarmy2D                = "solarmy2d"
-	SolanartCollectionIDSolarmy3D                = "solarmy3d"
-	SolanartCollectionIDThugBirdz                = "thugbirdz"
-	SolanartCollectionIDBabyApes                 = "babyapes"
-	SolanartCollectionIDTurtles                  = "turtles"
-	SolanartCollectionIDTheTower                 = "thetower"
-	SolanartCollectionIDFrakt                    = "frakt"
-	SolanartCollectionIDShadowySuperCoder        = "shadowysupercoder"
-	SolanartCollectionIDGuardians                = "guardians"
+	SolanartCollectionIDGalacticGeckoSpaceGarage         = "galacticgeckospacegarage"
+	SolanartCollectionIDGalacticGeckoSpaceGarageCrystals = "galacticgeckospacegarage_crystals"
+	SolanartCollectionIDDegenerateApeAcademy             = "degenape"
+	SolanartCollectionIDGloomPunk                        = "gloompunk"
+	SolanartCollectionIDSolarmy2D                        = "solarmy2d"
+	SolanartCollectionIDSolarmy3D                        = "solarmy3d"
+	SolanartCollectionIDThugBirdz                        = "thugbirdz"
+	SolanartCollectionIDBabyApes                         = "babyapes"
+	SolanartCollectionIDTurtles                          = "turtles"
+	SolanartCollectionIDTheTower                         = "thetower"
+	SolanartCollectionIDFrakt                            = "frakt"
+	SolanartCollectionIDShadowySuperCoder                = "shadowysupercoder"
+	SolanartCollectionIDGuardians                        = "guardians"
 )
 
 const (
@@ -38,6 +39,7 @@ func IsValidCollectionIDByVendor(vendor SolanaNFTVendor, collectionID string) bo
 		switch collectionID {
 		case
 			SolanartCollectionIDGalacticGeckoSpaceGarage,
+			SolanartCollectionIDGalacticGeckoSpaceGarageCrystals,
 			SolanartCollectionIDGloomPunk,
 			SolanartCollectionIDBabyApes,
 			SolanartCollectionIDSolarmy2D,

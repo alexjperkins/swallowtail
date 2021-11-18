@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -25,6 +26,7 @@ var (
 	collections = map[string]string{
 		"babyapes":          solananftsproto.SolanartCollectionIDBabyApes,
 		"geckos":            solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarage,
+		"crystals":          solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarageCrystals,
 		"daa":               solananftsproto.SolanartCollectionIDDegenerateApeAcademy,
 		"thugbirdz":         solananftsproto.SolanartCollectionIDThugBirdz,
 		"gloompunk":         solananftsproto.SolanartCollectionIDGloomPunk,
@@ -34,14 +36,15 @@ var (
 	}
 
 	collectionEmoji = map[string]string{
-		solananftsproto.SolanartCollectionIDBabyApes:                 ":monkey_face:",
-		solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarage: ":lizard:",
-		solananftsproto.SolanartCollectionIDDegenerateApeAcademy:     ":monkey:",
-		solananftsproto.SolanartCollectionIDThugBirdz:                ":bird:",
-		solananftsproto.SolanartCollectionIDGloomPunk:                ":woman_artist:",
-		solananftsproto.SolanartCollectionIDFrakt:                    ":art:",
-		solananftsproto.SolanartCollectionIDShadowySuperCoder:        ":computer:",
-		solananftsproto.SolanartCollectionIDGuardians:                ":robot:",
+		solananftsproto.SolanartCollectionIDBabyApes:                         ":monkey_face:",
+		solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarage:         ":lizard:",
+		solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarageCrystals: ":diamond_shape_with_a_dot_inside:",
+		solananftsproto.SolanartCollectionIDDegenerateApeAcademy:             ":monkey:",
+		solananftsproto.SolanartCollectionIDThugBirdz:                        ":bird:",
+		solananftsproto.SolanartCollectionIDGloomPunk:                        ":woman_artist:",
+		solananftsproto.SolanartCollectionIDFrakt:                            ":art:",
+		solananftsproto.SolanartCollectionIDShadowySuperCoder:                ":computer:",
+		solananftsproto.SolanartCollectionIDGuardians:                        ":robot:",
 	}
 )
 
@@ -69,6 +72,13 @@ func init() {
 				Description:         "Prints a stats of all nfts in a collection",
 				Handler:             priceStatsNFTHandler,
 				FailureMsg:          "Please check the vendor & the collection id are correct. No spaces!",
+			},
+			"list": {
+				ID:                  "nft-list",
+				MinimumNumberOfArgs: 0,
+				Usage:               "!nft list",
+				Description:         "Lists all available Solana NFT collections",
+				Handler:             listNFTHandler,
 			},
 		},
 	})
@@ -267,6 +277,21 @@ func scattergraphNFTHandler(ctx context.Context, tokens []string, s *discordgo.S
 
 	if err := os.Remove(fn); err != nil {
 		slog.Error(ctx, "Failed to remove scattergraph of nft collection")
+	}
+
+	return nil
+}
+
+func listNFTHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	var cc []string
+	for _, c := range collections {
+		cc = append(cc, c)
+	}
+
+	msg := fmt.Sprintf("Available Solana NFT collections: `%v`", strings.Join(cc, " "))
+
+	if _, err := s.ChannelMessageSend(m.ChannelID, msg); err != nil {
+		slog.Error(ctx, "Failed to send message to discord: list solana nft colletion: Error %v", err)
 	}
 
 	return nil
