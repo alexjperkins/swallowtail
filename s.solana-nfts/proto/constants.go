@@ -7,7 +7,7 @@ const (
 
 const (
 	SolanartCollectionIDGalacticGeckoSpaceGarage         = "galacticgeckospacegarage"
-	SolanartCollectionIDGalacticGeckoSpaceGarageCrystals = "galacticgeckospacegarageenigmacrystals"
+	SolanartCollectionIDGalacticGeckoSpaceGarageCrystals = "galacticgeckoenigmacrystals"
 	SolanartCollectionIDDegenerateApeAcademy             = "degenape"
 	SolanartCollectionIDGloomPunk                        = "gloompunk"
 	SolanartCollectionIDSolarmy2D                        = "solarmy2d"
