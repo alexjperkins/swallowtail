@@ -284,8 +284,8 @@ func scattergraphNFTHandler(ctx context.Context, tokens []string, s *discordgo.S
 
 func listNFTHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
 	var cc []string
-	for _, c := range collections {
-		cc = append(cc, c)
+	for k := range collections {
+		cc = append(cc, k)
 	}
 
 	msg := fmt.Sprintf("Available Solana NFT collections: `%v`", strings.Join(cc, " "))
