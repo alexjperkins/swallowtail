@@ -19,6 +19,12 @@ var (
 			Emoji:                 ":lizard:",
 		},
 		{
+			CollectionID:          solananftsproto.SolanartCollectionIDGalacticGeckoSpaceGarageCrystals,
+			Vendor:                solananftsproto.SolanaNFTVendor_SOLANART,
+			HumanizedCollectionID: "Galactic Gecko Space Garage Crystals",
+			Emoji:                 ":diamond_shape_with_a_dot_inside:",
+		},
+		{
 			CollectionID:          solananftsproto.SolanartCollectionIDDegenerateApeAcademy,
 			Vendor:                solananftsproto.SolanaNFTVendor_SOLANART,
 			HumanizedCollectionID: "Degenerate Ape Academy",
