@@ -64,7 +64,7 @@ func Init(ctx context.Context) error {
 		return err
 	}
 
-	slog.Info(ctx, "Gathered required futures exchange information")
+	slog.Info(ctx, "Gathered required futures exchange information: #%d assets", len(symbolInformation))
 
 	// Start our refresh loop.
 	go refresh(ctx)
@@ -107,7 +107,6 @@ func gatherExchangeInfo(ctx context.Context) error {
 	if err != nil {
 		return gerrors.Augment(err, "failed_to_init_exchange_info", nil)
 	}
-
 	if rsp == nil {
 		return gerrors.Augment(err, "failed_to_init_exchange_info.empty_response", nil)
 	}
@@ -126,8 +125,8 @@ func gatherExchangeInfo(ctx context.Context) error {
 			marketMinQty  string
 		)
 
-		var b []byte
-		if err := json.Unmarshal(b, s.Filters); err != nil {
+		b, err := json.Marshal(s.Filters)
+		if err != nil {
 			return gerrors.Augment(err, "failed_to_init_exchange_info.bad_filter", map[string]string{
 				"symbol": s.Symbol,
 			})
