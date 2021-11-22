@@ -48,6 +48,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/superoo7/go-gecko v1.0.0
+	github.com/tidwall/gjson v1.11.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
 	github.com/wcharczuk/go-chart v2.0.1+incompatible
 	go.opencensus.io v0.23.0 // indirect
