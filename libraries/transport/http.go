@@ -151,7 +151,7 @@ func (h *httpClient) doRawRequest(ctx context.Context, method, url string, body 
 		// Best effort; here we attempt to read the response bytes.
 		defer rsp.Body.Close()
 		rspBodyBytes, _ := ioutil.ReadAll(rsp.Body)
-		slog.Error(ctx, "Failed request: Response: %+v, %s", rsp, string(rspBodyBytes))
+		slog.Error(ctx, "Failed request: %s %s Response: %+v, %s", method, url, rsp, string(rspBodyBytes))
 
 		errParams["error"] = string(rspBodyBytes)
 		return nil, gerrors.Augment(err, "failed_to_execute_request.status_code", errParams)
