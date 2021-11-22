@@ -88,7 +88,7 @@ func ProtoOrderToExecutePerpetualsFutureTradeRequest(in *binanceproto.PerpetualF
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", nil)
 	}
 
-	slog.Warn(context.Background(), "%s: Lot size: %v, tick size: %v", assetQuantityPrecision, assetPricePrecision)
+	slog.Warn(context.Background(), "HERE %s: Lot size: %v, tick size: %v", in.Symbol, assetQuantityPrecision, assetPricePrecision)
 
 	// Convert floats to minimum precision rounded strings.
 	quantity := roundToPrecisionString(float64(in.Quantity), assetQuantityPrecision)

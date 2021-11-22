@@ -29,6 +29,11 @@ func TestCalculatePrecision(t *testing.T) {
 			value:             "0.0001",
 			expectedPrecision: 4,
 		},
+		{
+			name:              "vet-example",
+			value:             "0.00010",
+			expectedPrecision: 4,
+		},
 	}
 
 	for _, tt := range tests {

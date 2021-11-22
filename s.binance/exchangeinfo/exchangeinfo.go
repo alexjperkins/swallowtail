@@ -139,49 +139,49 @@ func gatherExchangeInfo(ctx context.Context) error {
 				case FilterTypePrice.String() == ft.String():
 					switch v := f.Get("maxPrice"); {
 					case !v.Exists() || v.String() == "":
-						slog.Error(ctx, "Failed to parse float; max price: %s: %v", s.Symbol, err)
+						slog.Error(ctx, "Failed to parse ; max price: %s: %v", s.Symbol, err)
 					default:
 						maxPrice = v.String()
 					}
 
 					switch v := f.Get("minPrice"); {
 					case !v.Exists() || v.String() == "":
-						slog.Error(ctx, "Failed to parse float; min price: %s: %v", s.Symbol, err)
+						slog.Error(ctx, "Failed to parse ; min price: %s: %v", s.Symbol, err)
 					default:
 						minPrice = v.String()
 					}
 
 					switch v := f.Get("tickSize"); {
 					case !v.Exists() || v.String() == "":
-						slog.Error(ctx, "Failed to parse float; tick size: %s: %v", s.Symbol, err)
+						slog.Error(ctx, "Failed to parse ; tick size: %s: %v", s.Symbol, err)
 					default:
 						tickSize = v.String()
 					}
 				case FilterTypeLotSize.String() == ft.String():
 					switch v := f.Get("stepSize"); {
 					case !v.Exists() || v.String() == "":
-						slog.Error(ctx, "Failed to parse float; lot size: %s: %v", s.Symbol, err)
+						slog.Error(ctx, "Failed to parse ; lot size: %s: %v", s.Symbol, err)
 					default:
 						lotSize = v.String()
 					}
 
 					switch v := f.Get("minQty"); {
 					case !v.Exists() || v.String() == "":
-						slog.Error(ctx, "Failed to parse float; min qty: %s: %v", s.Symbol, err)
+						slog.Error(ctx, "Failed to parse ; min qty: %s: %v", s.Symbol, err)
 					default:
 						minQty = v.String()
 					}
 				case FilterTypeMarketLotSize.String() == ft.String():
 					switch v := f.Get("stepSize"); {
 					case !v.Exists() || v.String() == "":
-						slog.Error(ctx, "Failed to parse float; market lot size: %s: %v", s.Symbol, err)
+						slog.Error(ctx, "Failed to parse ; market lot size: %s: %v", s.Symbol, err)
 					default:
 						marketLotSize = v.String()
 					}
 
 					switch v := f.Get("minQty"); {
 					case !v.Exists() || v.String() == "":
-						slog.Error(ctx, "Failed to parse float; market min qty: %s: %v", s.Symbol, err)
+						slog.Error(ctx, "Failed to parse ; market min qty: %s: %v", s.Symbol, err)
 					default:
 						marketMinQty = v.String()
 					}
@@ -206,7 +206,9 @@ func gatherExchangeInfo(ctx context.Context) error {
 			MarketMinQuantity: marketMinQty,
 		}
 
-		symbolInformation[s.Symbol] = d
+		symbolInformation[strings.ToLower(s.Symbol)] = d
+
+		slog.Info(ctx, "SYMBOL: %s, TICK_SIZE: %v, LOT_SIZE: %v, DATA: %+v", s.Symbol, tickSize, lotSize, d)
 	}
 
 	return nil
@@ -217,7 +219,7 @@ func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (int, b
 	mu.RLock()
 	defer mu.RUnlock()
 
-	v, ok := symbolInformation[baseAsset]
+	v, ok := symbolInformation[strings.ToLower(baseAsset)]
 	if !ok {
 		return 0, false
 	}
@@ -234,11 +236,7 @@ func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (int, b
 		return 0, false
 	}
 
-	if isMarketOrder {
-		return len(strings.ReplaceAll(vq, ".", "")) - 1, true
-	}
-
-	return len(strings.ReplaceAll(v.LotSize, ".", "")) - 1, true
+	return calculatePrecision(vq), true
 }
 
 // GetBaseAssetPricePrecision ...
@@ -246,7 +244,7 @@ func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	v, ok := symbolInformation[baseAsset]
+	v, ok := symbolInformation[strings.ToLower(baseAsset)]
 	if !ok {
 		return 0, false
 	}
@@ -255,7 +253,7 @@ func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
 		return 0, false
 	}
 
-	return len(strings.ReplaceAll(v.TickSize, ".", "")) - 1, true
+	return calculatePrecision(v.TickSize), true
 }
 
 // GetBaseAssetMinQty...
@@ -263,7 +261,7 @@ func GetBaseAssetMinQty(baseAsset string, isMarketOrder bool) (float64, bool, er
 	mu.RLock()
 	defer mu.RUnlock()
 
-	v, ok := symbolInformation[baseAsset]
+	v, ok := symbolInformation[strings.ToLower(baseAsset)]
 	if !ok {
 		return 0, false, nil
 	}
@@ -287,8 +285,9 @@ func GetBaseAssetMinQty(baseAsset string, isMarketOrder bool) (float64, bool, er
 }
 
 func calculatePrecision(v string) int {
-	if strings.Contains(v, ".") {
-		return len(v) - 2
+	trimmed := strings.TrimRight(v, "0")
+	if strings.Contains(trimmed, ".") {
+		return len(trimmed) - 2
 	}
 
 	return 0
