@@ -158,14 +158,15 @@ type GetFuturesExchangeInfoResponse struct {
 		MarginAvailable bool   `json:"margainAvailable"`
 	} `json:"assets"`
 	Symbols []struct {
-		Symbol            string `json:"symbol"`
-		Pair              string `json:"pair"`
-		ContractType      string `json:"contractType"`
-		BaseAsset         string `json:"baseAsset"`
-		QuoteAsset        string `json:"quoteAsset"`
-		MarginAsset       string `json:"marginAsset"`
-		QuantityPrecision int    `json:"quantityPrecision"`
-		PricePrecision    int    `json:"pricePrecision"`
+		Symbol            string        `json:"symbol"`
+		Pair              string        `json:"pair"`
+		ContractType      string        `json:"contractType"`
+		BaseAsset         string        `json:"baseAsset"`
+		QuoteAsset        string        `json:"quoteAsset"`
+		MarginAsset       string        `json:"marginAsset"`
+		QuantityPrecision int           `json:"quantityPrecision"`
+		PricePrecision    int           `json:"pricePrecision"`
+		Filters           []interface{} `json:"filters"`
 	}
 }
 

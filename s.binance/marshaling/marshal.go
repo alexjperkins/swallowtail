@@ -77,7 +77,7 @@ func ProtoOrdersToExecutePerpetualsFutureTradeRequest(ins []*binanceproto.Perpet
 // ProtoOrderToExecutePerpetualsFutureTradeRequest ...
 func ProtoOrderToExecutePerpetualsFutureTradeRequest(in *binanceproto.PerpetualFuturesOrder) (*client.ExecutePerpetualFuturesTradeRequest, error) {
 	// Round the quantity to the minimum precision allowed on the exchange.
-	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(in.Symbol)
+	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(in.Symbol, in.OrderType == binanceproto.BinanceOrderType_BINANCE_MARKET)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", nil)
 	}
