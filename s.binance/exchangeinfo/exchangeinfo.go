@@ -285,3 +285,11 @@ func GetBaseAssetMinQty(baseAsset string, isMarketOrder bool) (float64, bool, er
 
 	return vf, true, nil
 }
+
+func calculatePrecision(v string) int {
+	if strings.Contains(v, ".") {
+		return len(v) - 2
+	}
+
+	return 0
+}
