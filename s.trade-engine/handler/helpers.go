@@ -17,13 +17,13 @@ func isActorValid(actorID string) bool {
 	}
 }
 
-func validateTradeParticipant(tradeParticipant *tradeengineproto.AddParticipantToTradeRequest, trade *domain.Trade) error {
+func validateTradeStrategyParticipant(tradeStrategyParticipant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest, trade *domain.TradeStrategy) error {
 	switch {
-	case tradeParticipant.Risk > 50:
-		return gerrors.FailedPrecondition("invalid_trade_participant.risk_too_high", nil)
-	case tradeParticipant.Size < 0 && tradeParticipant.Risk < 0:
+	case tradeStrategyParticipant.Risk > 50:
+		return gerrors.FailedPrecondition("invalid_tradeStrategy_participant.risk_too_high", nil)
+	case tradeStrategyParticipant.Size < 0 && tradeStrategyParticipant.Risk < 0:
 		return gerrors.BadParam("bad_param.risk_or_size_cannot_be_less_than_zero", nil)
-	case tradeParticipant.Size == 0 && tradeParticipant.Risk == 0:
+	case tradeStrategyParticipant.Size == 0 && tradeStrategyParticipant.Risk == 0:
 		return gerrors.BadParam("bad_params.risk_and_size_cannot_be_zero", nil)
 	}
 

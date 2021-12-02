@@ -14,22 +14,22 @@ import (
 
 // FuturesTradeResponse ...
 type FuturesTradeResponse struct {
-	ExchangeTradeID        string
+	ExchangeTradeIDs       []string
 	NotionalSize           float64
 	ExecutionTimestamp     time.Time
 	NumberOfExecutedOrders int
 	ExecutionAlgoStrategy  string
 }
 
-// ExecuteFuturesTradeForParticipant ...
-func ExecuteFuturesTradeForParticipant(
+// ExecuteFuturesTradeStrategyForParticipant ...
+func ExecuteFuturesTradeStrategyForParticipant(
 	ctx context.Context,
-	trade *domain.Trade,
-	participant *tradeengineproto.AddParticipantToTradeRequest,
+	trade *domain.TradeStrategy,
+	participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest,
 	exchange *accountproto.Exchange,
 ) (*FuturesTradeResponse, error) {
 	switch {
-	case exchange.ExchangeType == accountproto.ExchangeType_BINANCE && trade.TradeType == tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS.String():
+	case exchange.ExchangeType == accountproto.ExchangeType_BINANCE && trade.InstrumentType == tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL.String():
 		return executeBinanceFuturesTrade(ctx, trade, participant, &binanceproto.Credentials{
 			ApiKey:    exchange.ApiKey,
 			SecretKey: exchange.SecretKey,
@@ -43,7 +43,7 @@ func ExecuteFuturesTradeForParticipant(
 	default:
 		return nil, gerrors.Unimplemented("cannot_execute_trade.unimplemented", map[string]string{
 			"exchange":   exchange.ExchangeType.String(),
-			"trade_type": trade.TradeType,
+			"trade_type": trade.InstrumentType,
 		})
 	}
 }

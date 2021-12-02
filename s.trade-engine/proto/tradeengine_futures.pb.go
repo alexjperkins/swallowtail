@@ -10,19 +10,19 @@ import (
 	"swallowtail/libraries/gerrors"
 )
 
-// --- Create Trade --- //
+// --- Create Trade Strategy --- //
 
-type CreateTradeFuture struct {
+type CreateTradeStrategyFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *CreateTradeResponse
+	resultc chan *CreateTradeStrategyResponse
 	ctx     context.Context
 }
 
-func (a *CreateTradeFuture) Response() (*CreateTradeResponse, error) {
+func (a *CreateTradeStrategyFuture) Response() (*CreateTradeStrategyResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "create_trade", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "create_trade_strategy", err)
 		}
 	}()
 
@@ -36,18 +36,18 @@ func (a *CreateTradeFuture) Response() (*CreateTradeResponse, error) {
 	}
 }
 
-func (r *CreateTradeRequest) Send(ctx context.Context) *CreateTradeFuture {
+func (r *CreateTradeStrategyRequest) Send(ctx context.Context) *CreateTradeStrategyFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *CreateTradeRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *CreateTradeFuture {
+func (r *CreateTradeStrategyRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *CreateTradeStrategyFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *CreateTradeResponse, 1)
+	resultc := make(chan *CreateTradeStrategyResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-tradeengine:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
-		return &CreateTradeFuture{
+		return &CreateTradeStrategyFuture{
 			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
@@ -59,15 +59,15 @@ func (r *CreateTradeRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.CreateTrade(ctx, r)
+		rsp, err := c.CreateTradeStrategy(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_to_create_trade", nil)
+			errc <- gerrors.Augment(err, "failed_to_create_trade_strategy", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
-	return &CreateTradeFuture{
+	return &CreateTradeStrategyFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()
@@ -146,19 +146,19 @@ func (r *ReadTradeByTradeIDRequest) SendWithTimeout(ctx context.Context, timeout
 	}
 }
 
-// --- Add Participant To Trade --- //
+// --- Execute Trade Strategy For Participant --- //
 
-type AddParticipantToTradeFuture struct {
+type ExecuteTradeStrategyForParticipantFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *AddParticipantToTradeResponse
+	resultc chan *ExecuteTradeStrategyForParticipantResponse
 	ctx     context.Context
 }
 
-func (a *AddParticipantToTradeFuture) Response() (*AddParticipantToTradeResponse, error) {
+func (a *ExecuteTradeStrategyForParticipantFuture) Response() (*ExecuteTradeStrategyForParticipantResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "add_participant_to_trade", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "execute_trade_strategy_for_participant", err)
 		}
 	}()
 
@@ -172,18 +172,18 @@ func (a *AddParticipantToTradeFuture) Response() (*AddParticipantToTradeResponse
 	}
 }
 
-func (r *AddParticipantToTradeRequest) Send(ctx context.Context) *AddParticipantToTradeFuture {
+func (r *ExecuteTradeStrategyForParticipantRequest) Send(ctx context.Context) *ExecuteTradeStrategyForParticipantFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *AddParticipantToTradeRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *AddParticipantToTradeFuture {
+func (r *ExecuteTradeStrategyForParticipantRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ExecuteTradeStrategyForParticipantFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *AddParticipantToTradeResponse, 1)
+	resultc := make(chan *ExecuteTradeStrategyForParticipantResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-tradeengine:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
-		return &AddParticipantToTradeFuture{
+		return &ExecuteTradeStrategyForParticipantFuture{
 			ctx:  ctx,
 			errc: errc,
 			closer: func() error {
@@ -200,15 +200,15 @@ func (r *AddParticipantToTradeRequest) SendWithTimeout(ctx context.Context, time
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.AddParticipantToTrade(ctx, r)
+		rsp, err := c.ExecuteTradeStrategyForParticipant(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_to_add_participant_to_trade", nil)
+			errc <- gerrors.Augment(err, "failed_to_execute_trade_strategy_for_trade_participant", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
-	return &AddParticipantToTradeFuture{
+	return &ExecuteTradeStrategyForParticipantFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

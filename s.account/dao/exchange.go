@@ -2,11 +2,13 @@ package dao
 
 import (
 	"context"
+	"strings"
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.account/domain"
 	"time"
 
 	"github.com/imdario/mergo"
+	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 )
 
@@ -29,6 +31,43 @@ func ReadExchangeByExchangeID(ctx context.Context, exchangeID string) (*domain.E
 	}
 
 	return exchanges[0], nil
+}
+
+// ReadExchangeByExchangeDetails ...
+func ReadExchangeByExchangeDetails(ctx context.Context, exchangeName, userID, subaccount string) (*domain.Exchange, error) {
+	var (
+		baseSql = `
+		SELECT * FROM s_account_exchanges
+		WHERE
+			exchange=$1
+		AND
+			user=$2
+		`
+		exchanges []*domain.Exchange
+	)
+
+	var sql = baseSql
+	if subaccount != "" {
+		sql = baseSql + `AND subaccount=$3`
+	}
+
+	if err := db.Select(ctx, &exchanges, sql, strings.ToUpper(exchangeName), userID, subaccount); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	}
+
+	switch len(exchanges) {
+	case 0:
+		return nil, gerrors.NotFound("exchanges_not_found_for_user_id", nil)
+	case 1:
+		return exchanges[0], nil
+	default:
+		slog.Critical(ctx, "Inconsistent state: more than one identical exchange found for user", map[string]string{
+			"exchange_name": exchangeName,
+			"user_id":       userID,
+			"subaccount":    subaccount,
+		})
+		return exchanges[0], nil
+	}
 }
 
 // ListExchangesByUserID ...

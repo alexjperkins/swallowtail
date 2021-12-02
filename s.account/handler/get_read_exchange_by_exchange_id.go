@@ -2,11 +2,12 @@ package handler
 
 import (
 	"context"
+
+	"github.com/monzo/terrors"
+
 	"swallowtail/s.account/dao"
 	"swallowtail/s.account/marshaling"
 	accountproto "swallowtail/s.account/proto"
-
-	"github.com/monzo/terrors"
 )
 
 // ReadExchange ...

@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BinanceClient interface {
 	ListAllAssetPairs(ctx context.Context, in *ListAllAssetPairsRequest, opts ...grpc.CallOption) (*ListAllAssetPairsResponse, error)
-	ExecuteFuturesPerpetualsTrade(ctx context.Context, in *ExecuteFuturesPerpetualsTradeRequest, opts ...grpc.CallOption) (*ExecuteFuturesPerpetualsTradeResponse, error)
+	ExecuteNewFuturesPerpetualOrder(ctx context.Context, in *ExecuteNewFuturesPerpetualOrderRequest, opts ...grpc.CallOption) (*ExecuteNewFuturesPerpetualOrderResponse, error)
 	GetLatestPrice(ctx context.Context, in *GetLatestPriceRequest, opts ...grpc.CallOption) (*GetLatestPriceResponse, error)
 	ReadPerpetualFuturesAccount(ctx context.Context, in *ReadPerpetualFuturesAccountRequest, opts ...grpc.CallOption) (*ReadPerpetualFuturesAccountResponse, error)
 	GetFundingRates(ctx context.Context, in *GetFundingRatesRequest, opts ...grpc.CallOption) (*GetFundingRatesResponse, error)
@@ -43,9 +43,9 @@ func (c *binanceClient) ListAllAssetPairs(ctx context.Context, in *ListAllAssetP
 	return out, nil
 }
 
-func (c *binanceClient) ExecuteFuturesPerpetualsTrade(ctx context.Context, in *ExecuteFuturesPerpetualsTradeRequest, opts ...grpc.CallOption) (*ExecuteFuturesPerpetualsTradeResponse, error) {
-	out := new(ExecuteFuturesPerpetualsTradeResponse)
-	err := c.cc.Invoke(ctx, "/binance/ExecuteFuturesPerpetualsTrade", in, out, opts...)
+func (c *binanceClient) ExecuteNewFuturesPerpetualOrder(ctx context.Context, in *ExecuteNewFuturesPerpetualOrderRequest, opts ...grpc.CallOption) (*ExecuteNewFuturesPerpetualOrderResponse, error) {
+	out := new(ExecuteNewFuturesPerpetualOrderResponse)
+	err := c.cc.Invoke(ctx, "/binance/ExecuteNewFuturesPerpetualOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (c *binanceClient) GetStatus(ctx context.Context, in *GetStatusRequest, opt
 // for forward compatibility
 type BinanceServer interface {
 	ListAllAssetPairs(context.Context, *ListAllAssetPairsRequest) (*ListAllAssetPairsResponse, error)
-	ExecuteFuturesPerpetualsTrade(context.Context, *ExecuteFuturesPerpetualsTradeRequest) (*ExecuteFuturesPerpetualsTradeResponse, error)
+	ExecuteNewFuturesPerpetualOrder(context.Context, *ExecuteNewFuturesPerpetualOrderRequest) (*ExecuteNewFuturesPerpetualOrderResponse, error)
 	GetLatestPrice(context.Context, *GetLatestPriceRequest) (*GetLatestPriceResponse, error)
 	ReadPerpetualFuturesAccount(context.Context, *ReadPerpetualFuturesAccountRequest) (*ReadPerpetualFuturesAccountResponse, error)
 	GetFundingRates(context.Context, *GetFundingRatesRequest) (*GetFundingRatesResponse, error)
@@ -118,8 +118,8 @@ type UnimplementedBinanceServer struct {
 func (*UnimplementedBinanceServer) ListAllAssetPairs(context.Context, *ListAllAssetPairsRequest) (*ListAllAssetPairsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAllAssetPairs not implemented")
 }
-func (*UnimplementedBinanceServer) ExecuteFuturesPerpetualsTrade(context.Context, *ExecuteFuturesPerpetualsTradeRequest) (*ExecuteFuturesPerpetualsTradeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecuteFuturesPerpetualsTrade not implemented")
+func (*UnimplementedBinanceServer) ExecuteNewFuturesPerpetualOrder(context.Context, *ExecuteNewFuturesPerpetualOrderRequest) (*ExecuteNewFuturesPerpetualOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExecuteNewFuturesPerpetualOrder not implemented")
 }
 func (*UnimplementedBinanceServer) GetLatestPrice(context.Context, *GetLatestPriceRequest) (*GetLatestPriceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestPrice not implemented")
@@ -160,20 +160,20 @@ func _Binance_ListAllAssetPairs_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Binance_ExecuteFuturesPerpetualsTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExecuteFuturesPerpetualsTradeRequest)
+func _Binance_ExecuteNewFuturesPerpetualOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecuteNewFuturesPerpetualOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BinanceServer).ExecuteFuturesPerpetualsTrade(ctx, in)
+		return srv.(BinanceServer).ExecuteNewFuturesPerpetualOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/binance/ExecuteFuturesPerpetualsTrade",
+		FullMethod: "/binance/ExecuteNewFuturesPerpetualOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BinanceServer).ExecuteFuturesPerpetualsTrade(ctx, req.(*ExecuteFuturesPerpetualsTradeRequest))
+		return srv.(BinanceServer).ExecuteNewFuturesPerpetualOrder(ctx, req.(*ExecuteNewFuturesPerpetualOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -277,8 +277,8 @@ var _Binance_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Binance_ListAllAssetPairs_Handler,
 		},
 		{
-			MethodName: "ExecuteFuturesPerpetualsTrade",
-			Handler:    _Binance_ExecuteFuturesPerpetualsTrade_Handler,
+			MethodName: "ExecuteNewFuturesPerpetualOrder",
+			Handler:    _Binance_ExecuteNewFuturesPerpetualOrder_Handler,
 		},
 		{
 			MethodName: "GetLatestPrice",

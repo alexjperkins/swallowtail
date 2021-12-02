@@ -1,13 +1,14 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "s.trade-engine/proto/tradeengine.proto";
 
-option go_package = "./;binanceproto";
+option go_package = "swallowtail/s.binance/proto/binanceproto";
 
 service binance {
     rpc ListAllAssetPairs (ListAllAssetPairsRequest) returns (ListAllAssetPairsResponse) {}
 
-    rpc ExecuteFuturesPerpetualsTrade (ExecuteFuturesPerpetualsTradeRequest) returns (ExecuteFuturesPerpetualsTradeResponse) {}
+    rpc ExecuteNewFuturesPerpetualOrder (ExecuteNewFuturesPerpetualOrderRequest) returns (ExecuteNewFuturesPerpetualOrderResponse) {}
 
     rpc GetLatestPrice (GetLatestPriceRequest) returns (GetLatestPriceResponse) {}
 
@@ -18,54 +19,6 @@ service binance {
     rpc VerifyCredentials (VerifyCredentialsRequest) returns (VerifyCredentialsResponse) {}
 
     rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
-}
-
-enum BinanceOrderType {
-    BINANCE_LIMIT = 0;
-    BINANCE_MARKET = 1;
-    BINANCE_STOP = 2;
-    BINANCE_TAKE_PROFIT = 3;
-    BINANCE_STOP_MARKET = 4;
-    BINANCE_TAKE_PROFIT_MARKET = 5;
-}
-
-enum BinanceTradeSide {
-    BINANCE_BUY = 0;
-    BINANCE_SELL = 1;
-}
-
-enum BinanceTimeInForce {
-    BINANCE_NOT_REQUIRED = 0;
-    BINANCE_GTC = 1;
-    BINANCE_IOC = 2;
-    BINANCE_FOK = 3;
-    BINANCE_GTX = 4;
-}
-
-enum BinanceWorkingType {
-    BINANCE_CONTRACT_PRICE = 0;
-    BINANCE_MARK_PRICE = 1;
-}
-
-enum BinancePositionSide {
-    BINANCE_SIDE_BOTH = 0;
-    BINANCE_SIDE_LONG = 1;
-    BINANCE_SIDE_SHORT = 2;
-}
-
-message PerpetualFuturesOrder {
-    BinanceTradeSide side = 1;
-    BinanceOrderType order_type = 2;
-    float quantity = 3;
-    string symbol = 4;
-    string pair = 5;
-    float price = 6;
-    float stop_price = 7;
-    BinanceTimeInForce time_in_force = 8;
-    BinanceWorkingType working_type = 9;
-    bool close_position = 10;
-    BinancePositionSide position_side = 11;
-    bool reduce_only = 12;
 }
 
 message AssetPair {
@@ -82,21 +35,19 @@ message ListAllAssetPairsResponse {
     repeated AssetPair asset_pairs = 1;
 }
 
-message ExecuteFuturesPerpetualsTradeRequest {
-    repeated PerpetualFuturesOrder orders = 1;
+message ExecuteNewFuturesPerpetualOrderRequest {
+    Order order = 1;
     google.protobuf.Timestamp timestamp = 2;
-    Credentials credentials = 3;
+    VenueCredentials credentials = 3;
 }
 
-message ExecuteFuturesPerpetualsTradeResponse {
-    string exchange_trade_id = 1;
-    int64 timestamp = 2;
-    int64 number_of_orders_executed = 3;
+message ExecuteNewFuturesPerpetualOrderResponse {
+    Order order = 1;
 }
 
 message ReadPerpetualFuturesAccountRequest {
     string actor_id = 1;
-    Credentials credentials = 2;
+    VenueCredentials credentials = 2;
 }
 
 message ReadPerpetualFuturesAccountResponse {
@@ -132,13 +83,8 @@ message GetFundingRatesResponse {
     repeated FundingRateInfo funding_rates = 1;
 }
 
-message Credentials {
-    string api_key = 1;
-    string secret_key = 2;
-}
-
 message VerifyCredentialsRequest {
-    Credentials credentials = 1;
+    VenueCredentials credentials = 1;
     string user_id = 2;
 }
 

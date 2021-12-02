@@ -5,11 +5,11 @@ import (
 	"strings"
 	"sync"
 
-	"swallowtail/libraries/sql"
-	"swallowtail/libraries/sql/mocks"
-
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	"swallowtail/libraries/sql"
+	"swallowtail/libraries/sql/mocks"
 )
 
 var (

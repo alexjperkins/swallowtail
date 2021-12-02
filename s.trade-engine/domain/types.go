@@ -2,15 +2,15 @@ package domain
 
 import "time"
 
-// Trade ...
-type Trade struct {
-	TradeID            string    `db:"trade_id"`
+// TradeStrategy ...
+type TradeStrategy struct {
+	TradeStrategyID    string    `db:"trade_strategy_id"`
 	ActorID            string    `db:"actor_id"`
 	HumanizedActorName string    `db:"humanized_actor_name"`
 	ActorType          string    `db:"actor_type"`
 	IdempotencyKey     string    `db:"idempotency_key"`
-	OrderType          string    `db:"order_type"`
-	TradeType          string    `db:"trade_type"`
+	ExecutionStrategy  string    `db:"execution_strategy"`
+	InstrumentType     string    `db:"instrument_type"`
 	Asset              string    `db:"asset"`
 	Pair               string    `db:"pair"`
 	Entries            []float64 `db:"entries"`
@@ -21,20 +21,19 @@ type Trade struct {
 	LastUpdated        time.Time `db:"last_updated"`
 	TradeSide          string    `db:"trade_side"`
 	CurrentPrice       float64   `db:"current_price"`
-	TradeableExchanges []string  `db:"tradeable_exchanges"`
+	TradeableVenues    []string  `db:"tradeable_venues"`
 }
 
-// TradeParticipant ...
-type TradeParticipant struct {
-	TradeParticipantID string    `db:"trade_participant_id"`
-	TradeID            string    `db:"trade_id"`
-	UserID             string    `db:"user_id"`
-	IsBot              bool      `db:"is_bot"`
-	Size               float64   `db:"size"`
-	Risk               float64   `db:"risk"`
-	Exchange           string    `db:"exchange"`
-	ExchangeOrderID    string    `db:"exchange_order_id"`
-	Status             string    `db:"status"`
-	ExecutedTimestamp  time.Time `db:"executed"`
-	DCAStrategy        string    `db:"dca_strategy"`
+// TradeStrategyParticipant ...
+type TradeStrategyParticipant struct {
+	ParticipantID     string    `db:"participant_id"`
+	TradeStrategyID   string    `db:"trade_strategy_id"`
+	UserID            string    `db:"user_id"`
+	IsBot             bool      `db:"is_bot"`
+	Size              float64   `db:"size"`
+	Risk              float64   `db:"risk"`
+	Venue             string    `db:"venue"`
+	ExchangeOrderIDs  []string  `db:"exchange_order_ids"`
+	Status            string    `db:"status"`
+	ExecutedTimestamp time.Time `db:"executed"`
 }

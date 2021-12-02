@@ -28,10 +28,11 @@ var (
 // DCAParser ...
 type DCAParser struct{}
 
-func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error) {
-	tradeType := parseTradeType(content)
+// Parse parses the content expecting a DCA order; if it cannot parse all neccesary information for a DCA order we fail.
+func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.TradeStrategy, error) {
+	instrumentType := parseInstrumentType(content)
 
-	ticker, exchanges := parseTicker(content, tradeType)
+	ticker, venues := parseTickerAndVenues(content, instrumentType)
 	if ticker == "" {
 		return nil, gerrors.FailedPrecondition("failed_to_parse_dca.missing_ticker", nil)
 	}
@@ -126,7 +127,7 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 		})
 	}
 
-	orderType, _ := parseOrderType(content, currentPrice, entries, side)
+	executionStrategy, _ := parseExecutionStrategy(content, currentPrice, entries, side)
 
 	protoEntries := make([]float32, 0, len(entries))
 	for _, entry := range entries {
@@ -140,17 +141,12 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 
 	actor := parseActor(m.Author.Username)
 
-	protoExchanges := make([]string, 0, len(exchanges))
-	for _, exchange := range exchanges {
-		protoExchanges = append(protoExchanges, exchange.String())
-	}
-
-	return &tradeengineproto.Trade{
+	return &tradeengineproto.TradeStrategy{
 		ActorId:            m.Author.ID,
 		HumanizedActorName: actor,
 		ActorType:          actorType,
-		OrderType:          orderType,
-		TradeType:          tradeType,
+		ExecutionStrategy:  executionStrategy,
+		InstrumentType:     instrumentType,
 		TradeSide:          side,
 		Asset:              strings.ToUpper(ticker),
 		Pair:               tradeengineproto.TRADE_PAIR_USDT,
@@ -158,6 +154,6 @@ func (d *DCAParser) Parse(ctx context.Context, content string, m *discordgo.Mess
 		StopLoss:           float32(stopLoss),
 		TakeProfits:        protoTakeProfits,
 		CurrentPrice:       float32(currentPrice),
-		TradeableExchanges: protoExchanges,
+		TradeableVenues:    venues,
 	}, nil
 }

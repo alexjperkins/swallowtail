@@ -19,7 +19,7 @@ func CalculatePositionsByRisk(
 	stopLoss, totalRisk float64,
 	howMany int,
 	side tradeengineproto.TRADE_SIDE,
-	strategy tradeengineproto.DCA_STRATEGY,
+	strategy tradeengineproto.DCA_EXECUTION_STRATEGY,
 ) ([]*Position, error) {
 
 	risks := make([]*Position, 0, len(entries))

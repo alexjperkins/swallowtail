@@ -489,3 +489,76 @@ func (r *ReadPrimaryExchangeByUserIDRequest) SendWithTimeout(ctx context.Context
 		resultc: resultc,
 	}
 }
+
+// --- Read Exchange By Exchange Details --- //
+
+type ReadExchangeByExchangeDetailsFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ReadExchangeByExchangeDetailsResponse
+	ctx     context.Context
+}
+
+func (a *ReadExchangeByExchangeDetailsFuture) Response() (*ReadExchangeByExchangeDetailsResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_exchange_by_exchange_details", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ReadExchangeByExchangeDetailsRequest) Send(ctx context.Context) *ReadExchangeByExchangeDetailsFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ReadExchangeByExchangeDetailsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadExchangeByExchangeDetailsFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ReadExchangeByExchangeDetailsResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &ReadExchangeByExchangeDetailsFuture{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewAccountClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ReadExchangeByExchangeDetails(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_to_read_exchange_by_exchange_details", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ReadExchangeByExchangeDetailsFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}

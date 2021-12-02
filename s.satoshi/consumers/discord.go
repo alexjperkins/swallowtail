@@ -45,7 +45,7 @@ type DiscordConsumer struct {
 func (dc DiscordConsumer) Receiver(ctx context.Context, c chan *ConsumerMessage, d chan struct{}, _ bool) {
 	discordClient := discordclient.New(discordConsumerName, discordConsumerToken, false)
 
-	// Add handlers
+	// Add handlers.
 	discordClient.AddHandler(handleModMessages(ctx, c, dc.Active))
 	discordClient.AddHandler(handleSwingMessages(ctx, c, dc.Active))
 	discordClient.AddHandler(handleInternalCallsMessages(ctx, c, dc.Active))
@@ -119,33 +119,33 @@ func handleModMessages(
 				msgs = append(msgs, msg)
 			}
 
-			// Attempt to parse a trade.
-			trade, err := parser.Parse(ctx, discordproto.DiscordMoonModMessagesChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_EXTERNAL)
+			// Attempt to parse a trade strategy.
+			tradeStrategy, err := parser.Parse(ctx, discordproto.DiscordMoonModMessagesChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_EXTERNAL)
 			if err != nil {
-				// No trade can be parsed; so lets continue.
-				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
+				// No trade strategy can be parsed; so lets continue.
+				slog.Trace(ctx, "Failed to parse trade strategy: %+v, content: %s", err, pc.Content)
 				continue
 			}
 
-			if trade == nil {
+			if tradeStrategy == nil {
 				continue
 			}
 
 			now := time.Now().UTC()
-			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, entriesAsString(trade.Entries), trade.StopLoss, now.Truncate(time.Hour))
+			idempotencyKey := fmt.Sprintf("tradestrategy-%s-%s-%v-%v-%v", tradeStrategy.ActorId, tradeStrategy.Asset, entriesAsString(tradeStrategy.Entries), tradeStrategy.StopLoss, now.Truncate(time.Hour))
 
 			// Sign our trade with our idempotency key.
-			trade.IdempotencyKey = idempotencyKey
+			tradeStrategy.IdempotencyKey = idempotencyKey
 
-			rsp, err := createTrade(ctx, trade)
+			rsp, err := createTradeStrategy(ctx, tradeStrategy)
 			if err != nil {
-				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+				slog.Error(ctx, "Failed to create trade: %v, Error: %v", tradeStrategy, err)
 				continue
 			}
 
-			trade.TradeId = rsp.TradeId
-			trade.Created = rsp.Created
-			tradeContent := formatter.FormatTrade("WWG", trade, pc.Content)
+			tradeStrategy.TradeStrategyId = rsp.TradeStrategyId
+			tradeStrategy.Created = rsp.Created
+			tradeContent := formatter.FormatTradeStrategy("WWG", tradeStrategy, pc.Content)
 
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
@@ -154,13 +154,13 @@ func handleModMessages(
 				Created:          time.Now(),
 				IsActive:         isActive,
 				Metadata: map[string]string{
-					"message":  fmt.Sprintf("%v", i),
-					"total":    fmt.Sprintf("%v", len(parsedContent)),
-					"trade_id": trade.TradeId,
+					"message":           fmt.Sprintf("%v", i),
+					"total":             fmt.Sprintf("%v", len(parsedContent)),
+					"trade_strategy_id": tradeStrategy.TradeStrategyId,
 				},
 				Poller: func(ctx context.Context, messageID string) error {
 					// Inject the trade ID.
-					return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
+					return startTradeParticipantsPoller(ctx, messageID, tradeStrategy.TradeStrategyId)
 				},
 			}
 
@@ -211,29 +211,29 @@ func handleSwingMessages(
 			})
 
 			// Attempt to parse a trade.
-			trade, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_EXTERNAL)
+			tradeStrategy, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_EXTERNAL)
 			if err != nil {
-				// No trade can be parsed; so lets continue.
-				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
+				// No trade strategy can be parsed; so lets continue.
+				slog.Trace(ctx, "Failed to parse trade strategy: %+v, content: %s", err, pc.Content)
 				continue
 			}
 
 			now := time.Now().UTC()
-			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, entriesAsString(trade.Entries), trade.StopLoss, now.Truncate(time.Minute))
+			idempotencyKey := fmt.Sprintf("tradestrategy-%s-%s-%v-%v-%v", tradeStrategy.ActorId, tradeStrategy.Asset, entriesAsString(tradeStrategy.Entries), tradeStrategy.StopLoss, now.Truncate(time.Minute))
 
-			// Sign our trade with an idempotency key.
-			trade.IdempotencyKey = idempotencyKey
+			// Sign our trade strategy with an idempotency key.
+			tradeStrategy.IdempotencyKey = idempotencyKey
 
-			rsp, err := createTrade(ctx, trade)
+			rsp, err := createTradeStrategy(ctx, tradeStrategy)
 			if err != nil {
 				// Best effort for now.
-				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+				slog.Error(ctx, "Failed to create tradeStrategy: %v, Error: %v", tradeStrategy, err)
 				continue
 			}
 
-			trade.TradeId = rsp.TradeId
-			trade.Created = rsp.Created
-			tradeContent := formatter.FormatTrade("SWINGS & SCALPS", trade, pc.Content)
+			tradeStrategy.TradeStrategyId = rsp.TradeStrategyId
+			tradeStrategy.Created = rsp.Created
+			tradeContent := formatter.FormatTradeStrategy("SWINGS & SCALPS", tradeStrategy, pc.Content)
 
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
@@ -243,13 +243,13 @@ func handleSwingMessages(
 				Attachments:      m.Attachments,
 				IsActive:         isActive,
 				Metadata: map[string]string{
-					"message":  fmt.Sprintf("%v", i),
-					"total":    fmt.Sprintf("%v", len(parsedContent)),
-					"trade_id": trade.TradeId,
+					"message":           fmt.Sprintf("%v", i),
+					"total":             fmt.Sprintf("%v", len(parsedContent)),
+					"trade_strategy_id": tradeStrategy.TradeStrategyId,
 				},
 				Poller: func(ctx context.Context, messageID string) error {
 					// Inject the trade ID.
-					return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
+					return startTradeParticipantsPoller(ctx, messageID, tradeStrategy.TradeStrategyId)
 				},
 			}
 
@@ -291,7 +291,7 @@ func handleInternalCallsMessages(
 		msgs := []*ConsumerMessage{}
 		for i, pc := range parsedContent {
 			// Attempt to parse a trade.
-			trade, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_INTERNAL)
+			tradeStrategy, err := parser.Parse(ctx, discordproto.DiscordMoonSwingGroupChannel, pc.Content, mc, tradeengineproto.ACTOR_TYPE_INTERNAL)
 			if err != nil {
 				// No trade can be parsed; so lets continue.
 				slog.Trace(ctx, "Failed to parse trade: %+v, content: %s", err, pc.Content)
@@ -299,21 +299,21 @@ func handleInternalCallsMessages(
 			}
 
 			now := time.Now().UTC()
-			idempotencyKey := fmt.Sprintf("%s-%s-%v-%v-%v", trade.ActorId, trade.Asset, entriesAsString(trade.Entries), trade.StopLoss, now.Truncate(time.Minute))
+			idempotencyKey := fmt.Sprintf("tradestrategy-%s-%s-%v-%v-%v", tradeStrategy.ActorId, tradeStrategy.Asset, entriesAsString(tradeStrategy.Entries), tradeStrategy.StopLoss, now.Truncate(time.Minute))
 
-			// Sign our trade with the timestamp.
-			trade.IdempotencyKey = idempotencyKey
+			// Sign our trade strategy with the timestamp.
+			tradeStrategy.IdempotencyKey = idempotencyKey
 
-			rsp, err := createTrade(ctx, trade)
+			rsp, err := createTradeStrategy(ctx, tradeStrategy)
 			if err != nil {
 				// Best effort for now.
-				slog.Error(ctx, "Failed to create trade: %v, Error: %v", trade, err)
+				slog.Error(ctx, "Failed to create trade: %v, Error: %v", tradeStrategy, err)
 				continue
 			}
 
-			trade.TradeId = rsp.TradeId
-			trade.Created = rsp.Created
-			tradeContent := formatter.FormatTrade("SCG INTERNAL CALL", trade, pc.Content)
+			tradeStrategy.TradeStrategyId = rsp.TradeStrategyId
+			tradeStrategy.Created = rsp.Created
+			tradeContent := formatter.FormatTradeStrategy("SCG INTERNAL CALL", tradeStrategy, pc.Content)
 
 			msg := &ConsumerMessage{
 				ConsumerID:       discordConsumerID,
@@ -323,13 +323,13 @@ func handleInternalCallsMessages(
 				Attachments:      m.Attachments,
 				IsActive:         isActive,
 				Metadata: map[string]string{
-					"trade_id": trade.TradeId,
-					"message":  fmt.Sprintf("%v", i),
-					"total":    fmt.Sprintf("%v", len(parsedContent)),
+					"trade_strategy_id": tradeStrategy.TradeStrategyId,
+					"message":           fmt.Sprintf("%v", i),
+					"total":             fmt.Sprintf("%v", len(parsedContent)),
 				},
 				Poller: func(ctx context.Context, messageID string) error {
 					// Inject the trade ID.
-					return startTradeParticipantsPoller(ctx, messageID, trade.TradeId)
+					return startTradeParticipantsPoller(ctx, messageID, tradeStrategy.TradeStrategyId)
 				},
 			}
 

@@ -98,43 +98,43 @@ func TestParseSide(t *testing.T) {
 	}
 }
 
-func TestParseOrderType(t *testing.T) {
+func TestParseExecutionStrategy(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name              string
-		content           string
-		currentValue      float64
-		entries           []float64
-		side              tradeengineproto.TRADE_SIDE
-		expectedOrderType tradeengineproto.ORDER_TYPE
+		name                      string
+		content                   string
+		currentValue              float64
+		entries                   []float64
+		side                      tradeengineproto.TRADE_SIDE
+		expectedExecutionStrategy tradeengineproto.EXECUTION_STRATEGY
 	}{
 		{
 			name: "limit_order",
 			content: `LIMIT LONG BTC 45000 SL 49000
 			`,
-			currentValue:      50000,
-			entries:           []float64{45000},
-			side:              tradeengineproto.TRADE_SIDE_BUY,
-			expectedOrderType: tradeengineproto.ORDER_TYPE_LIMIT,
+			currentValue:              50000,
+			entries:                   []float64{45000},
+			side:                      tradeengineproto.TRADE_SIDE_BUY,
+			expectedExecutionStrategy: tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT,
 		},
 		{
 			name: "market_order",
 			content: `LONG BTC 50000 SL 49000
 			`,
-			currentValue:      50000,
-			entries:           []float64{49000},
-			side:              tradeengineproto.TRADE_SIDE_BUY,
-			expectedOrderType: tradeengineproto.ORDER_TYPE_MARKET,
+			currentValue:              50000,
+			entries:                   []float64{49000},
+			side:                      tradeengineproto.TRADE_SIDE_BUY,
+			expectedExecutionStrategy: tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 		},
 		{
 			name: "limit_order_higher_entries_buy_side",
 			content: `LIMIT LONG BTC 50000 SL 49000
 			`,
-			currentValue:      50000,
-			entries:           []float64{55000},
-			side:              tradeengineproto.TRADE_SIDE_BUY,
-			expectedOrderType: tradeengineproto.ORDER_TYPE_MARKET,
+			currentValue:              50000,
+			entries:                   []float64{55000},
+			side:                      tradeengineproto.TRADE_SIDE_BUY,
+			expectedExecutionStrategy: tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 		},
 	}
 
@@ -143,9 +143,9 @@ func TestParseOrderType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			orderType, _ := parseOrderType(tt.content, tt.currentValue, tt.entries, tt.side)
+			orderType, _ := parseExecutionStrategy(tt.content, tt.currentValue, tt.entries, tt.side)
 
-			assert.Equal(t, tt.expectedOrderType, orderType)
+			assert.Equal(t, tt.expectedExecutionStrategy, orderType)
 		})
 	}
 }

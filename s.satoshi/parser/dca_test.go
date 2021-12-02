@@ -8,18 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	accountproto "swallowtail/s.account/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 func TestDCAParser(t *testing.T) {
 	tests := []struct {
-		name          string
-		content       string
-		username      string
-		currentValue  float64
-		expectedTrade *tradeengineproto.Trade
-		withErr       bool
+		name                  string
+		content               string
+		username              string
+		currentValue          float64
+		expectedTradeStrategy *tradeengineproto.TradeStrategy
+		withErr               bool
 	}{
 		{
 			name: "internal_case_1",
@@ -36,22 +35,22 @@ func TestDCAParser(t *testing.T) {
 			`,
 			username:     "alexjperkins",
 			currentValue: 50000,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTradeStrategy: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "ALEXJPERKINS",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DCA_FIRST_MARKET_REST_LIMIT,
 				Asset:              "BTC",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				Entries:            []float32{50000, 51000},
 				StopLoss:           49000,
 				CurrentPrice:       50000,
 				TakeProfits: []float32{
 					52000, 54000, 58000,
 				},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -60,22 +59,22 @@ func TestDCAParser(t *testing.T) {
 			content:      `Lrc long 0.404 DCA till 0.395 SL 0.38 TP 0.5 , (50%) and moon bag everyone manage risks`,
 			username:     "tahervag",
 			currentValue: 0.420,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTradeStrategy: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "TAHERVAG",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_DCA_ALL_LIMIT,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DCA_ALL_LIMIT,
 				Asset:              "LRC",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				Entries:            []float32{0.395, 0.404},
 				StopLoss:           0.38,
 				CurrentPrice:       0.420,
 				TakeProfits: []float32{
 					0.5,
 				},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -84,20 +83,20 @@ func TestDCAParser(t *testing.T) {
 			content:      `Long srm area 8.08 8 stop 7.80 everyone`,
 			username:     "eli",
 			currentValue: 8.10,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTradeStrategy: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "ELI",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DCA_FIRST_MARKET_REST_LIMIT,
 				Asset:              "SRM",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				Entries:            []float32{8.0, 8.08},
 				StopLoss:           7.80,
 				CurrentPrice:       8.1,
 				TakeProfits:        []float32{},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -110,20 +109,20 @@ func TestDCAParser(t *testing.T) {
 			`,
 			username:     "cryptogodjohn",
 			currentValue: 26.0,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTradeStrategy: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "CRYPTOGODJOHN",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_DCA_ALL_LIMIT,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DCA_ALL_LIMIT,
 				Asset:              "LINK",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_SHORT,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				Entries:            []float32{27.25, 27.0},
 				StopLoss:           27.66,
 				CurrentPrice:       26.0,
 				TakeProfits:        []float32{},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -165,8 +164,8 @@ bluntz/hfsp [crypto-scalp-trade-ideas-89]: trade idea scalp long btc/usd   scalp
 		},
 	}
 
-	originalBinanceAssetPairs := binanceAssetPairs
-	binanceAssetPairs = map[string]bool{
+	originalBinanceAssetPairs := binanceInstruments
+	binanceInstruments = map[string]bool{
 		"btc":  true,
 		"lrc":  true,
 		"srm":  true,
@@ -176,7 +175,7 @@ bluntz/hfsp [crypto-scalp-trade-ideas-89]: trade idea scalp long btc/usd   scalp
 
 	originalFetcher := fetchLatestPrice
 	t.Cleanup(func() {
-		binanceAssetPairs = originalBinanceAssetPairs
+		binanceInstruments = originalBinanceAssetPairs
 		fetchLatestPrice = originalFetcher
 	})
 
@@ -197,7 +196,7 @@ bluntz/hfsp [crypto-scalp-trade-ideas-89]: trade idea scalp long btc/usd   scalp
 			switch {
 			case !tt.withErr:
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedTrade, trade)
+				assert.Equal(t, tt.expectedTradeStrategy, trade)
 			default:
 				require.Error(t, err)
 			}

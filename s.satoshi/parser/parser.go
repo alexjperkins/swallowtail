@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	binanceAssetPairs = map[string]bool{}
-	ftxInstruments    = map[string]bool{}
+	binanceInstruments = map[string]bool{}
+	ftxInstruments     = map[string]bool{}
 )
 
 // TradeParser ...
 type TradeParser interface {
-	Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error)
+	Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.TradeStrategy, error)
 }
 
 // Init initializes the parser; we do this since we need to pull all the latest assets that are tradable.
@@ -45,7 +45,7 @@ func Init(ctx context.Context) error {
 		return gerrors.Augment(err, "failed_to_init_parser.no_binance_asset_pairs", nil)
 	}
 
-	slog.Trace(context.Background(), "Fetched all binance asset pairs for satoshi parser; total: %v", len(binanceAssetPairs))
+	slog.Trace(context.Background(), "Fetched all binance asset pairs for satoshi parser; total: %v", len(binanceInstruments))
 
 	// Fetch FTX info.
 	rsp, err = util.Retry(ctx, 3, func(ctx context.Context) (interface{}, error) {
@@ -69,7 +69,7 @@ func Init(ctx context.Context) error {
 	for _, assetPair := range binanceInfo.AssetPairs {
 		// We may have some inconsistencies here since we're using all symbols; since some symbols
 		// May not be actively traded on Binance.
-		binanceAssetPairs[strings.ToLower(assetPair.BaseAsset)] = true
+		binanceInstruments[strings.ToLower(assetPair.BaseAsset)] = true
 	}
 
 	for _, instrument := range ftxInfo.Instruments {
@@ -80,7 +80,7 @@ func Init(ctx context.Context) error {
 }
 
 // Parse ...
-func Parse(ctx context.Context, identifier, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.Trade, error) {
+func Parse(ctx context.Context, identifier, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.TradeStrategy, error) {
 	parsers, ok := getParsersByIdentifier(identifier)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_parse.parser_does_not_exist", nil)
@@ -126,8 +126,6 @@ func cleanContent(content string) string {
 	// Remove discord tags.
 	c = strings.ReplaceAll(c, "@", "")
 	c = strings.ReplaceAll(c, "​", "")
-
-	// TODO: Remove Attachments
 
 	// Normalize
 	c = strings.ToLower(c)

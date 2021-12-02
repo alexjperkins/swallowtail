@@ -40,7 +40,7 @@ func VerifyRequestDTOToProto(in *client.VerifyCredentialsResponse) *binanceproto
 }
 
 // PerpetualFuturesAccountBalanceDTOToProto ...
-func PerpetualFuturesAccountBalanceDTOToProto(in *client.PerpetualFuturesAccountBalance) (*binanceproto.ReadPerpetualFuturesAccountResponse, error) {
+func erpetualFuturesAccountBalanceDTOToProto(in *client.PerpetualFuturesAccountBalance) (*binanceproto.ReadPerpetualFuturesAccountResponse, error) {
 	balance, err := strconv.ParseFloat(in.Balance, 64)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_parse_float.balance", nil)

@@ -5,11 +5,19 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./;tradeengineproto";
 
 service tradeengine {
-    rpc CreateTrade (CreateTradeRequest) returns (CreateTradeResponse) {}
+    rpc CreateTradeStrategy (CreateTradeStrategyRequest) returns (CreateTradeStrategyResponse) {}
 
-    rpc AddParticipantToTrade (AddParticipantToTradeRequest) returns (AddParticipantToTradeResponse) {}
+    rpc ExecuteTradeStrategyForParticipant (ExecuteTradeStrategyForParticipantRequest) returns (ExecuteTradeStrategyForParticipantResponse) {}
 
     rpc ReadTradeByTradeID (ReadTradeByTradeIDRequest) returns (ReadTradeByTradeIDResponse) {}
+}
+
+enum VENUE {
+    UNREQUIRED = 0;
+    BINANCE = 1;
+    FTX = 2;
+    DERIBIT = 3;
+    BITFINEX = 4;
 }
 
 enum ACTOR_TYPE {
@@ -26,90 +34,150 @@ enum TRADE_SIDE {
     SHORT = 3;
 }
 
-enum TRADE_STATUS {
-    PENDING = 0;
+enum ORDER_STATUS {
+    PENDING_NEW_ORDER = 0;
+    NEW_ORDER = 1;
+    PENDING_CANCEL_ORDER = 2;
+    CANCELLED_ORDER = 3;
+    PARTIALLY_FILLED_ORDER = 4;
+    FILLED_ORDER = 5;
+    REJECTED = 6;
+    EXPIRED = 7;
+}
+
+enum TRADE_STRATEGY_STATUS {
+    NEW = 0;
     ACTIVE = 1;
     COMPLETE = 2;
     CANCELLED = 3;
 }
 
-enum TRADE_TYPE {
+enum INSTRUMENT_TYPE {
     SPOT = 0;
-    FUTURES_PERPETUALS = 1;
-    FUTURES_QUARTERLY = 2;
+    FUTURE_PERPETUAL = 1;
+    FUTURE = 2;
+    OPTION = 3;
+    FORWARD = 4;
+    MOVE = 5;
 }
 
 enum TRADE_PAIR {
     USDT = 0;
     USD = 1;
     BTC = 2;
+    USDC = 3;
+    ETH = 4;
 }
 
 enum ORDER_TYPE {
     LIMIT = 0;
     MARKET = 1;
     STOP_MARKET = 2;
-    DCA_FIRST_MARKET_REST_LIMIT = 3;
-    DCA_ALL_LIMIT = 4;
+    STOP_LIMIT = 3;
+    TAKE_PROFIT_MARKET = 4;
+    TAKE_PROFIT_LIMIT = 5;
+    TRAILING_STOP_MARKET = 6;
 }
 
-enum DCA_STRATEGY {
+enum TIME_IN_FORCE {
+    TIME_IN_FORCE_UNREQUIRED = 0;
+    GOOD_TILL_CANCELLED = 1;
+    IMMEDIATE_OR_CANCEL = 2;
+    FILL_OR_KILL = 3;
+    GOOD_TILL_CROSSING = 4;
+}
+
+enum WORKING_TYPE {
+    WORKING_TYPE_UNREQUIRED = 0;
+    MARK_PRICE = 1;
+    CONTRACT_PRICE = 2;
+}
+
+enum EXECUTION_STRATEGY {
+    DMA_LIMIT = 0;
+    DMA_MARKET = 1;
+    DCA_FIRST_MARKET_REST_LIMIT = 2;
+    DCA_ALL_LIMIT = 3;
+    TWAP = 4;
+    VWAP = 5;
+}
+
+enum DCA_EXECUTION_STRATEGY {
     CONSTANT = 0;
     LINEAR  = 1;
     EXPONENTIAL = 2;
 }
 
-message Trade {
-    string trade_id = 1;
+message Order {
+    string order_id = 1;
     string actor_id = 2;
-    string humanized_actor_name = 18;
+    string instrument = 3;
+    string pair = 4;
+    ORDER_TYPE order_type = 5;
+    TRADE_SIDE trade_side = 7;
+    float limit_price = 8;
+    float stop_price = 9;
+    float quantity = 10;
+    TIME_IN_FORCE time_in_force = 11;
+    bool post_only = 12;
+    bool reduce_only = 13;
+    WORKING_TYPE working_type = 14;
+    VENUE venue = 15;
+    int64 created_timestamp = 16;
+    string external_order_id = 17;
+}
+
+message TradeStrategy {
+    string trade_strategy_id = 1;
+    string actor_id = 2;
+    string humanized_actor_name = 7;
     ACTOR_TYPE actor_type = 3;
     string idempotency_key = 4;
-    ORDER_TYPE order_type = 5;
-    TRADE_TYPE trade_type = 6;
-    string asset = 7;
-    TRADE_PAIR pair = 8;
-    repeated float entries = 9;
-    float stop_loss = 10;
-    repeated float take_profits = 11;
-    TRADE_STATUS status = 12;
-    google.protobuf.Timestamp created = 14;
-    google.protobuf.Timestamp last_updated = 15;
-    TRADE_SIDE trade_side = 16;
-    float current_price = 17;
-    repeated string tradeable_exchanges = 19;
+    EXECUTION_STRATEGY execution_strategy = 5;
+    INSTRUMENT_TYPE instrument_type = 6;
+    string asset = 8;
+    TRADE_PAIR pair = 9;
+    repeated float entries = 10;
+    float stop_loss = 11;
+    repeated float take_profits = 12;
+    TRADE_STRATEGY_STATUS status = 13;
+    google.protobuf.Timestamp created = 15;
+    google.protobuf.Timestamp last_updated = 16;
+    TRADE_SIDE trade_side = 17;
+    float current_price = 18;
+    repeated VENUE tradeable_venues = 20;
 }
 
-message CreateTradeRequest {
-    Trade trade = 1;
+message CreateTradeStrategyRequest {
+    TradeStrategy trade_strategy = 1;
 }
 
-message CreateTradeResponse {
-    string trade_id = 1;
+message CreateTradeStrategyResponse {
+    string trade_strategy_id = 1;
     google.protobuf.Timestamp created = 2;
 }
 
-message AddParticipantToTradeRequest {
+message ExecuteTradeStrategyForParticipantRequest {
     string actor_id = 1;
     string user_id = 2;
     string trade_id = 3;
     float size = 5;
-    string exchange = 6;
+    VENUE venue = 6;
     bool is_bot = 7;
     float risk = 8; 
-    DCA_STRATEGY dca_strategy = 9;
 }
 
-message AddParticipantToTradeResponse {
-    string exchange_trade_id = 1;
+message ExecuteTradeStrategyForParticipantResponse {
+    repeated string exchange_trade_ids = 1;
     string trade_participant_id = 2;
-    string trade_id = 3;
+    string trade_strategy_id = 3;
     float notional_size = 4;
     google.protobuf.Timestamp timestamp = 5;
     string exchange = 6;
     string asset = 7;
     int64 number_of_executed_orders = 8;
-    string execution_algo_strategy = 9;
+    string execution_strategy = 9;
+    repeated Order successful_orders = 10;
 }
 
 message ReadTradeByTradeIDRequest {
@@ -117,5 +185,13 @@ message ReadTradeByTradeIDRequest {
 }
 
 message ReadTradeByTradeIDResponse {
-    Trade trade = 1;
+    TradeStrategy trade_strategy = 1;
+}
+
+message VenueCredentials {
+    VENUE venue = 1;
+    string api_key = 2;
+    string secret_key = 3;
+    string passphrase = 4;
+    string subaccount = 5;
 }

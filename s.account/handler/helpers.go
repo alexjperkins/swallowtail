@@ -38,7 +38,7 @@ func getIdentifierFromAccount(account *domain.Account, pagerType string) (string
 
 func isValidActorID(actorID string) bool {
 	switch actorID {
-	case accountproto.ActorSystemPayments, accountproto.ActorManual:
+	case accountproto.ActorSystemPayments, accountproto.ActorManual, accountproto.ActorSystemTradeEngine:
 		return true
 	default:
 		return false

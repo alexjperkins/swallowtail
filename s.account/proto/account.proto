@@ -29,7 +29,11 @@ service account {
   rpc ListExchanges (ListExchangesRequest) returns (ListExchangesResponse) {
   }
 
+  // TODO: update name to include ID
   rpc ReadExchange (ReadExchangeRequest) returns (ReadExchangeResponse) {
+  }
+
+  rpc ReadExchangeByExchangeDetails (ReadExchangeByExchangeDetailsRequest) returns (ReadExchangeByExchangeDetailsResponse) {
   }
 
   rpc ReadPrimaryExchangeByUserID (ReadPrimaryExchangeByUserIDRequest) returns (ReadPrimaryExchangeByUserIDResponse) {}
@@ -169,3 +173,15 @@ message ReadPrimaryExchangeByUserIDRequest {
 message ReadPrimaryExchangeByUserIDResponse {
     Exchange primary_exchange = 1;
 }
+
+message ReadExchangeByExchangeDetailsRequest {
+    string exchange = 1;
+    string user_id = 2;
+    string subaccount = 3;
+    string actor_id = 4;
+    string request_context = 5;
+}
+
+message ReadExchangeByExchangeDetailsResponse {
+    Exchange exchange = 1;
+} 

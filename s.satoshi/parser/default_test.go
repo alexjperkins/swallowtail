@@ -2,7 +2,6 @@ package parser
 
 import (
 	"context"
-	accountproto "swallowtail/s.account/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 	"testing"
 
@@ -17,7 +16,7 @@ func TestDefaultParser(t *testing.T) {
 		content       string
 		username      string
 		currentValue  float64
-		expectedTrade *tradeengineproto.Trade
+		expectedTrade *tradeengineproto.TradeStrategy
 		withErr       bool
 	}{
 		{
@@ -35,22 +34,22 @@ func TestDefaultParser(t *testing.T) {
 			`,
 			username:     "rego",
 			currentValue: 50000,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "REGO",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_MARKET,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 				Asset:              "BTC",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				Entries:            []float32{50000},
 				StopLoss:           49000,
 				CurrentPrice:       50000,
 				TakeProfits: []float32{
 					52000, 54000, 58000,
 				},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -66,22 +65,22 @@ func TestDefaultParser(t *testing.T) {
 
 			57% 3.25RR
 			`,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "BLUNTZ",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_MARKET,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 				Asset:              "SOL",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				CurrentPrice:       170,
 				Entries:            []float32{165},
 				StopLoss:           135.61,
 				TakeProfits: []float32{
 					259.7,
 				},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -97,20 +96,20 @@ func TestDefaultParser(t *testing.T) {
 			[Attachments]
 			https://cdn.discordapp.com/attachments/869596440777883749/885529381479518219/unknown.png
 			`,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "ASTEKZ",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_MARKET,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 				Asset:              "AAVE",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				CurrentPrice:       344,
 				Entries:            []float32{343},
 				StopLoss:           323,
 				TakeProfits:        []float32{},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -119,20 +118,20 @@ func TestDefaultParser(t *testing.T) {
 			username:     "eli",
 			currentValue: 10.9,
 			content:      `SRM LIMIT LONG 9.80 stop 8.90 tp 13 18 @​everyone`,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "ELI",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_LIMIT,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT,
 				Asset:              "SRM",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				CurrentPrice:       10.9,
 				Entries:            []float32{9.80},
 				StopLoss:           8.90,
 				TakeProfits:        []float32{13, 18},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -145,20 +144,20 @@ func TestDefaultParser(t *testing.T) {
 
 			SL $0.0374
 			`,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "CRYPTOGODJOHNNY",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_MARKET,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 				Asset:              "RSR",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				CurrentPrice:       0.041,
 				Entries:            []float32{0.0402},
 				StopLoss:           0.0374,
 				TakeProfits:        []float32{},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -174,14 +173,14 @@ func TestDefaultParser(t *testing.T) {
 			Tp 45800 44540 43680 42112
 			@​Scalps High risk
 			`,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "CRYPTOGODJOHNNY",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_MARKET,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 				Asset:              "BTC",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_SHORT,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				CurrentPrice:       46500,
 				Entries:            []float32{46650},
 				StopLoss:           47801,
@@ -191,8 +190,8 @@ func TestDefaultParser(t *testing.T) {
 					43680,
 					42112,
 				},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -209,20 +208,20 @@ func TestDefaultParser(t *testing.T) {
 			content: `XTZ 
 			6.28 6.02 
 			`,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "CRYPTOGODJOHNNY",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_MARKET,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 				Asset:              "XTZ",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				CurrentPrice:       6.28,
 				Entries:            []float32{6.28},
 				StopLoss:           6.02,
 				TakeProfits:        []float32{},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
 				},
 			},
 		},
@@ -237,27 +236,56 @@ func TestDefaultParser(t *testing.T) {
 			Stop: 44.00 (5.00%) 
 			TP: 50, 52 , 55 
 			`,
-			expectedTrade: &tradeengineproto.Trade{
+			expectedTrade: &tradeengineproto.TradeStrategy{
 				HumanizedActorName: "REGO",
 				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
-				OrderType:          tradeengineproto.ORDER_TYPE_MARKET,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
 				Asset:              "AVAX",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				TradeType:          tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
 				CurrentPrice:       46.0,
 				Entries:            []float32{46.64},
 				StopLoss:           44.0,
 				TakeProfits:        []float32{50, 52, 55},
-				TradeableExchanges: []string{
-					accountproto.ExchangeType_BINANCE.String(),
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
+				},
+			},
+		},
+		{
+			name:         "multi_venue",
+			username:     "rego",
+			currentValue: 46.0,
+			content: `
+			rego: STEP - SCALP LONG
+
+			Entry:  46.64
+			Stop: 44.00 (5.00%) 
+			TP: 50, 52 , 55 
+			`,
+			expectedTrade: &tradeengineproto.TradeStrategy{
+				HumanizedActorName: "REGO",
+				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
+				Asset:              "STEP",
+				Pair:               tradeengineproto.TRADE_PAIR_USDT,
+				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
+				CurrentPrice:       46.0,
+				Entries:            []float32{46.64},
+				StopLoss:           44.0,
+				TakeProfits:        []float32{50, 52, 55},
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
+					tradeengineproto.VENUE_FTX,
 				},
 			},
 		},
 	}
 
-	originalBinanceAssetPairs := binanceAssetPairs
-	binanceAssetPairs = map[string]bool{
+	originalBinanceAssetPairs := binanceInstruments
+	binanceInstruments = map[string]bool{
 		"btc":  true,
 		"sol":  true,
 		"aave": true,
@@ -266,11 +294,26 @@ func TestDefaultParser(t *testing.T) {
 		"xtz":  true,
 		"ftt":  true,
 		"avax": true,
+		"step": true,
+	}
+
+	originalFTXAssetPairs := ftxInstruments
+	ftxInstruments = map[string]bool{
+		"btc":  true,
+		"sol":  true,
+		"aave": true,
+		"srm":  true,
+		"rsr":  true,
+		"xtz":  true,
+		"ftt":  true,
+		"avax": true,
+		"step": true,
 	}
 
 	originalFetcher := fetchLatestPrice
 	t.Cleanup(func() {
-		binanceAssetPairs = originalBinanceAssetPairs
+		binanceInstruments = originalBinanceAssetPairs
+		ftxInstruments = originalFTXAssetPairs
 		fetchLatestPrice = originalFetcher
 	})
 

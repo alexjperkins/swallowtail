@@ -8,7 +8,6 @@ import (
 	"github.com/dlclark/regexp2"
 
 	"swallowtail/libraries/gerrors"
-	accountproto "swallowtail/s.account/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -82,7 +81,7 @@ func parseSide(content string) (tradeengineproto.TRADE_SIDE, bool) {
 
 // containsTicker checks if the contain contains a ticker that is traded on Binance
 // it assumes that the content passed with be normalized to lowercase.
-func parseTicker(content string, tradeType tradeengineproto.TRADE_TYPE) (string, []accountproto.ExchangeType) {
+func parseTickerAndVenues(content string, instrumentType tradeengineproto.INSTRUMENT_TYPE) (string, []tradeengineproto.VENUE) {
 	tokens := strings.Fields(strings.ToLower(content))
 	for _, token := range tokens {
 		switch {
@@ -105,16 +104,16 @@ func parseTicker(content string, tradeType tradeengineproto.TRADE_TYPE) (string,
 			t = strings.ReplaceAll(t, "perp", "")
 			t = strings.ReplaceAll(t, "-", "")
 
-			return parseTicker(t, tradeType)
+			return parseTickerAndVenues(t, instrumentType)
 		case strings.Contains(token, "/"):
 			// Some mods format their trades as `BTC/USDT`.
 			s := strings.Split(token, "/")
-			return parseTicker(s[0], tradeType)
+			return parseTickerAndVenues(s[0], instrumentType)
 		}
 
 		// Check if token matches a tradeable instrument across all exchanges.
 		// If it's on at least one; we return.
-		exchanges, ok := fetchAllExchangesTickerTradable(token, tradeType)
+		exchanges, ok := fetchTickerTradeableVenues(token, instrumentType)
 		if ok {
 			return token, exchanges
 		}
@@ -123,26 +122,26 @@ func parseTicker(content string, tradeType tradeengineproto.TRADE_TYPE) (string,
 	return "", nil
 }
 
-func fetchAllExchangesTickerTradable(ticker string, tradeType tradeengineproto.TRADE_TYPE) ([]accountproto.ExchangeType, bool) {
-	var exchanges []accountproto.ExchangeType
-	if _, ok := binanceAssetPairs[ticker]; ok {
-		exchanges = append(exchanges, accountproto.ExchangeType_BINANCE)
+func fetchTickerTradeableVenues(ticker string, instrumentType tradeengineproto.INSTRUMENT_TYPE) ([]tradeengineproto.VENUE, bool) {
+	var venues []tradeengineproto.VENUE
+	if _, ok := binanceInstruments[ticker]; ok {
+		venues = append(venues, tradeengineproto.VENUE_BINANCE)
 	}
 
 	//
 	var key string
-	switch tradeType {
-	case tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS:
+	switch instrumentType {
+	case tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL:
 		key = fmt.Sprintf("%s-perp", ticker)
-	case tradeengineproto.TRADE_TYPE_SPOT:
+	case tradeengineproto.INSTRUMENT_TYPE_SPOT:
 		key = fmt.Sprintf("%s/usdt", ticker)
 	}
 
 	if _, ok := ftxInstruments[key]; ok {
-		exchanges = append(exchanges, accountproto.ExchangeType_FTX)
+		venues = append(venues, tradeengineproto.VENUE_FTX)
 	}
 
-	return exchanges, len(exchanges) > 0
+	return venues, len(venues) > 0
 }
 
 func withinRange(value, truth, rangeAsPercentage float64) bool {
@@ -214,7 +213,7 @@ func validatePosition(currentValue float64, possibleValues []float64, isDCA bool
 	return entries, stopLoss, validTakeProfits, nil
 }
 
-func parseOrderType(content string, currentValue float64, entries []float64, side tradeengineproto.TRADE_SIDE) (tradeengineproto.ORDER_TYPE, bool) {
+func parseExecutionStrategy(content string, currentValue float64, entries []float64, side tradeengineproto.TRADE_SIDE) (tradeengineproto.EXECUTION_STRATEGY, bool) {
 	var containsLimit bool
 	for _, f := range strings.Fields(strings.ToLower(content)) {
 		if f == "limit" {
@@ -226,22 +225,22 @@ func parseOrderType(content string, currentValue float64, entries []float64, sid
 	if len(entries) > 1 {
 		lastEntry := entries[len(entries)-1]
 		if withinRange(lastEntry, currentValue, 2.5) {
-			return tradeengineproto.ORDER_TYPE_DCA_FIRST_MARKET_REST_LIMIT, true
+			return tradeengineproto.EXECUTION_STRATEGY_DCA_FIRST_MARKET_REST_LIMIT, true
 		}
 
-		return tradeengineproto.ORDER_TYPE_DCA_ALL_LIMIT, true
+		return tradeengineproto.EXECUTION_STRATEGY_DCA_ALL_LIMIT, true
 	}
 
 	entry := entries[0]
 	switch {
 	case !containsLimit:
-		return tradeengineproto.ORDER_TYPE_MARKET, true
+		return tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET, true
 	case (side == tradeengineproto.TRADE_SIDE_LONG || side == tradeengineproto.TRADE_SIDE_BUY) && entry < currentValue:
-		return tradeengineproto.ORDER_TYPE_LIMIT, true
+		return tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT, true
 	case (side == tradeengineproto.TRADE_SIDE_SHORT || side == tradeengineproto.TRADE_SIDE_SELL) && entry > currentValue:
-		return tradeengineproto.ORDER_TYPE_LIMIT, true
+		return tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT, true
 	default:
-		return tradeengineproto.ORDER_TYPE_MARKET, false
+		return tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET, false
 	}
 }
 
@@ -259,11 +258,11 @@ func entriesAsString(ff []float64) string {
 	return strings.Join(ss, ",")
 }
 
-func parseTradeType(content string) tradeengineproto.TRADE_TYPE {
+func parseInstrumentType(content string) tradeengineproto.INSTRUMENT_TYPE {
 	switch {
 	case strings.Contains(content, "spot"):
-		return tradeengineproto.TRADE_TYPE_SPOT
+		return tradeengineproto.INSTRUMENT_TYPE_SPOT
 	default:
-		return tradeengineproto.TRADE_TYPE_FUTURES_PERPETUALS
+		return tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL
 	}
 }

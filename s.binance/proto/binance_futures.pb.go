@@ -9,16 +9,16 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-// --- Execute Futures Perpetuals Trade --- //
+// --- Execute New Futures Perpetual Order --- //
 
-type ExecuteFuturesPerpetualsTradeFuture struct {
+type ExecuteNewFuturesPerpetualOrderFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *ExecuteFuturesPerpetualsTradeResponse
+	resultc chan *ExecuteNewFuturesPerpetualOrderResponse
 	ctx     context.Context
 }
 
-func (a *ExecuteFuturesPerpetualsTradeFuture) Response() (*ExecuteFuturesPerpetualsTradeResponse, error) {
+func (a *ExecuteNewFuturesPerpetualOrderFuture) Response() (*ExecuteNewFuturesPerpetualOrderResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
 			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "execute_futures_perpetuals_trade", err)
@@ -35,18 +35,18 @@ func (a *ExecuteFuturesPerpetualsTradeFuture) Response() (*ExecuteFuturesPerpetu
 	}
 }
 
-func (r *ExecuteFuturesPerpetualsTradeRequest) Send(ctx context.Context) *ExecuteFuturesPerpetualsTradeFuture {
+func (r *ExecuteNewFuturesPerpetualOrderRequest) Send(ctx context.Context) *ExecuteNewFuturesPerpetualOrderFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *ExecuteFuturesPerpetualsTradeRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ExecuteFuturesPerpetualsTradeFuture {
+func (r *ExecuteNewFuturesPerpetualOrderRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ExecuteNewFuturesPerpetualOrderFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *ExecuteFuturesPerpetualsTradeResponse, 1)
+	resultc := make(chan *ExecuteNewFuturesPerpetualOrderResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-binance:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s_binance_connection_failed", nil)
-		return &ExecuteFuturesPerpetualsTradeFuture{
+		return &ExecuteNewFuturesPerpetualOrderFuture{
 			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
@@ -58,7 +58,7 @@ func (r *ExecuteFuturesPerpetualsTradeRequest) SendWithTimeout(ctx context.Conte
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.ExecuteFuturesPerpetualsTrade(ctx, r)
+		rsp, err := c.ExecuteNewFuturesPerpetualOrder(ctx, r)
 		if err != nil {
 			errc <- gerrors.Augment(err, "failed_execute_futures_perpetuals_trade", nil)
 			return
@@ -66,7 +66,7 @@ func (r *ExecuteFuturesPerpetualsTradeRequest) SendWithTimeout(ctx context.Conte
 		resultc <- rsp
 	}()
 
-	return &ExecuteFuturesPerpetualsTradeFuture{
+	return &ExecuteNewFuturesPerpetualOrderFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()
