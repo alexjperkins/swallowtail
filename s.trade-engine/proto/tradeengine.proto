@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "./;tradeengineproto";
+option go_package = "swallowtail/s.trade-engine/proto/tradeengineproto";
 
 service tradeengine {
     rpc CreateTradeStrategy (CreateTradeStrategyRequest) returns (CreateTradeStrategyResponse) {}
@@ -125,6 +125,8 @@ message Order {
     VENUE venue = 15;
     int64 created_timestamp = 16;
     string external_order_id = 17;
+    bool close_position = 18;
+    INSTRUMENT_TYPE instrument_type = 19;
 }
 
 message TradeStrategy {

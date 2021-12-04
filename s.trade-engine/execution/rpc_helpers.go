@@ -2,97 +2,17 @@ package execution
 
 import (
 	"context"
-	"strings"
-
-	"github.com/hashicorp/go-multierror"
-	"google.golang.org/protobuf/internal/version"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"fmt"
+	"time"
 
 	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/util"
 	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
-	ftxproto "swallowtail/s.ftx/proto"
+	discordproto "swallowtail/s.discord/proto"
+	"swallowtail/s.trade-engine/marshaling"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
-
-// RouteExecuteNewOrder ...
-func RouteExecuteNewOrder(
-	ctx context.Context,
-	orders []*tradeengineproto.Order,
-	venue tradeengineproto.VENUE,
-	instrumentType tradeengineproto.INSTRUMENT_TYPE,
-	credentials *accountproto.Exchange,
-) ([]*tradeengineproto.Order, error) {
-	errParams := map[string]string{
-		"venue_id":        strings.ToLower(venue.String()),
-		"instrument_type": strings.ToLower(instrumentType.String()),
-	}
-
-	switch venue {
-	case tradeengineproto.VENUE_BINANCE:
-		creds := &binanceproto.Credentials{
-			ApiKey:    credentials.ApiKey,
-			SecretKey: credentials.SecretKey,
-		}
-
-		switch instrumentType {
-		case tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL:
-			return executeBinanceNewPerpetualFuturesOrders(ctx, orders, creds)
-		case tradeengineproto.INSTRUMENT_TYPE_SPOT:
-			return executeBinanceNewSpotOrders(ctx, orders, creds)
-		default:
-			return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.instrument_exchange_pair_umimplemented", errParams)
-		}
-	case tradeengineproto.VENUE_FTX:
-		creds := &ftxproto.FTXCredentials{
-			ApiKey:     credentials.ApiKey,
-			SecretKey:  credentials.SecretKey,
-			Subaccount: credentials.SubAccount,
-		}
-
-		return executeFTXNewOrders(ctx, orders, creds)
-	default:
-		return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.exchange_unimplemented", errParams)
-	}
-
-	return nil, nil
-}
-
-// executeBinanceNewPerpetualFuturesOrder ...
-func executeBinanceNewPerpetualFuturesOrders(ctx context.Context, orders []*tradeengineproto.Order, credentials *binanceproto.Credentials) ([]*tradeengineproto.Order, error) {
-	var (
-		os   []*tradeengineproto.Order
-		mErr error
-	)
-	for _, o := range orders {
-		rsp, err := (&binanceproto.ExecuteNewFuturesPerpetualOrderRequest{
-			Order:       o,
-			Credentials: credentials,
-			Timestamp:   timestamppb.Now(),
-		}).Send(ctx).Response()
-		if err != nil {
-			mErr = multierror.Append(mErr, err)
-		}
-
-		os = append(os, rsp.Order)
-	}
-
-	if mErr != nil {
-		return os, gerrors.Augment(mErr, "failed_to_route_and_execute_order.binance_perpetual_futures", nil)
-	}
-
-	return os, nil
-}
-
-// executeBinanceNewSpotOrder ...
-func executeBinanceNewSpotOrders(ctx context.Context, orders []*tradeengineproto.Order, credentials *tradeengineproto.VenueCredentials) ([]*tradeengineproto.Order, error) {
-	return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.ftx_new_orders_spot_unimplemented", nil)
-}
-
-// executeFTXNewOrder ...
-func executeFTXNewOrders(ctx context.Context, orders []*tradeengineproto.Order, credentials *tradeengineproto.VenueCredentials) ([]*tradeengineproto.Order, error) {
-	return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.ftx_new_orders_unimplemented", nil)
-}
 
 func readVenueCredentials(ctx context.Context, userID string, venue tradeengineproto.VENUE) (*tradeengineproto.VenueCredentials, error) {
 	rsp, err := (&accountproto.ReadExchangeByExchangeDetailsRequest{
@@ -103,18 +23,18 @@ func readVenueCredentials(ctx context.Context, userID string, venue tradeenginep
 		return nil, gerrors.Augment(err, "failed_to_read_exchange_credentials", nil)
 	}
 
-	e := rsp.GetExchange()
-	return &tradeengineproto.VenueCredentials{
-		ApiKey:     e.ApiKey,
-		SecretKey:  e.SecretKey,
-		Subaccount: e.SubAccount,
-		Passphrase: "", // TODO: we first need to add this to the data model of an exchange.
-	}, nil
+	// Marshal venue credentials.
+	venueCredentials, err := marshaling.AccountExchangeToVenueCredentials(rsp.GetExchange())
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_route_and_execute_order.marshal_credentials", nil)
+	}
+
+	return venueCredentials, nil
 }
 
-func readVenueAccountBalance(ctx context.Context, venue tradeengineproto.VENUE, credentials *tradeengineproto.VenueCredentials) (float64, error) {
+func readVenueAccountBalance(ctx context.Context, venue tradeengineproto.VENUE, _ tradeengineproto.INSTRUMENT_TYPE, credentials *tradeengineproto.VenueCredentials) (float64, error) {
 	errParams := map[string]string{
-		"venue": version.String(),
+		"venue": venue.String(),
 	}
 
 	switch venue {
@@ -137,4 +57,23 @@ func readVenueAccountBalance(ctx context.Context, venue tradeengineproto.VENUE, 
 	default:
 		return 0, gerrors.Unimplemented("failed_to_read_venue_account_balance.unimplemented.venue", errParams)
 	}
+}
+
+func notifyUser(ctx context.Context, msg string, userID string) error {
+	content := `:wave: <@%s> WARNING FROM TRADE ENGINE:
+
+%s
+`
+
+	formattedContent := fmt.Sprintf(content, userID, msg)
+	if _, err := (&discordproto.SendMsgToPrivateChannelRequest{
+		UserId:         userID,
+		SenderId:       tradeengineproto.TradeEngineActorSatoshiSystem,
+		Content:        formattedContent,
+		IdempotencyKey: fmt.Sprintf("%s-%s-%s", userID, util.Sha256Hash(msg), time.Now().UTC().Truncate(10*time.Minute)),
+	}).Send(ctx).Response(); err != nil {
+		return gerrors.Augment(err, "failed_to_notify_user", nil)
+	}
+
+	return nil
 }

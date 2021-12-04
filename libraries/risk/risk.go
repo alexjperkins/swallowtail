@@ -9,8 +9,8 @@ import (
 
 // Position ...
 type Position struct {
-	Risk  float64
-	Price float64
+	RiskCoefficient float64
+	Price           float64
 }
 
 // CalculatePositionsByRisk returns an array of risk percentages to  place based on both the entry, position & total risk
@@ -37,8 +37,8 @@ func CalculatePositionsByRisk(
 
 		return []*Position{
 			{
-				Risk:  r,
-				Price: entries[0],
+				RiskCoefficient: r,
+				Price:           entries[0],
 			},
 		}, nil
 	default:
