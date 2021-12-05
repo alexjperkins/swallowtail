@@ -1,4 +1,4 @@
-package algo
+package execution
 
 import (
 	"context"
@@ -10,8 +10,10 @@ func init() {
 	register(tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT, &DMALimit{})
 }
 
+// DMALimit ...
 type DMALimit struct{}
 
-func (d *DMALimit) Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
+// Execute ...
+func (d *DMALimit) Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
 	return nil, nil
 }

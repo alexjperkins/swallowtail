@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "s.trade-engine/proto/tradeengine.proto";
 
-option go_package = "swallowtail/s.binance/proto/binanceproto";
+option go_package = "swallowtail/s.binance/proto;binanceproto";
 
 service binance {
     rpc ListAllAssetPairs (ListAllAssetPairsRequest) returns (ListAllAssetPairsResponse) {}

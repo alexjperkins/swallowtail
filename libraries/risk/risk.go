@@ -61,13 +61,13 @@ func CalculatePositionsByRisk(
 	// Calculate the given risk space we shall use for our risk coefficients
 	var riskSpace []float64
 	switch strategy {
-	case tradeengineproto.DCA_STRATEGY_CONSTANT:
+	case tradeengineproto.DCA_EXECUTION_STRATEGY_CONSTANT:
 		for i := 0; i < howMany; i++ {
 			riskSpace = append(riskSpace, 1/float64(howMany))
 		}
-	case tradeengineproto.DCA_STRATEGY_LINEAR:
+	case tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR:
 		riskSpace = summedLinspace(howMany, totalRisk)
-	case tradeengineproto.DCA_STRATEGY_EXPONENTIAL:
+	case tradeengineproto.DCA_EXECUTION_STRATEGY_EXPONENTIAL:
 		return nil, gerrors.Unimplemented("failed_to_calculate_notional_size_from_risk.exponential_dca_strategy_unimplemented", nil)
 	default:
 	}

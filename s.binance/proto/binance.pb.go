@@ -12,7 +12,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
-	tradeengineproto "swallowtail/s.trade-engine/proto/tradeengineproto"
+	proto1 "swallowtail/s.trade-engine/proto"
 	sync "sync"
 )
 
@@ -196,9 +196,9 @@ type ExecuteNewFuturesPerpetualOrderRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Order       *tradeengineproto.Order            `protobuf:"bytes,1,opt,name=order,proto3" json:"order,omitempty"`
-	Timestamp   *timestamppb.Timestamp             `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Credentials *tradeengineproto.VenueCredentials `protobuf:"bytes,3,opt,name=credentials,proto3" json:"credentials,omitempty"`
+	Order       *proto1.Order            `protobuf:"bytes,1,opt,name=order,proto3" json:"order,omitempty"`
+	Timestamp   *timestamppb.Timestamp   `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Credentials *proto1.VenueCredentials `protobuf:"bytes,3,opt,name=credentials,proto3" json:"credentials,omitempty"`
 }
 
 func (x *ExecuteNewFuturesPerpetualOrderRequest) Reset() {
@@ -233,7 +233,7 @@ func (*ExecuteNewFuturesPerpetualOrderRequest) Descriptor() ([]byte, []int) {
 	return file_s_binance_proto_binance_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ExecuteNewFuturesPerpetualOrderRequest) GetOrder() *tradeengineproto.Order {
+func (x *ExecuteNewFuturesPerpetualOrderRequest) GetOrder() *proto1.Order {
 	if x != nil {
 		return x.Order
 	}
@@ -247,7 +247,7 @@ func (x *ExecuteNewFuturesPerpetualOrderRequest) GetTimestamp() *timestamppb.Tim
 	return nil
 }
 
-func (x *ExecuteNewFuturesPerpetualOrderRequest) GetCredentials() *tradeengineproto.VenueCredentials {
+func (x *ExecuteNewFuturesPerpetualOrderRequest) GetCredentials() *proto1.VenueCredentials {
 	if x != nil {
 		return x.Credentials
 	}
@@ -259,7 +259,7 @@ type ExecuteNewFuturesPerpetualOrderResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Order *tradeengineproto.Order `protobuf:"bytes,1,opt,name=order,proto3" json:"order,omitempty"`
+	Order *proto1.Order `protobuf:"bytes,1,opt,name=order,proto3" json:"order,omitempty"`
 }
 
 func (x *ExecuteNewFuturesPerpetualOrderResponse) Reset() {
@@ -294,7 +294,7 @@ func (*ExecuteNewFuturesPerpetualOrderResponse) Descriptor() ([]byte, []int) {
 	return file_s_binance_proto_binance_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ExecuteNewFuturesPerpetualOrderResponse) GetOrder() *tradeengineproto.Order {
+func (x *ExecuteNewFuturesPerpetualOrderResponse) GetOrder() *proto1.Order {
 	if x != nil {
 		return x.Order
 	}
@@ -306,8 +306,8 @@ type ReadPerpetualFuturesAccountRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ActorId     string                             `protobuf:"bytes,1,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
-	Credentials *tradeengineproto.VenueCredentials `protobuf:"bytes,2,opt,name=credentials,proto3" json:"credentials,omitempty"`
+	ActorId     string                   `protobuf:"bytes,1,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
+	Credentials *proto1.VenueCredentials `protobuf:"bytes,2,opt,name=credentials,proto3" json:"credentials,omitempty"`
 }
 
 func (x *ReadPerpetualFuturesAccountRequest) Reset() {
@@ -349,7 +349,7 @@ func (x *ReadPerpetualFuturesAccountRequest) GetActorId() string {
 	return ""
 }
 
-func (x *ReadPerpetualFuturesAccountRequest) GetCredentials() *tradeengineproto.VenueCredentials {
+func (x *ReadPerpetualFuturesAccountRequest) GetCredentials() *proto1.VenueCredentials {
 	if x != nil {
 		return x.Credentials
 	}
@@ -715,8 +715,8 @@ type VerifyCredentialsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Credentials *tradeengineproto.VenueCredentials `protobuf:"bytes,1,opt,name=credentials,proto3" json:"credentials,omitempty"`
-	UserId      string                             `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Credentials *proto1.VenueCredentials `protobuf:"bytes,1,opt,name=credentials,proto3" json:"credentials,omitempty"`
+	UserId      string                   `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 }
 
 func (x *VerifyCredentialsRequest) Reset() {
@@ -751,7 +751,7 @@ func (*VerifyCredentialsRequest) Descriptor() ([]byte, []int) {
 	return file_s_binance_proto_binance_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *VerifyCredentialsRequest) GetCredentials() *tradeengineproto.VenueCredentials {
+func (x *VerifyCredentialsRequest) GetCredentials() *proto1.VenueCredentials {
 	if x != nil {
 		return x.Credentials
 	}
@@ -1140,7 +1140,7 @@ var file_s_binance_proto_binance_proto_rawDesc = []byte{
 	0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
 	0x22, 0x00, 0x42, 0x2a, 0x5a, 0x28, 0x73, 0x77, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x74, 0x61, 0x69,
 	0x6c, 0x2f, 0x73, 0x2e, 0x62, 0x69, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x62, 0x69, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06,
+	0x6f, 0x3b, 0x62, 0x69, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
@@ -1174,9 +1174,9 @@ var file_s_binance_proto_binance_proto_goTypes = []interface{}{
 	(*VerifyCredentialsResponse)(nil),               // 13: VerifyCredentialsResponse
 	(*GetStatusRequest)(nil),                        // 14: GetStatusRequest
 	(*GetStatusResponse)(nil),                       // 15: GetStatusResponse
-	(*tradeengineproto.Order)(nil),                  // 16: Order
+	(*proto1.Order)(nil),                            // 16: Order
 	(*timestamppb.Timestamp)(nil),                   // 17: google.protobuf.Timestamp
-	(*tradeengineproto.VenueCredentials)(nil),       // 18: VenueCredentials
+	(*proto1.VenueCredentials)(nil),                 // 18: VenueCredentials
 }
 var file_s_binance_proto_binance_proto_depIdxs = []int32{
 	0,  // 0: ListAllAssetPairsResponse.asset_pairs:type_name -> AssetPair

@@ -19,8 +19,12 @@ type StrategyExecution interface {
 	Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error)
 }
 
-// ExecuteTradeStrategy executes the given trade strategy with the given execution executionrithm.
-func ExecuteTradeStrategy(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
+// ExecuteTradeStrategyForParticipant executes the given trade strategy with the given execution executionrithm.
+func ExecuteTradeStrategyForParticipant(
+	ctx context.Context,
+	strategy *tradeengineproto.TradeStrategy,
+	participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest,
+) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
 	errParams := map[string]string{
 		"execution_strategy": strategy.ExecutionStrategy.String(),
 		"user_id":            participant.UserId,

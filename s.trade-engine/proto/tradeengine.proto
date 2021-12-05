@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "swallowtail/s.trade-engine/proto/tradeengineproto";
+option go_package = "swallowtail/s.trade-engine/proto;tradeengineproto";
 
 service tradeengine {
     rpc CreateTradeStrategy (CreateTradeStrategyRequest) returns (CreateTradeStrategyResponse) {}
@@ -169,17 +169,19 @@ message ExecuteTradeStrategyForParticipantRequest {
     float risk = 8; 
 }
 
+message ExecutionError {
+    string error_message = 1;
+    Order failed_order = 2;
+}
+
 message ExecuteTradeStrategyForParticipantResponse {
-    repeated string exchange_trade_ids = 1;
-    string trade_participant_id = 2;
-    string trade_strategy_id = 3;
-    float notional_size = 4;
-    google.protobuf.Timestamp timestamp = 5;
-    string exchange = 6;
-    string asset = 7;
-    int64 number_of_executed_orders = 8;
-    string execution_strategy = 9;
-    repeated Order successful_orders = 10;
+    float notional_size = 1;
+    VENUE venue = 2;
+    int64 number_of_executed_orders = 3;
+    EXECUTION_STRATEGY execution_strategy = 4;
+    repeated Order successful_orders = 5;
+    google.protobuf.Timestamp timestamp = 6;
+    ExecutionError error = 7;
 }
 
 message ReadTradeByTradeIDRequest {

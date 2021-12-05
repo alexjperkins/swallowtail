@@ -3,13 +3,10 @@ package handler
 import (
 	"context"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"swallowtail/libraries/gerrors"
-	accountproto "swallowtail/s.account/proto"
 	"swallowtail/s.trade-engine/dao"
+	"swallowtail/s.trade-engine/execution"
 	"swallowtail/s.trade-engine/marshaling"
-	"swallowtail/s.trade-engine/orderrouter"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -35,78 +32,34 @@ func (s *TradeEngineService) ExecuteTradeStrategyForParticipant(
 	}
 
 	// Read trade strategy to see if it exists.
-	trade, err := dao.ReadTradeStrategyByTradeStrategyID(ctx, in.TradeId)
+	tradeStrategy, err := dao.ReadTradeStrategyByTradeStrategyID(ctx, in.TradeId)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade", errParams)
 	}
 
-	// Read trade participant to see if that already exists
-	existingTradeParticipant, err := dao.ReadTradeStrategyParticipantByTradeStrategyID(ctx, trade.TradeStrategyID, in.UserId)
+	// Read trade participant to see if that already exists.
+	existingTradeParticipant, err := dao.ReadTradeStrategyParticipantByTradeStrategyID(ctx, tradeStrategy.TradeStrategyID, in.UserId)
 	switch {
 	case gerrors.Is(err, gerrors.ErrNotFound, "not_found.trade_participant"):
 	case err != nil:
 		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.failed_check_if_trade_participant_already_exists", errParams)
-	}
-
-	if existingTradeParticipant != nil {
+	case existingTradeParticipant != nil:
 		return nil, gerrors.AlreadyExists("failed_to_add_participant_to_trade.trade_already_exists", errParams)
 	}
 
 	// Validate our trade strategy participant.
-	if err := validateTradeStrategyParticipant(in, trade); err != nil {
+	if err := validateTradeStrategyParticipant(in, tradeStrategy); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.invalid_trade_participant", errParams)
 	}
 
-	// Read the users primary exchange; here we do an implicit account check. This ensures the user does have an account with us.
-	// **we** don't need to verify if the user is a futures paying user.
-	primaryExchangeCredentials, err := readPrimaryExchangeCredentials(ctx, in.UserId)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.read_primary_exchange", errParams)
-	}
+	// Marshal domain trade strategy to proto; here we can leverage enums over order parameters.
+	tradeStrategyProto := marshaling.TradeStrategyDomainStrategyToProto(tradeStrategy)
 
 	// Execute the trade.
-	exchangeTradeRsp, err := orderrouter.ExecuteFuturesTradeStrategyForParticipant(ctx, trade, in, primaryExchangeCredentials)
+	rsp, err := execution.ExecuteTradeStrategyForParticipant(ctx, tradeStrategyProto, in)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.execute_trade", errParams)
 	}
 
-	// Translate the exchange.
-	var venue tradeengineproto.VENUE
-	switch primaryExchangeCredentials.ExchangeType {
-	case accountproto.ExchangeType_BINANCE:
-	case accountproto.ExchangeType_BITFINEX:
-	case accountproto.ExchangeType_FTX:
-	case accountproto.ExchangeType_DERIBIT:
-	default:
-		return nil, gerrors.Unimplemented("failed_to_add_participant_to_trade_strategy.unimplemented_exchange.credentials", map[string]string{
-			"exchange": primaryExchangeCredentials.ExchangeType.String(),
-		})
-	}
-
-	// Embelish the trade participant before marshaling & persisting.
-	in.Venue = venue
-	in.Size = float32(exchangeTradeRsp.NotionalSize)
-
-	tradeStrategyParticipant := marshaling.TradeParticipantProtoToDomain(in, exchangeTradeRsp.ExchangeTradeIDs, exchangeTradeRsp.ExecutionTimestamp)
-	if err := dao.AddParticpantToTradeStrategy(ctx, tradeStrategyParticipant); err != nil {
-		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.dao", errParams)
-	}
-
-	// Read trade participant back out to get the trade participant id.
-	existingTradeParticipant, err = dao.ReadTradeStrategyParticipantByTradeStrategyID(ctx, trade.TradeStrategyID, in.UserId)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade.failed_to_read_created_trade_participant", errParams)
-	}
-
-	return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
-		ExchangeTradeIds:       exchangeTradeRsp.ExchangeTradeIDs,
-		TradeParticipantId:     existingTradeParticipant.TradeParticipantID,
-		TradeId:                trade.TradeID,
-		NotionalSize:           float32(exchangeTradeRsp.NotionalSize),
-		Timestamp:              timestamppb.New(exchangeTradeRsp.ExecutionTimestamp),
-		Asset:                  trade.Asset,
-		Exchange:               tradeParticipant.Exchange,
-		NumberOfExecutedOrders: int64(exchangeTradeRsp.NumberOfExecutedOrders),
-		ExecutionAlgoStrategy:  exchangeTradeRsp.ExecutionAlgoStrategy,
-	}, nil
+	return rsp, nil
 }

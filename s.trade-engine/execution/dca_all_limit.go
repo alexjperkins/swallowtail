@@ -6,21 +6,31 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/monzo/slog"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/risk"
 	or "swallowtail/s.trade-engine/orderrouterv2"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
-
-	"github.com/monzo/slog"
 )
 
 func init() {
 	register(tradeengineproto.EXECUTION_STRATEGY_DCA_ALL_LIMIT, &DCAAllLimit{})
 }
 
+// DCAAllLimit ...
 type DCAAllLimit struct{}
 
+// Execute ...
 func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
+	// Defense in depth; validate strategy.
+	if len(strategy.Entries) < 2 {
+		return nil, gerrors.FailedPrecondition("failed_to_execute_dca_all_limit_strategy.invalid.more_than_one_entry_required", map[string]string{
+			"trade_strategy_id": strategy.TradeStrategyId,
+		})
+	}
+
 	// Fetch venue specific credentials.
 	venueCredentials, err := readVenueCredentials(ctx, participant.UserId, participant.Venue)
 	if err != nil {
@@ -81,14 +91,12 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		slog.Warn(ctx, "Participant executing trade strategy without a stop loss: %s, %s", strategy.TradeStrategyId, participant.UserId)
 
 		// Warn user of **not** using a stop loss. Best effort.
-		if err := notifyUser(ctx, "DCA_ALL_LIMIT: Placing without a STOP LOSS", participant.UserId); err != nil {
+		if err := notifyUser(ctx, fmt.Sprintf("[%s] participant placing without a stop loss", strategy.ExecutionStrategy), participant.UserId); err != nil {
 			slog.Error(ctx, "Failed to notifiy user: %v", err)
 		}
 	default:
-
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
-			Instrument:       fmt.Sprintf("%s%s", strategy.Asset, strategy.Pair.String()),
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_STOP_MARKET,
@@ -106,7 +114,6 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 	for _, p := range positions {
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
-			Instrument:       fmt.Sprintf("%s%s", strategy.Asset, strategy.Pair.String()),
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_LIMIT,
@@ -119,13 +126,11 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		})
 	}
 
-	tps := calculateTakeProfits(totalQuantity, strategy.TakeProfits)
-
 	// Add take profits.
+	tps := calculateTakeProfits(totalQuantity, strategy.TakeProfits)
 	for _, tp := range tps {
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
-			Instrument:       fmt.Sprintf("%s%s", strategy.Asset, strategy.Pair.String()),
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET,
@@ -139,15 +144,39 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		})
 	}
 
-	successfulOrders, err := or.RouteExecuteNewOrder(ctx, orders, participant.Venue, strategy.InstrumentType, venueCredentials)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy.orderrouter", errParams)
+	// Execute orders sequentially; gather successful orders, here we return early on the first failed order.
+	// Here we manage risk, by placing the stop first - this is the most important.
+	var successfulOrders = make([]*tradeengineproto.Order, 0, len(orders))
+	for i, o := range orders {
+		successfulOrder, err := or.RouteAndExecuteNewOrder(ctx, o, participant.Venue, strategy.InstrumentType, venueCredentials)
+		if err != nil {
+			slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", o, err, errParams)
+			return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
+				NotionalSize:           float32(totalQuantity),
+				Venue:                  participant.Venue,
+				NumberOfExecutedOrders: int64(i),
+				ExecutionStrategy:      strategy.ExecutionStrategy,
+				SuccessfulOrders:       successfulOrders,
+				Timestamp:              timestamppb.Now(),
+				Error: &tradeengineproto.ExecutionError{
+					ErrorMessage: gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy", nil).Error(),
+					FailedOrder:  o,
+				},
+			}, nil
+		}
+
+		slog.Info(ctx, "Order placed: %s [%s] %s", successfulOrder.Venue, successfulOrder.ExternalOrderId, successfulOrder.Instrument)
+		successfulOrders = append(successfulOrders, successfulOrder)
 	}
 
-	// Store DB.
+	// TODO: Store in DB.
 
 	return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
-		SuccessfulOrders: successfulOrders,
-		Exchange:         participant.Venue.String(), // TODO: change
+		NotionalSize:           float32(totalQuantity),
+		NumberOfExecutedOrders: int64(len(successfulOrders)),
+		ExecutionStrategy:      strategy.ExecutionStrategy,
+		SuccessfulOrders:       successfulOrders,
+		Timestamp:              timestamppb.Now(),
+		Venue:                  participant.Venue,
 	}, nil
 }

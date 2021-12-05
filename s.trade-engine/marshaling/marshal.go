@@ -41,8 +41,8 @@ func TradeStrategyProtoToDomain(proto *tradeengineproto.TradeStrategy) *domain.T
 	}
 }
 
-// TradeDomainToProto ...
-func TradeDomainToProto(domain *domain.TradeStrategy) *tradeengineproto.TradeStrategy {
+// TradeStrategyDomainStrategyToProto ...
+func TradeStrategyDomainStrategyToProto(domain *domain.TradeStrategy) *tradeengineproto.TradeStrategy {
 	entries := make([]float32, 0, len(domain.Entries))
 	for _, entry := range domain.Entries {
 		entries = append(entries, float32(entry))

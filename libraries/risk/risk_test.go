@@ -20,7 +20,7 @@ func TestCalculateRiskPositionsByRisk(t *testing.T) {
 		stopLoss  float64
 		howMany   int
 		side      tradeengineproto.TRADE_SIDE
-		strategy  tradeengineproto.DCA_STRATEGY
+		strategy  tradeengineproto.DCA_EXECUTION_STRATEGY
 	}{
 		{
 			name:      "5_entries",
@@ -29,7 +29,7 @@ func TestCalculateRiskPositionsByRisk(t *testing.T) {
 			stopLoss:  80,
 			howMany:   5,
 			side:      tradeengineproto.TRADE_SIDE_BUY,
-			strategy:  tradeengineproto.DCA_STRATEGY_LINEAR,
+			strategy:  tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR,
 		},
 		{
 			name:      "7_entries",
@@ -38,7 +38,7 @@ func TestCalculateRiskPositionsByRisk(t *testing.T) {
 			stopLoss:  8,
 			howMany:   7,
 			side:      tradeengineproto.TRADE_SIDE_BUY,
-			strategy:  tradeengineproto.DCA_STRATEGY_LINEAR,
+			strategy:  tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR,
 		},
 		{
 			name:      "5_entries_real_example",
@@ -47,7 +47,7 @@ func TestCalculateRiskPositionsByRisk(t *testing.T) {
 			stopLoss:  2500,
 			howMany:   5,
 			side:      tradeengineproto.TRADE_SIDE_BUY,
-			strategy:  tradeengineproto.DCA_STRATEGY_LINEAR,
+			strategy:  tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR,
 		},
 	}
 
