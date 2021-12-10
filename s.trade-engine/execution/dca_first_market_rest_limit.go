@@ -75,6 +75,13 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 		})
 	}
 
+	if err := isEnoughAvailableVenueMargain(venueAccountBalance); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit", map[string]string{
+			"venue_balance":           fmt.Sprintf("%f", venueAccountBalance),
+			"venue_min_margain_limit": fmt.Sprintf("%d", retailMinVenueMargainInUSDT),
+		})
+	}
+
 	var (
 		orders []*tradeengineproto.Order
 		now    = time.Now().UTC()

@@ -60,6 +60,13 @@ func (d *DMALimit) Execute(ctx context.Context, strategy *tradeengineproto.Trade
 		})
 	}
 
+	if err := isEnoughAvailableVenueMargain(venueAccountBalance); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_execute_dma_limit_strategy", map[string]string{
+			"venue_balance":           fmt.Sprintf("%f", venueAccountBalance),
+			"venue_min_margain_limit": fmt.Sprintf("%d", retailMinVenueMargainInUSDT),
+		})
+	}
+
 	var (
 		now    = time.Now().UTC()
 		orders []*tradeengineproto.Order
