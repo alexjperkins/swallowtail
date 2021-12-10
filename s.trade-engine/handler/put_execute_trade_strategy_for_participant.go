@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.trade-engine/dao"
@@ -23,6 +24,12 @@ func (s *TradeEngineService) ExecuteTradeStrategyForParticipant(
 		return nil, gerrors.BadParam("missing_param.user_id", nil)
 	case in.TradeId == "":
 		return nil, gerrors.BadParam("missing_param.trade_id", nil)
+	case in.Risk == 0 && in.Size == 0:
+		return nil, gerrors.FailedPrecondition("failed_precondition.risk_and_size_cannot_be_zero", nil)
+	case in.Risk > 50:
+		return nil, gerrors.FailedPrecondition("failed_precondition.risk_too_high", map[string]string{
+			"risk": fmt.Sprintf("%f", in.Risk),
+		})
 	}
 
 	errParams := map[string]string{

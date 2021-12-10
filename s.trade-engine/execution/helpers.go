@@ -2,6 +2,7 @@ package execution
 
 import (
 	"math"
+
 	"swallowtail/libraries/risk"
 )
 
@@ -23,9 +24,9 @@ func calculateNumberOfDCABuys(accountBalance float64) int {
 	return DCANumberOfBuysLowerBound
 }
 
-func calculateTotalQuantityFromPositions(accountBalance, totalRisk float64, positions []*risk.Position) float64 {
-	var f func(positions []*risk.Position) float64
-	f = func(postions []*risk.Position) float64 {
+func calculateTotalQuantityFromPositions(accountBalance, totalRisk float64, positions []*risk.PositionDetail) float64 {
+	var f func(positions []*risk.PositionDetail) float64
+	f = func(postions []*risk.PositionDetail) float64 {
 		if len(postions) == 0 {
 			return 0
 		}
@@ -33,7 +34,7 @@ func calculateTotalQuantityFromPositions(accountBalance, totalRisk float64, posi
 		return postions[0].RiskCoefficient + f(postions[1:])
 	}
 
-	return math.Ceil(f(positions) * accountBalance * totalRisk)
+	return math.Ceil(f(positions)*accountBalance*totalRisk) / 100
 }
 
 func calculateTakeProfits(totalPositionQuantity float64, takeProfitStopPrices []float32) []*TakeProfitDetail {

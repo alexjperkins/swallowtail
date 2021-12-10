@@ -12,8 +12,8 @@ import (
 	"github.com/monzo/terrors"
 )
 
-// ReadExchangeByExchangeID ...
-func ReadExchangeByExchangeID(ctx context.Context, exchangeID string) (*domain.Exchange, error) {
+// ReadExchangeByVenueID ...
+func ReadExchangeByVenueID(ctx context.Context, venueID string) (*domain.Exchange, error) {
 	var (
 		sql = `
 		SELECT * FROM s_account_exchanges
@@ -22,12 +22,12 @@ func ReadExchangeByExchangeID(ctx context.Context, exchangeID string) (*domain.E
 		exchanges []*domain.Exchange
 	)
 
-	if err := db.Select(ctx, exchanges, sql, exchangeID); err != nil {
-		return nil, terrors.Propagate(err)
+	if err := db.Select(ctx, exchanges, sql, venueID); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	if len(exchanges) == 0 {
-		return nil, terrors.NotFound("exchange-does-not-exist", "Failed to find exchange with exchange id", nil)
+		return nil, gerrors.NotFound("exchange_not_found_for_venue", nil)
 	}
 
 	return exchanges[0], nil

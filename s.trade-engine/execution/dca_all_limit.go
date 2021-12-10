@@ -11,7 +11,7 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/risk"
-	or "swallowtail/s.trade-engine/orderrouterv2"
+	or "swallowtail/s.trade-engine/orderrouter"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -19,16 +19,21 @@ func init() {
 	register(tradeengineproto.EXECUTION_STRATEGY_DCA_ALL_LIMIT, &DCAAllLimit{})
 }
 
-// DCAAllLimit ...
+// DCAAllLimit executes a dca all limit strategy via direct market access.
 type DCAAllLimit struct{}
 
 // Execute ...
 func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
-	// Defense in depth; validate strategy.
-	if len(strategy.Entries) < 2 {
+	// Validation.
+	switch {
+	case len(strategy.Entries) < 2:
 		return nil, gerrors.FailedPrecondition("failed_to_execute_dca_all_limit_strategy.invalid.more_than_one_entry_required", map[string]string{
 			"trade_strategy_id": strategy.TradeStrategyId,
 		})
+	case participant.Venue == tradeengineproto.VENUE_UNREQUIRED:
+		return nil, gerrors.FailedPrecondition("dca_all_limit.venue_required", nil)
+	case participant.Risk == 0:
+		return nil, gerrors.FailedPrecondition("dca_all_limit.participant_nil_risk", nil)
 	}
 
 	// Fetch venue specific credentials.
@@ -53,13 +58,21 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 	}
 
 	// Calculate positions.
-	positions, err := risk.CalculatePositionsByRisk(entries, float64(strategy.StopLoss), float64(participant.Risk), numberOfPositions, strategy.TradeSide, tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR)
+	positions, err := risk.CalculatePositionsByRisk(entries, float64(strategy.StopLoss), numberOfPositions, strategy.TradeSide, tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy.calculate_risk", nil)
 	}
 
 	// Calculate total quantity/size from positions.
 	totalQuantity := calculateTotalQuantityFromPositions(venueAccountBalance, float64(participant.Risk), positions)
+
+	// Validate order against risk appetite constraints.
+	if err := isTradeStrategyParticipantOverRiskAppetite(venueAccountBalance, totalQuantity); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy", map[string]string{
+			"total_quantity": fmt.Sprintf("%f", totalQuantity),
+			"venue_balance":  fmt.Sprintf("%f", venueAccountBalance),
+		})
+	}
 
 	var (
 		orders []*tradeengineproto.Order
@@ -75,6 +88,7 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		"asset":               strategy.Asset,
 		"pair":                strategy.Pair.String(),
 		"venue":               participant.Venue.String(),
+		"total_quantity":      fmt.Sprintf("%f", totalQuantity),
 	}
 
 	var exitTradeSide tradeengineproto.TRADE_SIDE
@@ -119,7 +133,7 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 			OrderType:        tradeengineproto.ORDER_TYPE_LIMIT,
 			TradeSide:        strategy.TradeSide,
 			LimitPrice:       float32(p.Price),
-			Quantity:         float32(venueAccountBalance) * participant.Risk * float32(p.RiskCoefficient),
+			Quantity:         float32(venueAccountBalance) * participant.Risk * float32(p.RiskCoefficient) / 100,
 			WorkingType:      tradeengineproto.WORKING_TYPE_MARK_PRICE,
 			Venue:            participant.Venue,
 			CreatedTimestamp: now.Unix(),
@@ -168,6 +182,8 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		slog.Info(ctx, "Order placed: %s [%s] %s", successfulOrder.Venue, successfulOrder.ExternalOrderId, successfulOrder.Instrument)
 		successfulOrders = append(successfulOrders, successfulOrder)
 	}
+
+	slog.Info(ctx, "Successfully placed dca all limit trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 
 	// TODO: Store in DB.
 

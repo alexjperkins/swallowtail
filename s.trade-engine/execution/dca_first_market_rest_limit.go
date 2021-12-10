@@ -12,7 +12,7 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/risk"
-	or "swallowtail/s.trade-engine/orderrouterv2"
+	or "swallowtail/s.trade-engine/orderrouter"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -25,23 +25,28 @@ type DCAFirstMarketRestLimit struct{}
 
 // Execute ...
 func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
-	// Defense in depth; validate strategy.
-	if len(strategy.Entries) < 2 {
-		return nil, gerrors.FailedPrecondition("failed_to_execute_dca_all_limit_strategy.invalid.more_than_one_entry_required", map[string]string{
+	// Validation.
+	switch {
+	case len(strategy.Entries) < 2:
+		return nil, gerrors.FailedPrecondition("failed_to_execute_dca_first_market_rest_limit.invalid.more_than_one_entry_required", map[string]string{
 			"trade_strategy_id": strategy.TradeStrategyId,
 		})
+	case participant.Venue == tradeengineproto.VENUE_UNREQUIRED:
+		return nil, gerrors.FailedPrecondition("dca_first_market_rest_limit.venue_required", nil)
+	case participant.Risk == 0:
+		return nil, gerrors.FailedPrecondition("dca_first_market_rest_limit.participant_nil_risk", nil)
 	}
 
 	// Fetch venue specific credentials.
 	venueCredentials, err := readVenueCredentials(ctx, participant.UserId, participant.Venue)
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy", nil)
+		return nil, gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit", nil)
 	}
 
 	// Read account balance.
 	venueAccountBalance, err := readVenueAccountBalance(ctx, participant.Venue, strategy.InstrumentType, venueCredentials)
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy", nil)
+		return nil, gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit", nil)
 	}
 
 	// Calculate number of DCA positions.
@@ -54,13 +59,21 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	}
 
 	// Calculate positions.
-	positions, err := risk.CalculatePositionsByRisk(entries, float64(strategy.StopLoss), float64(participant.Risk), numberOfPositions, strategy.TradeSide, tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR)
+	positions, err := risk.CalculatePositionsByRisk(entries, float64(strategy.StopLoss), numberOfPositions, strategy.TradeSide, tradeengineproto.DCA_EXECUTION_STRATEGY_LINEAR)
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy.calculate_risk", nil)
+		return nil, gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit.calculate_risk", nil)
 	}
 
 	// Calculate total quantity/size from positions.
 	totalQuantity := calculateTotalQuantityFromPositions(venueAccountBalance, float64(participant.Risk), positions)
+
+	// Validate order against risk appetite constraints.
+	if err := isTradeStrategyParticipantOverRiskAppetite(venueAccountBalance, totalQuantity); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit", map[string]string{
+			"total_quantity": fmt.Sprintf("%f", totalQuantity),
+			"venue_balance":  fmt.Sprintf("%f", venueAccountBalance),
+		})
+	}
 
 	var (
 		orders []*tradeengineproto.Order
@@ -183,7 +196,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 				SuccessfulOrders:       successfulOrders,
 				Timestamp:              timestamppb.Now(),
 				Error: &tradeengineproto.ExecutionError{
-					ErrorMessage: gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy", nil).Error(),
+					ErrorMessage: gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit", nil).Error(),
 					FailedOrder:  o,
 				},
 			}, nil
@@ -192,6 +205,8 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 		slog.Info(ctx, "Order placed: %s [%s] %s", successfulOrder.Venue, successfulOrder.ExternalOrderId, successfulOrder.Instrument)
 		successfulOrders = append(successfulOrders, successfulOrder)
 	}
+
+	slog.Info(ctx, "Successfully placed dca first market rest limit trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 
 	// TODO: store in DB.
 

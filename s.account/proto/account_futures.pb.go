@@ -77,7 +77,7 @@ func (r *CreateAccountRequest) SendWithTimeout(ctx context.Context, timeout time
 	}
 }
 
-// --- ListAccount --- //
+// --- List Account --- //
 
 type ListAccountsFuture struct {
 	closer  func() error
