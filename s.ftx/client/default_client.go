@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/monzo/slog"
-
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
 	"swallowtail/s.ftx/client/auth"
 )
 
 const (
-	// APIVersion defines the api version for the FTX exchange.
-	APIVersion = "/api/"
+// APIVersion defines the api version for the FTX exchange.
 )
 
 type ftxClient struct {
@@ -47,16 +44,13 @@ func (f *ftxClient) ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, 
 	var endpoint = "orders"
 	switch req.Type {
 	case "stop", "trailingStop", "takeProfit":
-		endpoint = "condition_order"
+		endpoint = "conditional_order"
 	}
 
 	rsp := &ExecuteOrderResponse{}
-	if err := f.signBeforeDo(ctx, http.MethodPost, fmt.Sprintf("%s%s", APIVersion, endpoint), req, rsp, nil, credentials); err != nil {
-		slog.Warn(ctx, "FTX order failed: %+v %v", err, req)
+	if err := f.signBeforeDo(ctx, http.MethodPost, fmt.Sprintf("/api/%s", endpoint), req, rsp, nil, credentials); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_post_order", nil)
 	}
-
-	slog.Info(ctx, "FTX order executed: %v")
 
 	return rsp, nil
 }

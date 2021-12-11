@@ -19,19 +19,19 @@ func (p *PaginationFilter) ToQueryString() string {
 
 // ExecuteOrderRequest ...
 type ExecuteOrderRequest struct {
-	Symbol            string `json:"symbol"`
+	Market            string `json:"market"`
 	Side              string `json:"side"`
 	Type              string `json:"type"`
-	Quantity          string `json:"quantity"`
+	Size              string `json:"size"`
 	Price             string `json:"price,omitempty"`
-	ReduceOnly        bool   `json:"reduce_only,omitempty"`
+	ReduceOnly        bool   `json:"reduceOnly,omitempty"`
 	IOC               bool   `json:"ioc,omitempty"`
-	PostOnly          bool   `json:"post_only,omitempty"`
-	RejectOnPriceBand bool   `json:"reject_on_price_band,omitempty"`
-	RetryUntilFilled  bool   `json:"retry_until_filled,omitempty"`
-	TriggerPrice      string `json:"trigger_price,omitempty"`
-	OrderPrice        string `json:"order_price,omitempty"`
-	TrailValue        string `json:"trail_value,omitempty"`
+	PostOnly          bool   `json:"postOnly,omitempty"`
+	RejectOnPriceBand bool   `json:"rejectOnPriceBand,omitempty"`
+	RetryUntilFilled  bool   `json:"retryUntilFilled,omitempty"`
+	TriggerPrice      string `json:"triggerPrice,omitempty"`
+	OrderPrice        string `json:"orderPrice,omitempty"`
+	TrailValue        string `json:"trailValue,omitempty"`
 }
 
 // ExecuteOrderResponse ...
@@ -44,15 +44,15 @@ type ExecuteOrderResponse struct {
 		ID            int       `json:"id,omitempty"`
 		Market        string    `json:"market,omitempty"`
 		Price         float64   `json:"price,omitempty"`
-		RemainingSize float64   `json:"remaining_size,omitempty"`
+		RemainingSize float64   `json:"remainingSize,omitempty"`
 		Side          string    `json:"side,omitempty"`
 		Quantity      float64   `json:"size,omitempty"`
 		Status        string    `json:"status,omitempty"`
 		Type          string    `json:"type,omitempty"`
-		ReduceOnly    bool      `json:"reduce_only,omitempty"`
+		ReduceOnly    bool      `json:"reduceOnly,omitempty"`
 		IOC           bool      `json:"ioc,omitempty"`
-		PostOnly      bool      `json:"post_only,omitempty"`
-		ClientID      string    `json:"client_id,omitempty"`
+		PostOnly      bool      `json:"postOnly,omitempty"`
+		ClientID      string    `json:"clientId,omitempty"`
 	} `json:"result"`
 }
 

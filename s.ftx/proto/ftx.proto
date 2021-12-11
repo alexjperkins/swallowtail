@@ -1,8 +1,9 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "s.trade-engine/proto/tradeengine.proto";
 
-option go_package = "./;ftxproto";
+option go_package = "swallowtail/s.ftx/proto;ftxproto";
 
 service ftx {
     rpc GetFTXStatus (GetFTXStatusRequest) returns (GetFTXStatusResponse) {}
@@ -108,15 +109,13 @@ message FTXOrder {
 }
 
 message ExecuteOrderRequest {
-    repeated FTXOrder orders = 1;
+    Order order = 1;
     google.protobuf.Timestamp timestamp = 2;
-    FTXCredentials credentials = 3;
+    VenueCredentials credentials = 3;
 }
 
 message ExecuteOrderResponse {
-    repeated string exchange_order_ids = 1;
-    int64 timestamp = 2;
-    int64 number_of_orders_executed = 3;
+    Order order = 1;
 }
 
 message ListFTXInstrumentsRequest {

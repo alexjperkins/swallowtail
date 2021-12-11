@@ -5,6 +5,7 @@ import (
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
 	ftxproto "swallowtail/s.ftx/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 func isValidActor(ctx context.Context, actorID string) (bool, error) {
@@ -23,7 +24,7 @@ func isValidActor(ctx context.Context, actorID string) (bool, error) {
 	return account.GetAccount().IsAdmin, nil
 }
 
-func validateCredentials(credentials *ftxproto.FTXCredentials) error {
+func validateCredentials(credentials *tradeengineproto.VenueCredentials) error {
 	switch {
 	case credentials == nil:
 		return gerrors.BadParam("missing_param.credentials", nil)
@@ -34,20 +35,12 @@ func validateCredentials(credentials *ftxproto.FTXCredentials) error {
 	}
 }
 
-func validateOrders(orders []*ftxproto.FTXOrder) error {
-	for _, o := range orders {
-		if err := validateOrder(o); err != nil {
-			return err
-		}
+func validateOrder(order *tradeengineproto.Order) error {
+	switch {
+	case order.Instrument== "":
+		return gerrors.BadParam("bad_param.symbol", nil)
 	}
 
-	return nil
-}
-
-func validateOrder(order *ftxproto.FTXOrder) error {
-	switch {
-	case order.Symbol == "":
-		return gerrors.BadParam("bad_param.symbol", nil)
 	case order.Price < 0:
 		return gerrors.BadParam("bad_param.price.negative", nil)
 	case order.TriggerPrice < 0:

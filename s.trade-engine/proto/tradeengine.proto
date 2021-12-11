@@ -113,7 +113,7 @@ message Order {
     string actor_id = 2;
     string instrument = 3;
     string asset = 20;
-    string pair = 4;
+    TRADE_PAIR pair = 4;
     ORDER_TYPE order_type = 5;
     TRADE_SIDE trade_side = 7;
     float limit_price = 8;

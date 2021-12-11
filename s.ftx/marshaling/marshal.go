@@ -5,10 +5,21 @@ import (
 	"math"
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.ftx/client"
+	"swallowtail/s.ftx/client/auth"
+	"swallowtail/s.ftx/exchangeinfo"
 	ftxproto "swallowtail/s.ftx/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func VenueCredentialsProtoToFTXCredentials(credentials *tradeengineproto.VenueCredentials) *auth.Credentials {
+	return &auth.Credentials{
+		APIKey:     credentials.ApiKey,
+		SecretKey:  credentials.SecretKey,
+		Subaccount: credentials.Subaccount,
+	}
+}
 
 func DepositDTOToProto(deposit *client.DepositRecord) *ftxproto.DepositRecord {
 	return &ftxproto.DepositRecord{
@@ -34,51 +45,47 @@ func DepositsDTOToProto(deposits []*client.DepositRecord) []*ftxproto.DepositRec
 	return protos
 }
 
-func OrdersProtoToDTO(orders []*ftxproto.FTXOrder) ([]*client.ExecuteOrderRequest, error) {
-	protos := make([]*client.ExecuteOrderRequest, 0, len(orders))
-	for _, o := range orders {
-		proto, err := OrderProtoToDTO(o)
-		if err != nil {
-			return nil, gerrors.Augment(err, "failed_to_marshal_orders_to_dto", nil)
-		}
+func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest, error) {
+	errParams := map[string]string{}
 
-		protos = append(protos, proto)
-	}
-
-	return protos, nil
-}
-
-func OrderProtoToDTO(order *ftxproto.FTXOrder) (*client.ExecuteOrderRequest, error) {
+	// Parse trade side.
 	var side string
-	switch order.Side {
-	case ftxproto.FTX_SIDE_FTX_SIDE_BUY:
+	switch order.TradeSide {
+	case tradeengineproto.TRADE_SIDE_BUY, tradeengineproto.TRADE_SIDE_LONG:
 		side = "buy"
-	case ftxproto.FTX_SIDE_FTX_SIDE_SELL:
+	case tradeengineproto.TRADE_SIDE_SELL, tradeengineproto.TRADE_SIDE_SHORT:
 		side = "sell"
 	default:
-		return nil, gerrors.FailedPrecondition("unrecognized_side", map[string]string{
-			"side": order.Side.String(),
+		return nil, gerrors.BadParam("invalid_trade_side", map[string]string{
+			"side": order.TradeSide.String(),
 		})
 	}
 
+	// Parse trade type.
 	var tradeType string
-	switch order.Type {
-	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_LIMIT:
+	switch order.OrderType {
+	case tradeengineproto.ORDER_TYPE_LIMIT:
 		tradeType = "limit"
-	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_MARKET:
-		tradeType = "markte"
-	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_TAKE_PROFIT:
+	case tradeengineproto.ORDER_TYPE_MARKET:
+		tradeType = "market"
+	case tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
 		tradeType = "takeProfit"
-	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_STOP:
+	case tradeengineproto.ORDER_TYPE_STOP_MARKET:
 		tradeType = "stop"
-	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_TRALING_STOP:
+	case tradeengineproto.ORDER_TYPE_TRAILING_STOP_MARKET:
 		tradeType = "trailingStop"
 	default:
-		return nil, gerrors.FailedPrecondition("unrecognized_type", map[string]string{
-			"type": order.Type.String(),
+		return nil, gerrors.BadParam("invalid_order_type", map[string]string{
+			"type": order.OrderType.String(),
 		})
 	}
 
+	exchangeInstrumentData, ok := exchangeinfo.GetInstrumentBySymbol(order.Instrument)
+	if !ok {
+		return nil, gerrors.FailedPrecondition("exchange_instrument_metadata_not_found", errParams)
+	}
+
+	// Parse order type.
 	var (
 		price        string
 		quantity     string
@@ -86,9 +93,9 @@ func OrderProtoToDTO(order *ftxproto.FTXOrder) (*client.ExecuteOrderRequest, err
 		orderPrice   string
 		trailValue   string
 	)
-
-	if order.Price > 0 {
-
+	switch order.OrderType {
+	case tradeengineproto.ORDER_TYPE_LIMIT:
+		price = roundToPrecisionString(float64(order.LimitPrice))
 	}
 
 	return &client.ExecuteOrderRequest{

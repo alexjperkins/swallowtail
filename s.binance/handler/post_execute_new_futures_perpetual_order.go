@@ -30,7 +30,7 @@ func (s *BinanceService) ExecuteNewFuturesPerpetualOrder(
 		return nil, gerrors.Unauthenticated("invalid_credentials", nil)
 	}
 
-	// Validate the trade.
+	// Validate the order.
 	if err := validatePerpetualFuturesOrder(order); err != nil {
 		slog.Error(ctx, "Invalid order: Error: %v, Order: %+v", err, order)
 		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.invalid_order", nil)
