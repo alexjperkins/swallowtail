@@ -94,6 +94,7 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		"user_id":             participant.UserId,
 		"asset":               strategy.Asset,
 		"pair":                strategy.Pair.String(),
+		"instrument":          strategy.Instrument,
 		"venue":               participant.Venue.String(),
 		"total_quantity":      fmt.Sprintf("%f", totalQuantity),
 	}
@@ -118,7 +119,9 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 	default:
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
+			Asset:            strategy.Asset,
 			Pair:             strategy.Pair.String(),
+			Instrument:       strategy.Instrument,
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_STOP_MARKET,
 			TradeSide:        exitTradeSide,
@@ -135,6 +138,8 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 	for _, p := range positions {
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
+			Instrument:       strategy.Instrument,
+			Asset:            strategy.Asset,
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_LIMIT,
@@ -152,6 +157,8 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 	for _, tp := range tps {
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
+			Instrument:       strategy.Instrument,
+			Asset:            strategy.Asset,
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET,

@@ -13,10 +13,11 @@ import (
 	"swallowtail/s.binance/client"
 	"swallowtail/s.binance/exchangeinfo"
 	binanceproto "swallowtail/s.binance/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 // CredentialsProtoToDTO ...
-func CredentialsProtoToDTO(in *binanceproto.Credentials) *client.Credentials {
+func CredentialsProtoToDTO(in *tradeengineproto.VenueCredentials) *client.Credentials {
 	return &client.Credentials{
 		APIKey:    in.ApiKey,
 		SecretKey: in.SecretKey,
@@ -40,7 +41,7 @@ func VerifyRequestDTOToProto(in *client.VerifyCredentialsResponse) *binanceproto
 }
 
 // PerpetualFuturesAccountBalanceDTOToProto ...
-func erpetualFuturesAccountBalanceDTOToProto(in *client.PerpetualFuturesAccountBalance) (*binanceproto.ReadPerpetualFuturesAccountResponse, error) {
+func PerpetualFuturesAccountBalanceDTOToProto(in *client.PerpetualFuturesAccountBalance) (*binanceproto.ReadPerpetualFuturesAccountResponse, error) {
 	balance, err := strconv.ParseFloat(in.Balance, 64)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_parse_float.balance", nil)
@@ -59,117 +60,136 @@ func erpetualFuturesAccountBalanceDTOToProto(in *client.PerpetualFuturesAccountB
 	}, nil
 }
 
-// ProtoOrdersToExecutePerpetualsFutureTradeRequest ...
-func ProtoOrdersToExecutePerpetualsFutureTradeRequest(ins []*binanceproto.PerpetualFuturesOrder) ([]*client.ExecutePerpetualFuturesTradeRequest, error) {
-	orders := make([]*client.ExecutePerpetualFuturesTradeRequest, 0, len(ins))
-	for _, in := range ins {
-		order, err := ProtoOrderToExecutePerpetualsFutureTradeRequest(in)
-		if err != nil {
-			return nil, err
-		}
-
-		orders = append(orders, order)
-	}
-
-	return orders, nil
-}
-
-// ProtoOrderToExecutePerpetualsFutureTradeRequest ...
-func ProtoOrderToExecutePerpetualsFutureTradeRequest(in *binanceproto.PerpetualFuturesOrder) (*client.ExecutePerpetualFuturesTradeRequest, error) {
+// ProtoOrderToExecutePerpetualsFutureOrderRequest ...
+func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order) (*client.ExecutePerpetualFuturesOrderRequest, error) {
 	// Round the quantity to the minimum precision allowed on the exchange.
-	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(in.Symbol)
+	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(in.Instrument)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", nil)
 	}
 
 	// Round the price to the minimum precision allowed on the exchange.
-	assetPricePrecision, ok := exchangeinfo.GetBaseAssetPricePrecision(in.Symbol)
+	assetPricePrecision, ok := exchangeinfo.GetBaseAssetPricePrecision(in.Instrument)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", nil)
 	}
 
+	// Parse Order ID.
+	var clientOrderID string
+	switch {
+	case in.OrderId != "":
+		clientOrderID = in.OrderId
+	}
+
 	// Convert floats to minimum precision rounded strings.
 	quantity := roundToPrecisionString(float64(in.Quantity), assetQuantityPrecision)
-	price := roundToPrecisionString(float64(in.Price), assetPricePrecision)
-	stopPrice := roundToPrecisionString(float64(in.StopPrice), assetPricePrecision)
+
+	// Parse limit & stop price.
+	var limitPrice, stopPrice string
+	switch in.OrderType {
+	case tradeengineproto.ORDER_TYPE_LIMIT:
+		limitPrice = roundToPrecisionString(float64(in.LimitPrice), assetPricePrecision)
+	case tradeengineproto.ORDER_TYPE_STOP_LIMIT:
+		limitPrice = roundToPrecisionString(float64(in.LimitPrice), assetPricePrecision)
+		stopPrice = roundToPrecisionString(float64(in.StopPrice), assetPricePrecision)
+	case tradeengineproto.ORDER_TYPE_STOP_MARKET:
+		stopPrice = roundToPrecisionString(float64(in.StopPrice), assetPricePrecision)
+	case tradeengineproto.ORDER_TYPE_TAKE_PROFIT_LIMIT:
+		limitPrice = roundToPrecisionString(float64(in.LimitPrice), assetPricePrecision)
+		stopPrice = roundToPrecisionString(float64(in.StopPrice), assetPricePrecision)
+	case tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
+		stopPrice = roundToPrecisionString(float64(in.StopPrice), assetPricePrecision)
+	default:
+		return nil, gerrors.Unimplemented("failed_to_marshall_perpetuals_trade.uimplemented.order_type", nil)
+	}
 
 	// Parse reduce only.
 	var reduceOnly string
-	if !in.ClosePosition && (in.OrderType == binanceproto.BinanceOrderType_BINANCE_STOP_MARKET || in.OrderType == binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT_MARKET) {
+	if in.ReduceOnly {
 		reduceOnly = "true"
 	}
 
-	errParams := map[string]string{}
-
-	var side string
-	switch in.Side {
-	case binanceproto.BinanceTradeSide_BINANCE_BUY:
-		side = "BUY"
-	case binanceproto.BinanceTradeSide_BINANCE_SELL:
-		side = "SELL"
-	default:
-		errParams["side"] = side
-		return nil, gerrors.BadParam("failed_to_marshall_perpetuals_trade.invalid_order_type", errParams)
+	errParams := map[string]string{
+		"limit_price": limitPrice,
+		"stop_price":  stopPrice,
+		"reduce_only": reduceOnly,
 	}
 
+	// Parse side.
+	var side string
+	switch in.TradeSide {
+	case tradeengineproto.TRADE_SIDE_BUY, tradeengineproto.TRADE_SIDE_LONG:
+		side = "BUY"
+	case tradeengineproto.TRADE_SIDE_SELL, tradeengineproto.TRADE_SIDE_SHORT:
+		side = "SELL"
+	default:
+		errParams["trade_side"] = side
+		return nil, gerrors.BadParam("failed_to_marshall_perpetuals_trade.invalid_trade_side", errParams)
+	}
+
+	// Parse order type.
 	var orderType string
 	switch in.OrderType {
-	case binanceproto.BinanceOrderType_BINANCE_LIMIT:
+	case tradeengineproto.ORDER_TYPE_LIMIT:
 		orderType = "LIMIT"
-	case binanceproto.BinanceOrderType_BINANCE_MARKET:
+	case tradeengineproto.ORDER_TYPE_MARKET:
 		orderType = "MARKET"
-	case binanceproto.BinanceOrderType_BINANCE_STOP_MARKET:
+	case tradeengineproto.ORDER_TYPE_STOP_MARKET:
 		orderType = "STOP_MARKET"
-	case binanceproto.BinanceOrderType_BINANCE_STOP:
+	case tradeengineproto.ORDER_TYPE_STOP_LIMIT:
 		orderType = "STOP"
-	case binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT:
+	case tradeengineproto.ORDER_TYPE_TAKE_PROFIT_LIMIT:
 		orderType = "TAKE_PROFIT"
-	case binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT_MARKET:
+	case tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
 		orderType = "TAKE_PROFIT_MARKET"
 	default:
 		errParams["order_type"] = orderType
 		return nil, gerrors.BadParam("failed_to_marshall_perpetuals_trade.invalid_order_type", errParams)
 	}
 
+	// Parse position side.
 	var positionSide string
-	switch in.PositionSide {
-	case binanceproto.BinancePositionSide_BINANCE_SIDE_BOTH:
-		positionSide = "BOTH"
-	case binanceproto.BinancePositionSide_BINANCE_SIDE_SHORT:
-		positionSide = "SHORT"
-	case binanceproto.BinancePositionSide_BINANCE_SIDE_LONG:
-		positionSide = "LONG"
-	}
-
-	var timeInForce string
-	switch in.TimeInForce {
-	case binanceproto.BinanceTimeInForce_BINANCE_GTC:
-		timeInForce = "GTC"
-	case binanceproto.BinanceTimeInForce_BINANCE_FOK:
-		timeInForce = "FOK"
-	case binanceproto.BinanceTimeInForce_BINANCE_GTX:
-		timeInForce = "GTX"
-	case binanceproto.BinanceTimeInForce_BINANCE_IOC:
-		timeInForce = "IOC"
+	switch {
+	// TODO: do we also allow for hedge mode at some point in the future?
 	default:
-		// Leave emtpy
+		positionSide = "BOTH"
 	}
 
+	// Parse time in force.
+	var timeInForce string
+	if in.OrderType == tradeengineproto.ORDER_TYPE_LIMIT {
+		switch in.TimeInForce {
+		case tradeengineproto.TIME_IN_FORCE_GOOD_TILL_CANCELLED:
+			timeInForce = "GTC"
+		case tradeengineproto.TIME_IN_FORCE_FILL_OR_KILL:
+			timeInForce = "FOK"
+		case tradeengineproto.TIME_IN_FORCE_GOOD_TILL_CROSSING:
+			timeInForce = "GTX"
+		case tradeengineproto.TIME_IN_FORCE_IMMEDIATE_OR_CANCEL:
+			timeInForce = "IOC"
+		default:
+			timeInForce = "GTC" // default value
+		}
+	}
+
+	// Parse working type.
 	var workingType string
 	switch in.WorkingType {
-	case binanceproto.BinanceWorkingType_BINANCE_CONTRACT_PRICE:
+	case tradeengineproto.WORKING_TYPE_CONTRACT_PRICE:
 		workingType = "CONTRACT_PRICE"
-	case binanceproto.BinanceWorkingType_BINANCE_MARK_PRICE:
+	case tradeengineproto.WORKING_TYPE_MARK_PRICE:
 		workingType = "MARKET_PRICE"
 	}
 
-	return &client.ExecutePerpetualFuturesTradeRequest{
-		Symbol:           in.Symbol,
+	// Marshal into dto.
+	return &client.ExecutePerpetualFuturesOrderRequest{
+		NewClientOrderID: clientOrderID,
+		Symbol:           in.Instrument,
 		Side:             side,
 		OrderType:        orderType,
 		PositionSide:     positionSide,
 		TimeInForce:      timeInForce,
-		Price:            price,
+		LimitPrice:       limitPrice,
 		StopPrice:        stopPrice,
 		Quantity:         quantity,
 		ReduceOnly:       reduceOnly,

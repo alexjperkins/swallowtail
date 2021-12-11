@@ -81,7 +81,7 @@ func gatherExchangeInfo(ctx context.Context) error {
 	return nil
 }
 
-// GetBaseAssetQuantityPrecision ...
+// GetBaseAssetQuantityPrecision returns the base asset quantity precision given the base asset.
 func GetBaseAssetQuantityPrecision(baseAsset string) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -94,7 +94,7 @@ func GetBaseAssetQuantityPrecision(baseAsset string) (int, bool) {
 	return v, true
 }
 
-// GetBaseAssetPricePrecision ...
+// GetBaseAssetPricePrecision returns the base asset price precision given the base asset.
 func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()

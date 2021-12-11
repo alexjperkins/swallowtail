@@ -9,6 +9,7 @@ import (
 	binanceclient "swallowtail/s.binance/client"
 	"swallowtail/s.binance/domain"
 	binanceproto "swallowtail/s.binance/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -73,7 +74,7 @@ func isValidActor(actorID string) bool {
 	}
 }
 
-func isValidCredentials(credentials *binanceproto.Credentials, apiKeyOnly bool) error {
+func isValidCredentials(credentials *tradeengineproto.VenueCredentials, apiKeyOnly bool) error {
 	switch {
 	case credentials == nil:
 		return gerrors.BadParam("missing_param.credentials", nil)
@@ -86,37 +87,63 @@ func isValidCredentials(credentials *binanceproto.Credentials, apiKeyOnly bool) 
 	}
 }
 
-func validatePerpetualFuturesTrade(trade *binanceproto.ExecuteFuturesPerpetualsTradeRequest) error {
-	for _, order := range trade.Orders {
-		if order.Symbol == "" {
-			return gerrors.BadParam("missing_param.symbol", nil)
+func validatePerpetualFuturesOrder(order *tradeengineproto.Order) error {
+	if order.Venue != tradeengineproto.VENUE_BINANCE {
+		return gerrors.FailedPrecondition("invalid_venue", nil)
+	}
+
+	if order.InstrumentType != tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL {
+		return gerrors.FailedPrecondition("invalid_instrument_type", nil)
+	}
+
+	if order.Instrument == "" {
+		return gerrors.BadParam("missing_param.instrument", nil)
+	}
+
+	if order.PostOnly {
+		return gerrors.FailedPrecondition("post_only_not_supported", nil)
+	}
+
+	switch order.OrderType {
+	case tradeengineproto.ORDER_TYPE_MARKET:
+		if order.Quantity <= 0 {
+			return gerrors.BadParam("bad_param.quantity_zero_or_below", nil)
+		}
+	case tradeengineproto.ORDER_TYPE_LIMIT:
+		if order.LimitPrice <= 0 {
+			return gerrors.BadParam("bad_param.price_zero_or_below", nil)
 		}
 
-		switch order.OrderType {
-		case binanceproto.BinanceOrderType_BINANCE_LIMIT:
-			if order.Quantity <= 0 {
-				return gerrors.BadParam("bad_param.quantity_zero_or_below", nil)
-			}
-			if order.Price <= 0 {
-				return gerrors.BadParam("bad_param.price_zero_or_below", nil)
-			}
-			if order.TimeInForce == binanceproto.BinanceTimeInForce_BINANCE_NOT_REQUIRED {
-				return gerrors.BadParam("missing_param.time_in_force_required", nil)
-			}
-		case binanceproto.BinanceOrderType_BINANCE_STOP_MARKET, binanceproto.BinanceOrderType_BINANCE_TAKE_PROFIT_MARKET:
-			if order.StopPrice <= 0 {
-				return gerrors.BadParam("bad_param.stop_price_zero_or_below", nil)
-			}
-			if order.ClosePosition && order.ReduceOnly {
-				return gerrors.BadParam("bad_param.extra_param_reduce_only", nil)
-			}
-			if order.ReduceOnly && order.Quantity <= 0 {
-				return gerrors.BadParam("bad_param.invalid_quantity", nil)
-			}
-			if !order.ClosePosition {
-				// This is for safety whilst we have discrentionary traders only.
-				return gerrors.BadParam("bad_param.stop_order_type_no_close_position", nil)
-			}
+		if order.TimeInForce == tradeengineproto.TIME_IN_FORCE_TIME_IN_FORCE_UNREQUIRED {
+			return gerrors.BadParam("missing_param.time_in_force_required", nil)
+		}
+	case tradeengineproto.ORDER_TYPE_STOP_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
+		if order.StopPrice <= 0 {
+			return gerrors.BadParam("bad_param.stop_price_zero_or_below", nil)
+		}
+
+		if order.ClosePosition && order.ReduceOnly {
+			return gerrors.BadParam("bad_param.extra_param_reduce_only", nil)
+		}
+
+		if order.ReduceOnly && order.Quantity <= 0 {
+			return gerrors.BadParam("bad_param.invalid_quantity", nil)
+		}
+	case tradeengineproto.ORDER_TYPE_STOP_LIMIT, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_LIMIT:
+		if order.LimitPrice <= 0 {
+			return gerrors.BadParam("bad_param.limit_price_zero_or_below", nil)
+		}
+
+		if order.StopPrice <= 0 {
+			return gerrors.BadParam("bad_param.stop_price_zero_or_below", nil)
+		}
+
+		if order.ClosePosition && order.ReduceOnly {
+			return gerrors.BadParam("bad_param.extra_param_reduce_only", nil)
+		}
+
+		if order.ReduceOnly && order.Quantity <= 0 {
+			return gerrors.BadParam("bad_param.invalid_quantity", nil)
 		}
 	}
 

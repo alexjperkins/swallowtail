@@ -41,7 +41,7 @@ func (c *binanceClient) ListAllAssetPairs(ctx context.Context) (*ListAllAssetPai
 	return rspBody, nil
 }
 
-func (c *binanceClient) ExecuteSpotTrade(ctx context.Context, trade *domain.Trade) error {
+func (c *binanceClient) ExecuteSpotOrder(ctx context.Context, trade *domain.Trade) error {
 	return gerrors.Unimplemented("unimplemented.execute_spot_trade", nil)
 }
 
@@ -60,20 +60,19 @@ func (c *binanceClient) ReadPerpetualFuturesAccount(ctx context.Context, _ *Read
 	return rspBody, nil
 }
 
-func (c *binanceClient) ExecutePerpetualFuturesTrade(ctx context.Context, req *ExecutePerpetualFuturesTradeRequest, credentials *Credentials) (*ExecutePerpetualFuturesTradeResponse, error) {
+func (c *binanceClient) ExecutePerpetualFuturesOrder(ctx context.Context, req *ExecutePerpetualFuturesOrderRequest, credentials *Credentials) (*ExecutePerpetualFuturesOrderResponse, error) {
 	url := fmt.Sprintf("%s/%s", binanceFuturesURL, "order")
-	rspBody := &ExecutePerpetualFuturesTradeResponse{}
+	rspBody := &ExecutePerpetualFuturesOrderResponse{}
 
 	qs := buildQueryStringFromFuturesPerpetualTrade(req)
 
+	// Execute request.
 	if err := c.doWithSignature(ctx, http.MethodPost, url, qs, nil, rspBody, credentials); err != nil {
 		slog.Warn(ctx, "Binance Perpetuals futures trade failed: %v", qs)
 		return nil, gerrors.Augment(err, "failed_to_execute_perpetual_futures_trade.client", map[string]string{
 			"query_string": qs,
 		})
 	}
-
-	slog.Info(ctx, "Binance Perpetuals futures trade executed: %v", qs)
 
 	return rspBody, nil
 }

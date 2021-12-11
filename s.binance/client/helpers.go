@@ -7,7 +7,7 @@ import (
 
 // Binance :)
 // TODO: this has to be fixed
-func buildQueryStringFromFuturesPerpetualTrade(req *ExecutePerpetualFuturesTradeRequest) string {
+func buildQueryStringFromFuturesPerpetualTrade(req *ExecutePerpetualFuturesOrderRequest) string {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("symbol=%s", req.Symbol))
@@ -30,8 +30,8 @@ func buildQueryStringFromFuturesPerpetualTrade(req *ExecutePerpetualFuturesTrade
 		sb.WriteString(fmt.Sprintf("&reduceOnly=%s", req.ReduceOnly))
 	}
 
-	if req.Price != "" {
-		sb.WriteString(fmt.Sprintf("&price=%s", req.Price))
+	if req.LimitPrice != "" {
+		sb.WriteString(fmt.Sprintf("&price=%s", req.LimitPrice))
 	}
 
 	if req.NewClientOrderID != "" {
@@ -46,12 +46,12 @@ func buildQueryStringFromFuturesPerpetualTrade(req *ExecutePerpetualFuturesTrade
 		sb.WriteString(fmt.Sprintf("&closePosition=%v", req.ClosePosition))
 	}
 
-	if req.ActivationPrice != 0 {
-		sb.WriteString(fmt.Sprintf("&activationPrice=%.1f", req.ActivationPrice))
+	if req.ActivationPrice != "" {
+		sb.WriteString(fmt.Sprintf("&activationPrice=%v", req.ActivationPrice))
 	}
 
-	if req.CallbackRate != 0 {
-		sb.WriteString(fmt.Sprintf("&callbackRate=%.2f", req.CallbackRate))
+	if req.CallbackRate != "" {
+		sb.WriteString(fmt.Sprintf("&callbackRate=%v", req.CallbackRate))
 	}
 
 	if req.WorkingType != "" {

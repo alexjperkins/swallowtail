@@ -39,6 +39,7 @@ message ExecuteNewFuturesPerpetualOrderRequest {
     Order order = 1;
     google.protobuf.Timestamp timestamp = 2;
     VenueCredentials credentials = 3;
+    bool is_account_hedge_mode = 4;
 }
 
 message ExecuteNewFuturesPerpetualOrderResponse {

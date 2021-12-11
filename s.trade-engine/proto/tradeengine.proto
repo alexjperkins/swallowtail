@@ -112,6 +112,7 @@ message Order {
     string order_id = 1;
     string actor_id = 2;
     string instrument = 3;
+    string asset = 20;
     string pair = 4;
     ORDER_TYPE order_type = 5;
     TRADE_SIDE trade_side = 7;
@@ -124,6 +125,7 @@ message Order {
     WORKING_TYPE working_type = 14;
     VENUE venue = 15;
     int64 created_timestamp = 16;
+    int64 execution_timestamp = 21;
     string external_order_id = 17;
     bool close_position = 18;
     INSTRUMENT_TYPE instrument_type = 19;
@@ -136,6 +138,7 @@ message TradeStrategy {
     ACTOR_TYPE actor_type = 3;
     string idempotency_key = 4;
     EXECUTION_STRATEGY execution_strategy = 5;
+    string instrument = 19;
     INSTRUMENT_TYPE instrument_type = 6;
     string asset = 8;
     TRADE_PAIR pair = 9;

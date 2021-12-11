@@ -95,6 +95,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 		"user_id":             participant.UserId,
 		"asset":               strategy.Asset,
 		"pair":                strategy.Pair.String(),
+		"instrument":          strategy.Instrument,
 		"venue":               participant.Venue.String(),
 	}
 
@@ -118,6 +119,8 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	default:
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
+			Instrument:       strategy.Instrument,
+			Asset:            strategy.Asset,
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_STOP_MARKET,
@@ -158,6 +161,8 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	for _, p := range limitOrderPositions {
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
+			Instrument:       strategy.Instrument,
+			Asset:            strategy.Asset,
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_LIMIT,
@@ -175,6 +180,8 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	for _, tp := range tps {
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
+			Instrument:       strategy.Instrument,
+			Asset:            strategy.Asset,
 			Pair:             strategy.Pair.String(),
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET,
