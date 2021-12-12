@@ -10,7 +10,6 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
-	"swallowtail/s.binance/domain"
 )
 
 type binanceClient struct {
@@ -39,10 +38,6 @@ func (c *binanceClient) ListAllAssetPairs(ctx context.Context) (*ListAllAssetPai
 	}
 
 	return rspBody, nil
-}
-
-func (c *binanceClient) ExecuteSpotOrder(ctx context.Context, trade *domain.Trade) error {
-	return gerrors.Unimplemented("unimplemented.execute_spot_trade", nil)
 }
 
 func (c *binanceClient) ReadSpotAccount(ctx context.Context, in *ReadSpotAccountRequest) (*ReadSpotAccountResponse, error) {
@@ -75,6 +70,10 @@ func (c *binanceClient) ExecutePerpetualFuturesOrder(ctx context.Context, req *E
 	}
 
 	return rspBody, nil
+}
+
+func (c *binanceClient) ExecuteSpotOrder(ctx context.Context, req *ExecuteSpotOrderRequest, credentials *Credentials) (*ExecuteSpotOrderResponse, error) {
+	return nil, gerrors.Unimplemented("unimplemented.execute_spot_trade", nil)
 }
 
 func (c *binanceClient) Ping(ctx context.Context) error {

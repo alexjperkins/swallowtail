@@ -12,10 +12,10 @@ import (
 	ftxproto "swallowtail/s.ftx/proto"
 )
 
-// ExecuteOrder executes a given order on FTX.
-func (s *FTXService) ExecuteOrder(
-	ctx context.Context, in *ftxproto.ExecuteOrderRequest,
-) (*ftxproto.ExecuteOrderResponse, error) {
+// ExecuteNewOrder executes a given order on FTX.
+func (s *FTXService) ExecuteNewOrder(
+	ctx context.Context, in *ftxproto.ExecuteNewOrderRequest,
+) (*ftxproto.ExecuteNewOrderResponse, error) {
 	// Validate request.
 	switch {
 	case in.Order == nil:
@@ -68,7 +68,7 @@ func (s *FTXService) ExecuteOrder(
 
 	slog.Info(ctx, "Executed order: %+v", order)
 
-	return &ftxproto.ExecuteOrderResponse{
+	return &ftxproto.ExecuteNewOrderResponse{
 		Order: order,
 	}, nil
 }

@@ -49,7 +49,11 @@ type ListAllAssetPairsResponse struct {
 }
 
 type ExecuteSpotOrderRequest struct{}
-type ExecuteSpotOrderResponse struct{}
+
+type ExecuteSpotOrderResponse struct {
+	ExternalOrderID    string
+	ExecutionTimestamp int
+}
 
 // PingRequest data transfer object for ping request.
 type PingRequest struct{}

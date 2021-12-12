@@ -44,9 +44,9 @@ type BinanceClient interface {
 	ListAllAssetPairs(context.Context) (*ListAllAssetPairsResponse, error)
 
 	// ExecuteSpotOrder attempts to execute a spot trade on Binance.
-	ExecuteSpotOrder(ctx context.Context, trade *domain.Trade) error
+	ExecuteSpotOrder(ctx context.Context, req *ExecuteSpotOrderRequest, credentials *Credentials) (*ExecuteSpotOrderResponse, error)
 
-	// ExecutePerpetualFuturesOrder
+	// ExecutePerpetualFuturesOrder attempts to execute a spot trade on Binance.
 	ExecutePerpetualFuturesOrder(ctx context.Context, req *ExecutePerpetualFuturesOrderRequest, credentials *Credentials) (*ExecutePerpetualFuturesOrderResponse, error)
 
 	// Ping serves as a healthcheck to the Binance API.
@@ -61,6 +61,7 @@ type BinanceClient interface {
 	// GetFuturesExchangeInfo returns the exchange information specifically for perpetual futures contracts.
 	GetFuturesExchangeInfo(context.Context, *GetFuturesExchangeInfoRequest) (*GetFuturesExchangeInfoResponse, error)
 
+	// GetFundingRate returns the fundings as per the request.
 	GetFundingRate(context.Context, *GetFundingRateRequest) (*GetFundingRateResponse, error)
 
 	// VerifyCredentials verifies the given credentials of the users.
@@ -139,6 +140,13 @@ func ExecutePerpetualFuturesOrder(ctx context.Context, req *ExecutePerpetualFutu
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Execute perpetual futures order on binance")
 	defer span.Finish()
 	return client.ExecutePerpetualFuturesOrder(ctx, req, credentials)
+}
+
+// ExecuteSpotOrder ...
+func ExecuteSpotOrder(ctx context.Context, req *ExecuteSpotOrderRequest, credentials *Credentials) (*ExecuteSpotOrderResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Execute spot order on binance")
+	defer span.Finish()
+	return client.ExecuteSpotOrder(ctx, req, credentials)
 }
 
 // VerifyCredentials ...

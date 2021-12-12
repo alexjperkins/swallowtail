@@ -4,11 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"swallowtail/libraries/gerrors"
-	binanceproto "swallowtail/s.binance/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
+
+	"github.com/monzo/slog"
 )
 
 // RouteAndExecuteNewOrder routes order to the correct exchange & executes.
@@ -19,6 +18,7 @@ func RouteAndExecuteNewOrder(
 	instrumentType tradeengineproto.INSTRUMENT_TYPE,
 	venueCredentials *tradeengineproto.VenueCredentials,
 ) (*tradeengineproto.Order, error) {
+
 	errParams := map[string]string{
 		"venue_id":        strings.ToLower(venue.String()),
 		"instrument_type": strings.ToLower(instrumentType.String()),
@@ -32,35 +32,17 @@ func RouteAndExecuteNewOrder(
 		case tradeengineproto.INSTRUMENT_TYPE_SPOT:
 			return executeBinanceNewSpotOrders(ctx, order, venueCredentials)
 		default:
-			return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.instrument_exchange_pair_umimplemented", errParams)
+			return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.instument_not_supported_on_venue", errParams)
 		}
 	case tradeengineproto.VENUE_FTX:
-		return executeFTXNewOrders(ctx, order, venueCredentials)
+		switch instrumentType {
+		case tradeengineproto.INSTRUMENT_TYPE_FORWARD:
+			return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.instument_not_supported_on_venue", errParams)
+		default:
+			return executeFTXNewOrders(ctx, order, venueCredentials)
+		}
 	default:
-		return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.exchange_unimplemented", errParams)
+		slog.Error(ctx, "Failed to route order: venue, instrument pair not implemented: %+v", errParams)
+		return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.venue_unimplemented", errParams)
 	}
-}
-
-// executeBinanceNewPerpetualFuturesOrder ...
-func executeBinanceNewPerpetualFuturesOrders(ctx context.Context, order *tradeengineproto.Order, credentials *tradeengineproto.VenueCredentials) (*tradeengineproto.Order, error) {
-	rsp, err := (&binanceproto.ExecuteNewFuturesPerpetualOrderRequest{
-		Order:       order,
-		Credentials: credentials,
-		Timestamp:   timestamppb.Now(),
-	}).Send(ctx).Response()
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_route_and_execute_order.binance_perpetual_futures", nil)
-	}
-
-	return rsp.Order, nil
-}
-
-// executeBinanceNewSpotOrder ...
-func executeBinanceNewSpotOrders(ctx context.Context, order *tradeengineproto.Order, credentials *tradeengineproto.VenueCredentials) (*tradeengineproto.Order, error) {
-	return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.ftx_new_orders_spot_unimplemented", nil)
-}
-
-// executeFTXNewOrder ...
-func executeFTXNewOrders(ctx context.Context, order *tradeengineproto.Order, credentials *tradeengineproto.VenueCredentials) (*tradeengineproto.Order, error) {
-	return nil, gerrors.Unimplemented("failed_to_route_and_execute_order.ftx_new_orders_unimplemented", nil)
 }

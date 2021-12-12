@@ -150,6 +150,10 @@ func validatePerpetualFuturesOrder(order *tradeengineproto.Order) error {
 	return nil
 }
 
+func validateSpotOrder(order *tradeengineproto.Order) error {
+	return nil
+}
+
 func max(a, b int) int {
 	if a > b {
 		return a

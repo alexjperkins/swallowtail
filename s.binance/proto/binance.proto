@@ -10,6 +10,8 @@ service binance {
 
     rpc ExecuteNewFuturesPerpetualOrder (ExecuteNewFuturesPerpetualOrderRequest) returns (ExecuteNewFuturesPerpetualOrderResponse) {}
 
+    rpc ExecuteNewSpotOrder (ExecuteNewSpotOrderRequest) returns (ExecuteNewSpotOrderResponse) {}
+
     rpc GetLatestPrice (GetLatestPriceRequest) returns (GetLatestPriceResponse) {}
 
     rpc ReadPerpetualFuturesAccount (ReadPerpetualFuturesAccountRequest) returns (ReadPerpetualFuturesAccountResponse) {}
@@ -43,6 +45,16 @@ message ExecuteNewFuturesPerpetualOrderRequest {
 }
 
 message ExecuteNewFuturesPerpetualOrderResponse {
+    Order order = 1;
+}
+
+message ExecuteNewSpotOrderRequest {
+    Order order = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    VenueCredentials credentials = 3;
+}
+
+message ExecuteNewSpotOrderResponse{
     Order order = 1;
 }
 

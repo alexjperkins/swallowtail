@@ -200,6 +200,11 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 	}, nil
 }
 
+// ProtoOrderToExecuteSpotOrderRequest ...
+func ProtoOrderToExecuteSpotOrderRequest(order *tradeengineproto.Order) (*client.ExecuteSpotOrderRequest, error) {
+	return nil, nil
+}
+
 func isSuccess(rsp *client.VerifyCredentialsResponse) (bool, string) {
 	reasons := []string{}
 

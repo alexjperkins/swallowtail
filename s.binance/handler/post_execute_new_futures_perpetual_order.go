@@ -33,14 +33,14 @@ func (s *BinanceService) ExecuteNewFuturesPerpetualOrder(
 	// Validate the order.
 	if err := validatePerpetualFuturesOrder(order); err != nil {
 		slog.Error(ctx, "Invalid order: Error: %v, Order: %+v", err, order)
-		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.invalid_order", nil)
+		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_order.invalid_order", nil)
 	}
 
 	// Marshal orders.
 	dtoOrder, err := marshaling.ProtoOrderToExecutePerpetualsFutureOrderRequest(order)
 	if err != nil {
 		slog.Error(ctx, "Failed to marshal order: Error: %v, Order: %+v", err, order)
-		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.invalid_order.marshaling", nil)
+		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_order.invalid_order.marshaling", nil)
 	}
 
 	// Marshal credentials.
@@ -50,7 +50,7 @@ func (s *BinanceService) ExecuteNewFuturesPerpetualOrder(
 	rsp, err := client.ExecutePerpetualFuturesOrder(ctx, dtoOrder, dtoCredentials)
 	if err != nil {
 		slog.Error(ctx, "Failed to execute order: Error: %v, Order: %+v", err, rsp)
-		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_trade.order", nil)
+		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_order.order", nil)
 	}
 
 	// Update order with metadata from exchange.

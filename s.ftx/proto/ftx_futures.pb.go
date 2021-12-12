@@ -226,19 +226,19 @@ func (r *ListAccountDepositsRequest) SendWithTimeout(ctx context.Context, timeou
 	}
 }
 
-// --- Execute Order --- //
+// --- Execute New Order --- //
 
-type ExecuteOrder struct {
+type ExecuteNewOrder struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *ExecuteOrderResponse
+	resultc chan *ExecuteNewOrderResponse
 	ctx     context.Context
 }
 
-func (a *ExecuteOrder) Response() (*ExecuteOrderResponse, error) {
+func (a *ExecuteNewOrder) Response() (*ExecuteNewOrderResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "execute_order", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "execute_new_order", err)
 		}
 	}()
 
@@ -252,18 +252,18 @@ func (a *ExecuteOrder) Response() (*ExecuteOrderResponse, error) {
 	}
 }
 
-func (r *ExecuteOrderRequest) Send(ctx context.Context) *ExecuteOrder {
+func (r *ExecuteNewOrderRequest) Send(ctx context.Context) *ExecuteNewOrder {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *ExecuteOrderRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ExecuteOrder {
+func (r *ExecuteNewOrderRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ExecuteNewOrder {
 	errc := make(chan error, 1)
-	resultc := make(chan *ExecuteOrderResponse, 1)
+	resultc := make(chan *ExecuteNewOrderResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-ftx:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- gerrors.Augment(err, "swallowtail_s-ftx_connection_failed", nil)
-		return &ExecuteOrder{
+		return &ExecuteNewOrder{
 			ctx:  ctx,
 			errc: errc,
 			closer: func() error {
@@ -280,15 +280,15 @@ func (r *ExecuteOrderRequest) SendWithTimeout(ctx context.Context, timeout time.
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.ExecuteOrder(ctx, r)
+		rsp, err := c.ExecuteNewOrder(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_execute_order", nil)
+			errc <- gerrors.Augment(err, "failed_execute_new_order", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
-	return &ExecuteOrder{
+	return &ExecuteNewOrder{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

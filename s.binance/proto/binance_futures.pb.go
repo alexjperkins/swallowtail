@@ -21,7 +21,7 @@ type ExecuteNewFuturesPerpetualOrderFuture struct {
 func (a *ExecuteNewFuturesPerpetualOrderFuture) Response() (*ExecuteNewFuturesPerpetualOrderResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "execute_futures_perpetuals_trade", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "execute_new_futures_perpetuals_order", err)
 		}
 	}()
 
@@ -60,13 +60,81 @@ func (r *ExecuteNewFuturesPerpetualOrderRequest) SendWithTimeout(ctx context.Con
 	go func() {
 		rsp, err := c.ExecuteNewFuturesPerpetualOrder(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_execute_futures_perpetuals_trade", nil)
+			errc <- gerrors.Augment(err, "failed_execute_new_futures_perpetuals_order", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
 	return &ExecuteNewFuturesPerpetualOrderFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
+// --- Execute New Spot Order --- //
+
+type ExecuteNewSpotOrderFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ExecuteNewSpotOrderResponse
+	ctx     context.Context
+}
+
+func (a *ExecuteNewSpotOrderFuture) Response() (*ExecuteNewSpotOrderResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "execute_new_spot_order", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ExecuteNewSpotOrderRequest) Send(ctx context.Context) *ExecuteNewSpotOrderFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ExecuteNewSpotOrderRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ExecuteNewSpotOrderFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ExecuteNewSpotOrderResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-binance:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s_binance_connection_failed", nil)
+		return &ExecuteNewSpotOrderFuture{
+			ctx:     ctx,
+			errc:    errc,
+			closer:  conn.Close,
+			resultc: resultc,
+		}
+	}
+	c := NewBinanceClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ExecuteNewSpotOrder(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_execute_new_spot_order", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ExecuteNewSpotOrderFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

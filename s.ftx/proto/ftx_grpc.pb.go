@@ -20,7 +20,7 @@ type FtxClient interface {
 	GetFTXStatus(ctx context.Context, in *GetFTXStatusRequest, opts ...grpc.CallOption) (*GetFTXStatusResponse, error)
 	GetFTXFundingRates(ctx context.Context, in *GetFTXFundingRatesRequest, opts ...grpc.CallOption) (*GetFTXFundingRatesResponse, error)
 	ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error)
-	ExecuteOrder(ctx context.Context, in *ExecuteOrderRequest, opts ...grpc.CallOption) (*ExecuteOrderResponse, error)
+	ExecuteNewOrder(ctx context.Context, in *ExecuteNewOrderRequest, opts ...grpc.CallOption) (*ExecuteNewOrderResponse, error)
 	ListFTXInstruments(ctx context.Context, in *ListFTXInstrumentsRequest, opts ...grpc.CallOption) (*ListFTXInstrumentsResponse, error)
 }
 
@@ -59,9 +59,9 @@ func (c *ftxClient) ListAccountDeposits(ctx context.Context, in *ListAccountDepo
 	return out, nil
 }
 
-func (c *ftxClient) ExecuteOrder(ctx context.Context, in *ExecuteOrderRequest, opts ...grpc.CallOption) (*ExecuteOrderResponse, error) {
-	out := new(ExecuteOrderResponse)
-	err := c.cc.Invoke(ctx, "/ftx/ExecuteOrder", in, out, opts...)
+func (c *ftxClient) ExecuteNewOrder(ctx context.Context, in *ExecuteNewOrderRequest, opts ...grpc.CallOption) (*ExecuteNewOrderResponse, error) {
+	out := new(ExecuteNewOrderResponse)
+	err := c.cc.Invoke(ctx, "/ftx/ExecuteNewOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ type FtxServer interface {
 	GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error)
 	GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error)
 	ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error)
-	ExecuteOrder(context.Context, *ExecuteOrderRequest) (*ExecuteOrderResponse, error)
+	ExecuteNewOrder(context.Context, *ExecuteNewOrderRequest) (*ExecuteNewOrderResponse, error)
 	ListFTXInstruments(context.Context, *ListFTXInstrumentsRequest) (*ListFTXInstrumentsResponse, error)
 	mustEmbedUnimplementedFtxServer()
 }
@@ -102,8 +102,8 @@ func (*UnimplementedFtxServer) GetFTXFundingRates(context.Context, *GetFTXFundin
 func (*UnimplementedFtxServer) ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAccountDeposits not implemented")
 }
-func (*UnimplementedFtxServer) ExecuteOrder(context.Context, *ExecuteOrderRequest) (*ExecuteOrderResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecuteOrder not implemented")
+func (*UnimplementedFtxServer) ExecuteNewOrder(context.Context, *ExecuteNewOrderRequest) (*ExecuteNewOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExecuteNewOrder not implemented")
 }
 func (*UnimplementedFtxServer) ListFTXInstruments(context.Context, *ListFTXInstrumentsRequest) (*ListFTXInstrumentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFTXInstruments not implemented")
@@ -168,20 +168,20 @@ func _Ftx_ListAccountDeposits_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Ftx_ExecuteOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExecuteOrderRequest)
+func _Ftx_ExecuteNewOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecuteNewOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FtxServer).ExecuteOrder(ctx, in)
+		return srv.(FtxServer).ExecuteNewOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ftx/ExecuteOrder",
+		FullMethod: "/ftx/ExecuteNewOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FtxServer).ExecuteOrder(ctx, req.(*ExecuteOrderRequest))
+		return srv.(FtxServer).ExecuteNewOrder(ctx, req.(*ExecuteNewOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -221,8 +221,8 @@ var _Ftx_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Ftx_ListAccountDeposits_Handler,
 		},
 		{
-			MethodName: "ExecuteOrder",
-			Handler:    _Ftx_ExecuteOrder_Handler,
+			MethodName: "ExecuteNewOrder",
+			Handler:    _Ftx_ExecuteNewOrder_Handler,
 		},
 		{
 			MethodName: "ListFTXInstruments",

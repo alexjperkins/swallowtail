@@ -12,7 +12,7 @@ service ftx {
 
     rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
 
-    rpc ExecuteOrder (ExecuteOrderRequest) returns (ExecuteOrderResponse) {}
+    rpc ExecuteNewOrder (ExecuteNewOrderRequest) returns (ExecuteNewOrderResponse) {}
 
     rpc ListFTXInstruments (ListFTXInstrumentsRequest) returns (ListFTXInstrumentsResponse) {}
 } 
@@ -108,13 +108,13 @@ message FTXOrder {
     float trail_value = 13;
 }
 
-message ExecuteOrderRequest {
+message ExecuteNewOrderRequest {
     Order order = 1;
     google.protobuf.Timestamp timestamp = 2;
     VenueCredentials credentials = 3;
 }
 
-message ExecuteOrderResponse {
+message ExecuteNewOrderResponse {
     Order order = 1;
 }
 
