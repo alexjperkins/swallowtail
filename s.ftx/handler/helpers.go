@@ -37,43 +37,35 @@ func validateCredentials(credentials *tradeengineproto.VenueCredentials) error {
 
 func validateOrder(order *tradeengineproto.Order) error {
 	switch {
-	case order.Instrument== "":
-		return gerrors.BadParam("bad_param.symbol", nil)
-	}
-
-	case order.Price < 0:
-		return gerrors.BadParam("bad_param.price.negative", nil)
-	case order.TriggerPrice < 0:
-		return gerrors.BadParam("bad_param.trigger_price.negative", nil)
-	case order.OrderPrice < 0:
-		return gerrors.BadParam("bad_param.order_price.negative", nil)
-	case order.TrailValue < 0:
-		return gerrors.BadParam("bad_param.trail_value.negative", nil)
-	case order.Quantity == 0:
+	case order.Venue != tradeengineproto.VENUE_FTX:
+		return gerrors.FailedPrecondition("invalid_venue.expecting_ftx", nil)
+	case order.Instrument == "":
+		return gerrors.BadParam("missing_param.instrument", nil)
+	case order.ClosePosition && order.Quantity == 0:
+		return gerrors.Unimplemented("unimplemented.close_position", nil)
+	case order.Quantity <= 0:
 		return gerrors.BadParam("missing_param.quantity", nil)
+	case order.InstrumentType == tradeengineproto.INSTRUMENT_TYPE_FORWARD:
+		return gerrors.Unimplemented("instrument_type.forward", nil)
 	}
 
-	switch {
-	case order.Type != ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_MARKET && order.Price == 0:
-		return gerrors.BadParam("missing_param.price", map[string]string{
-			"type": order.Type.String(),
-		})
-	}
-
-	switch order.Type {
-	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_STOP,
-		ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_TAKE_PROFIT:
-		if order.TriggerPrice == 0 && order.OrderPrice == 0 {
-			return gerrors.BadParam("missing_param.trigger_price_or_order_price", map[string]string{
-				"type": order.Type.String(),
-			})
+	switch order.OrderType {
+	case tradeengineproto.ORDER_TYPE_LIMIT:
+		switch {
+		case order.LimitPrice <= 0:
+			return gerrors.BadParam("bad_param.limit_price", nil)
 		}
-
-	case ftxproto.FTX_TRADE_TYPE_FTX_TRADE_TYPE_TRALING_STOP:
-		if order.TrailValue == 0 {
-			return gerrors.BadParam("missing_param.trail_value", map[string]string{
-				"type": order.Type.String(),
-			})
+	case tradeengineproto.ORDER_TYPE_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
+		switch {
+		case order.StopPrice <= 0:
+			return gerrors.BadParam("bad_param.stop_price", nil)
+		}
+	case tradeengineproto.ORDER_TYPE_STOP_LIMIT, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_LIMIT:
+		switch {
+		case order.LimitPrice <= 0:
+			return gerrors.BadParam("bad_param.limit_price", nil)
+		case order.StopPrice <= 0:
+			return gerrors.BadParam("bad_param.stop_price", nil)
 		}
 	}
 

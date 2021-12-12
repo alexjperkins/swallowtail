@@ -1,8 +1,9 @@
 package marshaling
 
 import (
-	"fmt"
 	"math"
+	"strconv"
+	"strings"
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.ftx/client"
 	"swallowtail/s.ftx/client/auth"
@@ -46,7 +47,15 @@ func DepositsDTOToProto(deposits []*client.DepositRecord) []*ftxproto.DepositRec
 }
 
 func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest, error) {
-	errParams := map[string]string{}
+	errParams := map[string]string{
+		"actor_id":   order.ActorId,
+		"order_id":   order.OrderId,
+		"trade_side": order.TradeSide.String(),
+		"order_type": order.OrderType.String(),
+		"instrument": order.Instrument,
+		"asset":      order.Asset,
+		"pair":       order.Pair.String(),
+	}
 
 	// Parse trade side.
 	var side string
@@ -56,61 +65,85 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 	case tradeengineproto.TRADE_SIDE_SELL, tradeengineproto.TRADE_SIDE_SHORT:
 		side = "sell"
 	default:
-		return nil, gerrors.BadParam("invalid_trade_side", map[string]string{
-			"side": order.TradeSide.String(),
-		})
+		return nil, gerrors.BadParam("invalid_trade_side", errParams)
 	}
 
-	// Parse trade type.
-	var tradeType string
+	// Parse order type.
+	var orderType string
 	switch order.OrderType {
 	case tradeengineproto.ORDER_TYPE_LIMIT:
-		tradeType = "limit"
+		orderType = "limit"
 	case tradeengineproto.ORDER_TYPE_MARKET:
-		tradeType = "market"
+		orderType = "market"
 	case tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
-		tradeType = "takeProfit"
+		orderType = "takeProfit"
 	case tradeengineproto.ORDER_TYPE_STOP_MARKET:
-		tradeType = "stop"
+		orderType = "stop"
 	case tradeengineproto.ORDER_TYPE_TRAILING_STOP_MARKET:
-		tradeType = "trailingStop"
+		orderType = "trailingStop"
 	default:
 		return nil, gerrors.BadParam("invalid_order_type", map[string]string{
 			"type": order.OrderType.String(),
 		})
 	}
 
+	// Gather instrument data.
 	exchangeInstrumentData, ok := exchangeinfo.GetInstrumentBySymbol(order.Instrument)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("exchange_instrument_metadata_not_found", errParams)
 	}
 
-	// Parse order type.
+	// Parse prices.
 	var (
 		price        string
-		quantity     string
 		triggerPrice string
 		orderPrice   string
 		trailValue   string
 	)
 	switch order.OrderType {
 	case tradeengineproto.ORDER_TYPE_LIMIT:
-		price = roundToPrecisionString(float64(order.LimitPrice))
+		price = roundToPrecisionString(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
+	case tradeengineproto.ORDER_TYPE_STOP_LIMIT, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_LIMIT:
+		orderPrice = roundToPrecisionString(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
+		triggerPrice = roundToPrecisionString(float64(order.StopPrice), exchangeInstrumentData.MininumTickSize)
+	case tradeengineproto.ORDER_TYPE_STOP_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
+		triggerPrice = roundToPrecisionString(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
 	}
 
+	// Parse quantity.
+	var quantity string
+	if !order.ClosePosition {
+		quantity = roundToPrecisionString(float64(order.Quantity), exchangeInstrumentData.MininumQuantity)
+	}
+
+	// Parse IOC.
+	var ioc bool
+	if order.TimeInForce == tradeengineproto.TIME_IN_FORCE_IMMEDIATE_OR_CANCEL {
+		ioc = true
+	}
+
+	// Parse retry until filled.
+	var retryUntilFilled bool
+	switch order.OrderType {
+	case tradeengineproto.ORDER_TYPE_STOP_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
+		retryUntilFilled = true
+	}
+
+	// Marshal into DTO.
 	return &client.ExecuteOrderRequest{
-		Side:              side,
-		Type:              tradeType,
-		Price:             price,
-		TriggerPrice:      triggerPrice,
-		OrderPrice:        orderPrice,
-		TrailValue:        trailValue,
-		Quantity:          quantity,
-		ReduceOnly:        order.ReduceOnly,
-		IOC:               order.Ioc,
-		PostOnly:          order.PostOnly,
-		RejectOnPriceBand: order.RejectOnPriceBand,
-		RetryUntilFilled:  order.RetryUntilFilled,
+		ClientID:         order.OrderId,
+		Market:           order.Instrument,
+		Side:             side,
+		Type:             orderType,
+		Price:            price,
+		TriggerPrice:     triggerPrice,
+		OrderPrice:       orderPrice,
+		TrailValue:       trailValue,
+		Size:             quantity,
+		ReduceOnly:       order.ReduceOnly,
+		IOC:              ioc,
+		PostOnly:         order.PostOnly,
+		RetryUntilFilled: retryUntilFilled,
 	}, nil
 }
 
@@ -139,13 +172,17 @@ func InstrumentDTOToProto(i *client.Instrument) *ftxproto.Instrument {
 	}
 }
 
-// NOTE: this **does** not account for large floats & can lead to overflow
-// TODO: move to own library.
-func roundToPrecisionString(f float64, p int) string {
-	if f == 0 {
-		return ""
+func roundToPrecisionString(f float64, minIncrement float64) string {
+	v := f / minIncrement
+
+	var p float64
+	switch {
+	case v < 1.0:
+		p = math.Ceil(f) * minIncrement
+	default:
+		p = math.Floor(f) * minIncrement
 	}
 
-	format := fmt.Sprintf("%%.%vf", p)
-	return fmt.Sprintf(format, math.Round(f*(math.Pow10(p)))/math.Pow10(p))
+	// Format float & trim zeros.
+	return strings.TrimRight(strconv.FormatFloat(p, 'f', 6, 64), "0")
 }

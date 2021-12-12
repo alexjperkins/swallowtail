@@ -16,6 +16,7 @@ import (
 func (s *FTXService) ExecuteOrder(
 	ctx context.Context, in *ftxproto.ExecuteOrderRequest,
 ) (*ftxproto.ExecuteOrderResponse, error) {
+	// Validate request.
 	switch {
 	case in.Order == nil:
 		return nil, gerrors.BadParam("missing_param.orders", nil)
@@ -39,7 +40,7 @@ func (s *FTXService) ExecuteOrder(
 		"pair":       order.Pair.String(),
 	}
 
-	// Validate all orders.
+	// Validate order.
 	if err := validateOrder(in.Order); err != nil {
 		slog.Error(ctx, "Failed to execute order invalid: Error: %v, Order: %+v", err, order)
 		return nil, gerrors.Augment(err, "failed_to_execute_order.invalid_order", errParams)
