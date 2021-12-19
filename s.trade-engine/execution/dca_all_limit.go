@@ -23,7 +23,11 @@ func init() {
 type DCAAllLimit struct{}
 
 // Execute ...
-func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
+func (d *DCAAllLimit) Execute(
+	ctx context.Context,
+	strategy *tradeengineproto.TradeStrategy,
+	participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest,
+) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error) {
 	// Validation.
 	switch {
 	case len(strategy.Entries) < 2:
@@ -120,7 +124,7 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
 			Asset:            strategy.Asset,
-			Pair:             strategy.Pair.String(),
+			Pair:             strategy.Pair,
 			Instrument:       strategy.Instrument,
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_STOP_MARKET,
@@ -140,7 +144,7 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
 			Instrument:       strategy.Instrument,
 			Asset:            strategy.Asset,
-			Pair:             strategy.Pair.String(),
+			Pair:             strategy.Pair,
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_LIMIT,
 			TradeSide:        strategy.TradeSide,
@@ -159,7 +163,7 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
 			Instrument:       strategy.Instrument,
 			Asset:            strategy.Asset,
-			Pair:             strategy.Pair.String(),
+			Pair:             strategy.Pair,
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET,
 			TradeSide:        exitTradeSide,
@@ -199,7 +203,7 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 
 	slog.Info(ctx, "Successfully placed dca all limit trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 
-	// TODO: Store in DB.
+	// TODO: Store into persistance layer.
 
 	return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
 		NotionalSize:           float32(totalQuantity),
@@ -208,5 +212,9 @@ func (d *DCAAllLimit) Execute(ctx context.Context, strategy *tradeengineproto.Tr
 		SuccessfulOrders:       successfulOrders,
 		Timestamp:              timestamppb.Now(),
 		Venue:                  participant.Venue,
+		Asset:                  strategy.Asset,
+		Pair:                   strategy.Pair,
+		TradeParticipantId:     participant.UserId,
+		Instrument:             strategy.Instrument,
 	}, nil
 }

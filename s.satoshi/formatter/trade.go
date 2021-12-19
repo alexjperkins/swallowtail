@@ -55,7 +55,7 @@ TRADE SIDE:   %s
 ORDER TYPE:   %s
 MOD:          %s
 MOD TYPE:     %s
-EXCHANGES:    %s
+VENUES:       %s
 
 CURRENT_PRICE %v
 
@@ -138,7 +138,7 @@ TRADE SIDE:   %s
 ORDER TYPE:   %s
 MOD:          %s
 MOD TYPE:     %s
-EXCHANGES:    %s
+VENUEs:       %s
 
 CURRENT_PRICE %v
 

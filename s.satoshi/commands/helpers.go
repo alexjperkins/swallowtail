@@ -90,7 +90,7 @@ func formatExchangesToMsg(exchanges []*accountproto.Exchange, m *discordgo.Messa
 
 		line := fmt.Sprintf(
 			"`%v) %s: %s %s %s %s`",
-			i, exchange.ExchangeType, exchange.ExchangeId, m.Author.Username, maskedAPIKey, maskedSecretKey,
+			i, exchange.Venue, exchange.ExchangeId, m.Author.Username, maskedAPIKey, maskedSecretKey,
 		)
 		lines = append(lines, line)
 	}

@@ -165,7 +165,7 @@ message CreateTradeStrategyResponse {
 message ExecuteTradeStrategyForParticipantRequest {
     string actor_id = 1;
     string user_id = 2;
-    string trade_id = 3;
+    string trade_strategy_id = 3;
     float size = 5;
     VENUE venue = 6;
     bool is_bot = 7;
@@ -185,6 +185,10 @@ message ExecuteTradeStrategyForParticipantResponse {
     repeated Order successful_orders = 5;
     google.protobuf.Timestamp timestamp = 6;
     ExecutionError error = 7;
+    string trade_participant_id = 8;
+    string asset = 9;
+    TRADE_PAIR pair = 10;
+    string instrument = 11;
 }
 
 message ReadTradeByTradeIDRequest {

@@ -66,6 +66,7 @@ func Init(ctx context.Context) error {
 
 	slog.Trace(context.Background(), "Fetched all ftx instruments for satoshi parser; total: %v", len(ftxInstruments))
 
+	// Add to internal instruments cache.
 	for _, assetPair := range binanceInfo.AssetPairs {
 		// We may have some inconsistencies here since we're using all symbols; since some symbols
 		// May not be actively traded on Binance.

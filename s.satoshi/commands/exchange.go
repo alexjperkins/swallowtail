@@ -8,6 +8,7 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 
 	"google.golang.org/grpc"
 
@@ -28,7 +29,7 @@ func init() {
 		MinimumNumberOfArgs: 1,
 		Usage:               exchangeUsage,
 		Handler:             exchangeCommand,
-		Description:         "Manages all things related to exchanges such as api keys & more; Binance supported, FTX coming soon",
+		Description:         "Manages all things related to exchanges such as api keys & more.",
 		Guide:               "https://scalloped-single-1bd.notion.site/How-to-register-an-exchange-d3d73af635f041a89a3e57d3d33a32b0",
 		SubCommands: map[string]*Command{
 			"register": {
@@ -61,22 +62,23 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(30*time.Second))
 	defer cancel()
 
-	exchange, apiKey, secretKey := strings.ToUpper(tokens[0]), tokens[1], tokens[2]
-	var exchangeType accountproto.ExchangeType
+	venue, apiKey, secretKey := strings.ToUpper(tokens[0]), tokens[1], tokens[2]
+	var venueProto tradeengineproto.VENUE
 
-	switch exchange {
-	case accountproto.ExchangeType_BINANCE.String():
-		exchangeType = accountproto.ExchangeType_BINANCE
-	case accountproto.ExchangeType_FTX.String():
-		exchangeType = accountproto.ExchangeType_FTX
+	switch strings.ToUpper(venue) {
+	case tradeengineproto.VENUE_BINANCE.String():
+		venueProto = tradeengineproto.VENUE_BINANCE
+	case tradeengineproto.VENUE_BITFINEX.String():
+		venueProto = tradeengineproto.VENUE_BITFINEX
+	case tradeengineproto.VENUE_DERIBIT.String():
+		venueProto = tradeengineproto.VENUE_DERIBIT
+	case tradeengineproto.VENUE_FTX.String():
+		venueProto = tradeengineproto.VENUE_FTX
 	default:
 		// Bad Exchange type.
 		if _, err := (s.ChannelMessageSend(
 			m.ChannelID,
-			fmt.Sprintf(":wave: Sorry, I don't support that exchange\n\nPlease choose from `%s, %s`",
-				accountproto.ExchangeType_BINANCE.String(),
-				accountproto.ExchangeType_FTX.String(),
-			),
+			fmt.Sprintf(":wave: Sorry, I don't support that venues\n\nPlease post in #crypto-support to check available venues`%s, %s`"),
 		)); err != nil {
 			return gerrors.Augment(err, "failed_to_send_to_discord_bad_exchange", map[string]string{
 				"command_id": "register-exchange-command",
@@ -89,10 +91,10 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 	rsp, err := (&accountproto.AddExchangeRequest{
 		UserId: m.Author.ID,
 		Exchange: &accountproto.Exchange{
-			ExchangeType: exchangeType,
-			ApiKey:       apiKey,
-			SecretKey:    secretKey,
-			IsActive:     true,
+			Venue:     venueProto,
+			ApiKey:    apiKey,
+			SecretKey: secretKey,
+			IsActive:  true,
 		},
 	}).Send(ctx).Response()
 	if err != nil {

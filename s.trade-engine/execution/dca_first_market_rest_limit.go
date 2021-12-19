@@ -121,7 +121,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
 			Instrument:       strategy.Instrument,
 			Asset:            strategy.Asset,
-			Pair:             strategy.Pair.String(),
+			Pair:             strategy.Pair,
 			InstrumentType:   strategy.InstrumentType,
 			OrderType:        tradeengineproto.ORDER_TYPE_STOP_MARKET,
 			TradeSide:        exitTradeSide,
@@ -147,7 +147,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 
 	orders = append(orders, &tradeengineproto.Order{
 		ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
-		Pair:             strategy.Pair.String(),
+		Pair:             strategy.Pair,
 		InstrumentType:   strategy.InstrumentType,
 		OrderType:        tradeengineproto.ORDER_TYPE_MARKET,
 		TradeSide:        strategy.TradeSide,
@@ -222,7 +222,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 
 	slog.Info(ctx, "Successfully placed dca first market rest limit trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 
-	// TODO: store in DB.
+	// TODO: store into persistance layer.
 
 	return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
 		NotionalSize:           float32(totalQuantity),
@@ -231,5 +231,9 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 		SuccessfulOrders:       successfulOrders,
 		Timestamp:              timestamppb.Now(),
 		Venue:                  participant.Venue,
+		Asset:                  strategy.Asset,
+		Pair:                   strategy.Pair,
+		TradeParticipantId:     participant.UserId,
+		Instrument:             strategy.Instrument,
 	}, nil
 }
