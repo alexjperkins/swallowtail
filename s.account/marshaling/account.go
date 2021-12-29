@@ -10,15 +10,15 @@ import (
 // AccountDomainToProto marshals an account domain object into the account proto definition.
 func AccountDomainToProto(account *domain.Account) *accountproto.Account {
 	return &accountproto.Account{
-		UserId:             account.UserID,
-		Username:           account.Username,
-		Email:              account.Email,
-		IsFuturesMember:    account.IsFuturesMember,
-		IsAdmin:            account.IsAdmin,
-		Created:            timestamppb.New(account.Created),
-		LastUpdated:        timestamppb.New(account.Updated),
-		PrimaryExchange:    account.PrimaryExchange,
-		DefaultDcaStrategy: account.DefaultDCAStrategy,
+		UserId:              account.UserID,
+		Username:            account.Username,
+		Email:               account.Email,
+		IsFuturesMember:     account.IsFuturesMember,
+		IsAdmin:             account.IsAdmin,
+		Created:             timestamppb.New(account.Created),
+		LastUpdated:         timestamppb.New(account.Updated),
+		PrimaryVenueAccount: account.PrimaryVenueAccount,
+		DefaultDcaStrategy:  account.DefaultDCAStrategy,
 	}
 }
 

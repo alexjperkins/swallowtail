@@ -23,21 +23,21 @@ service account {
   rpc PageAccount (PageAccountRequest) returns (PageAccountResponse) {
   }
 
-  /// --- Exchanges --- ///
-  rpc AddExchange (AddExchangeRequest) returns (AddExchangeResponse) {
+  /// --- Venue Account --- ///
+  rpc AddVenueAccount (AddVenueAccountRequest) returns (AddVenueAccountResponse) {
   }
 
-  rpc ListExchanges (ListExchangesRequest) returns (ListExchangesResponse) {
+  rpc ListVenueAccounts (ListVenueAccountsRequest) returns (ListVenueAccountsResponse) {
   }
 
   // TODO: update name to include ID
-  rpc ReadExchangeByVenueID (ReadExchangeByVenueIDRequest) returns (ReadExchangeByVenueIDResponse) {
+  rpc ReadVenueAccountByVenueID (ReadVenueAccountByVenueIDRequest) returns (ReadVenueAccountByVenueIDResponse) {
   }
 
-  rpc ReadExchangeByExchangeDetails (ReadExchangeByExchangeDetailsRequest) returns (ReadExchangeByExchangeDetailsResponse) {
+  rpc ReadVenueAccountByVenueAccountDetails (ReadVenueAccountByVenueAccountDetailsRequest) returns (ReadVenueAccountByVenueAccountDetailsResponse) {
   }
 
-  rpc ReadPrimaryExchangeByUserID (ReadPrimaryExchangeByUserIDRequest) returns (ReadPrimaryExchangeByUserIDResponse) {}
+  rpc ReadPrimaryVenueAccountByUserID (ReadPrimaryVenueAccountByUserIDRequest) returns (ReadPrimaryVenueAccountByUserIDResponse) {}
 }
 
 enum PagerType {
@@ -62,7 +62,7 @@ message Account {
     string username = 5;
     google.protobuf.Timestamp created = 6;
     google.protobuf.Timestamp last_updated = 7;
-    string primary_exchange = 8;
+    string primary_venue_account = 8;
     string default_dca_strategy = 9;
 }
 
@@ -120,62 +120,62 @@ message PageAccountRequest {
 
 message PageAccountResponse {}
 
-message Exchange {
+message VenueAccount {
     VENUE venue = 1;
     string api_key = 2;
     string secret_key = 3;
     string sub_account = 4;
     bool is_active = 5;
-    string exchange_id = 6;
+    string venue_account_id = 6;
 }
 
-message AddExchangeRequest {
-    Exchange exchange = 1;
+message AddVenueAccountRequest {
+    VenueAccount venue_account = 1;
     string user_id = 2;
 }
 
-message AddExchangeResponse {
-    Exchange exchange = 1;
+message AddVenueAccountResponse {
+    VenueAccount venue_account = 1;
     bool verified = 2;
     string reason = 3;
 }
 
-message ListExchangesRequest {
+message ListVenueAccountsRequest {
     string user_id = 1;
     bool active_only = 2;
     string actor_id = 3;
     bool with_unmaasked_credentials = 4;
 }
 
-message ListExchangesResponse {
-    repeated Exchange exchanges = 1;
+message ListVenueAccountsResponse {
+    repeated VenueAccount venue_accounts = 1;
 }
 
-message ReadExchangeByVenueIDRequest {
+message ReadVenueAccountByVenueIDRequest {
     VENUE venue = 1;
 }
 
-message ReadExchangeByVenueIDResponse{
-    Exchange exchange = 1;
+message ReadVenueAccountByVenueIDResponse{
+    VenueAccount venue_account = 1;
 }
 
-message ReadPrimaryExchangeByUserIDRequest {
+message ReadPrimaryVenueAccountByUserIDRequest {
     string user_id = 1;
     string actor_id = 2;
 }
 
-message ReadPrimaryExchangeByUserIDResponse {
-    Exchange primary_exchange = 1;
+message ReadPrimaryVenueAccountByUserIDResponse {
+    VenueAccount primary_venue_account = 1;
 }
 
-message ReadExchangeByExchangeDetailsRequest {
-    string exchange = 1;
+message ReadVenueAccountByVenueAccountDetailsRequest {
+    VENUE venue = 1;
     string user_id = 2;
     string subaccount = 3;
     string actor_id = 4;
     string request_context = 5;
 }
 
-message ReadExchangeByExchangeDetailsResponse {
-    Exchange exchange = 1;
+message ReadVenueAccountByVenueAccountDetailsResponse {
+    VenueAccount venue_account = 1;
 } 

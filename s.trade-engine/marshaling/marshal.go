@@ -77,7 +77,7 @@ func TradeStrategyDomainStrategyToProto(domain *domain.TradeStrategy) *tradeengi
 func TradeParticipantProtoToDomain(in *tradeengineproto.ExecuteTradeStrategyForParticipantRequest, exchangeOrderIDs []string, excutedTimestamp time.Time) *domain.TradeStrategyParticipant {
 	return &domain.TradeStrategyParticipant{
 		UserID:           in.UserId,
-		TradeStrategyID:  in.TradeId,
+		TradeStrategyID:  in.TradeStrategyId,
 		IsBot:            in.IsBot,
 		Size:             float64(in.Size),
 		Risk:             float64(in.Risk),

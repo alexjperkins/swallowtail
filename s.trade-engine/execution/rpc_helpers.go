@@ -15,21 +15,17 @@ import (
 )
 
 func readVenueCredentials(ctx context.Context, userID string, venue tradeengineproto.VENUE) (*tradeengineproto.VenueCredentials, error) {
-	rsp, err := (&accountproto.ReadExchangeByExchangeDetailsRequest{
-		Exchange: venue.String(),
-		UserId:   userID,
+	// Read venue account.
+	rsp, err := (&accountproto.ReadVenueAccountByVenueAccountDetailsRequest{
+		Venue:  venue,
+		UserId: userID,
 	}).Send(ctx).Response()
 	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_read_exchange_credentials", nil)
+		return nil, gerrors.Augment(err, "failed_to_read_venue_credentials", nil)
 	}
 
 	// Marshal venue credentials.
-	venueCredentials, err := marshaling.AccountExchangeToVenueCredentials(rsp.GetExchange())
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_route_and_execute_order.marshal_credentials", nil)
-	}
-
-	return venueCredentials, nil
+	return marshaling.VenueAccountToVenueCredentials(rsp.GetVenueAccount()), nil
 }
 
 func readVenueAccountBalance(ctx context.Context, venue tradeengineproto.VENUE, _ tradeengineproto.INSTRUMENT_TYPE, credentials *tradeengineproto.VenueCredentials) (float64, error) {

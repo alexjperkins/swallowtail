@@ -4,6 +4,7 @@ import (
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.account/domain"
 	accountproto "swallowtail/s.account/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 func getIdentifierFromAccount(account *domain.Account, pagerType string) (string, error) {
@@ -55,4 +56,28 @@ func isValidActorUnmaskedRequest(actorID string, isRequestingUnmaskedCredentials
 	}
 
 	return true
+}
+
+func validateVenueAccount(venueAccount *accountproto.VenueAccount) error {
+	if venueAccount == nil {
+		return gerrors.BadParam("missing_param.venue_account", nil)
+	}
+
+	switch {
+	case venueAccount.ApiKey == "":
+		return gerrors.BadParam("missing_param.api_key", nil)
+	case venueAccount.SecretKey == "":
+		return gerrors.BadParam("missing_param.secret_key", nil)
+	}
+
+	switch venueAccount.Venue {
+	case tradeengineproto.VENUE_FTX:
+		if venueAccount.SubAccount == "" {
+			return gerrors.FailedPrecondition("subaccount_required_for_ftx", nil)
+		}
+	case tradeengineproto.VENUE_UNREQUIRED:
+		return gerrors.BadParam("missing_param.venue_account.venue", nil)
+	}
+
+	return nil
 }

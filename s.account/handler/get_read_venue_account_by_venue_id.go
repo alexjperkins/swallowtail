@@ -10,29 +10,29 @@ import (
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-// ReadExchangeByVenueID ...
-func (s *AccountService) ReadExchangeByVenueID(
-	ctx context.Context, in *accountproto.ReadExchangeByVenueIDRequest,
-) (*accountproto.ReadExchangeByVenueIDResponse, error) {
+// ReadVenueAccountByVenueID ...
+func (s *AccountService) ReadVenueAccountByVenueID(
+	ctx context.Context, in *accountproto.ReadVenueAccountByVenueIDRequest,
+) (*accountproto.ReadVenueAccountByVenueIDResponse, error) {
 	if in.Venue == tradeengineproto.VENUE_UNREQUIRED {
-		return nil, gerrors.BadParam("missing_param.venue_id", nil)
+		return nil, gerrors.BadParam("missing_param.venue", nil)
 	}
 
 	errParams := map[string]string{
 		"venue": in.Venue.String(),
 	}
 
-	exchange, err := dao.ReadExchangeByVenueID(ctx, in.Venue.String())
+	exchange, err := dao.ReadVenueAccountByVenueID(ctx, in.Venue.String())
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_read_exchange_by_venue_id.dao", errParams)
 	}
 
-	proto, err := marshaling.ExchangeDomainToProto(exchange)
+	proto, err := marshaling.VenueAccountDomainToProto(exchange)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_read_exchange_by_venue_id.marshal_to_proto", errParams)
 	}
 
-	return &accountproto.ReadExchangeByVenueIDResponse{
-		Exchange: proto,
+	return &accountproto.ReadVenueAccountByVenueIDResponse{
+		VenueAccount: proto,
 	}, nil
 }

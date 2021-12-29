@@ -9,32 +9,31 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/monzo/slog"
-	"github.com/monzo/terrors"
 )
 
-// ReadExchangeByVenueID ...
-func ReadExchangeByVenueID(ctx context.Context, venueID string) (*domain.Exchange, error) {
+// ReadVenueAccountByVenueAccountID ...
+func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string) (*domain.VenueAccount, error) {
 	var (
 		sql = `
 		SELECT * FROM s_account_exchanges
 		WHERE exchange_id=$1
 		`
-		exchanges []*domain.Exchange
+		venueAccounts []*domain.VenueAccount
 	)
 
-	if err := db.Select(ctx, exchanges, sql, venueID); err != nil {
+	if err := db.Select(ctx, venueAccounts, sql, venueAccountID); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
-	if len(exchanges) == 0 {
-		return nil, gerrors.NotFound("exchange_not_found_for_venue", nil)
+	if len(venueAccounts) == 0 {
+		return nil, gerrors.NotFound("venue_account_not_found", nil)
 	}
 
-	return exchanges[0], nil
+	return venueAccounts[0], nil
 }
 
-// ReadExchangeByExchangeDetails ...
-func ReadExchangeByExchangeDetails(ctx context.Context, exchangeName, userID, subaccount string) (*domain.Exchange, error) {
+// ReadVenueAccountByVenueAccountDetails ...
+func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID, subaccount string) (*domain.VenueAccount, error) {
 	var (
 		baseSql = `
 		SELECT * FROM s_account_exchanges
@@ -43,7 +42,7 @@ func ReadExchangeByExchangeDetails(ctx context.Context, exchangeName, userID, su
 		AND
 			user=$2
 		`
-		exchanges []*domain.Exchange
+		venueAccounts []*domain.VenueAccount
 	)
 
 	var sql = baseSql
@@ -51,27 +50,27 @@ func ReadExchangeByExchangeDetails(ctx context.Context, exchangeName, userID, su
 		sql = baseSql + `AND subaccount=$3`
 	}
 
-	if err := db.Select(ctx, &exchanges, sql, strings.ToUpper(exchangeName), userID, subaccount); err != nil {
+	if err := db.Select(ctx, &venueAccounts, sql, strings.ToUpper(venueID), userID, subaccount); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
-	switch len(exchanges) {
+	switch len(venueAccounts) {
 	case 0:
-		return nil, gerrors.NotFound("exchanges_not_found_for_user_id", nil)
+		return nil, gerrors.NotFound("venue_accounts_not_found_for_user_id", nil)
 	case 1:
-		return exchanges[0], nil
+		return venueAccounts[0], nil
 	default:
-		slog.Critical(ctx, "Inconsistent state: more than one identical exchange found for user", map[string]string{
-			"exchange_name": exchangeName,
-			"user_id":       userID,
-			"subaccount":    subaccount,
+		slog.Critical(ctx, "Inconsistent state: more than one identical venue account found for user", map[string]string{
+			"venue_id":   venueID,
+			"user_id":    userID,
+			"subaccount": subaccount,
 		})
-		return exchanges[0], nil
+		return venueAccounts[0], nil
 	}
 }
 
-// ListExchangesByUserID ...
-func ListExchangesByUserID(ctx context.Context, userID string, isActive bool) ([]*domain.Exchange, error) {
+// ListVenueAccountsByUserID ...
+func ListVenueAccountsByUserID(ctx context.Context, userID string, isActive bool) ([]*domain.VenueAccount, error) {
 	var (
 		sql = `
 		SELECT * FROM s_account_exchanges
@@ -79,22 +78,22 @@ func ListExchangesByUserID(ctx context.Context, userID string, isActive bool) ([
 		AND is_active=$2
 		ORDER BY exchange
 		`
-		exchanges []*domain.Exchange
+		venueAccounts []*domain.VenueAccount
 	)
 
-	if err := db.Select(ctx, &exchanges, sql, userID, isActive); err != nil {
+	if err := db.Select(ctx, &venueAccounts, sql, userID, isActive); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
-	if len(exchanges) == 0 {
-		return nil, gerrors.NotFound("exchanges_not_found_for_user_id", nil)
+	if len(venueAccounts) == 0 {
+		return nil, gerrors.NotFound("venue_accounts_not_found_for_user_id", nil)
 	}
 
-	return exchanges, nil
+	return venueAccounts, nil
 }
 
-// AddExchange ...
-func AddExchange(ctx context.Context, exchange *domain.Exchange) error {
+// AddVenueAccount ...
+func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) error {
 	var (
 		sql = `
 		INSERT INTO s_account_exchanges
@@ -106,18 +105,18 @@ func AddExchange(ctx context.Context, exchange *domain.Exchange) error {
 	now := time.Now().UTC()
 	if _, err := (db.Exec(
 		ctx, sql,
-		exchange.ExchangeType, exchange.APIKey, exchange.SecretKey, exchange.UserID,
+		venueAccount.VenueID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.UserID,
 		now, now,
-		exchange.IsActive,
+		venueAccount.IsActive,
 	)); err != nil {
-		return terrors.Propagate(err)
+		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	return nil
 }
 
-// RemoveExchange ...
-func RemoveExchange(ctx context.Context, exchangeID string) error {
+// RemoveVenueAccount ...
+func RemoveVenueAccount(ctx context.Context, venueAccountID string) error {
 	var (
 		sql = `
 		DELETE FROM s_account_exchanges
@@ -126,15 +125,15 @@ func RemoveExchange(ctx context.Context, exchangeID string) error {
 	)
 
 	if _, err := (db.Exec(
-		ctx, sql, exchangeID,
+		ctx, sql, venueAccountID,
 	)); err != nil {
-		return terrors.Propagate(err)
+		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 	return nil
 }
 
-// UpdateExchange ...
-func UpdateExchange(ctx context.Context, mutation *domain.Exchange) (*domain.Exchange, error) {
+// UpdateVenueAccount ...
+func UpdateVenueAccount(ctx context.Context, mutation *domain.VenueAccount) (*domain.VenueAccount, error) {
 	var (
 		sql = `
 		UPDATE s_account_exchanges
@@ -142,28 +141,26 @@ func UpdateExchange(ctx context.Context, mutation *domain.Exchange) (*domain.Exc
 		exchange=$1, api_key=$2, secret_key=$3, updated=$4
 		`
 	)
-	if mutation.ExchangeID == "" {
-		return nil, terrors.PreconditionFailed("missing-exchange-id", "Cannot update exchange with missing exchange id", nil)
+	if mutation.VenueAccountID == "" {
+		return nil, gerrors.FailedPrecondition("missing_venue_account_id", nil)
 	}
 
-	exchange, err := ReadExchangeByExchangeID(ctx, mutation.ExchangeID)
+	venueAccount, err := ReadVenueAccountByVenueAccountID(ctx, mutation.VenueAccountID)
 	if err != nil {
-		return nil, terrors.Propagate(err)
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
-	if err := mergo.Merge(&exchange, mutation); err != nil {
-		return nil, terrors.BadRequest("mutation-merge-failure", "Failed to merge exchange mutation", map[string]string{
-			"upstream_err": err.Error(),
-		})
+	if err := mergo.Merge(&venueAccount, mutation); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_merge_venue_account_update_request", nil)
 	}
 
-	exchange.Updated = time.Now().UTC()
+	venueAccount.Updated = time.Now().UTC()
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		exchange.ExchangeType, exchange.APIKey, exchange.SecretKey, exchange.Updated,
+		venueAccount.VenueID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.Updated,
 	)); err != nil {
-		return nil, terrors.Propagate(err)
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	return nil, nil

@@ -8,7 +8,7 @@ type Account struct {
 	Password             string    `db:"password"`
 	Email                string    `db:"email"`
 	PhoneNumber          string    `db:"phone_number"`
-	PrimaryExchange      string    `db:"primary_exchange"`
+	PrimaryVenueAccount  string    `db:"primary_venue_account"`
 	Created              time.Time `db:"created"`
 	Updated              time.Time `db:"updated"`
 	LastPaymentTimestamp time.Time `db:"last_payment_timestamp"`

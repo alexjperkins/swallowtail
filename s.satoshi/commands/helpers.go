@@ -80,17 +80,17 @@ func formatHelpMsg(command *Command, isFuturesMember, isAdmin bool) string {
 	return sb.String()
 }
 
-func formatExchangesToMsg(exchanges []*accountproto.Exchange, m *discordgo.MessageCreate) string {
+func formatVenueAccountsToMsg(venueAccounts []*accountproto.VenueAccount, m *discordgo.MessageCreate) string {
 	var lines = []string{}
 	lines = append(lines, "`Exchange: ID Username MaskedAPIKey MaskedSecretKey`")
-	for i, exchange := range exchanges {
+	for i, venueAccount := range venueAccounts {
 		// We're masking here to be on the safe side; we should expect them to already be masked.
 		// TODO maybe we should ping someone here or something.
-		maskedAPIKey, maskedSecretKey := util.MaskKey(exchange.ApiKey, 4), util.MaskKey(exchange.SecretKey, 4)
+		maskedAPIKey, maskedSecretKey := util.MaskKey(venueAccount.ApiKey, 4), util.MaskKey(venueAccount.SecretKey, 4)
 
 		line := fmt.Sprintf(
 			"`%v) %s: %s %s %s %s`",
-			i, exchange.Venue, exchange.ExchangeId, m.Author.Username, maskedAPIKey, maskedSecretKey,
+			i, venueAccount.Venue, venueAccount.VenueAccountId, m.Author.Username, maskedAPIKey, maskedSecretKey,
 		)
 		lines = append(lines, line)
 	}

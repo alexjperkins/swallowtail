@@ -6,14 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
+	"github.com/monzo/slog"
+	"google.golang.org/grpc"
+
 	"swallowtail/libraries/gerrors"
 	accountproto "swallowtail/s.account/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
-
-	"google.golang.org/grpc"
-
-	"github.com/bwmarrin/discordgo"
-	"github.com/monzo/slog"
 )
 
 const (
@@ -88,9 +87,9 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 		return nil
 	}
 
-	rsp, err := (&accountproto.AddExchangeRequest{
+	rsp, err := (&accountproto.AddVenueAccountRequest{
 		UserId: m.Author.ID,
-		Exchange: &accountproto.Exchange{
+		VenueAccount: &accountproto.VenueAccount{
 			Venue:     venueProto,
 			ApiKey:    apiKey,
 			SecretKey: secretKey,
@@ -151,13 +150,13 @@ func listExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Sess
 	defer conn.Close()
 
 	client := accountproto.NewAccountClient(conn)
-	rsp, err := client.ListExchanges(ctx, &accountproto.ListExchangesRequest{
+	rsp, err := client.ListVenueAccounts(ctx, &accountproto.ListVenueAccountsRequest{
 		UserId:     m.Author.ID,
 		ActiveOnly: true,
 	})
 
-	exchanges := rsp.GetExchanges()
-	if exchanges == nil {
+	venueAccounts := rsp.GetVenueAccounts()
+	if venueAccounts == nil {
 		_, err := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf(":wave: Sorry, you don't have any exchanges registered I'm afraid."),
@@ -165,7 +164,7 @@ func listExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Sess
 		return err
 	}
 
-	exchangesMsg := formatExchangesToMsg(exchanges, m)
+	exchangesMsg := formatVenueAccountsToMsg(venueAccounts, m)
 
 	_, err = s.ChannelMessageSend(
 		m.ChannelID,

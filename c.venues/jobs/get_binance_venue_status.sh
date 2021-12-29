@@ -1,7 +1,7 @@
 #/bin/sh -x
 
-# Runs get Binance exchange status.
-echo Calling s.binance via gRPC. Gets Exchange Status.
+# Runs get Binance venue status.
+echo Calling s.binance via gRPC. Gets venue status.
 
 exec grpcurl -plaintext -d \
 	'{}' \

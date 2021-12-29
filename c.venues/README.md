@@ -1,10 +1,11 @@
-# Cron: c.exchanges
+# Cron: c.venues
 
 This calls given endpoints via gRPC in order to publish heartbeats to the channel `#exchanges-pulse`.
 
 The crontab runs every 5 minutes for:
 
 - Binance
+- Bitfinex
 - FTX
 
 It publishes certain statistics about the exchange such as:

@@ -117,14 +117,14 @@ func readAccountHandler(ctx context.Context, tokens []string, s *discordgo.Sessi
 	account := rsp.GetAccount()
 
 	tpl := `
-Username:          %s
-Email:             %s
-Created:           %s
-Last Updated:      %v
-Is Futures Member: %v
-Primary Exchange:  %s
+Username:               %s
+Email:                  %s
+Created:                %s
+Last Updated:           %v
+Is Futures Member:      %v
+Primary Venue Account:  %s
 	`
-	formattedMsg := fmt.Sprintf(tpl, account.Username, account.Email, account.Created.AsTime(), account.LastUpdated.AsTime(), account.IsFuturesMember, account.PrimaryExchange)
+	formattedMsg := fmt.Sprintf(tpl, account.Username, account.Email, account.Created.AsTime(), account.LastUpdated.AsTime(), account.IsFuturesMember, account.PrimaryVenueAccount)
 
 	// Best Effort.
 	s.ChannelMessageSend(

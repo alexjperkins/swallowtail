@@ -9,29 +9,35 @@ import (
 	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
 	discordproto "swallowtail/s.discord/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-func validateExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
+func validateVenueCredentials(ctx context.Context, userID string, venueAccount *accountproto.VenueAccount) (bool, string, error) {
 	errParams := map[string]string{
-		"exchange_type": exchange.ExchangeType.String(),
+		"venue": venueAccount.Venue.String(),
 	}
 
-	switch exchange.ExchangeType.String() {
-	case accountproto.ExchangeType_BINANCE.String():
-		return validateBinanceExchangeCredentials(ctx, userID, exchange)
-	case accountproto.ExchangeType_FTX.String():
-		return validateFTXExchangeCredentials(ctx, userID, exchange)
+	// Validate venue credentials.
+	switch venueAccount.Venue {
+	case tradeengineproto.VENUE_BINANCE:
+		return validateBinanceCredentials(ctx, userID, venueAccount)
+	case tradeengineproto.VENUE_BITFINEX:
+		return false, "", gerrors.Unimplemented("venue_unimplemented.bitfinex", nil)
+	case tradeengineproto.VENUE_DERIBIT:
+		return false, "", gerrors.Unimplemented("venue_unimplemented.deribit", nil)
+	case tradeengineproto.VENUE_FTX:
+		return validateFTXCredentials(ctx, userID, venueAccount)
 	default:
-		return false, "", gerrors.FailedPrecondition("failed_to_validate_credentials.invalid_exchange", errParams)
+		return false, "", gerrors.FailedPrecondition("failed_to_validate_credentials.invalid_venue_account", errParams)
 	}
 }
 
-func validateBinanceExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
+func validateBinanceCredentials(ctx context.Context, userID string, venueAccount *accountproto.VenueAccount) (bool, string, error) {
 	rsp, err := (&binanceproto.VerifyCredentialsRequest{
 		UserId: userID,
-		Credentials: &binanceproto.Credentials{
-			ApiKey:    exchange.ApiKey,
-			SecretKey: exchange.SecretKey,
+		Credentials: &tradeengineproto.VenueCredentials{
+			ApiKey:    venueAccount.ApiKey,
+			SecretKey: venueAccount.SecretKey,
 		},
 	}).SendWithTimeout(ctx, 30*time.Second).Response()
 	if err != nil {
@@ -41,7 +47,7 @@ func validateBinanceExchangeCredentials(ctx context.Context, userID string, exch
 	return rsp.Success, rsp.Reason, nil
 }
 
-func validateFTXExchangeCredentials(ctx context.Context, userID string, exchange *accountproto.Exchange) (bool, string, error) {
+func validateFTXCredentials(ctx context.Context, userID string, venueAccount *accountproto.VenueAccount) (bool, string, error) {
 	return false, "", nil
 }
 

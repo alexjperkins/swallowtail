@@ -1,7 +1,7 @@
 #/bin/sh -x
 
-# Runs get Bitfinex exchange status.
-echo Calling s.bitfinex via gRPC. Gets Exchange Status.
+# Runs get Bitfinex venue status.
+echo Calling s.bitfinex via gRPC. Gets venue status.
 
 exec grpcurl -plaintext -d \
 	'{}' \

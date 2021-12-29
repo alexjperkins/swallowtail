@@ -1,7 +1,7 @@
 #/bin/sh -x
 
-# Runs get FTX exchange status.
-echo Calling s.ftx via gRPC. Gets Exchange Status.
+# Runs get FTX venue status.
+echo Calling s.ftx via gRPC. Gets venue status.
 
 exec grpcurl -plaintext -d \
 	'{}' \
