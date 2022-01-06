@@ -15,8 +15,8 @@ import (
 func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string) (*domain.VenueAccount, error) {
 	var (
 		sql = `
-		SELECT * FROM s_account_exchanges
-		WHERE exchange_id=$1
+		SELECT * FROM s_account_venue_accounts
+		WHERE venue_account_id=$1
 		`
 		venueAccounts []*domain.VenueAccount
 	)
@@ -36,11 +36,9 @@ func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string
 func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID, subaccount string) (*domain.VenueAccount, error) {
 	var (
 		baseSql = `
-		SELECT * FROM s_account_exchanges
-		WHERE
-			exchange=$1
-		AND
-			user=$2
+		SELECT * FROM s_account_venue_accounts
+		WHERE venue_id=$1
+		AND user=$2
 		`
 		venueAccounts []*domain.VenueAccount
 	)
@@ -73,10 +71,10 @@ func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID,
 func ListVenueAccountsByUserID(ctx context.Context, userID string, isActive bool) ([]*domain.VenueAccount, error) {
 	var (
 		sql = `
-		SELECT * FROM s_account_exchanges
+		SELECT * FROM s_account_venue_accounts
 		WHERE user_id=$1
 		AND is_active=$2
-		ORDER BY exchange
+		ORDER BY venue_id 
 		`
 		venueAccounts []*domain.VenueAccount
 	)
@@ -96,9 +94,10 @@ func ListVenueAccountsByUserID(ctx context.Context, userID string, isActive bool
 func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) error {
 	var (
 		sql = `
-		INSERT INTO s_account_exchanges
-		(exchange, api_key, secret_key, user_id, created, updated, is_active)
-		VALUES($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO s_account_venue_accounts
+			(venue_id, api_key, secret_key, user_id, created, updated, is_active, account_alias)
+		VALUES
+			($1, $2, $3, $4, $5, $6, $7, &8)
 		`
 	)
 
@@ -108,6 +107,7 @@ func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) err
 		venueAccount.VenueID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.UserID,
 		now, now,
 		venueAccount.IsActive,
+		venueAccount.AccountAlias,
 	)); err != nil {
 		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
@@ -119,14 +119,14 @@ func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) err
 func RemoveVenueAccount(ctx context.Context, venueAccountID string) error {
 	var (
 		sql = `
-		DELETE FROM s_account_exchanges
-		WHERE exchange_id=$1 
+		DELETE FROM s_account_venue_accounts
+		WHERE venue_account_id=$1 
 		`
 	)
 
-	if _, err := (db.Exec(
+	if _, err := db.Exec(
 		ctx, sql, venueAccountID,
-	)); err != nil {
+	); err != nil {
 		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 	return nil
@@ -136,9 +136,10 @@ func RemoveVenueAccount(ctx context.Context, venueAccountID string) error {
 func UpdateVenueAccount(ctx context.Context, mutation *domain.VenueAccount) (*domain.VenueAccount, error) {
 	var (
 		sql = `
-		UPDATE s_account_exchanges
+		UPDATE s_account_venue_accounts
 		SET
-		exchange=$1, api_key=$2, secret_key=$3, updated=$4
+			api_key=$2, secret_key=$3, account_alias=$4 updated=$5
+		WHERE venue_account_id=$1
 		`
 	)
 	if mutation.VenueAccountID == "" {
@@ -156,10 +157,10 @@ func UpdateVenueAccount(ctx context.Context, mutation *domain.VenueAccount) (*do
 
 	venueAccount.Updated = time.Now().UTC()
 
-	if _, err := (db.Exec(
+	if _, err := db.Exec(
 		ctx, sql,
-		venueAccount.VenueID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.Updated,
-	)); err != nil {
+		venueAccount.VenueAccountID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.AccountAlias, venueAccount.Updated,
+	); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 

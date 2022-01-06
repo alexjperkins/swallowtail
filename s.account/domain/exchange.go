@@ -13,4 +13,5 @@ type VenueAccount struct {
 	Created        time.Time `db:"created"`
 	Updated        time.Time `db:"updated"`
 	IsActive       bool      `db:"is_active"`
+	AccountAlias   string    `db:"account_alias"`
 }
