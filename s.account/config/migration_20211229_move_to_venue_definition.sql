@@ -1,5 +1,5 @@
 -- Rename table
-ALTER TABLE IF EXISTS s_account_exchanges RENAME s_account_venue_accounts;
+ALTER TABLE IF EXISTS s_account_exchanges RENAME TO s_account_venue_accounts;
 
 -- Drop constraints
 ALTER TABLE IF EXISTS s_account_venue_accounts DROP CONSTRAINT s_account_venue_accounts_user_id_exchange_key;
