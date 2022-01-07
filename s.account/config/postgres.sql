@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS s_account_venue_accounts (
 	secret_key VARCHAR(200) NOT NULL,
 	subaccount VARCHAR(256) NOT NULL DEFAULT 'UNKNOWN',
 
-	account_alias VARCHAR(256) NOT NULL,
+	account_alias VARCHAR(256) NOT NULL DEFAULT 'PRIMARY',
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),

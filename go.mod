@@ -3,9 +3,9 @@ module swallowtail
 go 1.15
 
 require (
-	cloud.google.com/go v0.99.0 // indirect
+	cloud.google.com/go/compute v0.1.0 // indirect
 	github.com/99designs/gqlgen v0.13.0
-	github.com/ReneKroon/ttlcache/v2 v2.9.0
+	github.com/ReneKroon/ttlcache/v2 v2.11.0
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/blend/go-sdk v1.20211025.3 // indirect
 	github.com/bwmarrin/discordgo v0.23.2
@@ -53,12 +53,13 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
+	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/api v0.63.0
-	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb // indirect
+	google.golang.org/api v0.64.0
+	google.golang.org/genproto v0.0.0-20220106181925-4b6d468c965f // indirect
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect

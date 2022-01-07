@@ -27,7 +27,7 @@ type AccountClient interface {
 	AddVenueAccount(ctx context.Context, in *AddVenueAccountRequest, opts ...grpc.CallOption) (*AddVenueAccountResponse, error)
 	ListVenueAccounts(ctx context.Context, in *ListVenueAccountsRequest, opts ...grpc.CallOption) (*ListVenueAccountsResponse, error)
 	// TODO: update name to include ID
-	ReadVenueAccountByVenueID(ctx context.Context, in *ReadVenueAccountByVenueIDRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueIDResponse, error)
+	ReadVenueAccountByVenueAccountID(ctx context.Context, in *ReadVenueAccountByVenueAccountIDRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueAccountIDResponse, error)
 	ReadVenueAccountByVenueAccountDetails(ctx context.Context, in *ReadVenueAccountByVenueAccountDetailsRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueAccountDetailsResponse, error)
 	ReadPrimaryVenueAccountByUserID(ctx context.Context, in *ReadPrimaryVenueAccountByUserIDRequest, opts ...grpc.CallOption) (*ReadPrimaryVenueAccountByUserIDResponse, error)
 }
@@ -103,9 +103,9 @@ func (c *accountClient) ListVenueAccounts(ctx context.Context, in *ListVenueAcco
 	return out, nil
 }
 
-func (c *accountClient) ReadVenueAccountByVenueID(ctx context.Context, in *ReadVenueAccountByVenueIDRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueIDResponse, error) {
-	out := new(ReadVenueAccountByVenueIDResponse)
-	err := c.cc.Invoke(ctx, "/account/ReadVenueAccountByVenueID", in, out, opts...)
+func (c *accountClient) ReadVenueAccountByVenueAccountID(ctx context.Context, in *ReadVenueAccountByVenueAccountIDRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueAccountIDResponse, error) {
+	out := new(ReadVenueAccountByVenueAccountIDResponse)
+	err := c.cc.Invoke(ctx, "/account/ReadVenueAccountByVenueAccountID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ type AccountServer interface {
 	AddVenueAccount(context.Context, *AddVenueAccountRequest) (*AddVenueAccountResponse, error)
 	ListVenueAccounts(context.Context, *ListVenueAccountsRequest) (*ListVenueAccountsResponse, error)
 	// TODO: update name to include ID
-	ReadVenueAccountByVenueID(context.Context, *ReadVenueAccountByVenueIDRequest) (*ReadVenueAccountByVenueIDResponse, error)
+	ReadVenueAccountByVenueAccountID(context.Context, *ReadVenueAccountByVenueAccountIDRequest) (*ReadVenueAccountByVenueAccountIDResponse, error)
 	ReadVenueAccountByVenueAccountDetails(context.Context, *ReadVenueAccountByVenueAccountDetailsRequest) (*ReadVenueAccountByVenueAccountDetailsResponse, error)
 	ReadPrimaryVenueAccountByUserID(context.Context, *ReadPrimaryVenueAccountByUserIDRequest) (*ReadPrimaryVenueAccountByUserIDResponse, error)
 	mustEmbedUnimplementedAccountServer()
@@ -175,8 +175,8 @@ func (*UnimplementedAccountServer) AddVenueAccount(context.Context, *AddVenueAcc
 func (*UnimplementedAccountServer) ListVenueAccounts(context.Context, *ListVenueAccountsRequest) (*ListVenueAccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListVenueAccounts not implemented")
 }
-func (*UnimplementedAccountServer) ReadVenueAccountByVenueID(context.Context, *ReadVenueAccountByVenueIDRequest) (*ReadVenueAccountByVenueIDResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReadVenueAccountByVenueID not implemented")
+func (*UnimplementedAccountServer) ReadVenueAccountByVenueAccountID(context.Context, *ReadVenueAccountByVenueAccountIDRequest) (*ReadVenueAccountByVenueAccountIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadVenueAccountByVenueAccountID not implemented")
 }
 func (*UnimplementedAccountServer) ReadVenueAccountByVenueAccountDetails(context.Context, *ReadVenueAccountByVenueAccountDetailsRequest) (*ReadVenueAccountByVenueAccountDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadVenueAccountByVenueAccountDetails not implemented")
@@ -316,20 +316,20 @@ func _Account_ListVenueAccounts_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_ReadVenueAccountByVenueID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadVenueAccountByVenueIDRequest)
+func _Account_ReadVenueAccountByVenueAccountID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadVenueAccountByVenueAccountIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).ReadVenueAccountByVenueID(ctx, in)
+		return srv.(AccountServer).ReadVenueAccountByVenueAccountID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account/ReadVenueAccountByVenueID",
+		FullMethod: "/account/ReadVenueAccountByVenueAccountID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).ReadVenueAccountByVenueID(ctx, req.(*ReadVenueAccountByVenueIDRequest))
+		return srv.(AccountServer).ReadVenueAccountByVenueAccountID(ctx, req.(*ReadVenueAccountByVenueAccountIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -403,8 +403,8 @@ var _Account_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Account_ListVenueAccounts_Handler,
 		},
 		{
-			MethodName: "ReadVenueAccountByVenueID",
-			Handler:    _Account_ReadVenueAccountByVenueID_Handler,
+			MethodName: "ReadVenueAccountByVenueAccountID",
+			Handler:    _Account_ReadVenueAccountByVenueAccountID_Handler,
 		},
 		{
 			MethodName: "ReadVenueAccountByVenueAccountDetails",

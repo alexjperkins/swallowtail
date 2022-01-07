@@ -12,7 +12,7 @@ import (
 
 // executeFTXNewOrder ...
 func executeFTXNewOrders(ctx context.Context, order *tradeengineproto.Order, credentials *tradeengineproto.VenueCredentials) (*tradeengineproto.Order, error) {
-	rsp, err := (&ftxproto.ExecuteOrderRequest{
+	rsp, err := (&ftxproto.ExecuteNewOrderRequest{
 		Order:       order,
 		Credentials: credentials,
 		Timestamp:   timestamppb.Now(),

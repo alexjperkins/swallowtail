@@ -11,6 +11,33 @@ import (
 	"github.com/monzo/slog"
 )
 
+func ReadVenueAccountByAccountAlias(ctx context.Context, userID, accountAlias string) (*domain.VenueAccount, error) {
+	var (
+		sql = `
+		SELECT * FROM s_account_venue_accounts
+		WHERE
+			user_id=$1
+		AND
+			account_alias=$2
+		`
+		venueAccounts []*domain.VenueAccount
+	)
+
+	if err := db.Select(ctx, venueAccounts, sql, userID, accountAlias); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	}
+
+	switch len(venueAccounts) {
+	case 0:
+		return nil, gerrors.NotFound("venue_account_not_found", nil)
+	case 1:
+		return venueAccounts[0], nil
+	default:
+		slog.Critical(ctx, "Incoherent persistance state: violation of unique constraint: (user_id, account_alias)")
+		return venueAccounts[0], nil
+	}
+}
+
 // ReadVenueAccountByVenueAccountID ...
 func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string) (*domain.VenueAccount, error) {
 	var (
