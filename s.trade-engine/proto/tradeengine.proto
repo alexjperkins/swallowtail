@@ -9,7 +9,7 @@ service tradeengine {
 
     rpc ExecuteTradeStrategyForParticipant (ExecuteTradeStrategyForParticipantRequest) returns (ExecuteTradeStrategyForParticipantResponse) {}
 
-    rpc ReadTradeByTradeID (ReadTradeByTradeIDRequest) returns (ReadTradeByTradeIDResponse) {}
+    rpc ReadTradeStrategyByTradeStrategyID (ReadTradeStrategyByTradeStrategyIDRequest) returns (ReadTradeStrategyByTradeStrategyIDResponse) {}
 }
 
 enum VENUE {
@@ -191,11 +191,11 @@ message ExecuteTradeStrategyForParticipantResponse {
     string instrument = 11;
 }
 
-message ReadTradeByTradeIDRequest {
-    string trade_id = 1;
+message ReadTradeStrategyByTradeStrategyIDRequest {
+    string trade_strategy_id = 1;
 }
 
-message ReadTradeByTradeIDResponse {
+message ReadTradeStrategyByTradeStrategyIDResponse {
     TradeStrategy trade_strategy = 1;
 }
 
@@ -205,4 +205,6 @@ message VenueCredentials {
     string secret_key = 3;
     string passphrase = 4;
     string subaccount = 5;
+    string url = 6;
+    string ws_url = 7;
 }

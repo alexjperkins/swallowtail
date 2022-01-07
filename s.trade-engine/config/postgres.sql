@@ -111,11 +111,11 @@ CREATE TABLE IF NOT EXISTS s_tradeengine_trade_strategies (
 	created TIME NOT NULL,
 	last_updated TIME NOT NULL,
 
-	PRIMARY KEY(trade_id)
+	PRIMARY KEY(trade_strategy_id)
 );
 
 CREATE TABLE IF NOT EXISTS s_tradeengine_trade_strategy_participants (
-	participant_id uuid DEFAULT uuid_generate_v4(),
+	trade_participant_id uuid DEFAULT uuid_generate_v4(),
 
 	trade_strategy_id uuid,
 	user_id VARCHAR(20) NOT NULL,

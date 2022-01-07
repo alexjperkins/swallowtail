@@ -10,7 +10,7 @@ import (
 )
 
 // ListFTXInstruments ...
-func ListFTXInstruments(
+func (s *FTXService) ListFTXInstruments(
 	ctx context.Context, in *ftxproto.ListFTXInstrumentsRequest,
 ) (*ftxproto.ListFTXInstrumentsResponse, error) {
 	rsp, err := client.ListInstruments(ctx, &client.ListInstrumentsRequest{})

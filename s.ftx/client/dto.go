@@ -138,5 +138,5 @@ type Instrument struct {
 
 // ListInstrumentsResponse ...
 type ListInstrumentsResponse struct {
-	Instruments []*Instrument
+	Instruments []*Instrument `json:"result"`
 }

@@ -31,7 +31,14 @@ func (f *ftxClient) signBeforeDo(ctx context.Context, method, endpoint string, r
 
 	url := fmt.Sprintf("%s%s", f.hostname, preparedEndpoint)
 
-	return f.http.DoWithEphemeralHeaders(ctx, method, url, req, rsp, credentials.AsHeaders(signature, ts))
+	return f.http.DoWithEphemeralHeaders(
+		ctx,
+		method,
+		url,
+		req,
+		rsp,
+		credentials.AsHeaders(signature, ts),
+	)
 }
 
 func buildEndpoint(base string, pagination *PaginationFilter) string {

@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion6
 type TradeengineClient interface {
 	CreateTradeStrategy(ctx context.Context, in *CreateTradeStrategyRequest, opts ...grpc.CallOption) (*CreateTradeStrategyResponse, error)
 	ExecuteTradeStrategyForParticipant(ctx context.Context, in *ExecuteTradeStrategyForParticipantRequest, opts ...grpc.CallOption) (*ExecuteTradeStrategyForParticipantResponse, error)
-	ReadTradeByTradeID(ctx context.Context, in *ReadTradeByTradeIDRequest, opts ...grpc.CallOption) (*ReadTradeByTradeIDResponse, error)
+	ReadTradeStrategyByTradeStrategyID(ctx context.Context, in *ReadTradeStrategyByTradeStrategyIDRequest, opts ...grpc.CallOption) (*ReadTradeStrategyByTradeStrategyIDResponse, error)
 }
 
 type tradeengineClient struct {
@@ -48,9 +48,9 @@ func (c *tradeengineClient) ExecuteTradeStrategyForParticipant(ctx context.Conte
 	return out, nil
 }
 
-func (c *tradeengineClient) ReadTradeByTradeID(ctx context.Context, in *ReadTradeByTradeIDRequest, opts ...grpc.CallOption) (*ReadTradeByTradeIDResponse, error) {
-	out := new(ReadTradeByTradeIDResponse)
-	err := c.cc.Invoke(ctx, "/tradeengine/ReadTradeByTradeID", in, out, opts...)
+func (c *tradeengineClient) ReadTradeStrategyByTradeStrategyID(ctx context.Context, in *ReadTradeStrategyByTradeStrategyIDRequest, opts ...grpc.CallOption) (*ReadTradeStrategyByTradeStrategyIDResponse, error) {
+	out := new(ReadTradeStrategyByTradeStrategyIDResponse)
+	err := c.cc.Invoke(ctx, "/tradeengine/ReadTradeStrategyByTradeStrategyID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *tradeengineClient) ReadTradeByTradeID(ctx context.Context, in *ReadTrad
 type TradeengineServer interface {
 	CreateTradeStrategy(context.Context, *CreateTradeStrategyRequest) (*CreateTradeStrategyResponse, error)
 	ExecuteTradeStrategyForParticipant(context.Context, *ExecuteTradeStrategyForParticipantRequest) (*ExecuteTradeStrategyForParticipantResponse, error)
-	ReadTradeByTradeID(context.Context, *ReadTradeByTradeIDRequest) (*ReadTradeByTradeIDResponse, error)
+	ReadTradeStrategyByTradeStrategyID(context.Context, *ReadTradeStrategyByTradeStrategyIDRequest) (*ReadTradeStrategyByTradeStrategyIDResponse, error)
 	mustEmbedUnimplementedTradeengineServer()
 }
 
@@ -77,8 +77,8 @@ func (*UnimplementedTradeengineServer) CreateTradeStrategy(context.Context, *Cre
 func (*UnimplementedTradeengineServer) ExecuteTradeStrategyForParticipant(context.Context, *ExecuteTradeStrategyForParticipantRequest) (*ExecuteTradeStrategyForParticipantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteTradeStrategyForParticipant not implemented")
 }
-func (*UnimplementedTradeengineServer) ReadTradeByTradeID(context.Context, *ReadTradeByTradeIDRequest) (*ReadTradeByTradeIDResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReadTradeByTradeID not implemented")
+func (*UnimplementedTradeengineServer) ReadTradeStrategyByTradeStrategyID(context.Context, *ReadTradeStrategyByTradeStrategyIDRequest) (*ReadTradeStrategyByTradeStrategyIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadTradeStrategyByTradeStrategyID not implemented")
 }
 func (*UnimplementedTradeengineServer) mustEmbedUnimplementedTradeengineServer() {}
 
@@ -122,20 +122,20 @@ func _Tradeengine_ExecuteTradeStrategyForParticipant_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Tradeengine_ReadTradeByTradeID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadTradeByTradeIDRequest)
+func _Tradeengine_ReadTradeStrategyByTradeStrategyID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadTradeStrategyByTradeStrategyIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TradeengineServer).ReadTradeByTradeID(ctx, in)
+		return srv.(TradeengineServer).ReadTradeStrategyByTradeStrategyID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tradeengine/ReadTradeByTradeID",
+		FullMethod: "/tradeengine/ReadTradeStrategyByTradeStrategyID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradeengineServer).ReadTradeByTradeID(ctx, req.(*ReadTradeByTradeIDRequest))
+		return srv.(TradeengineServer).ReadTradeStrategyByTradeStrategyID(ctx, req.(*ReadTradeStrategyByTradeStrategyIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -153,8 +153,8 @@ var _Tradeengine_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Tradeengine_ExecuteTradeStrategyForParticipant_Handler,
 		},
 		{
-			MethodName: "ReadTradeByTradeID",
-			Handler:    _Tradeengine_ReadTradeByTradeID_Handler,
+			MethodName: "ReadTradeStrategyByTradeStrategyID",
+			Handler:    _Tradeengine_ReadTradeStrategyByTradeStrategyID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

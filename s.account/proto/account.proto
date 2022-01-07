@@ -52,6 +52,12 @@ enum PagerPriority {
     LOW = 1;
 }
 
+enum VenueAccountType {
+    TRADING = 0;
+    TESTING = 1;
+    TREASURY = 2;
+}
+
 // Only used for responses, we currently don't have mechanisms to remove sensitived data such
 // as keys or phones. This should only contain insensitive data.
 message Account {
@@ -127,6 +133,8 @@ message VenueAccount {
     string sub_account = 4;
     bool is_active = 5;
     string venue_account_id = 6;
+    string url = 7;
+    string ws_url = 8;
 }
 
 message AddVenueAccountRequest {
@@ -175,6 +183,7 @@ message ReadVenueAccountByVenueAccountDetailsRequest {
     string actor_id = 4;
     string request_context = 5;
     string account_alias = 6;
+    VenueAccountType venue_account_type = 7;
 }
 
 message ReadVenueAccountByVenueAccountDetailsResponse {

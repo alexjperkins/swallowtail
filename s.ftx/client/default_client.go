@@ -10,10 +10,6 @@ import (
 	"swallowtail/s.ftx/client/auth"
 )
 
-const (
-// APIVersion defines the api version for the FTX exchange.
-)
-
 type ftxClient struct {
 	http     transport.HttpClient
 	hostname string
@@ -33,7 +29,7 @@ func (f *ftxClient) Ping(ctx context.Context) error {
 
 func (f *ftxClient) GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, error) {
 	rsp := &GetStatusResponse{}
-	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/stats/latency_stats", req, rsp, nil, nil); err != nil {
+	if err := f.do(ctx, http.MethodGet, "/api/stats/latency_stats", req, rsp, nil, nil); err != nil {
 		return nil, gerrors.Augment(err, "failed_get_ftx_status", nil)
 	}
 
@@ -98,7 +94,7 @@ func (f *ftxClient) GetFundingRate(ctx context.Context, req *GetFundingRateReque
 func (f *ftxClient) ListInstruments(ctx context.Context, req *ListInstrumentsRequest, futuresOnly bool) (*ListInstrumentsResponse, error) {
 	// Determine the correct endpoint based on whether the caller requires `futuresOnly`.
 	rsp := &ListInstrumentsResponse{}
-	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/markets", req, rsp, nil, nil); err != nil {
+	if err := f.do(ctx, http.MethodGet, "/api/markets", req, rsp, nil, nil); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_list_instruments", nil)
 	}
 

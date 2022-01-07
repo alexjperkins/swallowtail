@@ -2,16 +2,9 @@ package execution
 
 import (
 	"context"
-	"fmt"
-	"sync"
 
 	"swallowtail/libraries/gerrors"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
-)
-
-var (
-	executionRegistry map[tradeengineproto.EXECUTION_STRATEGY]StrategyExecution
-	executionMu       sync.RWMutex
 )
 
 // StrategyExecution defines the execution execution.
@@ -19,7 +12,7 @@ type StrategyExecution interface {
 	Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error)
 }
 
-// ExecuteTradeStrategyForParticipant executes the given trade strategy with the given execution executionrithm.
+// ExecuteTradeStrategyForParticipant executes the given trade strategy with the given execution algorithm.
 func ExecuteTradeStrategyForParticipant(
 	ctx context.Context,
 	strategy *tradeengineproto.TradeStrategy,
@@ -43,27 +36,4 @@ func ExecuteTradeStrategyForParticipant(
 	}
 
 	return rsp, nil
-}
-
-func register(strategy tradeengineproto.EXECUTION_STRATEGY, handler StrategyExecution) {
-	executionMu.Lock()
-	defer executionMu.Unlock()
-
-	if _, ok := executionRegistry[strategy]; ok {
-		panic(fmt.Sprintf("Failed to register execution strategy: strategy already registered; %s", strategy))
-	}
-
-	executionRegistry[strategy] = handler
-}
-
-func getStrategyExecution(strategy tradeengineproto.EXECUTION_STRATEGY) (StrategyExecution, bool) {
-	executionMu.Lock()
-	defer executionMu.Unlock()
-
-	a, ok := executionRegistry[strategy]
-	if !ok {
-		return nil, false
-	}
-
-	return a, true
 }

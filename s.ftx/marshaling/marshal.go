@@ -148,9 +148,9 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 }
 
 // InstrumentsDTOToProtos ...
-func InstrumentsDTOToProtos(is []*client.Instrument) []*ftxproto.Instrument {
-	protos := make([]*ftxproto.Instrument, 0, len(is))
-	for _, i := range is {
+func InstrumentsDTOToProtos(ii []*client.Instrument) []*ftxproto.Instrument {
+	protos := make([]*ftxproto.Instrument, 0, len(ii))
+	for _, i := range ii {
 		protos = append(protos, InstrumentDTOToProto(i))
 	}
 

@@ -13,6 +13,10 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dca_strategy') THEN
 		CREATE TYPE dca_strategy AS ENUM ('CONSTANT', 'LINEAR', 'EXPONENTIAL');
 	END IF;
+
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 's_account_venue_account_type') THEN
+		CREATE TYPE s_account_venue_account_type AS ENUM ('TRADING', 'TESTING', 'TREASURY');
+	END IF;
 END
 $$;
 
@@ -52,12 +56,17 @@ CREATE TABLE IF NOT EXISTS s_account_venue_accounts (
 	secret_key VARCHAR(200) NOT NULL,
 	subaccount VARCHAR(256) NOT NULL DEFAULT 'UNKNOWN',
 
+	url VARCHAR(512),
+	ws_url VARCHAR(512),
+
 	account_alias VARCHAR(256) NOT NULL DEFAULT 'PRIMARY',
 
 	created TIME NOT NULL DEFAULT now(),
 	updated TIME NOT NULL DEFAULT now(),
 
 	is_active BOOLEAN DEFAULT FALSE,
+
+	venue_account_type s_account_venue_account_type NOT NULL DEFAULT 'TESTING',
 
 	PRIMARY KEY(venue_account_id),
 	CONSTRAINT fk_account
@@ -67,3 +76,6 @@ CREATE TABLE IF NOT EXISTS s_account_venue_accounts (
 	UNIQUE(user_id, venue_id, subaccount),
 	UNIQUE(user_id, account_alias)
 );
+
+-- Unique index to enforce singleton test accounts across venues
+CREATE UNIQUE INDEX ON s_account_venue_accounts(venue_id) WHERE venue_account_type = 'TESTING';

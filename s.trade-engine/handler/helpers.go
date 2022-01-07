@@ -17,7 +17,7 @@ func isActorValid(actorID string) bool {
 	}
 }
 
-func validateTradeStrategyParticipant(tradeStrategyParticipant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest, trade *domain.TradeStrategy) error {
+func validateTradeStrategyParticipant(tradeStrategyParticipant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest, tradeStrategy *domain.TradeStrategy) error {
 	switch {
 	case tradeStrategyParticipant.Risk > 50:
 		return gerrors.FailedPrecondition("invalid_tradeStrategy_participant.risk_too_high", nil)

@@ -78,19 +78,19 @@ func (r *CreateTradeStrategyRequest) SendWithTimeout(ctx context.Context, timeou
 	}
 }
 
-// --- Read Trade --- //
+// --- Read Strategy --- //
 
-type ReadTradeByTradeIDFuture struct {
+type ReadTradeStrategyByTradeStrategyIDFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *ReadTradeByTradeIDResponse
+	resultc chan *ReadTradeStrategyByTradeStrategyIDResponse
 	ctx     context.Context
 }
 
-func (a *ReadTradeByTradeIDFuture) Response() (*ReadTradeByTradeIDResponse, error) {
+func (a *ReadTradeStrategyByTradeStrategyIDFuture) Response() (*ReadTradeStrategyByTradeStrategyIDResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_trade_by_trade_id", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_trade_strategy_by_trade_strategy_id", err)
 		}
 	}()
 
@@ -104,18 +104,18 @@ func (a *ReadTradeByTradeIDFuture) Response() (*ReadTradeByTradeIDResponse, erro
 	}
 }
 
-func (r *ReadTradeByTradeIDRequest) Send(ctx context.Context) *ReadTradeByTradeIDFuture {
+func (r *ReadTradeStrategyByTradeStrategyIDRequest) Send(ctx context.Context) *ReadTradeStrategyByTradeStrategyIDFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *ReadTradeByTradeIDRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadTradeByTradeIDFuture {
+func (r *ReadTradeStrategyByTradeStrategyIDRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadTradeStrategyByTradeStrategyIDFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *ReadTradeByTradeIDResponse, 1)
+	resultc := make(chan *ReadTradeStrategyByTradeStrategyIDResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-tradeengine:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
-		return &ReadTradeByTradeIDFuture{
+		return &ReadTradeStrategyByTradeStrategyIDFuture{
 			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
@@ -127,15 +127,15 @@ func (r *ReadTradeByTradeIDRequest) SendWithTimeout(ctx context.Context, timeout
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.ReadTradeByTradeID(ctx, r)
+		rsp, err := c.ReadTradeStrategyByTradeStrategyID(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_to_read_trade_by_trade_id", nil)
+			errc <- gerrors.Augment(err, "failed_to_read_trade_strategy_by_trade_strategy_id", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
-	return &ReadTradeByTradeIDFuture{
+	return &ReadTradeStrategyByTradeStrategyIDFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()
