@@ -149,6 +149,7 @@ func (s *SatoshiService) PollTradeStrategyParticipants(
 							slog.Error(newCtx, "Failed to notify user of successful trade strategy: %v TradeParticipantId: %v", in.TradeStrategyId, rsp.TradeParticipantId)
 						}
 
+						// Push to pulse channel.
 						if err := notifyPulseChannelUserTradeSuccess(newCtx, userID, in.TradeStrategyId, rsp.ExecutionStrategy, rsp.Venue, risk, rsp.SuccessfulOrders); err != nil {
 							slog.Error(newCtx, err.Error())
 						}

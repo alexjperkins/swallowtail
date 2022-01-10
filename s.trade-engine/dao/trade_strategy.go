@@ -48,12 +48,13 @@ func CreateTradeStrategy(ctx context.Context, trade *domain.TradeStrategy) error
 				take_profits,
 				current_price,
 				status,
+				tradeable_venues,
 				created,
 				last_updated
 			)
 		VALUES
 			(
-				$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+				$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
 			)
 		`
 	)
@@ -65,7 +66,7 @@ func CreateTradeStrategy(ctx context.Context, trade *domain.TradeStrategy) error
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		t.ActorID, t.HumanizedActorName, t.ActorType, t.IdempotencyKey, t.ExecutionStrategy, t.InstrumentType, t.TradeSide, trade.Asset, t.Pair, t.Entries, t.StopLoss, t.TakeProfits, t.CurrentPrice, t.Status,
+		t.ActorID, t.HumanizedActorName, t.ActorType, t.IdempotencyKey, t.ExecutionStrategy, t.InstrumentType, t.TradeSide, trade.Asset, t.Pair, t.Entries, t.StopLoss, t.TakeProfits, t.CurrentPrice, t.Status, t.TradeableVenues,
 		t.Created, t.LastUpdated,
 	)); err != nil {
 		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)

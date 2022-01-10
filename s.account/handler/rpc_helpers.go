@@ -26,7 +26,7 @@ func validateVenueCredentials(ctx context.Context, userID string, venueAccount *
 	case tradeengineproto.VENUE_DERIBIT:
 		return false, "", gerrors.Unimplemented("venue_unimplemented.deribit", nil)
 	case tradeengineproto.VENUE_FTX:
-		return validateFTXCredentials(ctx, userID, venueAccount)
+		return false, "", gerrors.Unimplemented("venue_validation_unimplemented.ftx", nil)
 	default:
 		return false, "", gerrors.FailedPrecondition("failed_to_validate_credentials.invalid_venue_account", errParams)
 	}

@@ -34,10 +34,6 @@ func formatTradeStrategy(header string, tradeStrategy *tradeengineproto.TradeStr
 	}
 
 	base := fmt.Sprintf("%s   `NEW TRADE ALERT: %s: %s%s`    :rocket:", sideEmoji, header, tradeStrategy.Asset, tradeStrategy.Pair)
-	warning := `
-
-:warning: Satoshi can not and **will** not be 100% accurate; please make sure the trade is sensible before placing :warning:
-`
 
 	var venues []string
 	for _, v := range tradeStrategy.TradeableVenues {
@@ -45,22 +41,22 @@ func formatTradeStrategy(header string, tradeStrategy *tradeengineproto.TradeStr
 	}
 
 	content := `
-TRADE ID:     %s 
-TIMESTAMP:    %v
-
 ASSET:        %v
 PAIR:         %v
+ENTRY:        %v
+STOP LOSS:    %v
+
 TRADE TYPE:   %s
 TRADE SIDE:   %s
 ORDER TYPE:   %s
+
 MOD:          %s
-MOD TYPE:     %s
-VENUES:       %s
+VENUES:       [%s]
 
+TRADE ID:     %s 
+TIMESTAMP:    %v
 CURRENT_PRICE %v
-
-ENTRY:        %v
-STOP LOSS:    %v
+MOD TYPE:     %s
 `
 	formattedContent := fmt.Sprintf(
 		content,
@@ -95,12 +91,13 @@ Please manage your risk accordingly. To **place** a trade react with one of the 
 5%:  :five:
 10%: :keycap_ten:
 
+:warning: Satoshi can not and **will** not be 100% accurate; please make sure the trade is sensible before placing :warning:
 Always manually check the trade has been put on correctly on your account. Don't assume it will work 100% of the time whilst in **Beta**.
 `
 	// Append where we parsed the trade from.
 	footer.WriteString(fmt.Sprintf("\nParsed From:\n%s", parsedFrom))
 
-	return fmt.Sprintf("%s%s```%s%s```%s", base, warning, formattedContent, footer.String(), riskMessage)
+	return fmt.Sprintf("%s```%s%s```%s", base, formattedContent, footer.String(), riskMessage)
 }
 
 func formatDCATrade(header string, tradeStrategy *tradeengineproto.TradeStrategy, parsedFrom string) string {

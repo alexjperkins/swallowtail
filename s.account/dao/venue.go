@@ -142,6 +142,22 @@ func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) err
 	return nil
 }
 
+// CreateOrUpdateTestVenueAccount ...
+func CreateOrUpdateTestVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount, preventOverwrite bool) (*domain.VenueAccount, error) {
+	var (
+		sql = `
+		`
+	)
+
+	if _, err := (db.Exec(
+		ctx, sql,
+	)); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	}
+
+	return nil, nil
+}
+
 // RemoveVenueAccount ...
 func RemoveVenueAccount(ctx context.Context, venueAccountID string) error {
 	var (

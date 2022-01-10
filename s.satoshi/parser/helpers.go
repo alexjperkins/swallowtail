@@ -128,7 +128,7 @@ func fetchTickerTradeableVenues(ticker string, instrumentType tradeengineproto.I
 		venues = append(venues, tradeengineproto.VENUE_BINANCE)
 	}
 
-	//
+	// Determine key.
 	var key string
 	switch instrumentType {
 	case tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL:

@@ -22,8 +22,10 @@ type DefaultParser struct{}
 // Parse attempts to parse some content into a `tradeengineproto.Trade`. If it fails it returns a `FailedPrecondition` gerror
 // that details why it was unable to.
 func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.TradeStrategy, error) {
+	// Parse instrument types.
 	instrumentType := parseInstrumentType(content)
 
+	// Parse venues.
 	ticker, venues := parseTickerAndVenues(content, instrumentType)
 	if ticker == "" {
 		return nil, gerrors.FailedPrecondition("failed_to_parse_default.not_enough_information.missing_ticker", nil)

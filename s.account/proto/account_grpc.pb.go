@@ -11,7 +11,8 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
 
 // AccountClient is the client API for Account service.
 //
@@ -25,6 +26,7 @@ type AccountClient interface {
 	PageAccount(ctx context.Context, in *PageAccountRequest, opts ...grpc.CallOption) (*PageAccountResponse, error)
 	/// --- Venue Account --- ///
 	AddVenueAccount(ctx context.Context, in *AddVenueAccountRequest, opts ...grpc.CallOption) (*AddVenueAccountResponse, error)
+	AddTestVenueAccount(ctx context.Context, in *AddTestVenueAccountRequest, opts ...grpc.CallOption) (*AddTestVenueAccountResponse, error)
 	ListVenueAccounts(ctx context.Context, in *ListVenueAccountsRequest, opts ...grpc.CallOption) (*ListVenueAccountsResponse, error)
 	// TODO: update name to include ID
 	ReadVenueAccountByVenueAccountID(ctx context.Context, in *ReadVenueAccountByVenueAccountIDRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueAccountIDResponse, error)
@@ -94,6 +96,15 @@ func (c *accountClient) AddVenueAccount(ctx context.Context, in *AddVenueAccount
 	return out, nil
 }
 
+func (c *accountClient) AddTestVenueAccount(ctx context.Context, in *AddTestVenueAccountRequest, opts ...grpc.CallOption) (*AddTestVenueAccountResponse, error) {
+	out := new(AddTestVenueAccountResponse)
+	err := c.cc.Invoke(ctx, "/account/AddTestVenueAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accountClient) ListVenueAccounts(ctx context.Context, in *ListVenueAccountsRequest, opts ...grpc.CallOption) (*ListVenueAccountsResponse, error) {
 	out := new(ListVenueAccountsResponse)
 	err := c.cc.Invoke(ctx, "/account/ListVenueAccounts", in, out, opts...)
@@ -142,6 +153,7 @@ type AccountServer interface {
 	PageAccount(context.Context, *PageAccountRequest) (*PageAccountResponse, error)
 	/// --- Venue Account --- ///
 	AddVenueAccount(context.Context, *AddVenueAccountRequest) (*AddVenueAccountResponse, error)
+	AddTestVenueAccount(context.Context, *AddTestVenueAccountRequest) (*AddTestVenueAccountResponse, error)
 	ListVenueAccounts(context.Context, *ListVenueAccountsRequest) (*ListVenueAccountsResponse, error)
 	// TODO: update name to include ID
 	ReadVenueAccountByVenueAccountID(context.Context, *ReadVenueAccountByVenueAccountIDRequest) (*ReadVenueAccountByVenueAccountIDResponse, error)
@@ -154,40 +166,50 @@ type AccountServer interface {
 type UnimplementedAccountServer struct {
 }
 
-func (*UnimplementedAccountServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
+func (UnimplementedAccountServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAccounts not implemented")
 }
-func (*UnimplementedAccountServer) ReadAccount(context.Context, *ReadAccountRequest) (*ReadAccountResponse, error) {
+func (UnimplementedAccountServer) ReadAccount(context.Context, *ReadAccountRequest) (*ReadAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadAccount not implemented")
 }
-func (*UnimplementedAccountServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
+func (UnimplementedAccountServer) CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAccount not implemented")
 }
-func (*UnimplementedAccountServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error) {
+func (UnimplementedAccountServer) UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
 }
-func (*UnimplementedAccountServer) PageAccount(context.Context, *PageAccountRequest) (*PageAccountResponse, error) {
+func (UnimplementedAccountServer) PageAccount(context.Context, *PageAccountRequest) (*PageAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PageAccount not implemented")
 }
-func (*UnimplementedAccountServer) AddVenueAccount(context.Context, *AddVenueAccountRequest) (*AddVenueAccountResponse, error) {
+func (UnimplementedAccountServer) AddVenueAccount(context.Context, *AddVenueAccountRequest) (*AddVenueAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddVenueAccount not implemented")
 }
-func (*UnimplementedAccountServer) ListVenueAccounts(context.Context, *ListVenueAccountsRequest) (*ListVenueAccountsResponse, error) {
+func (UnimplementedAccountServer) AddTestVenueAccount(context.Context, *AddTestVenueAccountRequest) (*AddTestVenueAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddTestVenueAccount not implemented")
+}
+func (UnimplementedAccountServer) ListVenueAccounts(context.Context, *ListVenueAccountsRequest) (*ListVenueAccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListVenueAccounts not implemented")
 }
-func (*UnimplementedAccountServer) ReadVenueAccountByVenueAccountID(context.Context, *ReadVenueAccountByVenueAccountIDRequest) (*ReadVenueAccountByVenueAccountIDResponse, error) {
+func (UnimplementedAccountServer) ReadVenueAccountByVenueAccountID(context.Context, *ReadVenueAccountByVenueAccountIDRequest) (*ReadVenueAccountByVenueAccountIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadVenueAccountByVenueAccountID not implemented")
 }
-func (*UnimplementedAccountServer) ReadVenueAccountByVenueAccountDetails(context.Context, *ReadVenueAccountByVenueAccountDetailsRequest) (*ReadVenueAccountByVenueAccountDetailsResponse, error) {
+func (UnimplementedAccountServer) ReadVenueAccountByVenueAccountDetails(context.Context, *ReadVenueAccountByVenueAccountDetailsRequest) (*ReadVenueAccountByVenueAccountDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadVenueAccountByVenueAccountDetails not implemented")
 }
-func (*UnimplementedAccountServer) ReadPrimaryVenueAccountByUserID(context.Context, *ReadPrimaryVenueAccountByUserIDRequest) (*ReadPrimaryVenueAccountByUserIDResponse, error) {
+func (UnimplementedAccountServer) ReadPrimaryVenueAccountByUserID(context.Context, *ReadPrimaryVenueAccountByUserIDRequest) (*ReadPrimaryVenueAccountByUserIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadPrimaryVenueAccountByUserID not implemented")
 }
-func (*UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
+func (UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
 
-func RegisterAccountServer(s *grpc.Server, srv AccountServer) {
-	s.RegisterService(&_Account_serviceDesc, srv)
+// UnsafeAccountServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AccountServer will
+// result in compilation errors.
+type UnsafeAccountServer interface {
+	mustEmbedUnimplementedAccountServer()
+}
+
+func RegisterAccountServer(s grpc.ServiceRegistrar, srv AccountServer) {
+	s.RegisterService(&Account_ServiceDesc, srv)
 }
 
 func _Account_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -298,6 +320,24 @@ func _Account_AddVenueAccount_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Account_AddTestVenueAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddTestVenueAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).AddTestVenueAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/account/AddTestVenueAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).AddTestVenueAccount(ctx, req.(*AddTestVenueAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Account_ListVenueAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListVenueAccountsRequest)
 	if err := dec(in); err != nil {
@@ -370,7 +410,10 @@ func _Account_ReadPrimaryVenueAccountByUserID_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Account_serviceDesc = grpc.ServiceDesc{
+// Account_ServiceDesc is the grpc.ServiceDesc for Account service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Account_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "account",
 	HandlerType: (*AccountServer)(nil),
 	Methods: []grpc.MethodDesc{
@@ -397,6 +440,10 @@ var _Account_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddVenueAccount",
 			Handler:    _Account_AddVenueAccount_Handler,
+		},
+		{
+			MethodName: "AddTestVenueAccount",
+			Handler:    _Account_AddTestVenueAccount_Handler,
 		},
 		{
 			MethodName: "ListVenueAccounts",

@@ -9,7 +9,11 @@ import (
 
 // StrategyExecution defines the execution execution.
 type StrategyExecution interface {
-	Execute(ctx context.Context, strategy *tradeengineproto.TradeStrategy, participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error)
+	Execute(
+		ctx context.Context,
+		strategy *tradeengineproto.TradeStrategy,
+		participant *tradeengineproto.ExecuteTradeStrategyForParticipantRequest,
+	) (*tradeengineproto.ExecuteTradeStrategyForParticipantResponse, error)
 }
 
 // ExecuteTradeStrategyForParticipant executes the given trade strategy with the given execution algorithm.
@@ -25,12 +29,14 @@ func ExecuteTradeStrategyForParticipant(
 		"venue":              participant.Venue.String(),
 	}
 
-	execution, ok := getStrategyExecution(strategy.ExecutionStrategy)
+	// Fetch strategy from local registry.
+	executionStrategy, ok := getStrategyExecution(strategy.ExecutionStrategy)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_execute_trading_strategy.invalid_execution_strategy", errParams)
 	}
 
-	rsp, err := execution.Execute(ctx, strategy, participant)
+	// Execute.
+	rsp, err := executionStrategy.Execute(ctx, strategy, participant)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_execute_trading_strategy_execution_for_participant", errParams)
 	}

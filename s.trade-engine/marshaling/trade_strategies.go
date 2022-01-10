@@ -20,6 +20,11 @@ func TradeStrategyProtoToDomain(proto *tradeengineproto.TradeStrategy) *domain.T
 		tps = append(tps, float64(tp))
 	}
 
+	tradeableVenues := make([]string, 0, len(proto.TradeableVenues))
+	for _, tv := range proto.TradeableVenues {
+		tradeableVenues = append(tradeableVenues, tv.String())
+	}
+
 	return &domain.TradeStrategy{
 		TradeStrategyID:    proto.TradeStrategyId,
 		ActorID:            proto.ActorId,
@@ -38,6 +43,7 @@ func TradeStrategyProtoToDomain(proto *tradeengineproto.TradeStrategy) *domain.T
 		Status:             proto.Status.String(),
 		Created:            proto.Created.AsTime(),
 		LastUpdated:        proto.LastUpdated.AsTime(),
+		TradeableVenues:    tradeableVenues,
 	}
 }
 
