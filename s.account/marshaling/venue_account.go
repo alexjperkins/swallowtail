@@ -1,7 +1,7 @@
 package marshaling
 
 import (
-	"github.com/monzo/terrors"
+	"strings"
 
 	"swallowtail/libraries/encryption"
 	"swallowtail/libraries/gerrors"
@@ -25,11 +25,70 @@ func VenueAccountProtoToDomain(userID string, venueAccount *accountproto.VenueAc
 	}
 
 	return &domain.VenueAccount{
-		VenueID:   venueAccount.Venue.String(),
-		APIKey:    encryptedAPIKey,
-		SecretKey: encryptedSecretKey,
-		IsActive:  venueAccount.IsActive,
-		UserID:    userID,
+		VenueID:      venueAccount.Venue.String(),
+		APIKey:       encryptedAPIKey,
+		SecretKey:    encryptedSecretKey,
+		IsActive:     venueAccount.IsActive,
+		UserID:       userID,
+		WSURL:        venueAccount.WsUrl,
+		URL:          venueAccount.Url,
+		SubAccount:   venueAccount.SubAccount,
+		AccountAlias: venueAccount.AccountAlias,
+	}, nil
+}
+
+func InternalVenueAccountProtoToDomain(internalVenueAccount *accountproto.InternalVenueAccount) (*domain.InternalVenueAccount, error) {
+	encryptedAPIKey, err := encryption.EncryptWithAES([]byte(internalVenueAccount.ApiKey), "passphrase")
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed-to-marshal-proto-to-domain.bad-api-key", nil)
+	}
+
+	encryptedSecretKey, err := encryption.EncryptWithAES([]byte(internalVenueAccount.SecretKey), "passphrase")
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed-to-marshal-proto-to-domain.bad-secret-key", nil)
+	}
+
+	return &domain.InternalVenueAccount{
+		VenueID:          internalVenueAccount.Venue.String(),
+		APIKey:           encryptedAPIKey,
+		SecretKey:        encryptedSecretKey,
+		SubAccount:       internalVenueAccount.SubAccount,
+		WSURL:            internalVenueAccount.WsUrl,
+		URL:              internalVenueAccount.Url,
+		VenueAccountType: internalVenueAccount.VenueAccountType.String(),
+	}, nil
+}
+
+func InternalVenueAccountDomainToProto(internalVenueAccount *domain.InternalVenueAccount) (*accountproto.InternalVenueAccount, error) {
+	venue, err := convertVenueIDToProto(internalVenueAccount.VenueID)
+	if err != nil {
+		return nil, err
+	}
+
+	venueAccountType, err := convertVenueAccountTypeToProto(internalVenueAccount.VenueAccountType)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_marshal_to_proto", nil)
+	}
+
+	decryptedAPIKey, err := encryption.DecryptWithAES(internalVenueAccount.APIKey, "passphrase")
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_decrypt.api_key", nil)
+	}
+
+	decryptedSecretKey, err := encryption.DecryptWithAES(internalVenueAccount.SecretKey, "passphrase")
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_decrypt.secret_key", nil)
+	}
+
+	return &accountproto.InternalVenueAccount{
+		VenueAccountId:   internalVenueAccount.VenueAccountID,
+		ApiKey:           decryptedAPIKey,
+		SecretKey:        decryptedSecretKey,
+		Venue:            venue,
+		VenueAccountType: venueAccountType,
+		SubAccount:       internalVenueAccount.SubAccount,
+		Url:              internalVenueAccount.URL,
+		WsUrl:            internalVenueAccount.WSURL,
 	}, nil
 }
 
@@ -57,12 +116,12 @@ func VenueAccountDomainToProto(in *domain.VenueAccount) (*accountproto.VenueAcco
 
 	decryptedAPIKey, err := encryption.DecryptWithAES(in.APIKey, "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+		return nil, gerrors.Augment(err, "failed_to_decrypt.api_key", nil)
 	}
 
 	decryptedSecretKey, err := encryption.DecryptWithAES(in.SecretKey, "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+		return nil, gerrors.Augment(err, "failed_to_decrypt.secret_key", nil)
 	}
 
 	return &accountproto.VenueAccount{
@@ -71,6 +130,10 @@ func VenueAccountDomainToProto(in *domain.VenueAccount) (*accountproto.VenueAcco
 		SecretKey:      util.MaskKey(decryptedSecretKey, 4),
 		Venue:          venue,
 		IsActive:       in.IsActive,
+		SubAccount:     in.SubAccount,
+		AccountAlias:   in.AccountAlias,
+		Url:            in.URL,
+		WsUrl:          in.WSURL,
 	}, nil
 }
 
@@ -100,25 +163,30 @@ func VenueAccountDomainToProtoUnmasked(in *domain.VenueAccount) (*accountproto.V
 
 	decryptedAPIKey, err := encryption.DecryptWithAES(in.APIKey, "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+		return nil, gerrors.Augment(err, "failed_to_decrypt.api_key", nil)
 	}
 
 	decryptedSecretKey, err := encryption.DecryptWithAES(in.SecretKey, "passphrase")
 	if err != nil {
-		return nil, terrors.Augment(err, "Failed to marshal domain to proto; decryption of api key failed", nil)
+		return nil, gerrors.Augment(err, "failed_to_decrypt.secret_key", nil)
 	}
 
 	return &accountproto.VenueAccount{
 		VenueAccountId: in.VenueAccountID,
+		Venue:          venue,
 		ApiKey:         decryptedAPIKey,
 		SecretKey:      decryptedSecretKey,
-		Venue:          venue,
+		SubAccount:     in.SubAccount,
 		IsActive:       in.IsActive,
+		AccountAlias:   in.AccountAlias,
+		Url:            in.URL,
+		WsUrl:          in.WSURL,
 	}, nil
 }
 
-func convertVenueIDToProto(venueID string) (tradeengineproto.VENUE, error) {
-	switch venueID {
+// ConvertVenueIDToProto ...
+func ConvertVenueIDToProto(venueID string) (tradeengineproto.VENUE, error) {
+	switch strings.ToUpper(venueID) {
 	case tradeengineproto.VENUE_BINANCE.String():
 		return tradeengineproto.VENUE_BINANCE, nil
 	case tradeengineproto.VENUE_BITFINEX.String():
@@ -130,6 +198,21 @@ func convertVenueIDToProto(venueID string) (tradeengineproto.VENUE, error) {
 	default:
 		return 0, gerrors.Unimplemented("unsupported_venue", map[string]string{
 			"venue_id": venueID,
+		})
+	}
+}
+
+func convertVenueAccountTypeToProto(venueAccountType string) (accountproto.VenueAccountType, error) {
+	switch strings.ToUpper(venueAccountType) {
+	case accountproto.VenueAccountType_TREASURY.String():
+		return accountproto.VenueAccountType_TREASURY, nil
+	case accountproto.VenueAccountType_TESTING.String():
+		return accountproto.VenueAccountType_TESTING, nil
+	case accountproto.VenueAccountType_TRADING.String():
+		return accountproto.VenueAccountType_TRADING, nil
+	default:
+		return 0, gerrors.Unimplemented("unsupported_venue_account_type", map[string]string{
+			"venue_account_type": venueAccountType,
 		})
 	}
 }

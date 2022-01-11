@@ -68,6 +68,10 @@ func validateVenueAccount(venueAccount *accountproto.VenueAccount) error {
 		return gerrors.BadParam("missing_param.api_key", nil)
 	case venueAccount.SecretKey == "":
 		return gerrors.BadParam("missing_param.secret_key", nil)
+	case venueAccount.Url == "":
+		return gerrors.BadParam("missing_param.venue_account._url", nil)
+	case venueAccount.WsUrl == "":
+		return gerrors.BadParam("missing_param.venue_account.ws_url", nil)
 	}
 
 	switch venueAccount.Venue {
@@ -77,6 +81,34 @@ func validateVenueAccount(venueAccount *accountproto.VenueAccount) error {
 		}
 	case tradeengineproto.VENUE_UNREQUIRED:
 		return gerrors.BadParam("missing_param.venue_account.venue", nil)
+	}
+
+	return nil
+}
+
+func validateInternalVenueAccount(internalVenueAccount *accountproto.InternalVenueAccount) error {
+	if internalVenueAccount == nil {
+		return gerrors.BadParam("missing_param.internal_venue_account", nil)
+	}
+
+	switch {
+	case internalVenueAccount.ApiKey == "":
+		return gerrors.BadParam("missing_param.internal_venue_account.api_key", nil)
+	case internalVenueAccount.SecretKey == "":
+		return gerrors.BadParam("missing_param.internal_venue_account_secret_key", nil)
+	case internalVenueAccount.Url == "":
+		return gerrors.BadParam("missing_param.internal_venue_account._url", nil)
+	case internalVenueAccount.WsUrl == "":
+		return gerrors.BadParam("missing_param.internal_venue_account.ws_url", nil)
+	}
+
+	switch internalVenueAccount.Venue {
+	case tradeengineproto.VENUE_FTX:
+		if internalVenueAccount.SubAccount == "" {
+			return gerrors.FailedPrecondition("subaccount_required_for_ftx", nil)
+		}
+	case tradeengineproto.VENUE_UNREQUIRED:
+		return gerrors.BadParam("missing_param.internal_venue_account.venue", nil)
 	}
 
 	return nil

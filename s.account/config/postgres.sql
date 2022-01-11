@@ -66,8 +66,6 @@ CREATE TABLE IF NOT EXISTS s_account_venue_accounts (
 
 	is_active BOOLEAN DEFAULT FALSE,
 
-	venue_account_type s_account_venue_account_type NOT NULL DEFAULT 'TESTING',
-
 	PRIMARY KEY(venue_account_id),
 	CONSTRAINT fk_account
 		FOREIGN KEY(user_id)
@@ -77,5 +75,26 @@ CREATE TABLE IF NOT EXISTS s_account_venue_accounts (
 	UNIQUE(user_id, account_alias)
 );
 
--- Unique index to enforce singleton test accounts across venues
+CREATE TABLE IF NOT EXISTS s_account_internal_venue_accounts (
+	internal_account_id uuid DEFAULT uuid_generate_v4(),
+	venue_id venue,
+
+	api_key VARCHAR(200) NOT NULL,
+	secret_key VARCHAR(200) NOT NULL,
+	subaccount VARCHAR(256) NOT NULL DEFAULT 'UNKNOWN',
+
+	url VARCHAR(512),
+	ws_url VARCHAR(512),
+
+	venue_account_type s_account_venue_account_type NOT NULL DEFAULT 'TESTING',
+
+	created TIME NOT NULL DEFAULT now(),
+	updated TIME NOT NULL DEFAULT now(),
+
+	PRIMARY KEY(internal_account_id),
+
+	UNIQUE(venue_id, subaccount, account_type)
+);
+
+-- Unique index to enforce singleton test accounts across venues.
 CREATE UNIQUE INDEX ON s_account_venue_accounts(venue_id) WHERE venue_account_type = 'TESTING';

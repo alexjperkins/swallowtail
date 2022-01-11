@@ -26,12 +26,12 @@ type AccountClient interface {
 	PageAccount(ctx context.Context, in *PageAccountRequest, opts ...grpc.CallOption) (*PageAccountResponse, error)
 	/// --- Venue Account --- ///
 	AddVenueAccount(ctx context.Context, in *AddVenueAccountRequest, opts ...grpc.CallOption) (*AddVenueAccountResponse, error)
-	AddTestVenueAccount(ctx context.Context, in *AddTestVenueAccountRequest, opts ...grpc.CallOption) (*AddTestVenueAccountResponse, error)
+	CreateOrUpdateInternalVenueAccount(ctx context.Context, in *CreateOrUpdateInternalVenueAccountRequest, opts ...grpc.CallOption) (*CreateOrUpdateInternalVenueAccountResponse, error)
 	ListVenueAccounts(ctx context.Context, in *ListVenueAccountsRequest, opts ...grpc.CallOption) (*ListVenueAccountsResponse, error)
-	// TODO: update name to include ID
 	ReadVenueAccountByVenueAccountID(ctx context.Context, in *ReadVenueAccountByVenueAccountIDRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueAccountIDResponse, error)
 	ReadVenueAccountByVenueAccountDetails(ctx context.Context, in *ReadVenueAccountByVenueAccountDetailsRequest, opts ...grpc.CallOption) (*ReadVenueAccountByVenueAccountDetailsResponse, error)
 	ReadPrimaryVenueAccountByUserID(ctx context.Context, in *ReadPrimaryVenueAccountByUserIDRequest, opts ...grpc.CallOption) (*ReadPrimaryVenueAccountByUserIDResponse, error)
+	ReadInternalVenueAccount(ctx context.Context, in *ReadInternalVenueAccountRequest, opts ...grpc.CallOption) (*ReadInternalVenueAccountResponse, error)
 }
 
 type accountClient struct {
@@ -96,9 +96,9 @@ func (c *accountClient) AddVenueAccount(ctx context.Context, in *AddVenueAccount
 	return out, nil
 }
 
-func (c *accountClient) AddTestVenueAccount(ctx context.Context, in *AddTestVenueAccountRequest, opts ...grpc.CallOption) (*AddTestVenueAccountResponse, error) {
-	out := new(AddTestVenueAccountResponse)
-	err := c.cc.Invoke(ctx, "/account/AddTestVenueAccount", in, out, opts...)
+func (c *accountClient) CreateOrUpdateInternalVenueAccount(ctx context.Context, in *CreateOrUpdateInternalVenueAccountRequest, opts ...grpc.CallOption) (*CreateOrUpdateInternalVenueAccountResponse, error) {
+	out := new(CreateOrUpdateInternalVenueAccountResponse)
+	err := c.cc.Invoke(ctx, "/account/CreateOrUpdateInternalVenueAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +141,15 @@ func (c *accountClient) ReadPrimaryVenueAccountByUserID(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *accountClient) ReadInternalVenueAccount(ctx context.Context, in *ReadInternalVenueAccountRequest, opts ...grpc.CallOption) (*ReadInternalVenueAccountResponse, error) {
+	out := new(ReadInternalVenueAccountResponse)
+	err := c.cc.Invoke(ctx, "/account/ReadInternalVenueAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServer is the server API for Account service.
 // All implementations must embed UnimplementedAccountServer
 // for forward compatibility
@@ -153,12 +162,12 @@ type AccountServer interface {
 	PageAccount(context.Context, *PageAccountRequest) (*PageAccountResponse, error)
 	/// --- Venue Account --- ///
 	AddVenueAccount(context.Context, *AddVenueAccountRequest) (*AddVenueAccountResponse, error)
-	AddTestVenueAccount(context.Context, *AddTestVenueAccountRequest) (*AddTestVenueAccountResponse, error)
+	CreateOrUpdateInternalVenueAccount(context.Context, *CreateOrUpdateInternalVenueAccountRequest) (*CreateOrUpdateInternalVenueAccountResponse, error)
 	ListVenueAccounts(context.Context, *ListVenueAccountsRequest) (*ListVenueAccountsResponse, error)
-	// TODO: update name to include ID
 	ReadVenueAccountByVenueAccountID(context.Context, *ReadVenueAccountByVenueAccountIDRequest) (*ReadVenueAccountByVenueAccountIDResponse, error)
 	ReadVenueAccountByVenueAccountDetails(context.Context, *ReadVenueAccountByVenueAccountDetailsRequest) (*ReadVenueAccountByVenueAccountDetailsResponse, error)
 	ReadPrimaryVenueAccountByUserID(context.Context, *ReadPrimaryVenueAccountByUserIDRequest) (*ReadPrimaryVenueAccountByUserIDResponse, error)
+	ReadInternalVenueAccount(context.Context, *ReadInternalVenueAccountRequest) (*ReadInternalVenueAccountResponse, error)
 	mustEmbedUnimplementedAccountServer()
 }
 
@@ -184,8 +193,8 @@ func (UnimplementedAccountServer) PageAccount(context.Context, *PageAccountReque
 func (UnimplementedAccountServer) AddVenueAccount(context.Context, *AddVenueAccountRequest) (*AddVenueAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddVenueAccount not implemented")
 }
-func (UnimplementedAccountServer) AddTestVenueAccount(context.Context, *AddTestVenueAccountRequest) (*AddTestVenueAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddTestVenueAccount not implemented")
+func (UnimplementedAccountServer) CreateOrUpdateInternalVenueAccount(context.Context, *CreateOrUpdateInternalVenueAccountRequest) (*CreateOrUpdateInternalVenueAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrUpdateInternalVenueAccount not implemented")
 }
 func (UnimplementedAccountServer) ListVenueAccounts(context.Context, *ListVenueAccountsRequest) (*ListVenueAccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListVenueAccounts not implemented")
@@ -198,6 +207,9 @@ func (UnimplementedAccountServer) ReadVenueAccountByVenueAccountDetails(context.
 }
 func (UnimplementedAccountServer) ReadPrimaryVenueAccountByUserID(context.Context, *ReadPrimaryVenueAccountByUserIDRequest) (*ReadPrimaryVenueAccountByUserIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadPrimaryVenueAccountByUserID not implemented")
+}
+func (UnimplementedAccountServer) ReadInternalVenueAccount(context.Context, *ReadInternalVenueAccountRequest) (*ReadInternalVenueAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadInternalVenueAccount not implemented")
 }
 func (UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
 
@@ -320,20 +332,20 @@ func _Account_AddVenueAccount_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_AddTestVenueAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddTestVenueAccountRequest)
+func _Account_CreateOrUpdateInternalVenueAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrUpdateInternalVenueAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServer).AddTestVenueAccount(ctx, in)
+		return srv.(AccountServer).CreateOrUpdateInternalVenueAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account/AddTestVenueAccount",
+		FullMethod: "/account/CreateOrUpdateInternalVenueAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).AddTestVenueAccount(ctx, req.(*AddTestVenueAccountRequest))
+		return srv.(AccountServer).CreateOrUpdateInternalVenueAccount(ctx, req.(*CreateOrUpdateInternalVenueAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -410,6 +422,24 @@ func _Account_ReadPrimaryVenueAccountByUserID_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Account_ReadInternalVenueAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadInternalVenueAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).ReadInternalVenueAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/account/ReadInternalVenueAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).ReadInternalVenueAccount(ctx, req.(*ReadInternalVenueAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Account_ServiceDesc is the grpc.ServiceDesc for Account service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -442,8 +472,8 @@ var Account_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Account_AddVenueAccount_Handler,
 		},
 		{
-			MethodName: "AddTestVenueAccount",
-			Handler:    _Account_AddTestVenueAccount_Handler,
+			MethodName: "CreateOrUpdateInternalVenueAccount",
+			Handler:    _Account_CreateOrUpdateInternalVenueAccount_Handler,
 		},
 		{
 			MethodName: "ListVenueAccounts",
@@ -460,6 +490,10 @@ var Account_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadPrimaryVenueAccountByUserID",
 			Handler:    _Account_ReadPrimaryVenueAccountByUserID_Handler,
+		},
+		{
+			MethodName: "ReadInternalVenueAccount",
+			Handler:    _Account_ReadInternalVenueAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

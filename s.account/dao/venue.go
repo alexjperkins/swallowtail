@@ -94,6 +94,35 @@ func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID,
 	}
 }
 
+func ReadInternalVenueAccount(ctx context.Context, venueID, subaccount, internalAccountType string) (*domain.InternalVenueAccount, error) {
+	var (
+		sql = `
+		SELECT * FROM s_account_internal_venue_accounts
+		WHERE 
+			venue_id=$1
+		AND
+			subaccount=$2
+		AND 
+			venue_account_type=$3
+		`
+		internalAccounts []*domain.InternalVenueAccount
+	)
+
+	if err := db.Select(ctx, &internalAccounts, sql, venueID, subaccount, internalAccountType); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	}
+
+	switch len(internalAccounts) {
+	case 0:
+		return nil, gerrors.NotFound("internal_venue_account.not_found", nil)
+	case 1:
+		return internalAccounts[0], nil
+	default:
+		slog.Critical(ctx, "Unique constraint failed on s_account_internal_venue_accounts")
+		return internalAccounts[0], nil
+	}
+}
+
 // ListVenueAccountsByUserID ...
 func ListVenueAccountsByUserID(ctx context.Context, userID string, isActive bool) ([]*domain.VenueAccount, error) {
 	var (
@@ -122,16 +151,17 @@ func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) err
 	var (
 		sql = `
 		INSERT INTO s_account_venue_accounts
-			(venue_id, api_key, secret_key, user_id, created, updated, is_active, account_alias)
+			(venue_id, user_id, api_key, secret_key, subaccount, url, ws_url, account_alias, created, updated, is_active)
 		VALUES
-			($1, $2, $3, $4, $5, $6, $7, &8)
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		`
 	)
 
 	now := time.Now().UTC()
 	if _, err := (db.Exec(
 		ctx, sql,
-		venueAccount.VenueID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.UserID,
+		venueAccount.VenueID, venueAccount.UserID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.SubAccount,
+		venueAccount.URL, venueAccount.WSURL, venueAccount.AccountAlias,
 		now, now,
 		venueAccount.IsActive,
 		venueAccount.AccountAlias,
@@ -142,20 +172,33 @@ func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) err
 	return nil
 }
 
-// CreateOrUpdateTestVenueAccount ...
-func CreateOrUpdateTestVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount, preventOverwrite bool) (*domain.VenueAccount, error) {
+// CreateOrUpdateInternalVenueAccount ...
+func CreateOrUpdateInternalVenueAccount(ctx context.Context, venueAccount *domain.InternalVenueAccount, allowUpdate bool) error {
 	var (
 		sql = `
+		INSERT INTO s_account_internal_venue_accounts
+			(venue_id, api_key, secret_key, subaccount, url, ws_url, account_type, updated)
+		VALUES 
+			($1, $2, $3, $4, $5, $6, $7, $8)
 		`
 	)
 
-	if _, err := (db.Exec(
-		ctx, sql,
-	)); err != nil {
-		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	// Convert insert into an upsert if we allow an update.
+	if allowUpdate {
+		sql = sql + `
+		ON CONFLICT DO UPDATE
+		`
 	}
 
-	return nil, nil
+	if _, err := (db.Exec(
+		ctx, sql,
+		venueAccount.VenueID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.URL, venueAccount.WSURL, venueAccount.VenueAccountType,
+		time.Now().UTC(),
+	)); err != nil {
+		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
+	}
+
+	return nil
 }
 
 // RemoveVenueAccount ...

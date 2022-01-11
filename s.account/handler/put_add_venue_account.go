@@ -17,10 +17,10 @@ func (s *AccountService) AddVenueAccount(
 ) (*accountproto.AddVenueAccountResponse, error) {
 	// Validation.
 	switch {
-	case in.UserId == "":
-		return nil, gerrors.BadParam("missing_param.user_id", nil)
 	case in.GetVenueAccount() == nil:
 		return nil, gerrors.BadParam("missing_param.venue_account", nil)
+	case in.UserId == "":
+		return nil, gerrors.BadParam("missing_param.user_id", nil)
 	}
 
 	// Validate venue account.
@@ -29,8 +29,9 @@ func (s *AccountService) AddVenueAccount(
 	}
 
 	errParams := map[string]string{
-		"user_id": in.UserId,
-		"venue":   in.VenueAccount.Venue.String(),
+		"user_id":    in.UserId,
+		"venue":      in.VenueAccount.Venue.String(),
+		"subaccount": in.VenueAccount.SubAccount,
 	}
 
 	// Confirm the requester first has an account with us.
@@ -60,7 +61,7 @@ func (s *AccountService) AddVenueAccount(
 
 	if !verified {
 		errParams["reason"] = reason
-		slog.Info(ctx, "Failed to verify users venue account credentials for %s: %s", in.VenueAccount.Venue, in.UserId)
+		slog.Warn(ctx, "Failed to verify users venue account credentials for %s: %s: invalid", in.VenueAccount.Venue, in.UserId)
 		return &accountproto.AddVenueAccountResponse{
 			Verified: false,
 			Reason:   reason,

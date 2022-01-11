@@ -27,13 +27,12 @@ service account {
   rpc AddVenueAccount (AddVenueAccountRequest) returns (AddVenueAccountResponse) {
   }
 
-  rpc AddTestVenueAccount (AddTestVenueAccountRequest) returns (AddTestVenueAccountResponse) {
+  rpc CreateOrUpdateInternalVenueAccount (CreateOrUpdateInternalVenueAccountRequest) returns (CreateOrUpdateInternalVenueAccountResponse) {
   }
 
   rpc ListVenueAccounts (ListVenueAccountsRequest) returns (ListVenueAccountsResponse) {
   }
 
-  // TODO: update name to include ID
   rpc ReadVenueAccountByVenueAccountID (ReadVenueAccountByVenueAccountIDRequest) returns (ReadVenueAccountByVenueAccountIDResponse) {
   }
 
@@ -41,6 +40,8 @@ service account {
   }
 
   rpc ReadPrimaryVenueAccountByUserID (ReadPrimaryVenueAccountByUserIDRequest) returns (ReadPrimaryVenueAccountByUserIDResponse) {}
+
+  rpc ReadInternalVenueAccount (ReadInternalVenueAccountRequest) returns (ReadInternalVenueAccountResponse) {}
 }
 
 enum PagerType {
@@ -56,8 +57,8 @@ enum PagerPriority {
 }
 
 enum VenueAccountType {
-    TRADING = 0;
-    TESTING = 1;
+    TESTING = 0;
+    TRADING = 1;
     TREASURY = 2;
 }
 
@@ -71,8 +72,32 @@ message Account {
     string username = 5;
     google.protobuf.Timestamp created = 6;
     google.protobuf.Timestamp last_updated = 7;
-    string primary_venue_account = 8;
-    string default_dca_strategy = 9;
+    google.protobuf.Timestamp last_payment_timestamp = 8;
+    string primary_venue = 9;
+    string default_dca_strategy = 10;
+}
+
+message VenueAccount {
+    VENUE venue = 1;
+    string api_key = 2;
+    string secret_key = 3;
+    string sub_account = 4;
+    bool is_active = 5;
+    string venue_account_id = 6;
+    string url = 7;
+    string ws_url = 8;
+    string account_alias = 9;
+}
+
+message InternalVenueAccount {
+    VENUE venue = 1;
+    string api_key = 2;
+    string secret_key = 3;
+    string sub_account = 4;
+    string venue_account_id = 6;
+    string url = 7;
+    string ws_url = 8;
+    VenueAccountType venue_account_type = 9;
 }
 
 message ListAccountsRequest{
@@ -129,17 +154,6 @@ message PageAccountRequest {
 
 message PageAccountResponse {}
 
-message VenueAccount {
-    VENUE venue = 1;
-    string api_key = 2;
-    string secret_key = 3;
-    string sub_account = 4;
-    bool is_active = 5;
-    string venue_account_id = 6;
-    string url = 7;
-    string ws_url = 8;
-}
-
 message AddVenueAccountRequest {
     VenueAccount venue_account = 1;
     string user_id = 2;
@@ -152,15 +166,15 @@ message AddVenueAccountResponse {
     string reason = 3;
 }
 
-message AddTestVenueAccountRequest {
-    VenueAccount venue_account = 1;
+message CreateOrUpdateInternalVenueAccountRequest {
+    InternalVenueAccount internal_venue_account = 1;
     string user_id = 2;
     string actor_id = 3;
-    bool prevent_overwrite = 4;
+    bool allow_updates = 4;
 }
 
-message AddTestVenueAccountResponse {
-    VenueAccount venue_account = 1;
+message CreateOrUpdateInternalVenueAccountResponse {
+    InternalVenueAccount internal_venue_account = 1;
     bool verified = 2;
     string reason = 3;
 }
@@ -206,3 +220,14 @@ message ReadVenueAccountByVenueAccountDetailsRequest {
 message ReadVenueAccountByVenueAccountDetailsResponse {
     VenueAccount venue_account = 1;
 } 
+
+message ReadInternalVenueAccountRequest {
+    VENUE venue = 1;
+    VenueAccountType venue_account_type = 2;
+    string subaccount = 3;
+    string actor_id = 4;
+}
+
+message ReadInternalVenueAccountResponse {
+    InternalVenueAccount internal_venue_account = 1;
+}
