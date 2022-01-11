@@ -16,7 +16,7 @@ require (
 	github.com/dghubble/sling v1.4.0 // indirect
 	github.com/dlclark/regexp2 v1.4.0
 	github.com/fatih/color v1.10.0
-	github.com/georgysavva/scany v0.2.9
+	github.com/georgysavva/scany v0.3.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2
@@ -34,8 +34,10 @@ require (
 	github.com/jackc/pgproto3/v2 v2.2.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/jackc/pgtype v1.9.1 // indirect
+	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jackc/puddle v1.2.1 // indirect
+	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/monzo/slog v0.0.0-20211123154010-52a5ddb2ba55
 	github.com/monzo/terrors v0.0.0-20211018135141-bff28203d17a
@@ -53,13 +55,13 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
-	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d // indirect
+	golang.org/x/net v0.0.0-20220111093109-d55c255bac03 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220110181412-a018aaa089fe // indirect
+	golang.org/x/sys v0.0.0-20220111092808-5a964db01320 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.64.0
-	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368 // indirect
+	google.golang.org/genproto v0.0.0-20220111164026-67b88f271998 // indirect
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect

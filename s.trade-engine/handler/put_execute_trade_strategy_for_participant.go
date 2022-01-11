@@ -35,6 +35,7 @@ func (s *TradeEngineService) ExecuteTradeStrategyForParticipant(
 	errParams := map[string]string{
 		"actor_id": in.ActorId,
 		"trade_id": in.TradeStrategyId,
+		"user_id":  in.UserId,
 		"venue":    in.Venue.String(),
 	}
 

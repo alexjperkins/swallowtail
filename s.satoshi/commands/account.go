@@ -122,9 +122,9 @@ Email:                  %s
 Created:                %s
 Last Updated:           %v
 Is Futures Member:      %v
-Primary Venue Account:  %s
+Primary Venue:          %v
 	`
-	formattedMsg := fmt.Sprintf(tpl, account.Username, account.Email, account.Created.AsTime(), account.LastUpdated.AsTime(), account.IsFuturesMember, account.PrimaryVenueAccount)
+	formattedMsg := fmt.Sprintf(tpl, account.Username, account.Email, account.Created.AsTime(), account.LastUpdated.AsTime(), account.IsFuturesMember, account.PrimaryVenue)
 
 	// Best Effort.
 	s.ChannelMessageSend(
