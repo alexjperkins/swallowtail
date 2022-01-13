@@ -62,16 +62,31 @@ func PerpetualFuturesAccountBalanceDTOToProto(in *client.PerpetualFuturesAccount
 
 // ProtoOrderToExecutePerpetualsFutureOrderRequest ...
 func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order) (*client.ExecutePerpetualFuturesOrderRequest, error) {
+	// Parse symbol.
+	var symbol string
+	switch {
+	case in.Asset == "" && in.Instrument == "":
+		return nil, gerrors.FailedPrecondition("missing_param.instrument_or_asset", nil)
+	case in.Instrument == "":
+		symbol = fmt.Sprintf("%s%s", strings.ToUpper(in.Asset), strings.ToUpper(in.Pair.String()))
+	default:
+		symbol = strings.ToUpper(in.Instrument)
+	}
+
+	errParams := map[string]string{
+		"symbol": symbol,
+	}
+
 	// Round the quantity to the minimum precision allowed on the exchange.
-	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(in.Instrument)
+	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(symbol)
 	if !ok {
-		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", nil)
+		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", errParams)
 	}
 
 	// Round the price to the minimum precision allowed on the exchange.
-	assetPricePrecision, ok := exchangeinfo.GetBaseAssetPricePrecision(in.Instrument)
+	assetPricePrecision, ok := exchangeinfo.GetBaseAssetPricePrecision(symbol)
 	if !ok {
-		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", nil)
+		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", errParams)
 	}
 
 	// Parse Order ID.
@@ -87,6 +102,8 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 	// Parse limit & stop price.
 	var limitPrice, stopPrice string
 	switch in.OrderType {
+	case tradeengineproto.ORDER_TYPE_MARKET:
+		// Do nothing.
 	case tradeengineproto.ORDER_TYPE_LIMIT:
 		limitPrice = roundToPrecisionString(float64(in.LimitPrice), assetPricePrecision)
 	case tradeengineproto.ORDER_TYPE_STOP_LIMIT:
@@ -100,7 +117,7 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 	case tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
 		stopPrice = roundToPrecisionString(float64(in.StopPrice), assetPricePrecision)
 	default:
-		return nil, gerrors.Unimplemented("failed_to_marshall_perpetuals_trade.uimplemented.order_type", nil)
+		return nil, gerrors.Unimplemented("failed_to_marshall_perpetuals_trade.unimplemented.order_type", nil)
 	}
 
 	// Parse reduce only.
@@ -109,11 +126,9 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 		reduceOnly = "true"
 	}
 
-	errParams := map[string]string{
-		"limit_price": limitPrice,
-		"stop_price":  stopPrice,
-		"reduce_only": reduceOnly,
-	}
+	errParams["limit_price"] = limitPrice
+	errParams["stop_price"] = stopPrice
+	errParams["reduce_only"] = reduceOnly
 
 	// Parse side.
 	var side string
@@ -178,13 +193,13 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 	case tradeengineproto.WORKING_TYPE_CONTRACT_PRICE:
 		workingType = "CONTRACT_PRICE"
 	case tradeengineproto.WORKING_TYPE_MARK_PRICE:
-		workingType = "MARKET_PRICE"
+		workingType = "MARK_PRICE"
 	}
 
 	// Marshal into dto.
 	return &client.ExecutePerpetualFuturesOrderRequest{
 		NewClientOrderID: clientOrderID,
-		Symbol:           in.Instrument,
+		Symbol:           symbol,
 		Side:             side,
 		OrderType:        orderType,
 		PositionSide:     positionSide,

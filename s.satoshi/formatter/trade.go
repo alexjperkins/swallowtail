@@ -33,7 +33,7 @@ func formatTradeStrategy(header string, tradeStrategy *tradeengineproto.TradeStr
 		sideEmoji = shortEmoji
 	}
 
-	base := fmt.Sprintf("%s   `NEW TRADE ALERT: %s: %s%s`    :rocket:", sideEmoji, header, tradeStrategy.Asset, tradeStrategy.Pair)
+	base := fmt.Sprintf("%s   `NEW TRADE STRATEGY ALERT: %s: %s%s`    :rocket:", sideEmoji, header, tradeStrategy.Asset, tradeStrategy.Pair)
 
 	var venues []string
 	for _, v := range tradeStrategy.TradeableVenues {
@@ -41,40 +41,39 @@ func formatTradeStrategy(header string, tradeStrategy *tradeengineproto.TradeStr
 	}
 
 	content := `
-ASSET:        %v
-PAIR:         %v
-ENTRY:        %v
-STOP LOSS:    %v
+BASE CCY:          %v
+QUOTE CCY:         %v
+CURRENT_PRICE      %v
+ENTRY:             %v
+STOP LOSS:         %v
 
-TRADE TYPE:   %s
-TRADE SIDE:   %s
-ORDER TYPE:   %s
+INSTRUMENT TYPE:   %s
+TRADE SIDE:        %s
+ORDER TYPE:        %s
 
-MOD:          %s
-VENUES:       [%s]
+MOD:               %s
+MOD TYPE:          %s
 
-TRADE ID:     %s 
-TIMESTAMP:    %v
-CURRENT_PRICE %v
-MOD TYPE:     %s
+VENUES:            [%s]
+
+TRADE STRATEGY ID: %s 
+TIMESTAMP:         %v
 `
 	formattedContent := fmt.Sprintf(
 		content,
-		tradeStrategy.TradeStrategyId,
-		tradeStrategy.Created.AsTime(),
-
 		strings.ToUpper(tradeStrategy.Asset),
 		tradeStrategy.Pair.String(),
-
+		tradeStrategy.CurrentPrice,
+		tradeStrategy.Entries[0],
+		tradeStrategy.StopLoss,
 		tradeStrategy.InstrumentType.String(),
 		tradeStrategy.TradeSide.String(),
 		tradeStrategy.ExecutionStrategy.String(),
 		tradeStrategy.HumanizedActorName,
 		tradeStrategy.ActorType.String(),
 		strings.Join(venues, ", "),
-		tradeStrategy.CurrentPrice,
-		tradeStrategy.Entries[0],
-		tradeStrategy.StopLoss,
+		tradeStrategy.TradeStrategyId,
+		tradeStrategy.Created.AsTime(),
 	)
 
 	// Append take profits if they exist.
@@ -109,11 +108,8 @@ func formatDCATrade(header string, tradeStrategy *tradeengineproto.TradeStrategy
 		sideEmoji = shortEmoji
 	}
 
-	base := fmt.Sprintf("%s   `NEW DCA TRADE ALERT: %s: %s%s`    :lizard:", sideEmoji, header, tradeStrategy.Asset, tradeStrategy.Pair)
-	warning := `
+	base := fmt.Sprintf("%s   `NEW DCA TRADE STRATEGY ALERT: %s: %s%s`    :lizard:", sideEmoji, header, tradeStrategy.Asset, tradeStrategy.Pair)
 
-:warning: This is a DCA Order. Satoshi can not and **will** not be 100% accurate; please make sure the trade is sensible before placing :warning:
-`
 	sortedEntries := tradeStrategy.Entries
 	sort.Slice(sortedEntries, func(i, j int) bool {
 		return sortedEntries[i] > sortedEntries[j]
@@ -125,42 +121,45 @@ func formatDCATrade(header string, tradeStrategy *tradeengineproto.TradeStrategy
 	}
 
 	content := `
-TRADE ID:     %s 
-TIMESTAMP:    %v
+BASE CCY:           %v
+QUOTE CCY:          %v
+CURRENT_PRICE       %v
+UPPER:              %v
+LOWER:              %v
+STOP LOSS:          %v
 
-ASSET:        %v
-PAIR:         %v
-TRADE TYPE:   %s
-TRADE SIDE:   %s
-ORDER TYPE:   %s
-MOD:          %s
-MOD TYPE:     %s
-VENUEs:       %s
+INSTRUMENT TYPE:   %s
+TRADE SIDE:         %s
+EXECUTION_STRATEGY: %s  
 
-CURRENT_PRICE %v
+MOD:                %s
+MOD TYPE:           %s
 
-UPPER:        %v
-LOWER:        %v
-STOP LOSS:    %v
+VENUES:             %s
+
+TRADE STRATEGY ID:  %s 
+TIMESTAMP:          %v
 `
 	formattedContent := fmt.Sprintf(
 		content,
-		tradeStrategy.TradeStrategyId,
-		tradeStrategy.Created.AsTime(),
-
 		strings.ToUpper(tradeStrategy.Asset),
 		tradeStrategy.Pair.String(),
-
-		tradeStrategy.InstrumentType.String(),
-		tradeStrategy.TradeSide.String(),
-		tradeStrategy.ExecutionStrategy.String(),
-		tradeStrategy.HumanizedActorName,
-		tradeStrategy.ActorType.String(),
-		strings.Join(venues, ", "),
 		tradeStrategy.CurrentPrice,
 		sortedEntries[0],
 		sortedEntries[1],
 		tradeStrategy.StopLoss,
+
+		tradeStrategy.InstrumentType.String(),
+		tradeStrategy.TradeSide.String(),
+
+		tradeStrategy.ExecutionStrategy.String(),
+
+		tradeStrategy.HumanizedActorName,
+		tradeStrategy.ActorType.String(),
+
+		strings.Join(venues, ", "),
+		tradeStrategy.TradeStrategyId,
+		tradeStrategy.Created.AsTime(),
 	)
 
 	// Append take profits if they exist.
@@ -182,5 +181,5 @@ Always manually check the trade has been put on correctly on your account. Don't
 	// Append where we parsed the trade from.
 	footer.WriteString(fmt.Sprintf("\nParsed From:\n%s", parsedFrom))
 
-	return fmt.Sprintf("%s%s```%s%s```%s", base, warning, formattedContent, footer.String(), riskMessage)
+	return fmt.Sprintf("%s```%s%s```%s", base, formattedContent, footer.String(), riskMessage)
 }

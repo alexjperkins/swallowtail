@@ -86,7 +86,7 @@ func registerAccountHandler(ctx context.Context, tokens []string, s *discordgo.S
 	s.ChannelMessageSend(
 		m.ChannelID,
 		fmt.Sprintf(
-			":wave: I have registered your account with email: `%s`.\n\nRef Links\n Binance: %s\nFTX: %s",
+			":wave: I have registered your account with email: `%s`.\n\nRef Links:\n`Binance`: %s\n`FTX`: %s",
 			email,
 			binanceReferralLink,
 			ftxReferralLink,

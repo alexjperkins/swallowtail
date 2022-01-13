@@ -1,6 +1,7 @@
 package marshaling
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -55,6 +56,26 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 		"instrument": order.Instrument,
 		"asset":      order.Asset,
 		"pair":       order.Pair.String(),
+	}
+
+	// Parse market.
+	var market string
+	switch {
+	case order.Instrument == "" && order.Asset == "":
+		return nil, gerrors.FailedPrecondition("missing_params.instrument_or_asset", nil)
+	case order.Instrument == "":
+		switch order.InstrumentType {
+		case tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL:
+			market = fmt.Sprintf("%s-PERP", strings.ToUpper(order.Asset))
+		case tradeengineproto.INSTRUMENT_TYPE_SPOT:
+			market = fmt.Sprintf("%s/%s", strings.ToUpper(order.Asset), strings.ToUpper(order.Pair.String()))
+		case tradeengineproto.INSTRUMENT_TYPE_MOVE:
+			return nil, gerrors.FailedPrecondition("ftx_move_contract_must_be_defined_in_the_instrument", nil)
+		default:
+			return nil, gerrors.Unimplemented("instrument_type.unimplemented", nil)
+		}
+	default:
+		market = strings.ToUpper(order.Instrument)
 	}
 
 	// Parse trade side.
@@ -132,7 +153,7 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 	// Marshal into DTO.
 	return &client.ExecuteOrderRequest{
 		ClientID:         order.OrderId,
-		Market:           order.Instrument,
+		Market:           market,
 		Side:             side,
 		Type:             orderType,
 		Price:            price,

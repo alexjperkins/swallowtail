@@ -3,13 +3,13 @@ package handler
 import (
 	"context"
 
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
 	"swallowtail/s.account/dao"
 	"swallowtail/s.account/marshaling"
 	accountproto "swallowtail/s.account/proto"
-
-	"github.com/monzo/slog"
 )
 
 // CreateOrUpdateInternalVenueAccountRequest ...

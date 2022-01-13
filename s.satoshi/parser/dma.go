@@ -17,11 +17,11 @@ var (
 )
 
 // The default parser to parse trades from external mods.
-type DefaultParser struct{}
+type DMAParser struct{}
 
 // Parse attempts to parse some content into a `tradeengineproto.Trade`. If it fails it returns a `FailedPrecondition` gerror
 // that details why it was unable to.
-func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.TradeStrategy, error) {
+func (d *DMAParser) Parse(ctx context.Context, content string, m *discordgo.MessageCreate, actorType tradeengineproto.ACTOR_TYPE) (*tradeengineproto.TradeStrategy, error) {
 	// Parse instrument types.
 	instrumentType := parseInstrumentType(content)
 
@@ -31,6 +31,7 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		return nil, gerrors.FailedPrecondition("failed_to_parse_default.not_enough_information.missing_ticker", nil)
 	}
 
+	// Parse entries, stop losses, tps.
 	possibleValues, err := parseNumbersFromContent(content)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_parse_default", nil)
@@ -42,6 +43,7 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		})
 	}
 
+	// Parse side
 	side, _ := parseSide(content)
 
 	switch {
@@ -58,11 +60,13 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		"ticker": ticker,
 	}
 
+	// Fetch current price.
 	currentPrice, err := fetchLatestPrice(ctx, ticker)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_parse_default", errParams)
 	}
 
+	// Validate potential strategy.
 	entries, stopLoss, takeProfits, err := validatePosition(currentPrice, possibleValues, false)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_parse_with_default_parser.validate_position", nil)
@@ -73,8 +77,10 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		return nil, gerrors.FailedPrecondition("failed_to_parse_with_default_parser.multiple_entries", errParams)
 	}
 
+	// Parse execution strategy.
 	executionStrategy, _ := parseExecutionStrategy(content, currentPrice, entries, side)
 
+	// Marshal.
 	protoEntries := make([]float32, 0, len(entries))
 	for _, entry := range entries {
 		protoEntries = append(protoEntries, float32(entry))
@@ -85,6 +91,7 @@ func (d *DefaultParser) Parse(ctx context.Context, content string, m *discordgo.
 		protoTakeProfits = append(protoTakeProfits, float32(tp))
 	}
 
+	// Parse actor.
 	actor := parseActor(m.Author.Username)
 
 	return &tradeengineproto.TradeStrategy{

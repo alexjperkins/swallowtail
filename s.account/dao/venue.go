@@ -3,18 +3,34 @@ package dao
 import (
 	"context"
 	"strings"
-	"swallowtail/libraries/gerrors"
-	"swallowtail/s.account/domain"
 	"time"
 
 	"github.com/imdario/mergo"
 	"github.com/monzo/slog"
+
+	"swallowtail/libraries/gerrors"
+	"swallowtail/s.account/domain"
+	accountproto "swallowtail/s.account/proto"
 )
 
+// ReadVenueAccountByAccountAlias ...
 func ReadVenueAccountByAccountAlias(ctx context.Context, userID, accountAlias string) (*domain.VenueAccount, error) {
 	var (
 		sql = `
-		SELECT * FROM s_account_venue_accounts
+		SELECT 
+			venue_account_id,
+			venue_id,
+			api_key,
+			secret_key,
+			subaccount,
+			user_id,
+			created,
+			updated,
+			is_active,
+			account_alias,
+			COALESCE(url, '') as url,
+			COALESCE(ws_url, '') as ws_url
+		FROM s_account_venue_accounts
 		WHERE
 			user_id=$1
 		AND
@@ -42,7 +58,20 @@ func ReadVenueAccountByAccountAlias(ctx context.Context, userID, accountAlias st
 func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string) (*domain.VenueAccount, error) {
 	var (
 		sql = `
-		SELECT * FROM s_account_venue_accounts
+		SELECT
+			venue_account_id,
+			venue_id,
+			api_key,
+			secret_key,
+			subaccount,
+			user_id,
+			created,
+			updated,
+			is_active,
+			account_alias,
+			COALESCE(url, '') as url,
+			COALESCE(ws_url, '') as ws_url
+		FROM s_account_venue_accounts
 		WHERE venue_account_id=$1
 		`
 		venueAccounts []*domain.VenueAccount
@@ -62,17 +91,31 @@ func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string
 // ReadVenueAccountByVenueAccountDetails ...
 func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID, subaccount string) (*domain.VenueAccount, error) {
 	var (
-		baseSql = `
-		SELECT * FROM s_account_venue_accounts
+		sql = `
+		SELECT 
+			venue_account_id,
+			venue_id,
+			api_key,
+			secret_key,
+			subaccount,
+			user_id,
+			created,
+			updated,
+			is_active,
+			account_alias,
+			COALESCE(url, '') as url,
+			COALESCE(ws_url, '') as ws_url
+		FROM s_account_venue_accounts
 		WHERE venue_id=$1
-		AND user=$2
+		AND user_id=$2
+		AND subaccount=$3
 		`
 		venueAccounts []*domain.VenueAccount
 	)
 
-	var sql = baseSql
-	if subaccount != "" {
-		sql = baseSql + `AND subaccount=$3`
+	// Switch empty subaccount to the default value we store in the db.
+	if subaccount == "" {
+		subaccount = accountproto.SubAccountUnknown
 	}
 
 	if err := db.Select(ctx, &venueAccounts, sql, strings.ToUpper(venueID), userID, subaccount); err != nil {
@@ -81,7 +124,7 @@ func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID,
 
 	switch len(venueAccounts) {
 	case 0:
-		return nil, gerrors.NotFound("venue_accounts_not_found_for_user_id", nil)
+		return nil, gerrors.NotFound("venue_account_not_found_for_user_id", nil)
 	case 1:
 		return venueAccounts[0], nil
 	default:
@@ -97,7 +140,18 @@ func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID,
 func ReadInternalVenueAccount(ctx context.Context, venueID, subaccount, internalAccountType string) (*domain.InternalVenueAccount, error) {
 	var (
 		sql = `
-		SELECT * FROM s_account_internal_venue_accounts
+		SELECT 
+			venue_account_id,
+			venue_id,
+			api_key,
+			secret_key,
+			subaccount,
+			COALESCE(url, '') as url,
+			COALESCE(ws_url, '') as ws_url,
+			venue_account_type,
+			created,
+			updated
+		FROM s_account_internal_venue_accounts
 		WHERE 
 			venue_id=$1
 		AND
@@ -127,7 +181,20 @@ func ReadInternalVenueAccount(ctx context.Context, venueID, subaccount, internal
 func ListVenueAccountsByUserID(ctx context.Context, userID string, isActive bool) ([]*domain.VenueAccount, error) {
 	var (
 		sql = `
-		SELECT * FROM s_account_venue_accounts
+		SELECT
+			venue_account_id,
+			venue_id,
+			api_key,
+			secret_key,
+			subaccount,
+			user_id,
+			created,
+			updated,
+			is_active,
+			account_alias,
+			COALESCE(url, '') as url,
+			COALESCE(ws_url, '') as ws_url
+		FROM s_account_venue_accounts
 		WHERE user_id=$1
 		AND is_active=$2
 		ORDER BY venue_id 
@@ -164,7 +231,6 @@ func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) err
 		venueAccount.URL, venueAccount.WSURL, venueAccount.AccountAlias,
 		now, now,
 		venueAccount.IsActive,
-		venueAccount.AccountAlias,
 	)); err != nil {
 		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}

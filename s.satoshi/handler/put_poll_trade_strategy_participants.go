@@ -136,7 +136,6 @@ func (s *SatoshiService) PollTradeStrategyParticipants(
 							userID,
 							in.TradeStrategyId,
 							userID,
-							rsp.Instrument,
 							rsp.Asset,
 							rsp.Pair.String(),
 							rsp.ExecutionStrategy,

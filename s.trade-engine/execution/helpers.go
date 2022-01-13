@@ -43,13 +43,16 @@ func calculateTakeProfits(totalPositionQuantity float64, takeProfitStopPrices []
 	}
 
 	// Calculate position to consider; we leave some amount for continuation.
-	positionSizeToConsider := totalPositionQuantity * float64(len(takeProfitStopPrices))
+	// This is `total quantity * (1 - 1/n + 1)` where `n` is the number of take profits.
+	var numberOfTakeProfits = len(takeProfitStopPrices)
+	positionSizeToConsider := totalPositionQuantity * (1 - (1 / float64(numberOfTakeProfits+1)))
 
+	// Calculate quantity per take profit.
 	var tpds = make([]*TakeProfitDetail, 0, len(takeProfitStopPrices))
 	for _, tp := range takeProfitStopPrices {
 		tpds = append(tpds, &TakeProfitDetail{
 			StopPrice: float64(tp),
-			Quantity:  positionSizeToConsider * float64(1.0/len(takeProfitStopPrices)),
+			Quantity:  positionSizeToConsider * 1.0 / float64(numberOfTakeProfits),
 		})
 	}
 

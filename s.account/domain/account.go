@@ -14,7 +14,7 @@ type Account struct {
 	Created              time.Time `db:"created"`
 	Updated              time.Time `db:"updated"`
 	LastPaymentTimestamp time.Time `db:"last_payment_timestamp"`
-	PrimaryVenueAccount  string    `db:"primary_venue_account"`
+	PrimaryVenue         string    `db:"primary_venue"`
 	IsAdmin              bool      `db:"is_admin"`
 	IsFuturesMember      bool      `db:"is_futures_member"`
 	DefaultDCAStrategy   string    `db:"default_dca_strategy"`

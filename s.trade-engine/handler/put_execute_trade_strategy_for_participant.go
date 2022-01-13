@@ -48,9 +48,9 @@ func (s *TradeEngineService) ExecuteTradeStrategyForParticipant(
 	// Read trade participant to see if that already exists.
 	existingTradeParticipant, err := dao.ReadTradeStrategyParticipantByTradeStrategyID(ctx, tradeStrategy.TradeStrategyID, in.UserId)
 	switch {
-	case gerrors.Is(err, gerrors.ErrNotFound, "not_found.trade_participant"):
+	case gerrors.Is(err, gerrors.ErrNotFound, "not_found.trade_strategy_participant"):
 	case err != nil:
-		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade_strategy.failed_check_if_trade_participant_already_exists", errParams)
+		return nil, gerrors.Augment(err, "failed_to_add_participant_to_trade_strategy.failed_to_check_if_trade_participant_already_exists", errParams)
 	case existingTradeParticipant != nil:
 		return nil, gerrors.AlreadyExists("failed_to_add_participant_to_trade_strategy.trade_already_exists", errParams)
 	}

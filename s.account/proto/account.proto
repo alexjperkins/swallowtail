@@ -214,7 +214,6 @@ message ReadVenueAccountByVenueAccountDetailsRequest {
     string actor_id = 4;
     string request_context = 5;
     string account_alias = 6;
-    VenueAccountType venue_account_type = 7;
 }
 
 message ReadVenueAccountByVenueAccountDetailsResponse {

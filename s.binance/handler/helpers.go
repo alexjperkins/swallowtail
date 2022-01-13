@@ -96,8 +96,8 @@ func validatePerpetualFuturesOrder(order *tradeengineproto.Order) error {
 		return gerrors.FailedPrecondition("invalid_instrument_type", nil)
 	}
 
-	if order.Instrument == "" {
-		return gerrors.BadParam("missing_param.instrument", nil)
+	if order.Instrument == "" && order.Asset == "" {
+		return gerrors.BadParam("missing_param.instrument_or_asset", nil)
 	}
 
 	if order.PostOnly {
@@ -126,7 +126,7 @@ func validatePerpetualFuturesOrder(order *tradeengineproto.Order) error {
 			return gerrors.BadParam("bad_param.extra_param_reduce_only", nil)
 		}
 
-		if order.ReduceOnly && order.Quantity <= 0 {
+		if !order.ClosePosition && order.Quantity <= 0 {
 			return gerrors.BadParam("bad_param.invalid_quantity", nil)
 		}
 	case tradeengineproto.ORDER_TYPE_STOP_LIMIT, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_LIMIT:
@@ -142,7 +142,7 @@ func validatePerpetualFuturesOrder(order *tradeengineproto.Order) error {
 			return gerrors.BadParam("bad_param.extra_param_reduce_only", nil)
 		}
 
-		if order.ReduceOnly && order.Quantity <= 0 {
+		if !order.ClosePosition && order.Quantity <= 0 {
 			return gerrors.BadParam("bad_param.invalid_quantity", nil)
 		}
 	}

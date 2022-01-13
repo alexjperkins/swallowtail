@@ -78,7 +78,7 @@ func (d *DCAAllLimit) Execute(
 		})
 	}
 
-	if err := isEnoughAvailableVenueMargain(venueAccountBalance); err != nil {
+	if err := isEnoughAvailableVenueMargin(venueAccountBalance); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_execute_dca_all_limit_strategy", map[string]string{
 			"venue_balance":           fmt.Sprintf("%f", venueAccountBalance),
 			"venue_min_margain_limit": fmt.Sprintf("%d", retailMinVenueMargainInUSDT),
@@ -153,6 +153,7 @@ func (d *DCAAllLimit) Execute(
 			WorkingType:      tradeengineproto.WORKING_TYPE_MARK_PRICE,
 			Venue:            participant.Venue,
 			CreatedTimestamp: now.Unix(),
+			TimeInForce:      tradeengineproto.TIME_IN_FORCE_GOOD_TILL_CANCELLED,
 		})
 	}
 

@@ -8,8 +8,7 @@ import (
 	"github.com/monzo/slog"
 
 	"swallowtail/libraries/gerrors"
-	"swallowtail/s.account/domain"
-	"swallowtail/s.account/marshaling"
+	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
 	discordproto "swallowtail/s.discord/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
@@ -18,33 +17,23 @@ import (
 func validateVenueCredentials(ctx context.Context, userID string, venueAccount interface{}) (bool, string, error) {
 	var credentials *tradeengineproto.VenueCredentials
 	switch t := venueAccount.(type) {
-	case *domain.VenueAccount:
-		venue, err := marshaling.ConvertVenueIDToProto(t.VenueID)
-		if err != nil {
-			return false, "", gerrors.Augment(err, "failed_to_validate_credentials.venue_account", nil)
-		}
-
+	case *accountproto.VenueAccount:
 		credentials = &tradeengineproto.VenueCredentials{
-			Venue:      venue,
-			ApiKey:     t.APIKey,
+			Venue:      t.Venue,
+			ApiKey:     t.ApiKey,
 			SecretKey:  t.SecretKey,
 			Subaccount: t.SubAccount,
-			Url:        t.URL,
-			WsUrl:      t.WSURL,
+			Url:        t.Url,
+			WsUrl:      t.WsUrl,
 		}
-	case *domain.InternalVenueAccount:
-		venue, err := marshaling.ConvertVenueIDToProto(t.VenueID)
-		if err != nil {
-			return false, "", gerrors.Augment(err, "failed_to_validate_credentials.internal_venue_account", nil)
-		}
-
+	case *accountproto.InternalVenueAccount:
 		credentials = &tradeengineproto.VenueCredentials{
-			Venue:      venue,
-			ApiKey:     t.APIKey,
+			Venue:      t.Venue,
+			ApiKey:     t.ApiKey,
 			SecretKey:  t.SecretKey,
 			Subaccount: t.SubAccount,
-			Url:        t.URL,
-			WsUrl:      t.WSURL,
+			Url:        t.Url,
+			WsUrl:      t.WsUrl,
 		}
 	default:
 		slog.Error(ctx, "Failed to validate venue credentials, invalid type: %T", t)

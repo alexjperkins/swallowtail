@@ -24,6 +24,11 @@ func VenueAccountProtoToDomain(userID string, venueAccount *accountproto.VenueAc
 		return nil, gerrors.Augment(err, "failed-to-marshal-proto-to-domain.bad-secret-key", nil)
 	}
 
+	var subAccount = venueAccount.SubAccount
+	if subAccount == "" {
+		subAccount = accountproto.SubAccountUnknown
+	}
+
 	return &domain.VenueAccount{
 		VenueID:      venueAccount.Venue.String(),
 		APIKey:       encryptedAPIKey,
@@ -37,6 +42,7 @@ func VenueAccountProtoToDomain(userID string, venueAccount *accountproto.VenueAc
 	}, nil
 }
 
+// InternalVenueAccountProtoToDomain ...
 func InternalVenueAccountProtoToDomain(internalVenueAccount *accountproto.InternalVenueAccount) (*domain.InternalVenueAccount, error) {
 	encryptedAPIKey, err := encryption.EncryptWithAES([]byte(internalVenueAccount.ApiKey), "passphrase")
 	if err != nil {
@@ -46,6 +52,11 @@ func InternalVenueAccountProtoToDomain(internalVenueAccount *accountproto.Intern
 	encryptedSecretKey, err := encryption.EncryptWithAES([]byte(internalVenueAccount.SecretKey), "passphrase")
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed-to-marshal-proto-to-domain.bad-secret-key", nil)
+	}
+
+	var subAccount = internalVenueAccount.SubAccount
+	if subAccount == "" {
+		subAccount = accountproto.SubAccountUnknown
 	}
 
 	return &domain.InternalVenueAccount{
@@ -59,8 +70,9 @@ func InternalVenueAccountProtoToDomain(internalVenueAccount *accountproto.Intern
 	}, nil
 }
 
+// InternalVenueAccountDomainToProto ...
 func InternalVenueAccountDomainToProto(internalVenueAccount *domain.InternalVenueAccount) (*accountproto.InternalVenueAccount, error) {
-	venue, err := convertVenueIDToProto(internalVenueAccount.VenueID)
+	venue, err := ConvertVenueIDToProto(internalVenueAccount.VenueID)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +121,7 @@ func VenueAccountDomainsToProtos(ins []*domain.VenueAccount) ([]*accountproto.Ve
 // VenueAccountDomainToProto marshals an exchange domain to the respective proto.
 // All keys are masked by default.
 func VenueAccountDomainToProto(in *domain.VenueAccount) (*accountproto.VenueAccount, error) {
-	venue, err := convertVenueIDToProto(in.VenueID)
+	venue, err := ConvertVenueIDToProto(in.VenueID)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +168,7 @@ func VenueAccountDomainsToProtosUnmasked(ins []*domain.VenueAccount) ([]*account
 // VenueAccountDomainToProtoUnmasked ...
 // NOTE: only use this on internal endpoints; we cannot allow keys to be leaked.
 func VenueAccountDomainToProtoUnmasked(in *domain.VenueAccount) (*accountproto.VenueAccount, error) {
-	venue, err := convertVenueIDToProto(in.VenueID)
+	venue, err := ConvertVenueIDToProto(in.VenueID)
 	if err != nil {
 		return nil, err
 	}

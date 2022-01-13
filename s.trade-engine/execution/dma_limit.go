@@ -60,7 +60,7 @@ func (d *DMALimit) Execute(ctx context.Context, strategy *tradeengineproto.Trade
 		})
 	}
 
-	if err := isEnoughAvailableVenueMargain(venueAccountBalance); err != nil {
+	if err := isEnoughAvailableVenueMargin(venueAccountBalance); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_execute_dma_limit_strategy", map[string]string{
 			"venue_balance":           fmt.Sprintf("%f", venueAccountBalance),
 			"venue_min_margain_limit": fmt.Sprintf("%d", retailMinVenueMargainInUSDT),
@@ -99,6 +99,7 @@ func (d *DMALimit) Execute(ctx context.Context, strategy *tradeengineproto.Trade
 		slog.Warn(ctx, "Participant executing trade strategy without a stop loss: %s, %s", strategy.TradeStrategyId, participant.UserId)
 
 		// Warn user of **not** using a stop loss. Best effort.
+		// TODO: this is a candidate to make async.
 		if err := notifyUser(ctx, fmt.Sprintf("[%s] participant placing without a stop loss", strategy.ExecutionStrategy), participant.UserId); err != nil {
 			slog.Error(ctx, "Failed to notifiy user: %v", err)
 		}
@@ -134,11 +135,13 @@ func (d *DMALimit) Execute(ctx context.Context, strategy *tradeengineproto.Trade
 		WorkingType:      tradeengineproto.WORKING_TYPE_MARK_PRICE,
 		Venue:            participant.Venue,
 		CreatedTimestamp: now.Unix(),
+		TimeInForce:      tradeengineproto.TIME_IN_FORCE_GOOD_TILL_CANCELLED,
 	})
 
 	// Add take profits.
 	tps := calculateTakeProfits(totalQuantity, strategy.TakeProfits)
 	for _, tp := range tps {
+
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
 			Instrument:       strategy.Instrument,

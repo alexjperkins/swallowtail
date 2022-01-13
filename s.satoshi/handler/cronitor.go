@@ -60,7 +60,7 @@ FAILED ORDER:      %+v
 
 func notifyUserOnSuccess(
 	ctx context.Context,
-	userID, tradeStrategyID, tradeParticipantID, instrument, asset, pair string,
+	userID, tradeStrategyID, tradeParticipantID, asset, pair string,
 	executionStrategy tradeengineproto.EXECUTION_STRATEGY,
 	venue tradeengineproto.VENUE,
 	risk, size float64,
@@ -72,7 +72,6 @@ func notifyUserOnSuccess(
 	content := `
 TRADE STRATEGY ID:    %s
 TRADE PARTICIPANT ID: %s
-INSTRUMENT:           %s
 ASSET:                %s
 PAIR:                 %s
 VENUE:                %s
@@ -83,7 +82,7 @@ TIMESTAMP:            %v
 
 SUCCESSFUL_ORDERS:    %v
 `
-	formattedContent := fmt.Sprintf(content, tradeStrategyID, tradeParticipantID, instrument, asset, pair, venue, executionStrategy, risk, size, timestamp, len(successfulOrders))
+	formattedContent := fmt.Sprintf(content, tradeStrategyID, tradeParticipantID, asset, pair, venue, executionStrategy, risk, size, timestamp, len(successfulOrders))
 
 	if _, err := (&discordproto.SendMsgToPrivateChannelRequest{
 		UserId:         userID,

@@ -2,15 +2,16 @@ package parser
 
 import (
 	"context"
-	tradeengineproto "swallowtail/s.trade-engine/proto"
 	"testing"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
-func TestDefaultParser(t *testing.T) {
+func TestDMAParser(t *testing.T) {
 	tests := []struct {
 		name          string
 		content       string
@@ -323,7 +324,7 @@ func TestDefaultParser(t *testing.T) {
 				return tt.currentValue, nil
 			}
 
-			trade, err := (&DefaultParser{}).Parse(context.Background(), tt.content, &discordgo.MessageCreate{
+			trade, err := (&DMAParser{}).Parse(context.Background(), tt.content, &discordgo.MessageCreate{
 				Message: &discordgo.Message{
 					Author: &discordgo.User{
 						Username: tt.username,

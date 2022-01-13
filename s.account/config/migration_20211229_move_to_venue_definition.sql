@@ -25,7 +25,7 @@ ALTER TABLE IF EXISTS s_account_accounts DROP COLUMN primary_exchange;
 -- Rename enum type.
 ALTER TYPE exchange RENAME TO venue CASCADE;
 
-ALTER TABLE IF EXISTS s_account_venue_accounts ADD COLUMN primary_venue venue DEFAULT 'BINANCE';
+ALTER TABLE IF EXISTS s_account_accounts ADD COLUMN primary_venue venue DEFAULT 'BINANCE';
 
 -- Drop unused field.
 DROP TYPE IF EXISTS exchange_execution_strategy;

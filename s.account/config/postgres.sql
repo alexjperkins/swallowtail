@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS s_account_internal_venue_accounts (
 
 	PRIMARY KEY(internal_account_id),
 
-	UNIQUE(venue_id, subaccount, account_type)
+	UNIQUE(venue_id, subaccount, venue_account_type)
 );
 
 -- Unique index to enforce singleton test accounts across venues.

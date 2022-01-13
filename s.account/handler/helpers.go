@@ -68,10 +68,6 @@ func validateVenueAccount(venueAccount *accountproto.VenueAccount) error {
 		return gerrors.BadParam("missing_param.api_key", nil)
 	case venueAccount.SecretKey == "":
 		return gerrors.BadParam("missing_param.secret_key", nil)
-	case venueAccount.Url == "":
-		return gerrors.BadParam("missing_param.venue_account._url", nil)
-	case venueAccount.WsUrl == "":
-		return gerrors.BadParam("missing_param.venue_account.ws_url", nil)
 	}
 
 	switch venueAccount.Venue {
@@ -95,9 +91,9 @@ func validateInternalVenueAccount(internalVenueAccount *accountproto.InternalVen
 	case internalVenueAccount.ApiKey == "":
 		return gerrors.BadParam("missing_param.internal_venue_account.api_key", nil)
 	case internalVenueAccount.SecretKey == "":
-		return gerrors.BadParam("missing_param.internal_venue_account_secret_key", nil)
+		return gerrors.BadParam("missing_param.internal_venue_account.secret_key", nil)
 	case internalVenueAccount.Url == "":
-		return gerrors.BadParam("missing_param.internal_venue_account._url", nil)
+		return gerrors.BadParam("missing_param.internal_venue_account.url", nil)
 	case internalVenueAccount.WsUrl == "":
 		return gerrors.BadParam("missing_param.internal_venue_account.ws_url", nil)
 	}

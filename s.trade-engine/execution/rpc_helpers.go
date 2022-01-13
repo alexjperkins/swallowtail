@@ -17,8 +17,10 @@ import (
 func readVenueCredentials(ctx context.Context, userID string, venue tradeengineproto.VENUE) (*tradeengineproto.VenueCredentials, error) {
 	// Read venue account.
 	rsp, err := (&accountproto.ReadVenueAccountByVenueAccountDetailsRequest{
-		Venue:  venue,
-		UserId: userID,
+		Venue:          venue,
+		UserId:         userID,
+		ActorId:        accountproto.ActorSystemTradeEngine,
+		RequestContext: accountproto.RequestContextOrderRequest,
 	}).Send(ctx).Response()
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_read_venue_credentials", nil)

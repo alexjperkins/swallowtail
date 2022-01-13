@@ -15,7 +15,7 @@ func isTradeStrategyParticipantOverRiskAppetite(accountBalance float64, totalOrd
 	return nil
 }
 
-func isEnoughAvailableVenueMargain(accountBalanceInUSDT float64) error {
+func isEnoughAvailableVenueMargin(accountBalanceInUSDT float64) error {
 	if accountBalanceInUSDT < retailMinVenueMargainInUSDT {
 		return gerrors.FailedPrecondition("venue_balance_too_small", nil)
 	}

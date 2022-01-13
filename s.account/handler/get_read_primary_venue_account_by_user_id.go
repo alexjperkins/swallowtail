@@ -47,7 +47,7 @@ func (s *AccountService) ReadPrimaryVenueAccountByUserID(
 	// Parse primary venue account.
 	var primaryVenueAccount *domain.VenueAccount
 	for _, venueAccount := range venueAccounts {
-		if venueAccount.VenueID == account.PrimaryVenueAccount {
+		if venueAccount.VenueID == account.PrimaryVenue {
 			primaryVenueAccount = venueAccount
 		}
 	}

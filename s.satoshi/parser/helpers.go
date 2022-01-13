@@ -233,11 +233,9 @@ func parseExecutionStrategy(content string, currentValue float64, entries []floa
 
 	entry := entries[0]
 	switch {
-	case !containsLimit:
-		return tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET, true
-	case (side == tradeengineproto.TRADE_SIDE_LONG || side == tradeengineproto.TRADE_SIDE_BUY) && entry < currentValue:
+	case containsLimit:
 		return tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT, true
-	case (side == tradeengineproto.TRADE_SIDE_SHORT || side == tradeengineproto.TRADE_SIDE_SELL) && entry > currentValue:
+	case !withinRange(entry, currentValue, 5):
 		return tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT, true
 	default:
 		return tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET, false

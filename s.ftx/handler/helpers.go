@@ -39,8 +39,8 @@ func validateOrder(order *tradeengineproto.Order) error {
 	switch {
 	case order.Venue != tradeengineproto.VENUE_FTX:
 		return gerrors.FailedPrecondition("invalid_venue.expecting_ftx", nil)
-	case order.Instrument == "":
-		return gerrors.BadParam("missing_param.instrument", nil)
+	case order.Instrument == "" && order.Asset == "":
+		return gerrors.BadParam("missing_param.instrument_or_asset", nil)
 	case order.ClosePosition && order.Quantity == 0:
 		return gerrors.Unimplemented("unimplemented.close_position", nil)
 	case order.Quantity <= 0:
