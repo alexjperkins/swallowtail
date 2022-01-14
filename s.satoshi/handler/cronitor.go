@@ -107,7 +107,7 @@ TIMESTAMP:            %v
 
 	if _, err := (&discordproto.SendMsgToPrivateChannelRequest{
 		UserId:         userID,
-		Content:        fmt.Sprintf("%s```%s```%s", header, formattedContent, formatOrders(successfulOrders, executionError.FailedOrder, executionError.ErrorMessage)),
+		Content:        fmt.Sprintf("%s```%s```%s", header, formattedContent, formatOrders(successfulOrders, executionError.GetFailedOrder(), executionError.GetErrorMessage())),
 		IdempotencyKey: fmt.Sprintf("tradestrategysuccess-%s-%s-%s", userID, tradeStrategyID, time.Now().UTC().Truncate(15*time.Minute)),
 	}).Send(ctx).Response(); err != nil {
 		return gerrors.Augment(err, "failed_to_notify_user", nil)

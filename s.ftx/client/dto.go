@@ -141,28 +141,42 @@ type ListInstrumentsResponse struct {
 	Instruments []*Instrument `json:"result"`
 }
 
-// ReadAccountInformationRequest ...
-type ReadAccountInformationRequest struct{}
-
+// ReadAccountInformationResponseResult ...
 type ReadAccountInformationResponseResult struct {
-	BackstopProvider             bool    `json:"backstopProvider"`
-	Collateral                   float64 `json:"collateral"`
-	FreeCollateral               float64 `json:"freeCollateral"`
-	InitialMarginRequirement     float64 `json:"initialMarginRequirement"`
-	Leverage                     int64   `json:"leverage"`
-	Liquidating                  bool    `json:"liquidating"`
-	MaintenanceMarginRequirement float64 `json:"maintenanceMarginRequirement"`
-	MakerFee                     float64 `json:"makerFee"`
-	MarginFraction               float64 `json:"marginFraction"`
-	OpenMarginFraction           float64 `json:"openMarginFraction"`
-	TakerFee                     float64 `json:"takerFee"`
-	TotalAccountValue            float64 `json:"totalAccountValue"`
-	TotalPositionSize            float64 `json:"totalPositionSize"`
-	Username                     string  `json:"username"`
+	BackstopProvider             bool    `json:"backstopProvider,omitempty"`
+	Collateral                   float64 `json:"collateral,omitempty"`
+	FreeCollateral               float64 `json:"freeCollateral,omitempty"`
+	InitialMarginRequirement     float64 `json:"initialMarginRequirement,omitempty"`
+	Leverage                     float64 `json:"leverage,omitempty"`
+	Liquidating                  bool    `json:"liquidating,omitempty"`
+	MaintenanceMarginRequirement float64 `json:"maintenanceMarginRequirement,omitempty"`
+	MakerFee                     float64 `json:"makerFee,omitempty"`
+	MarginFraction               float64 `json:"marginFraction,omitempty"`
+	OpenMarginFraction           float64 `json:"openMarginFraction,omitempty"`
+	TakerFee                     float64 `json:"takerFee,omitempty"`
+	TotalAccountValue            float64 `json:"totalAccountValue,omitempty"`
+	TotalPositionSize            float64 `json:"totalPositionSize,omitempty"`
+	Username                     string  `json:"username,omitempty"`
 }
 
 // ReadAccountInformationResponse ...
 type ReadAccountInformationResponse struct {
 	Success bool                                  `json:"success"`
 	Result  *ReadAccountInformationResponseResult `json:"result"`
+}
+
+// AccountBalance ...
+type AccountBalance struct {
+	Asset                  string  `json:"coin"`
+	QuantityAvailable      float64 `json:"free"`
+	SpotBorrow             float64 `json:"spotBorrow,omitempty"`
+	Total                  float64 `json:"total"`
+	USDValue               float64 `json:"usdValue,omitempty"`
+	AvailableWithoutBorrow float64 `json:"availableWithoutBorrow"`
+}
+
+// ListAccountBalancesResponse ...
+type ListAccountBalancesResponse struct {
+	Success         bool              `json:"success"`
+	AccountBalances []*AccountBalance `json:"result"`
 }

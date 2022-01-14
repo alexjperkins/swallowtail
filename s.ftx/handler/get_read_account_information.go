@@ -34,7 +34,7 @@ func (S *FTXService) ReadAccountInformation(
 	domainCredentials := marshaling.VenueCredentialsProtoToFTXCredentials(in.Credentials)
 
 	// Read account information.
-	rsp, err := client.ReadAccountInformation(ctx, &client.ReadAccountInformationRequest{}, domainCredentials)
+	rsp, err := client.ReadAccountInformation(ctx, domainCredentials)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_read_account_information", errParams)
 	}

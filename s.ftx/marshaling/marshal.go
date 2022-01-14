@@ -201,7 +201,7 @@ func ReadAccountInformationDomainToProto(in *client.ReadAccountInformationRespon
 		Collateral:                   float32(in.Collateral),
 		FreeCollateral:               float32(in.Collateral),
 		InitalMarginRequirement:      float32(in.InitialMarginRequirement),
-		Leverage:                     in.Leverage,
+		Leverage:                     float32(in.Leverage),
 		Liquidating:                  in.Liquidating,
 		MaintenanceMarginRequirement: float32(in.MaintenanceMarginRequirement),
 		MakerFee:                     float32(in.MakerFee),
@@ -211,6 +211,28 @@ func ReadAccountInformationDomainToProto(in *client.ReadAccountInformationRespon
 		TotalAccountValue:            float32(in.TotalAccountValue),
 		TotalPositionSize:            float32(in.TotalPositionSize),
 		Username:                     in.Username,
+	}
+}
+
+// AccountBalancesDTOToProtos ...
+func AccountBalancesDTOToProtos(in []*client.AccountBalance) []*ftxproto.AccountBalance {
+	var out = make([]*ftxproto.AccountBalance, 0, len(in))
+	for _, ab := range in {
+		out = append(out, AccountBalancesDTOToProto(ab))
+	}
+
+	return out
+}
+
+// AccountBalancesDTOToProto ...
+func AccountBalancesDTOToProto(in *client.AccountBalance) *ftxproto.AccountBalance {
+	return &ftxproto.AccountBalance{
+		Asset:                  in.Asset,
+		QuantityAvailable:      float32(in.QuantityAvailable),
+		SpotBorrow:             float32(in.SpotBorrow),
+		Total:                  float32(in.Total),
+		UsdValue:               float32(in.USDValue),
+		AvailableWithoutBorrow: float32(in.AvailableWithoutBorrow),
 	}
 }
 

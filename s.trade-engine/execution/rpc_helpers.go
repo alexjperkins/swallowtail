@@ -3,6 +3,7 @@ package execution
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"swallowtail/libraries/gerrors"
@@ -10,6 +11,7 @@ import (
 	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
 	discordproto "swallowtail/s.discord/proto"
+	ftxproto "swallowtail/s.ftx/proto"
 	"swallowtail/s.trade-engine/marshaling"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
@@ -30,7 +32,7 @@ func readVenueCredentials(ctx context.Context, userID string, venue tradeenginep
 	return marshaling.VenueAccountToVenueCredentials(rsp.GetVenueAccount()), nil
 }
 
-func readVenueAccountBalance(ctx context.Context, venue tradeengineproto.VENUE, _ tradeengineproto.INSTRUMENT_TYPE, credentials *tradeengineproto.VenueCredentials) (float64, error) {
+func readVenueAccountBalance(ctx context.Context, venue tradeengineproto.VENUE, tradeStrategy *tradeengineproto.TradeStrategy, credentials *tradeengineproto.VenueCredentials) (float64, error) {
 	errParams := map[string]string{
 		"venue": venue.String(),
 	}
@@ -46,12 +48,26 @@ func readVenueAccountBalance(ctx context.Context, venue tradeengineproto.VENUE, 
 		}
 
 		return float64(rsp.Balance), nil
-	case tradeengineproto.VENUE_BITFINEX:
-		return 0, gerrors.Unimplemented("failed_to_read_venue_account_balance.unimplemented.venue", errParams)
-	case tradeengineproto.VENUE_DERIBIT:
-		return 0, gerrors.Unimplemented("failed_to_read_venue_account_balance.unimplemented.venue", errParams)
 	case tradeengineproto.VENUE_FTX:
-		return 0, gerrors.Unimplemented("failed_to_read_venue_account_balance.unimplemented.venue", errParams)
+		rsp, err := (&ftxproto.ListAccountBalancesRequest{
+			Credentials: credentials,
+		}).Send(ctx).Response()
+		if err != nil {
+			return 0, gerrors.Augment(err, "failed_to_read_venue_account_balance", errParams)
+		}
+
+		// Parse balances & retrieve balance for the pair (or base ccy).
+		var balanceForPair *ftxproto.AccountBalance
+		for _, ab := range rsp.GetAccountBalances() {
+			if strings.ToUpper(ab.Asset) == strings.ToUpper(tradeStrategy.Pair.String()) {
+				balanceForPair = ab
+			}
+		}
+		if balanceForPair == nil {
+			return 0, gerrors.FailedPrecondition("failed_to_read_venue_account_balance.missing_pair_balance", errParams)
+		}
+
+		return float64(balanceForPair.AvailableWithoutBorrow), nil
 	default:
 		return 0, gerrors.Unimplemented("failed_to_read_venue_account_balance.unimplemented.venue", errParams)
 	}

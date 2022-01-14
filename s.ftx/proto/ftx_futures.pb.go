@@ -445,3 +445,76 @@ func (r *ReadAccountInformationRequest) SendWithTimeout(ctx context.Context, tim
 		resultc: resultc,
 	}
 }
+
+// --- List Account Balances --- //
+
+type ListAccountBalances struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ListAccountBalancesResponse
+	ctx     context.Context
+}
+
+func (a *ListAccountBalances) Response() (*ListAccountBalancesResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "list_account_balances", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ListAccountBalancesRequest) Send(ctx context.Context) *ListAccountBalances {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ListAccountBalancesRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ListAccountBalances {
+	errc := make(chan error, 1)
+	resultc := make(chan *ListAccountBalancesResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-ftx:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s-ftx_connection_failed", nil)
+		return &ListAccountBalances{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewFtxClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ListAccountBalances(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_list_account_balances", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ListAccountBalances{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}

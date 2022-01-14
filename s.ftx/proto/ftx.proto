@@ -17,6 +17,8 @@ service ftx {
     rpc ListFTXInstruments (ListFTXInstrumentsRequest) returns (ListFTXInstrumentsResponse) {}
 
     rpc ReadAccountInformation (ReadAccountInformationRequest) returns (ReadAccountInformationResponse) {}
+
+    rpc ListAccountBalances (ListAccountBalancesRequest) returns (ListAccountBalancesResponse) {}
 } 
 
 enum FTX_SIDE {
@@ -151,7 +153,7 @@ message ReadAccountInformationResponse {
     float collateral = 2;
     float free_collateral = 3;
     float initalMarginRequirement = 4;
-    int64 leverage = 5;
+    float leverage = 5;
     bool liquidating = 6;
     float maintenanceMarginRequirement = 7;
     float makerFee = 8;
@@ -161,4 +163,24 @@ message ReadAccountInformationResponse {
     float totalAccountValue = 12;
     float totalPositionSize = 13;
     string username = 14;
+}
+
+message ListAccountBalancesRequest {
+    VenueCredentials credentials = 1;
+    string actor_id = 2;
+    string request_context = 3;
+}
+
+message AccountBalance {
+    string asset = 1;
+    float quantity_available = 2;
+    float spot_borrow = 3;
+    float total = 4;
+    float usd_value = 5;
+    float available_without_borrow = 6;
+}
+
+message ListAccountBalancesResponse {
+    repeated AccountBalance account_balances = 1;
+    
 }

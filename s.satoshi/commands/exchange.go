@@ -70,7 +70,7 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(30*time.Second))
 	defer cancel()
 
-	venue, apiKey, secretKey := strings.ToUpper(tokens[0]), tokens[1], tokens[2]
+	venue, apiKey, secretKey := tokens[0], tokens[1], tokens[2]
 
 	// Parse venue.
 	var venueProto tradeengineproto.VENUE

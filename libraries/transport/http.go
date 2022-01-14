@@ -106,6 +106,7 @@ func (h *httpClient) DoWithEphemeralHeaders(ctx context.Context, method, url str
 	}
 
 	if err := json.Unmarshal(rspBodyBytes, rspBody); err != nil {
+		slog.Error(ctx, "Response body for marshaling failure: %v", string(rspBodyBytes))
 		return gerrors.FailedPrecondition("bad_request.unmarshal_error", errParams)
 	}
 

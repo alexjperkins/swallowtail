@@ -42,7 +42,11 @@ type FTXClient interface {
 	// GetFundingRate ...
 	GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error)
 
-	ReadAccountInformation(ctx context.Context, req *ReadAccountInformationRequest, credentials *auth.Credentials) (*ReadAccountInformationResponse, error)
+	// ReadAccountInformation ...
+	ReadAccountInformation(ctx context.Context, credentials *auth.Credentials) (*ReadAccountInformationResponse, error)
+
+	// ListAccountBalances ...
+	ListAccountBalances(ctx context.Context, credentials *auth.Credentials) (*ListAccountBalancesResponse, error)
 }
 
 // Init instantiates the FTX client singleton.
@@ -126,9 +130,17 @@ func ListInstruments(ctx context.Context, req *ListInstrumentsRequest) (*ListIns
 }
 
 // ReadAccountInformation ...
-func ReadAccountInformation(ctx context.Context, req *ReadAccountInformationRequest, credentials *auth.Credentials) (*ReadAccountInformationResponse, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "List instruments")
+func ReadAccountInformation(ctx context.Context, credentials *auth.Credentials) (*ReadAccountInformationResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Read account information")
 	defer span.Finish()
 
-	return client.ReadAccountInformation(ctx, req, credentials)
+	return client.ReadAccountInformation(ctx, credentials)
+}
+
+// ListAccountBalances ...
+func ListAccountBalances(ctx context.Context, credentials *auth.Credentials) (*ListAccountBalancesResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "List account balances")
+	defer span.Finish()
+
+	return client.ListAccountBalances(ctx, credentials)
 }

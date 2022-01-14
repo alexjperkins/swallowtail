@@ -101,10 +101,19 @@ func (f *ftxClient) ListInstruments(ctx context.Context, req *ListInstrumentsReq
 	return rsp, nil
 }
 
-func (f *ftxClient) ReadAccountInformation(ctx context.Context, req *ReadAccountInformationRequest, credentials *auth.Credentials) (*ReadAccountInformationResponse, error) {
+func (f *ftxClient) ReadAccountInformation(ctx context.Context, credentials *auth.Credentials) (*ReadAccountInformationResponse, error) {
 	rsp := &ReadAccountInformationResponse{}
-	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/account", req, rsp, nil, credentials); err != nil {
+	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/account", nil, rsp, nil, credentials); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_read_account_information", nil)
+	}
+
+	return rsp, nil
+}
+
+func (f *ftxClient) ListAccountBalances(ctx context.Context, credentials *auth.Credentials) (*ListAccountBalancesResponse, error) {
+	rsp := &ListAccountBalancesResponse{}
+	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/wallet/balances", nil, rsp, nil, credentials); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_list_account_balances", nil)
 	}
 
 	return rsp, nil

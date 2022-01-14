@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.account/domain"
-	accountproto "swallowtail/s.account/proto"
 )
 
 // ReadVenueAccountByAccountAlias ...
@@ -89,7 +89,7 @@ func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string
 }
 
 // ReadVenueAccountByVenueAccountDetails ...
-func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID, subaccount string) (*domain.VenueAccount, error) {
+func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID, _ string) (*domain.VenueAccount, error) {
 	var (
 		sql = `
 		SELECT 
@@ -108,17 +108,19 @@ func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID,
 		FROM s_account_venue_accounts
 		WHERE venue_id=$1
 		AND user_id=$2
-		AND subaccount=$3
+		AND account_alias=$3
 		`
 		venueAccounts []*domain.VenueAccount
 	)
 
 	// Switch empty subaccount to the default value we store in the db.
-	if subaccount == "" {
-		subaccount = accountproto.SubAccountUnknown
-	}
+	//if subaccount == "" {
+	//	subaccount = accountproto.SubAccountUnknown
+	//}
 
-	if err := db.Select(ctx, &venueAccounts, sql, strings.ToUpper(venueID), userID, subaccount); err != nil {
+	accountAlias := strings.ToUpper(fmt.Sprintf("%s-MAIN", venueID))
+
+	if err := db.Select(ctx, &venueAccounts, sql, strings.ToUpper(venueID), userID, accountAlias); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
@@ -129,9 +131,8 @@ func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID,
 		return venueAccounts[0], nil
 	default:
 		slog.Critical(ctx, "Inconsistent state: more than one identical venue account found for user", map[string]string{
-			"venue_id":   venueID,
-			"user_id":    userID,
-			"subaccount": subaccount,
+			"venue_id": venueID,
+			"user_id":  userID,
 		})
 		return venueAccounts[0], nil
 	}
@@ -224,11 +225,21 @@ func AddVenueAccount(ctx context.Context, venueAccount *domain.VenueAccount) err
 		`
 	)
 
+	// If we have an empty account alias then we build one internally using the venue & we
+	// assume this is the main.
+	// The unqiue constraint (user_id, account_alias) therefore forces the end user to
+	// choose a user space unique account alias if they wish to have more than one venue account per venue.
+	var accountAlias string
+	switch {
+	case venueAccount.AccountAlias == "":
+		accountAlias = strings.ToUpper(fmt.Sprintf("%s-%s", venueAccount.VenueID, "MAIN"))
+	}
+
 	now := time.Now().UTC()
 	if _, err := (db.Exec(
 		ctx, sql,
 		venueAccount.VenueID, venueAccount.UserID, venueAccount.APIKey, venueAccount.SecretKey, venueAccount.SubAccount,
-		venueAccount.URL, venueAccount.WSURL, venueAccount.AccountAlias,
+		venueAccount.URL, venueAccount.WSURL, accountAlias,
 		now, now,
 		venueAccount.IsActive,
 	)); err != nil {

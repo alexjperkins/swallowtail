@@ -22,7 +22,7 @@ func (f *ftxClient) do(ctx context.Context, method, endpoint string, req, rsp in
 }
 
 func (f *ftxClient) signBeforeDo(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *auth.Credentials) error {
-	ts := strconv.FormatInt(time.Now().UTC().Unix()*1000, 10)
+	ts := strconv.FormatInt(time.Now().Unix()*1000, 10)
 	preparedEndpoint := buildEndpoint(endpoint, pagination)
 
 	signature, err := auth.SignRequest(preparedEndpoint, method, ts, req, credentials)
@@ -31,6 +31,7 @@ func (f *ftxClient) signBeforeDo(ctx context.Context, method, endpoint string, r
 	}
 
 	url := fmt.Sprintf("%s%s", f.hostname, preparedEndpoint)
+	headers := credentials.AsHeaders(signature, ts)
 
 	return f.http.DoWithEphemeralHeaders(
 		ctx,
@@ -38,7 +39,7 @@ func (f *ftxClient) signBeforeDo(ctx context.Context, method, endpoint string, r
 		url,
 		req,
 		rsp,
-		credentials.AsHeaders(signature, ts),
+		headers,
 	)
 }
 
