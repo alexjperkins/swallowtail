@@ -140,6 +140,7 @@ message UpdateAccountRequest {
     bool is_futures = 10; 
     string actor_id = 11;
     string default_dca_strategy = 12;
+    VENUE primary_venue = 13;
 }
 
 message UpdateAccountResponse {

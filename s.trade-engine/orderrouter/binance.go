@@ -26,14 +26,5 @@ func executeBinanceNewPerpetualFuturesOrders(ctx context.Context, order *tradeen
 
 // executeBinanceNewSpotOrder executes an order as a binance spot order.
 func executeBinanceNewSpotOrders(ctx context.Context, order *tradeengineproto.Order, credentials *tradeengineproto.VenueCredentials) (*tradeengineproto.Order, error) {
-	rsp, err := (&binanceproto.ExecuteNewSpotOrderRequest{
-		Order:       order,
-		Credentials: credentials,
-		Timestamp:   timestamppb.Now(),
-	}).Send(ctx).Response()
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_route_and_execute_order.binance_spot", nil)
-	}
-
-	return rsp.Order, nil
+	return nil, gerrors.Unimplemented("unimplemented.binance_spot_orders", nil)
 }

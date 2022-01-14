@@ -136,18 +136,20 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	var (
 		sql = `
 		UPDATE s_account_accounts
-		SET username=$1, password=$2, email=$3, phone_number=$4, high_priority_pager=$5, low_priority_pager=$6, is_futures_member=$7, is_admin=$8, updated=$9
-		WHERE user_id=$10`
+		SET username=$1, password=$2, email=$3, phone_number=$4, high_priority_pager=$5, low_priority_pager=$6, is_futures_member=$7, is_admin=$8, updated=$9, primary_venue=$10
+		WHERE user_id=$11`
 	)
 	if mutation.UserID == "" {
 		return nil, terrors.PreconditionFailed("mutation-without-id", "Account mutation requires at least the account ID", nil)
 	}
 
+	// Read current account.
 	account, err := ReadAccountByUserID(ctx, mutation.UserID)
 	if err != nil {
 		return nil, err
 	}
 
+	// Merge current account with mutation.
 	if err := mergo.MergeWithOverwrite(account, mutation); err != nil {
 		return nil, gerrors.Augment(gerrors.Propagate(err, gerrors.ErrUnknown, nil), "failed_to_merge_accounts", nil)
 	}
@@ -163,6 +165,7 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 		account.IsFuturesMember,
 		account.IsAdmin,
 		account.Updated,
+		account.PrimaryVenue,
 		account.UserID,
 	)); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)

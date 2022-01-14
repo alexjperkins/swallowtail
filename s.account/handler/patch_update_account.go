@@ -14,6 +14,7 @@ import (
 func (s *AccountService) UpdateAccount(
 	ctx context.Context, in *accountproto.UpdateAccountRequest,
 ) (*accountproto.UpdateAccountResponse, error) {
+	// Validation.
 	switch {
 	case in.UserId == "":
 		return nil, gerrors.BadParam("missing_param.user_id", nil)
@@ -28,8 +29,10 @@ func (s *AccountService) UpdateAccount(
 		"user_id": in.UserId,
 	}
 
+	// Create mutation in domain.
 	mutation := marshaling.UpdateAccountProtoToDomain(in)
 
+	// Apply mutation.
 	account, err := dao.UpdateAccount(ctx, mutation)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_update_account", errParams)

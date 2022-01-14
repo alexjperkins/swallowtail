@@ -49,6 +49,14 @@ func init() {
 				Description:         "Lists all registered API keys.",
 				Handler:             listExchangeCommand,
 			},
+			"set-primary": {
+				ID:                  "exchange-set-primary",
+				IsPrivate:           true,
+				IsFuturesOnly:       true,
+				MinimumNumberOfArgs: 1,
+				Usage:               `set-primary <exchange>`,
+				Description:         "Sets the primary exchange to use on your account",
+			},
 		},
 	})
 }
@@ -139,7 +147,7 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 }
 
 func listExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(30*time.Second))
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(30*time.Second))
 	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
@@ -172,4 +180,48 @@ func listExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Sess
 	)
 
 	return err
+}
+
+func setPrimaryExchangeCommand(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	venueToken := tokens[0]
+
+	var venue tradeengineproto.VENUE
+	switch strings.ToUpper(venueToken) {
+	case strings.ToUpper(tradeengineproto.VENUE_BINANCE.String()):
+		venue = tradeengineproto.VENUE_BINANCE
+	case strings.ToUpper(tradeengineproto.VENUE_FTX.String()):
+		venue = tradeengineproto.VENUE_FTX
+	case strings.ToUpper(tradeengineproto.VENUE_DERIBIT.String()):
+		return gerrors.Unimplemented("venue_unimplemented_for_primary_account.deribit", nil)
+	case strings.ToUpper(tradeengineproto.VENUE_BITFINEX.String()):
+		return gerrors.Unimplemented("venue_unimplemented_for_primary_account.deribit", nil)
+	default:
+		return gerrors.Unimplemented("venue_unimplemented", map[string]string{
+			"venue": venueToken,
+		})
+	}
+
+	if _, err := (&accountproto.UpdateAccountRequest{
+		PrimaryVenue: venue,
+	}).SendWithTimeout(ctx, 10*time.Second).Response(); err != nil {
+		s.ChannelMessageSend(
+			m.ChannelID,
+			fmt.Sprintf(
+				":wave I was unable to set your primary exchange on your account to: %s, Error: %v", venue, err,
+			),
+		)
+
+		return gerrors.Augment(err, "failed_to_set_primary_venue", map[string]string{
+			"venue": venueToken,
+		})
+	}
+
+	s.ChannelMessageSend(
+		m.ChannelID,
+		fmt.Sprintf(
+			":wave I have set your primary exchange on your account to be: %s", venue,
+		),
+	)
+
+	return nil
 }

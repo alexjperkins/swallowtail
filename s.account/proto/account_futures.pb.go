@@ -251,9 +251,14 @@ func (r *UpdateAccountRequest) SendWithTimeout(ctx context.Context, timeout time
 	if err != nil {
 		errc <- err
 		return &UpdateAccountFuture{
-			ctx:     ctx,
-			errc:    errc,
-			closer:  conn.Close,
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					conn.Close()
+				}
+				return nil
+			},
 			resultc: resultc,
 		}
 	}
@@ -332,7 +337,7 @@ func (r *PageAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	go func() {
 		rsp, err := c.PageAccount(ctx, r)
 		if err != nil {
-			errc <- err
+			errc <- gerrors.Augment(err, "failed_update_account", nil)
 			return
 		}
 		resultc <- rsp
