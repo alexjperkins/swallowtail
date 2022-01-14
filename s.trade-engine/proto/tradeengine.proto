@@ -10,6 +10,8 @@ service tradeengine {
     rpc ExecuteTradeStrategyForParticipant (ExecuteTradeStrategyForParticipantRequest) returns (ExecuteTradeStrategyForParticipantResponse) {}
 
     rpc ReadTradeStrategyByTradeStrategyID (ReadTradeStrategyByTradeStrategyIDRequest) returns (ReadTradeStrategyByTradeStrategyIDResponse) {}
+
+    rpc ListAvailableVenues (ListAvailableVenuesRequest) returns (ListAvailableVenuesResponse) {}
 }
 
 enum VENUE {
@@ -207,4 +209,10 @@ message VenueCredentials {
     string subaccount = 5;
     string url = 6;
     string ws_url = 7;
+}
+
+message ListAvailableVenuesRequest{}
+
+message ListAvailableVenuesResponse{
+    repeated string venues = 1;
 }

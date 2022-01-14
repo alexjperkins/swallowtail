@@ -218,3 +218,76 @@ func (r *ExecuteTradeStrategyForParticipantRequest) SendWithTimeout(ctx context.
 		resultc: resultc,
 	}
 }
+
+// --- List Available Venues --- //
+
+type ListAvailableVenuesFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ListAvailableVenuesResponse
+	ctx     context.Context
+}
+
+func (a *ListAvailableVenuesFuture) Response() (*ListAvailableVenuesResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "list_available_venues", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ListAvailableVenuesRequest) Send(ctx context.Context) *ListAvailableVenuesFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ListAvailableVenuesRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ListAvailableVenuesFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ListAvailableVenuesResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-tradeengine:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &ListAvailableVenuesFuture{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewTradeengineClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ListAvailableVenues(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_list_available_venues", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ListAvailableVenuesFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}

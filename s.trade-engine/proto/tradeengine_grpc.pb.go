@@ -21,6 +21,7 @@ type TradeengineClient interface {
 	CreateTradeStrategy(ctx context.Context, in *CreateTradeStrategyRequest, opts ...grpc.CallOption) (*CreateTradeStrategyResponse, error)
 	ExecuteTradeStrategyForParticipant(ctx context.Context, in *ExecuteTradeStrategyForParticipantRequest, opts ...grpc.CallOption) (*ExecuteTradeStrategyForParticipantResponse, error)
 	ReadTradeStrategyByTradeStrategyID(ctx context.Context, in *ReadTradeStrategyByTradeStrategyIDRequest, opts ...grpc.CallOption) (*ReadTradeStrategyByTradeStrategyIDResponse, error)
+	ListAvailableVenues(ctx context.Context, in *ListAvailableVenuesRequest, opts ...grpc.CallOption) (*ListAvailableVenuesResponse, error)
 }
 
 type tradeengineClient struct {
@@ -58,6 +59,15 @@ func (c *tradeengineClient) ReadTradeStrategyByTradeStrategyID(ctx context.Conte
 	return out, nil
 }
 
+func (c *tradeengineClient) ListAvailableVenues(ctx context.Context, in *ListAvailableVenuesRequest, opts ...grpc.CallOption) (*ListAvailableVenuesResponse, error) {
+	out := new(ListAvailableVenuesResponse)
+	err := c.cc.Invoke(ctx, "/tradeengine/ListAvailableVenues", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TradeengineServer is the server API for Tradeengine service.
 // All implementations must embed UnimplementedTradeengineServer
 // for forward compatibility
@@ -65,6 +75,7 @@ type TradeengineServer interface {
 	CreateTradeStrategy(context.Context, *CreateTradeStrategyRequest) (*CreateTradeStrategyResponse, error)
 	ExecuteTradeStrategyForParticipant(context.Context, *ExecuteTradeStrategyForParticipantRequest) (*ExecuteTradeStrategyForParticipantResponse, error)
 	ReadTradeStrategyByTradeStrategyID(context.Context, *ReadTradeStrategyByTradeStrategyIDRequest) (*ReadTradeStrategyByTradeStrategyIDResponse, error)
+	ListAvailableVenues(context.Context, *ListAvailableVenuesRequest) (*ListAvailableVenuesResponse, error)
 	mustEmbedUnimplementedTradeengineServer()
 }
 
@@ -80,6 +91,9 @@ func (UnimplementedTradeengineServer) ExecuteTradeStrategyForParticipant(context
 }
 func (UnimplementedTradeengineServer) ReadTradeStrategyByTradeStrategyID(context.Context, *ReadTradeStrategyByTradeStrategyIDRequest) (*ReadTradeStrategyByTradeStrategyIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadTradeStrategyByTradeStrategyID not implemented")
+}
+func (UnimplementedTradeengineServer) ListAvailableVenues(context.Context, *ListAvailableVenuesRequest) (*ListAvailableVenuesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAvailableVenues not implemented")
 }
 func (UnimplementedTradeengineServer) mustEmbedUnimplementedTradeengineServer() {}
 
@@ -148,6 +162,24 @@ func _Tradeengine_ReadTradeStrategyByTradeStrategyID_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Tradeengine_ListAvailableVenues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAvailableVenuesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TradeengineServer).ListAvailableVenues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/tradeengine/ListAvailableVenues",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TradeengineServer).ListAvailableVenues(ctx, req.(*ListAvailableVenuesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Tradeengine_ServiceDesc is the grpc.ServiceDesc for Tradeengine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,6 +198,10 @@ var Tradeengine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadTradeStrategyByTradeStrategyID",
 			Handler:    _Tradeengine_ReadTradeStrategyByTradeStrategyID_Handler,
+		},
+		{
+			MethodName: "ListAvailableVenues",
+			Handler:    _Tradeengine_ListAvailableVenues_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

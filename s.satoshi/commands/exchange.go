@@ -54,7 +54,7 @@ func init() {
 				IsPrivate:           true,
 				IsFuturesOnly:       true,
 				MinimumNumberOfArgs: 1,
-				Usage:               `set-primary <exchange>`,
+				Usage:               `!exchange set-primary <exchange>`,
 				Description:         "Sets the primary exchange to use on your account",
 				Handler:             setPrimaryExchangeCommand,
 			},
