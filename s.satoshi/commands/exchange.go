@@ -56,6 +56,7 @@ func init() {
 				MinimumNumberOfArgs: 1,
 				Usage:               `set-primary <exchange>`,
 				Description:         "Sets the primary exchange to use on your account",
+				Handler:             setPrimaryExchangeCommand,
 			},
 		},
 	})
@@ -203,11 +204,12 @@ func setPrimaryExchangeCommand(ctx context.Context, tokens []string, s *discordg
 
 	if _, err := (&accountproto.UpdateAccountRequest{
 		PrimaryVenue: venue,
+		UserId:       m.Author.ID,
 	}).SendWithTimeout(ctx, 10*time.Second).Response(); err != nil {
 		s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf(
-				":wave I was unable to set your primary exchange on your account to: %s, Error: %v", venue, err,
+				":wave: I was unable to set your primary exchange on your account to: `%s`, Error: `%v`", venue, err,
 			),
 		)
 
@@ -219,9 +221,11 @@ func setPrimaryExchangeCommand(ctx context.Context, tokens []string, s *discordg
 	s.ChannelMessageSend(
 		m.ChannelID,
 		fmt.Sprintf(
-			":wave I have set your primary exchange on your account to be: %s", venue,
+			":wave: I have set your primary exchange on your account to be: `%s`", venue,
 		),
 	)
+
+	slog.Info(ctx, "Successfully updated users [%s] primary exchange to: %s", m.Author.Username, venue)
 
 	return nil
 }
