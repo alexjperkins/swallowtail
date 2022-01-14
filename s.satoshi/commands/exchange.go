@@ -36,7 +36,7 @@ func init() {
 				IsPrivate:           true,
 				IsFuturesOnly:       true,
 				MinimumNumberOfArgs: 3,
-				Usage:               `!exchange register binance <api-key> <secret-key>`,
+				Usage:               `!exchange register binance <api-key> <secret-key> <?subaccount>`,
 				Description:         "Registers a set of API keys (Binance only for now).",
 				Handler:             registerExchangeCommand,
 			},
@@ -71,8 +71,9 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 	defer cancel()
 
 	venue, apiKey, secretKey := strings.ToUpper(tokens[0]), tokens[1], tokens[2]
-	var venueProto tradeengineproto.VENUE
 
+	// Parse venue.
+	var venueProto tradeengineproto.VENUE
 	switch strings.ToUpper(venue) {
 	case tradeengineproto.VENUE_BINANCE.String():
 		venueProto = tradeengineproto.VENUE_BINANCE
@@ -86,8 +87,13 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 		// Bad Exchange type.
 		if _, err := (s.ChannelMessageSend(
 			m.ChannelID,
-			fmt.Sprintf(":wave: Sorry, I don't support that venues\n\nPlease post in #crypto-support to check available venues`%s, %s`"),
+			fmt.Sprintf(":wave: Sorry, I don't support that venues\n\nPlease post in #crypto-support to check available venues`%s`", venue),
 		)); err != nil {
+			s.ChannelMessageSend(
+				m.ChannelID,
+				fmt.Sprintf("Venue: %s, requires a subaccount to be passed: this should match the one created in the exchange itself", venueProto.String()),
+			)
+
 			return gerrors.Augment(err, "failed_to_send_to_discord_bad_exchange", map[string]string{
 				"command_id": "register-exchange-command",
 			})
@@ -96,22 +102,38 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 		return nil
 	}
 
+	// Parse subaccount if required by given venue.
+	var subaccount string
+	switch venueProto {
+	case tradeengineproto.VENUE_FTX:
+		if len(tokens) < 4 {
+			return gerrors.FailedPrecondition("subaccount_required_for_venue", map[string]string{
+				"venue": venueProto.String(),
+			})
+		}
+
+		subaccount = tokens[3]
+	default:
+		// Nothing to do here.
+	}
+
 	rsp, err := (&accountproto.AddVenueAccountRequest{
 		UserId: m.Author.ID,
 		VenueAccount: &accountproto.VenueAccount{
-			Venue:     venueProto,
-			ApiKey:    apiKey,
-			SecretKey: secretKey,
-			IsActive:  true,
+			Venue:      venueProto,
+			ApiKey:     apiKey,
+			SecretKey:  secretKey,
+			IsActive:   true,
+			SubAccount: subaccount,
 		},
 	}).Send(ctx).Response()
 	if err != nil {
 		slog.Error(ctx, "Failed to add exchange, error: %v", err)
-		_, derr := s.ChannelMessageSend(
+
+		if _, derr := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf(":wave: Sorry, I wasn't able to to add an exchange; please ping @ajperkins to investigate."),
-		)
-		if derr != nil {
+		); derr != nil {
 			return gerrors.Augment(derr, "failed_to_send_to_discord_failure", nil)
 		}
 
@@ -125,14 +147,13 @@ func registerExchangeCommand(ctx context.Context, tokens []string, s *discordgo.
 			reasons.WriteString(fmt.Sprintf("- %s\n", r))
 		}
 
-		_, derr := s.ChannelMessageSend(
+		if _, derr := s.ChannelMessageSend(
 			m.ChannelID,
 			fmt.Sprintf(
 				":wave: Sorry, I wasn't able to to verify your credentials. This is likely due to the following permissisions issues:```%s```",
 				reasons.String(),
 			),
-		)
-		if derr != nil {
+		); derr != nil {
 			return gerrors.Augment(derr, "failed_to_send_to_discord_failure", nil)
 		}
 
@@ -197,11 +218,44 @@ func setPrimaryExchangeCommand(ctx context.Context, tokens []string, s *discordg
 	case strings.ToUpper(tradeengineproto.VENUE_BITFINEX.String()):
 		return gerrors.Unimplemented("venue_unimplemented_for_primary_account.deribit", nil)
 	default:
+		// Best effort.
+		rsp, err := (&tradeengineproto.ListAvailableVenuesRequest{}).Send(ctx).Response()
+		switch {
+		case err != nil:
+			slog.Error(ctx, "Failed to retrieve list of available list, unimplemeted venue for set primary exchange command, Error: %v", err)
+		default:
+			s.ChannelMessageSend(
+				m.ChannelID,
+				fmt.Sprintf(
+					":wave: I was unable to set `%s` as your primary venue, I don't implement that venue just yet.\n\nAvailable Venues: `%s`",
+					venueToken, rsp.GetVenues(),
+				),
+			)
+		}
+
 		return gerrors.Unimplemented("venue_unimplemented", map[string]string{
 			"venue": venueToken,
 		})
 	}
 
+	// Read exchanges to see if venue account actually exists.
+	rsp, err := (&accountproto.ListVenueAccountsRequest{
+		UserId:                   m.Author.ID,
+		ActiveOnly:               true,
+		WithUnmaaskedCredentials: false,
+	}).SendWithTimeout(ctx, 10*time.Second).Response()
+	if err != nil {
+		slog.Error(ctx, "Failed to read venue accounts for user: %s", m.Author.ID)
+		return gerrors.Augment(err, "failed_to_set_primary_venue_on_account.list_venue_accounts", nil)
+	}
+
+	// Confirm that the user indeed has a venue account before setting it as primary venue.
+	if !doesUserHaveVenueAccountForVenue(rsp.GetVenueAccounts(), venue) {
+		slog.Error(ctx, "User does not have a venue account registered for: %s, cannot set primary venue to this venue", venue)
+		return gerrors.Augment(err, "failed_to_set_primary_venue_on_account.missing_venue_account_for_venue", nil)
+	}
+
+	// Update account.
 	if _, err := (&accountproto.UpdateAccountRequest{
 		PrimaryVenue: venue,
 		UserId:       m.Author.ID,
@@ -228,4 +282,14 @@ func setPrimaryExchangeCommand(ctx context.Context, tokens []string, s *discordg
 	slog.Info(ctx, "Successfully updated users [%s] primary exchange to: %s", m.Author.Username, venue)
 
 	return nil
+}
+
+func doesUserHaveVenueAccountForVenue(venueAccounts []*accountproto.VenueAccount, venue tradeengineproto.VENUE) bool {
+	for _, va := range venueAccounts {
+		if va.Venue == venue {
+			return true
+		}
+	}
+
+	return false
 }

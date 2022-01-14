@@ -30,6 +30,10 @@ func validateCredentials(credentials *tradeengineproto.VenueCredentials) error {
 		return gerrors.BadParam("missing_param.credentials", nil)
 	case credentials.ApiKey == "":
 		return gerrors.BadParam("missing_param.credentials.api_key", nil)
+	case credentials.SecretKey == "":
+		return gerrors.BadParam("missing_param.credentials.secret_key", nil)
+	case credentials.Subaccount == "":
+		return gerrors.BadParam("missing_param.credentials.subaccount", nil)
 	default:
 		return nil
 	}

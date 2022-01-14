@@ -20,6 +20,8 @@ func VenueCredentialsProtoToFTXCredentials(credentials *tradeengineproto.VenueCr
 		APIKey:     credentials.ApiKey,
 		SecretKey:  credentials.SecretKey,
 		Subaccount: credentials.Subaccount,
+		URL:        credentials.Url,
+		WSURL:      credentials.WsUrl,
 	}
 }
 
@@ -190,6 +192,25 @@ func InstrumentDTOToProto(i *client.Instrument) *ftxproto.Instrument {
 		Underlying:      i.Underlying,
 		BaseCurrency:    i.BaseCurrency,
 		QuoteCurrency:   i.QuoteCurrency,
+	}
+}
+
+func ReadAccountInformationDomainToProto(in *client.ReadAccountInformationResponseResult) *ftxproto.ReadAccountInformationResponse {
+	return &ftxproto.ReadAccountInformationResponse{
+		BackstopProvider:             in.BackstopProvider,
+		Collateral:                   float32(in.Collateral),
+		FreeCollateral:               float32(in.Collateral),
+		InitalMarginRequirement:      float32(in.InitialMarginRequirement),
+		Leverage:                     in.Leverage,
+		Liquidating:                  in.Liquidating,
+		MaintenanceMarginRequirement: float32(in.MaintenanceMarginRequirement),
+		MakerFee:                     float32(in.MakerFee),
+		MarginFraction:               float32(in.MakerFee),
+		OpenMarginFraction:           float32(in.OpenMarginFraction),
+		TakerFee:                     float32(in.TakerFee),
+		TotalAccountValue:            float32(in.TotalAccountValue),
+		TotalPositionSize:            float32(in.TotalPositionSize),
+		Username:                     in.Username,
 	}
 }
 

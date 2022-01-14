@@ -15,6 +15,8 @@ service ftx {
     rpc ExecuteNewOrder (ExecuteNewOrderRequest) returns (ExecuteNewOrderResponse) {}
 
     rpc ListFTXInstruments (ListFTXInstrumentsRequest) returns (ListFTXInstrumentsResponse) {}
+
+    rpc ReadAccountInformation (ReadAccountInformationRequest) returns (ReadAccountInformationResponse) {}
 } 
 
 enum FTX_SIDE {
@@ -136,4 +138,27 @@ message Instrument {
     string underlying = 7;
     string base_currency = 8;
     string quote_currency = 9;
+}
+
+message ReadAccountInformationRequest {
+    VenueCredentials credentials = 1;
+    string actor_id = 2;
+    string request_context = 3;
+}
+
+message ReadAccountInformationResponse {
+    bool backstopProvider = 1;
+    float collateral = 2;
+    float free_collateral = 3;
+    float initalMarginRequirement = 4;
+    int64 leverage = 5;
+    bool liquidating = 6;
+    float maintenanceMarginRequirement = 7;
+    float makerFee = 8;
+    float marginFraction = 9;
+    float openMarginFraction = 10;
+    float takerFee = 11;
+    float totalAccountValue = 12;
+    float totalPositionSize = 13;
+    string username = 14;
 }

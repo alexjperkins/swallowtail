@@ -34,15 +34,9 @@ func formatNonPublicMsg(userID string) string {
 }
 
 func formatFailureMsg(userID, usage, failureMsg string, err error) string {
-	var errMsg = err.Error()
-	switch {
-	case gerrors.Is(err, gerrors.ErrUnimplemented):
-		errMsg = "Command unimplemented"
-	}
-
 	return fmt.Sprintf(
-		":disappointed: Sorry <@%s>, I failed to execute that command.\n%s\n Error: %s\n",
-		userID, failureMsg, errMsg,
+		":disappointed: Sorry <@%s>, I failed to execute that command: %s \nError: `%v`\n",
+		userID, failureMsg, err,
 	)
 }
 

@@ -100,3 +100,12 @@ func (f *ftxClient) ListInstruments(ctx context.Context, req *ListInstrumentsReq
 
 	return rsp, nil
 }
+
+func (f *ftxClient) ReadAccountInformation(ctx context.Context, req *ReadAccountInformationRequest, credentials *auth.Credentials) (*ReadAccountInformationResponse, error) {
+	rsp := &ReadAccountInformationResponse{}
+	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/account", req, rsp, nil, credentials); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_account_information", nil)
+	}
+
+	return rsp, nil
+}

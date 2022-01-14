@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.ftx/client/auth"
-	"time"
 )
 
 func (f *ftxClient) do(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *auth.Credentials) error {

@@ -1,12 +1,13 @@
 package ftxproto
 
 import (
-	context "context"
-	"swallowtail/libraries/gerrors"
+	"context"
 	"time"
 
 	"github.com/monzo/slog"
-	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc"
+
+	"swallowtail/libraries/gerrors"
 )
 
 // --- Get FTX Status --- //
@@ -362,6 +363,79 @@ func (r *ListFTXInstrumentsRequest) SendWithTimeout(ctx context.Context, timeout
 	}()
 
 	return &ListFTXInstruments{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
+// --- Read Account Information --- //
+
+type ReadAccountInformation struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ReadAccountInformationResponse
+	ctx     context.Context
+}
+
+func (a *ReadAccountInformation) Response() (*ReadAccountInformationResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_account_information", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ReadAccountInformationRequest) Send(ctx context.Context) *ReadAccountInformation {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ReadAccountInformationRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadAccountInformation {
+	errc := make(chan error, 1)
+	resultc := make(chan *ReadAccountInformationResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-ftx:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- gerrors.Augment(err, "swallowtail_s-ftx_connection_failed", nil)
+		return &ReadAccountInformation{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewFtxClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ReadAccountInformation(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_read_account_information", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ReadAccountInformation{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

@@ -11,7 +11,8 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
 
 // FtxClient is the client API for Ftx service.
 //
@@ -22,6 +23,7 @@ type FtxClient interface {
 	ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error)
 	ExecuteNewOrder(ctx context.Context, in *ExecuteNewOrderRequest, opts ...grpc.CallOption) (*ExecuteNewOrderResponse, error)
 	ListFTXInstruments(ctx context.Context, in *ListFTXInstrumentsRequest, opts ...grpc.CallOption) (*ListFTXInstrumentsResponse, error)
+	ReadAccountInformation(ctx context.Context, in *ReadAccountInformationRequest, opts ...grpc.CallOption) (*ReadAccountInformationResponse, error)
 }
 
 type ftxClient struct {
@@ -77,6 +79,15 @@ func (c *ftxClient) ListFTXInstruments(ctx context.Context, in *ListFTXInstrumen
 	return out, nil
 }
 
+func (c *ftxClient) ReadAccountInformation(ctx context.Context, in *ReadAccountInformationRequest, opts ...grpc.CallOption) (*ReadAccountInformationResponse, error) {
+	out := new(ReadAccountInformationResponse)
+	err := c.cc.Invoke(ctx, "/ftx/ReadAccountInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FtxServer is the server API for Ftx service.
 // All implementations must embed UnimplementedFtxServer
 // for forward compatibility
@@ -86,6 +97,7 @@ type FtxServer interface {
 	ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error)
 	ExecuteNewOrder(context.Context, *ExecuteNewOrderRequest) (*ExecuteNewOrderResponse, error)
 	ListFTXInstruments(context.Context, *ListFTXInstrumentsRequest) (*ListFTXInstrumentsResponse, error)
+	ReadAccountInformation(context.Context, *ReadAccountInformationRequest) (*ReadAccountInformationResponse, error)
 	mustEmbedUnimplementedFtxServer()
 }
 
@@ -93,25 +105,35 @@ type FtxServer interface {
 type UnimplementedFtxServer struct {
 }
 
-func (*UnimplementedFtxServer) GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error) {
+func (UnimplementedFtxServer) GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFTXStatus not implemented")
 }
-func (*UnimplementedFtxServer) GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error) {
+func (UnimplementedFtxServer) GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFTXFundingRates not implemented")
 }
-func (*UnimplementedFtxServer) ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error) {
+func (UnimplementedFtxServer) ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAccountDeposits not implemented")
 }
-func (*UnimplementedFtxServer) ExecuteNewOrder(context.Context, *ExecuteNewOrderRequest) (*ExecuteNewOrderResponse, error) {
+func (UnimplementedFtxServer) ExecuteNewOrder(context.Context, *ExecuteNewOrderRequest) (*ExecuteNewOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteNewOrder not implemented")
 }
-func (*UnimplementedFtxServer) ListFTXInstruments(context.Context, *ListFTXInstrumentsRequest) (*ListFTXInstrumentsResponse, error) {
+func (UnimplementedFtxServer) ListFTXInstruments(context.Context, *ListFTXInstrumentsRequest) (*ListFTXInstrumentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFTXInstruments not implemented")
 }
-func (*UnimplementedFtxServer) mustEmbedUnimplementedFtxServer() {}
+func (UnimplementedFtxServer) ReadAccountInformation(context.Context, *ReadAccountInformationRequest) (*ReadAccountInformationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadAccountInformation not implemented")
+}
+func (UnimplementedFtxServer) mustEmbedUnimplementedFtxServer() {}
 
-func RegisterFtxServer(s *grpc.Server, srv FtxServer) {
-	s.RegisterService(&_Ftx_serviceDesc, srv)
+// UnsafeFtxServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FtxServer will
+// result in compilation errors.
+type UnsafeFtxServer interface {
+	mustEmbedUnimplementedFtxServer()
+}
+
+func RegisterFtxServer(s grpc.ServiceRegistrar, srv FtxServer) {
+	s.RegisterService(&Ftx_ServiceDesc, srv)
 }
 
 func _Ftx_GetFTXStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -204,7 +226,28 @@ func _Ftx_ListFTXInstruments_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Ftx_serviceDesc = grpc.ServiceDesc{
+func _Ftx_ReadAccountInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadAccountInformationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FtxServer).ReadAccountInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ftx/ReadAccountInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FtxServer).ReadAccountInformation(ctx, req.(*ReadAccountInformationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Ftx_ServiceDesc is the grpc.ServiceDesc for Ftx service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Ftx_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ftx",
 	HandlerType: (*FtxServer)(nil),
 	Methods: []grpc.MethodDesc{
@@ -227,6 +270,10 @@ var _Ftx_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListFTXInstruments",
 			Handler:    _Ftx_ListFTXInstruments_Handler,
+		},
+		{
+			MethodName: "ReadAccountInformation",
+			Handler:    _Ftx_ReadAccountInformation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -32,6 +32,8 @@ type Credentials struct {
 	APIKey     string
 	SecretKey  string
 	Subaccount string
+	URL        string
+	WSURL      string
 }
 
 // AsHeaders converts the credentials struct into the headers required to verify the user.

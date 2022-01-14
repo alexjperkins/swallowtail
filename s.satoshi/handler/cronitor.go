@@ -30,12 +30,14 @@ func notifyUserOnFailure(ctx context.Context, userID, tradeStrategyID string, nu
 		errMsg = "Sorry, the request to the exchange was malformed. This can happen if the trade amount you place is too small, **please** ping @ajperkins to investigate if you don't believe this is the case."
 	case gerrors.Is(err, gerrors.ErrRateLimited):
 		errMsg = "Sorry, looks like I've been rate limited. Please try and place the trade manually again in a few seconds time."
+	case gerrors.Is(err, gerrors.ErrFailedPrecondition, "venue_account_found_different_to_primary_venue_account_on_account"):
+		errMsg = "Sorry, looks like you don't have an exchange set up for that venue, please check with the `!exchange list` command."
 	default:
 		errMsg = "Sorry, I'm not sure what happened there. Please ping @ajperkins for a hand."
 	}
 
 	header := fmt.Sprintf(
-		":warning: <@%s>, I failed to fully execute your trade strategy, %d were placed. Please manually check on the exchange :warning:\nIf the error is transient you may try to place manually with a command.",
+		":warning: <@%s>, Sorry, I failed to fully execute your trade strategy, %d were placed. Please manually check on the exchange :warning:\n",
 		userID,
 		numberOfSuccessOrders,
 	)
@@ -44,7 +46,7 @@ func notifyUserOnFailure(ctx context.Context, userID, tradeStrategyID string, nu
 TRADE STRATEGY ID: %s
 ERROR:             %v
 EXECUTION ERROR:   %v
-FAILED ORDER:      %+v
+FAILED ORDER:      %v
 `
 	formattedContent := fmt.Sprintf(content, tradeStrategyID, errMsg, executionError.GetErrorMessage(), executionError.GetFailedOrder())
 

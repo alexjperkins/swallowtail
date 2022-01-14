@@ -214,5 +214,5 @@ message VenueCredentials {
 message ListAvailableVenuesRequest{}
 
 message ListAvailableVenuesResponse{
-    repeated string venues = 1;
+    repeated VENUE venues = 1;
 }

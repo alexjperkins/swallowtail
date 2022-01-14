@@ -11,6 +11,7 @@ import (
 	accountproto "swallowtail/s.account/proto"
 	binanceproto "swallowtail/s.binance/proto"
 	discordproto "swallowtail/s.discord/proto"
+	ftxproto "swallowtail/s.ftx/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -55,7 +56,7 @@ func validateVenueCredentials(ctx context.Context, userID string, venueAccount i
 	case tradeengineproto.VENUE_DERIBIT:
 		return false, "", gerrors.Unimplemented("venue_unimplemented.deribit", nil)
 	case tradeengineproto.VENUE_FTX:
-		return false, "", gerrors.Unimplemented("venue_validation_unimplemented.ftx", nil)
+		return validateFTXCredentials(ctx, userID, credentials)
 	default:
 		return false, "", gerrors.FailedPrecondition("failed_to_validate_credentials.invalid_venue_account", errParams)
 	}
@@ -74,7 +75,15 @@ func validateBinanceCredentials(ctx context.Context, userID string, venueCredent
 }
 
 func validateFTXCredentials(ctx context.Context, userID string, venueCredentials *tradeengineproto.VenueCredentials) (bool, string, error) {
-	return false, "", nil
+	if _, err := (&ftxproto.ReadAccountInformationRequest{
+		Credentials: venueCredentials,
+	}).Send(ctx).Response(); err != nil {
+		return false, "", gerrors.Augment(err, "failed_to_validate_credentials.ftx", map[string]string{
+			"subaccount": venueCredentials.Subaccount,
+		})
+	}
+
+	return true, "", nil
 }
 
 func notifyPulseChannel(ctx context.Context, userID, username string, timestamp time.Time) error {

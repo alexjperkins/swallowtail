@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"strings"
 
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
@@ -11,13 +10,14 @@ import (
 func (s *TradeEngineService) ListAvailableVenues(
 	ctx context.Context, in *tradeengineproto.ListAvailableVenuesRequest,
 ) (*tradeengineproto.ListAvailableVenuesResponse, error) {
-	var venues = make([]string, 0, len(tradeengineproto.VENUE_name))
-	for _, v := range tradeengineproto.VENUE_name {
-		if strings.ToUpper(v) != tradeengineproto.VENUE_UNREQUIRED.String() {
+	var venues = make([]tradeengineproto.VENUE, 0, len(tradeengineproto.VENUE_name))
+	for _, venue := range tradeengineproto.VENUE_value {
+		v := tradeengineproto.VENUE(venue)
+		if v == tradeengineproto.VENUE_UNREQUIRED {
 			continue
 		}
 
-		venues = append(venues, strings.ToUpper(v))
+		venues = append(venues, v)
 	}
 
 	return &tradeengineproto.ListAvailableVenuesResponse{

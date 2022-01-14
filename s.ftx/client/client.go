@@ -41,6 +41,8 @@ type FTXClient interface {
 
 	// GetFundingRate ...
 	GetFundingRate(ctx context.Context, req *GetFundingRateRequest) (*GetFundingRateResponse, error)
+
+	ReadAccountInformation(ctx context.Context, req *ReadAccountInformationRequest, credentials *auth.Credentials) (*ReadAccountInformationResponse, error)
 }
 
 // Init instantiates the FTX client singleton.
@@ -121,4 +123,12 @@ func ListInstruments(ctx context.Context, req *ListInstrumentsRequest) (*ListIns
 	defer span.Finish()
 	// NOTE: git merge issues; futues only still required?
 	return client.ListInstruments(ctx, req, true)
+}
+
+// ReadAccountInformation ...
+func ReadAccountInformation(ctx context.Context, req *ReadAccountInformationRequest, credentials *auth.Credentials) (*ReadAccountInformationResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "List instruments")
+	defer span.Finish()
+
+	return client.ReadAccountInformation(ctx, req, credentials)
 }
