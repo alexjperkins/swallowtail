@@ -43,7 +43,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	}
 
 	// Read account balance.
-	venueAccountBalance, err := readVenueAccountBalance(ctx, participant.Venue, strategy.InstrumentType, venueCredentials)
+	venueAccountBalance, err := readVenueAccountBalance(ctx, participant.Venue, strategy, venueCredentials)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit", nil)
 	}
