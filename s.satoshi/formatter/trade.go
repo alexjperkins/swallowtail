@@ -40,12 +40,19 @@ func formatTradeStrategy(header string, tradeStrategy *tradeengineproto.TradeStr
 		venues = append(venues, v.String())
 	}
 
+	var tps strings.Builder
+	for i, tp := range tradeStrategy.TakeProfits {
+		tps.WriteString(fmt.Sprintf("TP%v:                %v\n", i+1, tp))
+	}
+
 	content := `
+
 BASE CCY:          %v
 QUOTE CCY:         %v
 CURRENT_PRICE      %v
 ENTRY:             %v
 STOP LOSS:         %v
+%s
 
 INSTRUMENT TYPE:   %s
 TRADE SIDE:        %s
@@ -66,6 +73,7 @@ TIMESTAMP:         %v
 		tradeStrategy.CurrentPrice,
 		tradeStrategy.Entries[0],
 		tradeStrategy.StopLoss,
+		tps.String(),
 		tradeStrategy.InstrumentType.String(),
 		tradeStrategy.TradeSide.String(),
 		tradeStrategy.ExecutionStrategy.String(),
@@ -76,12 +84,8 @@ TIMESTAMP:         %v
 		tradeStrategy.Created.AsTime(),
 	)
 
-	// Append take profits if they exist.
+	// Build footer.
 	var footer strings.Builder
-	for i, tp := range tradeStrategy.TakeProfits {
-		footer.WriteString(fmt.Sprintf("TP%v:          %v\n", i+1, tp))
-	}
-
 	riskMessage := `
 Please manage your risk accordingly. To **place** a trade react with one of the following emojis within **15 minutes**:
 
@@ -120,22 +124,28 @@ func formatDCATrade(header string, tradeStrategy *tradeengineproto.TradeStrategy
 		venues = append(venues, v.String())
 	}
 
+	var tps strings.Builder
+	for i, tp := range tradeStrategy.TakeProfits {
+		tps.WriteString(fmt.Sprintf("TP%v:                %v\n", i+1, tp))
+	}
+
 	content := `
+
 BASE CCY:           %v
 QUOTE CCY:          %v
 CURRENT_PRICE       %v
 UPPER:              %v
 LOWER:              %v
 STOP LOSS:          %v
-
-INSTRUMENT TYPE:   %s
+%s
+INSTRUMENT TYPE:    %s
 TRADE SIDE:         %s
 EXECUTION_STRATEGY: %s  
 
 MOD:                %s
 MOD TYPE:           %s
 
-VENUES:             %s
+VENUES:             [%s]
 
 TRADE STRATEGY ID:  %s 
 TIMESTAMP:          %v
@@ -148,6 +158,7 @@ TIMESTAMP:          %v
 		sortedEntries[0],
 		sortedEntries[1],
 		tradeStrategy.StopLoss,
+		tps.String(),
 
 		tradeStrategy.InstrumentType.String(),
 		tradeStrategy.TradeSide.String(),
@@ -162,12 +173,8 @@ TIMESTAMP:          %v
 		tradeStrategy.Created.AsTime(),
 	)
 
-	// Append take profits if they exist.
+	// Build footer.
 	var footer strings.Builder
-	for i, tp := range tradeStrategy.TakeProfits {
-		footer.WriteString(fmt.Sprintf("TP%v:          %v\n", i+1, tp))
-	}
-
 	riskMessage := `
 Please manage your risk accordingly. To **place** a trade react with one of the following emojis within **15 minutes**:
 

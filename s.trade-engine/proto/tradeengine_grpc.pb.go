@@ -11,7 +11,8 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
 
 // TradeengineClient is the client API for Tradeengine service.
 //
@@ -71,19 +72,26 @@ type TradeengineServer interface {
 type UnimplementedTradeengineServer struct {
 }
 
-func (*UnimplementedTradeengineServer) CreateTradeStrategy(context.Context, *CreateTradeStrategyRequest) (*CreateTradeStrategyResponse, error) {
+func (UnimplementedTradeengineServer) CreateTradeStrategy(context.Context, *CreateTradeStrategyRequest) (*CreateTradeStrategyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTradeStrategy not implemented")
 }
-func (*UnimplementedTradeengineServer) ExecuteTradeStrategyForParticipant(context.Context, *ExecuteTradeStrategyForParticipantRequest) (*ExecuteTradeStrategyForParticipantResponse, error) {
+func (UnimplementedTradeengineServer) ExecuteTradeStrategyForParticipant(context.Context, *ExecuteTradeStrategyForParticipantRequest) (*ExecuteTradeStrategyForParticipantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteTradeStrategyForParticipant not implemented")
 }
-func (*UnimplementedTradeengineServer) ReadTradeStrategyByTradeStrategyID(context.Context, *ReadTradeStrategyByTradeStrategyIDRequest) (*ReadTradeStrategyByTradeStrategyIDResponse, error) {
+func (UnimplementedTradeengineServer) ReadTradeStrategyByTradeStrategyID(context.Context, *ReadTradeStrategyByTradeStrategyIDRequest) (*ReadTradeStrategyByTradeStrategyIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadTradeStrategyByTradeStrategyID not implemented")
 }
-func (*UnimplementedTradeengineServer) mustEmbedUnimplementedTradeengineServer() {}
+func (UnimplementedTradeengineServer) mustEmbedUnimplementedTradeengineServer() {}
 
-func RegisterTradeengineServer(s *grpc.Server, srv TradeengineServer) {
-	s.RegisterService(&_Tradeengine_serviceDesc, srv)
+// UnsafeTradeengineServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TradeengineServer will
+// result in compilation errors.
+type UnsafeTradeengineServer interface {
+	mustEmbedUnimplementedTradeengineServer()
+}
+
+func RegisterTradeengineServer(s grpc.ServiceRegistrar, srv TradeengineServer) {
+	s.RegisterService(&Tradeengine_ServiceDesc, srv)
 }
 
 func _Tradeengine_CreateTradeStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -140,7 +148,10 @@ func _Tradeengine_ReadTradeStrategyByTradeStrategyID_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Tradeengine_serviceDesc = grpc.ServiceDesc{
+// Tradeengine_ServiceDesc is the grpc.ServiceDesc for Tradeengine service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Tradeengine_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "tradeengine",
 	HandlerType: (*TradeengineServer)(nil),
 	Methods: []grpc.MethodDesc{

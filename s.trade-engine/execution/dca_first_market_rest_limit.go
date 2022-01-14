@@ -12,7 +12,6 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/risk"
-	or "swallowtail/s.trade-engine/orderrouter"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -143,7 +142,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	})
 
 	// Partition market order & limit orders
-	marketOrderPosition, limitOrderPositions := positions[0], positions[1:]
+	marketOrder, limitOrders := positions[0], positions[1:]
 
 	// Add first entry as market order.
 	orders = append(orders, &tradeengineproto.Order{
@@ -152,14 +151,14 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 		InstrumentType:   strategy.InstrumentType,
 		OrderType:        tradeengineproto.ORDER_TYPE_MARKET,
 		TradeSide:        strategy.TradeSide,
-		Quantity:         float32(venueAccountBalance) * participant.Risk * float32(marketOrderPosition.RiskCoefficient),
+		Quantity:         float32(venueAccountBalance) * float32(marketOrder.RiskCoefficient) * participant.Risk / 100.0,
 		WorkingType:      tradeengineproto.WORKING_TYPE_MARK_PRICE,
 		Venue:            participant.Venue,
 		CreatedTimestamp: now.Unix(),
 	})
 
 	// Add entry orders.
-	for _, p := range limitOrderPositions {
+	for _, p := range limitOrders {
 		orders = append(orders, &tradeengineproto.Order{
 			ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
 			Instrument:       strategy.Instrument,
@@ -169,7 +168,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 			OrderType:        tradeengineproto.ORDER_TYPE_LIMIT,
 			TradeSide:        strategy.TradeSide,
 			LimitPrice:       float32(p.Price),
-			Quantity:         float32(venueAccountBalance) * participant.Risk * float32(p.RiskCoefficient),
+			Quantity:         float32(venueAccountBalance) * float32(p.RiskCoefficient) * participant.Risk / 100.0,
 			WorkingType:      tradeengineproto.WORKING_TYPE_MARK_PRICE,
 			Venue:            participant.Venue,
 			CreatedTimestamp: now.Unix(),
@@ -199,30 +198,14 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 
 	// Execute orders sequentially; gather successful orders, here we return early on the first failed order.
 	// Here we manage risk, by placing the stop first - this is the most important.
-	var successfulOrders = make([]*tradeengineproto.Order, 0, len(orders))
-	for i, o := range orders {
-		successfulOrder, err := or.RouteAndExecuteNewOrder(ctx, o, participant.Venue, strategy.InstrumentType, venueCredentials)
-		if err != nil {
-			slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", o, err, errParams)
-			return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
-				NotionalSize:           float32(totalQuantity),
-				Venue:                  participant.Venue,
-				NumberOfExecutedOrders: int64(i),
-				ExecutionStrategy:      strategy.ExecutionStrategy,
-				SuccessfulOrders:       successfulOrders,
-				Timestamp:              timestamppb.Now(),
-				Error: &tradeengineproto.ExecutionError{
-					ErrorMessage: gerrors.Augment(err, "failed_to_execute_dca_first_market_rest_limit", nil).Error(),
-					FailedOrder:  o,
-				},
-			}, nil
-		}
 
-		slog.Info(ctx, "Order placed: %s [%s] %s", successfulOrder.Venue, successfulOrder.ExternalOrderId, successfulOrder.Instrument)
-		successfulOrders = append(successfulOrders, successfulOrder)
+	successfulOrders, executionErr := executeOrdersSequentiallyWithoutRetry(ctx, orders, participant.Venue, strategy.InstrumentType, venueCredentials)
+	switch {
+	case err != nil:
+		slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", executionErr.FailedOrder, executionErr.ErrorMessage, errParams)
+	default:
+		slog.Info(ctx, "Successfully placed trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 	}
-
-	slog.Info(ctx, "Successfully placed dca first market rest limit trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 
 	// TODO: store into persistance layer.
 
@@ -231,6 +214,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 		NumberOfExecutedOrders: int64(len(successfulOrders)),
 		ExecutionStrategy:      strategy.ExecutionStrategy,
 		SuccessfulOrders:       successfulOrders,
+		Error:                  executionErr,
 		Timestamp:              timestamppb.Now(),
 		Venue:                  participant.Venue,
 		Asset:                  strategy.Asset,

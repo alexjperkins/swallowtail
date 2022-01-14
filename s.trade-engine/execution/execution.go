@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"swallowtail/libraries/gerrors"
+	or "swallowtail/s.trade-engine/orderrouter"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
+
+	"github.com/monzo/slog"
 )
 
 // StrategyExecution defines the execution execution.
@@ -42,4 +45,29 @@ func ExecuteTradeStrategyForParticipant(
 	}
 
 	return rsp, nil
+}
+
+func executeOrdersSequentiallyWithoutRetry(
+	ctx context.Context,
+	orders []*tradeengineproto.Order,
+	venue tradeengineproto.VENUE,
+	instrumentType tradeengineproto.INSTRUMENT_TYPE,
+	credentials *tradeengineproto.VenueCredentials,
+) ([]*tradeengineproto.Order, *tradeengineproto.ExecutionError) {
+	var successfulOrders = make([]*tradeengineproto.Order, 0, len(orders))
+	for _, order := range orders {
+		successfulOrder, err := or.RouteAndExecuteNewOrder(ctx, order, venue, instrumentType, credentials)
+		if err != nil {
+			slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", order, err)
+			return successfulOrders, &tradeengineproto.ExecutionError{
+				ErrorMessage: gerrors.Augment(err, "failed_to_execute_order", nil).Error(),
+				FailedOrder:  order,
+			}
+		}
+
+		slog.Info(ctx, "Order placed: %s [%s] %s", successfulOrder.Venue, successfulOrder.ExternalOrderId, successfulOrder.Instrument)
+		successfulOrders = append(successfulOrders, successfulOrder)
+	}
+
+	return successfulOrders, nil
 }

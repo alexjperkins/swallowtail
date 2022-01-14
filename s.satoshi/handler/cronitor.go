@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"swallowtail/libraries/gerrors"
@@ -66,8 +67,17 @@ func notifyUserOnSuccess(
 	risk, size float64,
 	timestamp time.Time,
 	successfulOrders []*tradeengineproto.Order,
+	executionError *tradeengineproto.ExecutionError,
 ) error {
-	header := fmt.Sprintf(":wave: <@%s>, I have executed your trade strategy with %v%% risk :rocket:", userID, risk)
+	var header string
+	switch {
+	case executionError == nil || executionError.FailedOrder == nil:
+		header = fmt.Sprintf(":wave: <@%s>, I have executed your trade strategy with %v%% risk :rocket:", userID, risk)
+	case len(successfulOrders) == 0:
+		header = fmt.Sprintf(":wave: <@%s>, I have failed to execute your trade strategy :rotating_light:", userID)
+	default:
+		header = fmt.Sprintf(":wave: <@%s>, I have partially executed your trade strategy with risk %v%% :warning:", userID, risk)
+	}
 
 	content := `
 TRADE STRATEGY ID:    %s
@@ -79,14 +89,23 @@ EXECUTION STRATEGY:   %v
 RISK (%%):             %v
 SIZE:                 %v
 TIMESTAMP:            %v
-
-SUCCESSFUL_ORDERS:    %v
 `
-	formattedContent := fmt.Sprintf(content, tradeStrategyID, tradeParticipantID, asset, pair, venue, executionStrategy, risk, size, timestamp, len(successfulOrders))
+	formattedContent := fmt.Sprintf(
+		content,
+		tradeStrategyID,
+		tradeParticipantID,
+		asset,
+		pair,
+		venue,
+		executionStrategy,
+		risk,
+		size,
+		timestamp,
+	)
 
 	if _, err := (&discordproto.SendMsgToPrivateChannelRequest{
 		UserId:         userID,
-		Content:        fmt.Sprintf("%s```%s```", header, formattedContent),
+		Content:        fmt.Sprintf("%s```%s```%s", header, formattedContent, formatOrders(successfulOrders, executionError.FailedOrder, executionError.ErrorMessage)),
 		IdempotencyKey: fmt.Sprintf("tradestrategysuccess-%s-%s-%s", userID, tradeStrategyID, time.Now().UTC().Truncate(15*time.Minute)),
 	}).Send(ctx).Response(); err != nil {
 		return gerrors.Augment(err, "failed_to_notify_user", nil)
@@ -237,4 +256,36 @@ FAILED_ORDER:       %+v
 	}
 
 	return nil
+}
+
+func formatOrders(successfulOrders []*tradeengineproto.Order, failedOrder *tradeengineproto.Order, errorMessage string) string {
+	var sb strings.Builder
+	for i, so := range successfulOrders {
+		sb.WriteString(
+			fmt.Sprintf(
+				":white_check_mark: `[%v]: %s%s [%v:%s] %s %v @ %v (%v)`\n",
+				i+1, so.Asset, so.Pair.String(), so.Venue.String(), so.ExternalOrderId, so.OrderType.String(), so.Quantity, parsePrice(so), so.ExecutionTimestamp,
+			),
+		)
+	}
+
+	if failedOrder != nil {
+		sb.WriteString(
+			fmt.Sprintf(
+				":red_square: `[%v]: %s%s [%v] %s %v @ %v [Error: %v]`\n",
+				len(successfulOrders)+1, failedOrder.Asset, failedOrder.Pair.String(), failedOrder.Venue.String(), failedOrder.OrderType.String(), failedOrder.Quantity, parsePrice(failedOrder), errorMessage,
+			),
+		)
+	}
+
+	return sb.String()
+}
+
+func parsePrice(order *tradeengineproto.Order) float32 {
+	switch order.OrderType {
+	case tradeengineproto.ORDER_TYPE_MARKET, tradeengineproto.ORDER_TYPE_LIMIT:
+		return order.LimitPrice
+	default:
+		return order.StopPrice
+	}
 }

@@ -120,11 +120,7 @@ func (s *SatoshiService) PollTradeStrategyParticipants(
 						if rsp.GetError() != nil {
 							slog.Error(newCtx, "Partially failed to execute trade strategy for participant: %s; Error: %v", userID, rsp.GetError())
 
-							// Notify parties of failure.
-							if perr := notifyUserOnFailure(newCtx, userID, in.TradeStrategyId, int(rsp.NumberOfExecutedOrders), nil, rsp.GetError()); perr != nil {
-								slog.Error(newCtx, "Failed to notify user of successful trade strategy: %s, UserID %s, Error: %s", in.TradeStrategyId, userID, perr)
-							}
-
+							// Notify pulse channel of partial failure.
 							if perr := notifyPulseChannelUserTradeFailure(newCtx, userID, in.TradeStrategyId, risk, int(rsp.NumberOfExecutedOrders), nil, rsp.GetError()); perr != nil {
 								slog.Error(newCtx, "Failed to notify channel of successful trade strategy: %s, UserID %s, Error: %v", in.TradeStrategyId, userID, perr)
 							}
@@ -144,6 +140,7 @@ func (s *SatoshiService) PollTradeStrategyParticipants(
 							float64(rsp.NotionalSize),
 							rsp.Timestamp.AsTime(),
 							rsp.SuccessfulOrders,
+							rsp.Error,
 						); err != nil {
 							slog.Error(newCtx, "Failed to notify user of successful trade strategy: %v TradeParticipantId: %v", in.TradeStrategyId, rsp.TradeParticipantId)
 						}

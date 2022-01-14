@@ -11,7 +11,6 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/risk"
-	or "swallowtail/s.trade-engine/orderrouter"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
@@ -161,38 +160,22 @@ func (d *DMALimit) Execute(ctx context.Context, strategy *tradeengineproto.Trade
 
 	// Execute orders sequentially; gather successful orders, here we return early on the first failed order.
 	// Here we manage risk, by placing the stop first - this is the most important.
-	var successfulOrders = make([]*tradeengineproto.Order, 0, len(orders))
-	for i, o := range orders {
-		successfulOrder, err := or.RouteAndExecuteNewOrder(ctx, o, participant.Venue, strategy.InstrumentType, venueCredentials)
-		if err != nil {
-			slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", o, err, errParams)
-			return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
-				NotionalSize:           float32(totalQuantity),
-				Venue:                  participant.Venue,
-				NumberOfExecutedOrders: int64(i),
-				ExecutionStrategy:      strategy.ExecutionStrategy,
-				SuccessfulOrders:       successfulOrders,
-				Timestamp:              timestamppb.Now(),
-				Error: &tradeengineproto.ExecutionError{
-					ErrorMessage: gerrors.Augment(err, "failed_to_execute_dma_limit_strategy", nil).Error(),
-					FailedOrder:  o,
-				},
-			}, nil
-		}
-
-		slog.Info(ctx, "Order placed: %s [%s] %s", successfulOrder.Venue, successfulOrder.ExternalOrderId, successfulOrder.Instrument)
-		successfulOrders = append(successfulOrders, successfulOrder)
+	successfulOrders, executionErr := executeOrdersSequentiallyWithoutRetry(ctx, orders, participant.Venue, strategy.InstrumentType, venueCredentials)
+	switch {
+	case err != nil:
+		slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", executionErr.FailedOrder, executionErr.ErrorMessage, errParams)
+	default:
+		slog.Info(ctx, "Successfully placed trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 	}
 
-	slog.Info(ctx, "Successfully placed dma limit trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
-
-	// TODO: store into persistance layer.
+	// TODO: Persist orders
 
 	return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
 		NotionalSize:           float32(totalQuantity),
 		NumberOfExecutedOrders: int64(len(successfulOrders)),
 		ExecutionStrategy:      strategy.ExecutionStrategy,
 		SuccessfulOrders:       successfulOrders,
+		Error:                  executionErr,
 		Timestamp:              timestamppb.Now(),
 		Venue:                  participant.Venue,
 		Asset:                  strategy.Asset,

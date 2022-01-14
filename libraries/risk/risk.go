@@ -57,6 +57,7 @@ func CalculatePositionsByRisk(
 			sideCoeff = 1.0
 		}
 
+		// (Last entry - first entry) * side coeff * 1 / (num of bids - 1)
 		positionIncrement := float64(math.Abs(entries[len(entries)-1]-entries[0])) * 1.0 / (float64(howMany) - 1.0) * sideCoeff
 		for i := 0; i < howMany; i++ {
 			positions = append(positions, entries[0]+(float64(i)*positionIncrement))
@@ -104,7 +105,7 @@ func calculateContractsPerUnitRisk(entry float64, stopLoss, coeff float64, side 
 		return 0, gerrors.FailedPrecondition("failed_to_calculate_contracts_per_unit_risk.entry_cannot_equal_stop_loss", nil)
 	}
 
-	contractsPerUnitOfRisk := 0.01 * coeff / (entry - stopLoss)
+	contractsPerUnitOfRisk := coeff / (entry - stopLoss)
 
 	switch side.String() {
 	case "LONG", "BUY":
