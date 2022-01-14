@@ -3,13 +3,14 @@ package exchangeinfo
 import (
 	"context"
 	"strings"
-	"swallowtail/libraries/gerrors"
-	"swallowtail/s.ftx/client"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/monzo/slog"
+
+	"swallowtail/libraries/gerrors"
+	"swallowtail/s.ftx/client"
 )
 
 var (

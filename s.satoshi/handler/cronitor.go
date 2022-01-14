@@ -32,6 +32,8 @@ func notifyUserOnFailure(ctx context.Context, userID, tradeStrategyID string, nu
 		errMsg = "Sorry, looks like I've been rate limited. Please try and place the trade manually again in a few seconds time."
 	case gerrors.Is(err, gerrors.ErrFailedPrecondition, "venue_account_found_different_to_primary_venue_account_on_account"):
 		errMsg = "Sorry, looks like you don't have an exchange set up for that venue, please check with the `!exchange list` command."
+	case gerrors.Is(err, gerrors.ErrFailedPrecondition, "venue_balance_too_small"):
+		errMsg = "Sorry, looks like you don't have enough margin in your exchange account to place that trade strategy: default minimum is 100 USD"
 	default:
 		errMsg = "Sorry, I'm not sure what happened there. Please ping @ajperkins for a hand."
 	}

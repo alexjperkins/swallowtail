@@ -111,9 +111,9 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 	}
 
 	// Gather instrument data.
-	exchangeInstrumentData, ok := exchangeinfo.GetInstrumentBySymbol(order.Instrument)
+	exchangeInstrumentData, ok := exchangeinfo.GetInstrumentBySymbol(market)
 	if !ok {
-		return nil, gerrors.FailedPrecondition("exchange_instrument_metadata_not_found", errParams)
+		return nil, gerrors.FailedPrecondition("exchange_market_metadata_not_found", errParams)
 	}
 
 	// Parse prices.

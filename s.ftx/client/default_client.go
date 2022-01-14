@@ -40,7 +40,7 @@ func (f *ftxClient) ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, 
 	var endpoint = "orders"
 	switch req.Type {
 	case "stop", "trailingStop", "takeProfit":
-		endpoint = "conditional_order"
+		endpoint = "conditional_orders"
 	}
 
 	rsp := &ExecuteOrderResponse{}
