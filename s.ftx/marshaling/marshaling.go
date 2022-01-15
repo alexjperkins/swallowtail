@@ -5,50 +5,18 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.ftx/client"
 	"swallowtail/s.ftx/client/auth"
 	"swallowtail/s.ftx/exchangeinfo"
 	ftxproto "swallowtail/s.ftx/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func VenueCredentialsProtoToFTXCredentials(credentials *tradeengineproto.VenueCredentials) *auth.Credentials {
-	return &auth.Credentials{
-		APIKey:     credentials.ApiKey,
-		SecretKey:  credentials.SecretKey,
-		Subaccount: credentials.Subaccount,
-		URL:        credentials.Url,
-		WSURL:      credentials.WsUrl,
-	}
-}
-
-func DepositDTOToProto(deposit *client.DepositRecord) *ftxproto.DepositRecord {
-	return &ftxproto.DepositRecord{
-		Coin:          deposit.Coin,
-		Confirmations: deposit.Confirmations,
-		ConfirmedTime: timestamppb.New(deposit.ConfirmedTime),
-		Fee:           float32(deposit.Fee),
-		Id:            deposit.ID,
-		SentTime:      timestamppb.New(deposit.SentTime),
-		Size:          float32(deposit.Size),
-		Status:        deposit.Status,
-		Time:          timestamppb.New(deposit.Time),
-		TransactionId: deposit.TXID,
-	}
-}
-
-func DepositsDTOToProto(deposits []*client.DepositRecord) []*ftxproto.DepositRecord {
-	protos := []*ftxproto.DepositRecord{}
-	for _, d := range deposits {
-		protos = append(protos, DepositDTOToProto(d))
-	}
-
-	return protos
-}
-
+// OrderProtoToDTO ...
 func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest, error) {
 	errParams := map[string]string{
 		"actor_id":   order.ActorId,
@@ -130,7 +98,7 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 		orderPrice = roundToPrecisionString(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
 		triggerPrice = roundToPrecisionString(float64(order.StopPrice), exchangeInstrumentData.MininumTickSize)
 	case tradeengineproto.ORDER_TYPE_STOP_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
-		triggerPrice = roundToPrecisionString(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
+		triggerPrice = roundToPrecisionString(float64(order.StopPrice), exchangeInstrumentData.MininumTickSize)
 	}
 
 	// Parse quantity.
@@ -168,6 +136,40 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 		PostOnly:         order.PostOnly,
 		RetryUntilFilled: retryUntilFilled,
 	}, nil
+}
+
+func VenueCredentialsProtoToFTXCredentials(credentials *tradeengineproto.VenueCredentials) *auth.Credentials {
+	return &auth.Credentials{
+		APIKey:     credentials.ApiKey,
+		SecretKey:  credentials.SecretKey,
+		Subaccount: credentials.Subaccount,
+		URL:        credentials.Url,
+		WSURL:      credentials.WsUrl,
+	}
+}
+
+func DepositDTOToProto(deposit *client.DepositRecord) *ftxproto.DepositRecord {
+	return &ftxproto.DepositRecord{
+		Coin:          deposit.Coin,
+		Confirmations: deposit.Confirmations,
+		ConfirmedTime: timestamppb.New(deposit.ConfirmedTime),
+		Fee:           float32(deposit.Fee),
+		Id:            deposit.ID,
+		SentTime:      timestamppb.New(deposit.SentTime),
+		Size:          float32(deposit.Size),
+		Status:        deposit.Status,
+		Time:          timestamppb.New(deposit.Time),
+		TransactionId: deposit.TXID,
+	}
+}
+
+func DepositsDTOToProto(deposits []*client.DepositRecord) []*ftxproto.DepositRecord {
+	protos := []*ftxproto.DepositRecord{}
+	for _, d := range deposits {
+		protos = append(protos, DepositDTOToProto(d))
+	}
+
+	return protos
 }
 
 // InstrumentsDTOToProtos ...
@@ -237,14 +239,18 @@ func AccountBalancesDTOToProto(in *client.AccountBalance) *ftxproto.AccountBalan
 }
 
 func roundToPrecisionString(f float64, minIncrement float64) string {
+	if f <= 0.0 {
+		return "0.0"
+	}
+
 	v := f / minIncrement
 
 	var p float64
 	switch {
 	case v < 1.0:
-		p = math.Ceil(f) * minIncrement
+		p = math.Ceil(v) * minIncrement
 	default:
-		p = math.Floor(f) * minIncrement
+		p = math.Floor(v) * minIncrement
 	}
 
 	// Format float & trim zeros.

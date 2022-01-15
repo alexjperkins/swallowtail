@@ -19,7 +19,7 @@ func (p *PaginationFilter) ToQueryString() string {
 
 // ExecuteOrderRequest ...
 type ExecuteOrderRequest struct {
-	ClientID         string `json:"clientId"`
+	ClientID         string `json:"clientId,omitempty"`
 	Market           string `json:"market"`
 	Side             string `json:"side"`
 	Type             string `json:"type"`

@@ -137,10 +137,11 @@ func (s *SatoshiService) PollTradeStrategyParticipants(
 							rsp.ExecutionStrategy,
 							rsp.Venue,
 							float64(risk),
-							float64(rsp.NotionalSize),
 							rsp.Timestamp.AsTime(),
 							rsp.SuccessfulOrders,
 							rsp.Error,
+							rsp.InstrumentType,
+							float64(rsp.NotionalSizeIsUsd),
 						); err != nil {
 							slog.Error(newCtx, "Failed to notify user of successful trade strategy: %v TradeParticipantId: %v", in.TradeStrategyId, rsp.TradeParticipantId)
 						}

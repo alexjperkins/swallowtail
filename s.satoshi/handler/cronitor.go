@@ -68,10 +68,12 @@ func notifyUserOnSuccess(
 	userID, tradeStrategyID, tradeParticipantID, asset, pair string,
 	executionStrategy tradeengineproto.EXECUTION_STRATEGY,
 	venue tradeengineproto.VENUE,
-	risk, size float64,
+	risk float64,
 	timestamp time.Time,
 	successfulOrders []*tradeengineproto.Order,
 	executionError *tradeengineproto.ExecutionError,
+	instrumentType tradeengineproto.INSTRUMENT_TYPE,
+	notionalSizeInUSD float64,
 ) error {
 	var header string
 	switch {
@@ -86,12 +88,13 @@ func notifyUserOnSuccess(
 	content := `
 TRADE STRATEGY ID:    %s
 TRADE PARTICIPANT ID: %s
-ASSET:                %s
-PAIR:                 %s
+BASE:                 %s
+QUOTE:                %s
+INSTRUMENT_TYPE:      %s
 VENUE:                %s
 EXECUTION STRATEGY:   %v
 RISK (%%):             %v
-SIZE:                 %v
+NOTIONAL SIZE (USD):  %.2f
 TIMESTAMP:            %v
 `
 	formattedContent := fmt.Sprintf(
@@ -100,10 +103,11 @@ TIMESTAMP:            %v
 		tradeParticipantID,
 		asset,
 		pair,
+		instrumentType.String(),
 		venue,
 		executionStrategy,
 		risk,
-		size,
+		notionalSizeInUSD,
 		timestamp,
 	)
 

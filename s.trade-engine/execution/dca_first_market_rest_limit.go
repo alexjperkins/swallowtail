@@ -210,7 +210,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	// TODO: store into persistance layer.
 
 	return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
-		NotionalSize:           float32(totalQuantity),
+		NotionalSizeIsUsd:      float32(totalQuantity),
 		NumberOfExecutedOrders: int64(len(successfulOrders)),
 		ExecutionStrategy:      strategy.ExecutionStrategy,
 		SuccessfulOrders:       successfulOrders,

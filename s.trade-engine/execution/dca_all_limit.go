@@ -189,7 +189,7 @@ func (d *DCAAllLimit) Execute(
 	// TODO: Store into persistance layer.
 
 	return &tradeengineproto.ExecuteTradeStrategyForParticipantResponse{
-		NotionalSize:           float32(totalQuantity),
+		NotionalSizeIsUsd:      float32(venueAccountBalance) * 0.01 * participant.Risk,
 		NumberOfExecutedOrders: int64(len(successfulOrders)),
 		ExecutionStrategy:      strategy.ExecutionStrategy,
 		SuccessfulOrders:       successfulOrders,
@@ -200,5 +200,6 @@ func (d *DCAAllLimit) Execute(
 		Pair:                   strategy.Pair,
 		TradeParticipantId:     participant.UserId,
 		Instrument:             strategy.Instrument,
+		InstrumentType:         strategy.InstrumentType,
 	}, nil
 }

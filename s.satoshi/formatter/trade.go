@@ -42,7 +42,7 @@ func formatTradeStrategy(header string, tradeStrategy *tradeengineproto.TradeStr
 
 	var tps strings.Builder
 	for i, tp := range tradeStrategy.TakeProfits {
-		tps.WriteString(fmt.Sprintf("TP%v:                %v\n", i+1, tp))
+		tps.WriteString(fmt.Sprintf("TP%v:               %v\n", i+1, tp))
 	}
 
 	content := `

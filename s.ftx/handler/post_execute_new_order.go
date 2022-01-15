@@ -66,8 +66,6 @@ func (s *FTXService) ExecuteNewOrder(
 	order.ExternalOrderId = strconv.Itoa(rsp.Result.ID)
 	order.ExecutionTimestamp = rsp.Result.CreatedAt.UnixMilli()
 
-	slog.Info(ctx, "Executed order: %+v", order)
-
 	return &ftxproto.ExecuteNewOrderResponse{
 		Order: order,
 	}, nil

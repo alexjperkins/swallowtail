@@ -63,6 +63,8 @@ services:
       - .envs/twitter.env
     depends_on:
       - postgres
+      - swallowtail.s.binance
+      - swallowtail.s.ftx
     profiles:
       - backend
 

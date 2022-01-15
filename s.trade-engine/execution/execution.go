@@ -59,6 +59,7 @@ func executeOrdersSequentiallyWithoutRetry(
 		successfulOrder, err := or.RouteAndExecuteNewOrder(ctx, order, venue, instrumentType, credentials)
 		if err != nil {
 			slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", order, err)
+
 			return successfulOrders, &tradeengineproto.ExecutionError{
 				ErrorMessage: gerrors.Augment(err, "failed_to_execute_order", nil).Error(),
 				FailedOrder:  order,

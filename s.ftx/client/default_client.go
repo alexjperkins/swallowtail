@@ -8,6 +8,8 @@ import (
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
 	"swallowtail/s.ftx/client/auth"
+
+	"github.com/monzo/slog"
 )
 
 type ftxClient struct {
@@ -37,16 +39,19 @@ func (f *ftxClient) GetStatus(ctx context.Context, req *GetStatusRequest) (*GetS
 }
 
 func (f *ftxClient) ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *auth.Credentials) (*ExecuteOrderResponse, error) {
-	var endpoint = "orders"
+	var endpoint = "/api/orders"
 	switch req.Type {
 	case "stop", "trailingStop", "takeProfit":
-		endpoint = "conditional_orders"
+		endpoint = "/api/conditional_orders"
 	}
 
 	rsp := &ExecuteOrderResponse{}
-	if err := f.signBeforeDo(ctx, http.MethodPost, fmt.Sprintf("/api/%s", endpoint), req, rsp, nil, credentials); err != nil {
+	if err := f.signBeforeDo(ctx, http.MethodPost, fmt.Sprintf(endpoint), req, rsp, nil, credentials); err != nil {
+		slog.Error(ctx, "Request [%s] failed: Order: %+v", endpoint, req)
 		return nil, gerrors.Augment(err, "failed_to_post_order", nil)
 	}
+
+	slog.Info(ctx, "Request [%s] successful: Executed order: %+v", endpoint, req)
 
 	return rsp, nil
 }

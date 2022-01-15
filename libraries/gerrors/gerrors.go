@@ -3,9 +3,6 @@ package gerrors
 import (
 	"strings"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/monzo/terrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -41,42 +38,18 @@ func Augment(err error, msg string, params map[string]string) error {
 	// Convert error to status.Status
 	s, ok := status.FromError(err)
 	if !ok {
-		return terrors.Augment(err, "Failed to augment gerror", nil)
-	}
-	details := map[string]string{}
-	for k, v := range params {
-		details[k] = v
+		return status.Error(ErrUnknown, "Failed to augment gerror")
 	}
 
-	// Create new status; append message, with the same code & add new metadata details.
-	ns := status.Newf(s.Code(), "%s: %s", msg, s.Message())
-	ns, e := ns.WithDetails(&gerrorsproto.GerrorMessage{
-		Params: details,
+	var e error
+	s, e = s.WithDetails(&gerrorsproto.GerrorMessage{
+		Params: params,
 	})
 	if e != nil {
 		return e
 	}
 
-	// Update with old metadata.
-	for _, v := range s.Details() {
-		m, ok := v.(proto.Message)
-		if !ok {
-			// Best effort
-			continue
-		}
-
-		dv, e := ptypes.MarshalAny(m)
-		if e != nil {
-			return e
-		}
-
-		ns, e = ns.WithDetails(dv)
-		if e != nil {
-			return e
-		}
-	}
-
-	return ns.Err()
+	return s.Err()
 }
 
 // New ...
@@ -91,6 +64,29 @@ func New(code codes.Code, msg string, params map[string]string) error {
 	}
 
 	return s.Err()
+}
+
+// CollectDetailByKeyFromError ...
+func CollectDetailByKeyFromError(err error, key string) ([]string, bool) {
+	st, ok := status.FromError(err)
+	if !ok {
+		return nil, false
+	}
+
+	var ss []string
+	for _, detail := range st.Details() {
+		switch d := detail.(type) {
+		case *gerrorsproto.GerrorMessage:
+			s, ok := d.Params[key]
+			if !ok {
+				continue
+			}
+
+			ss = append(ss, s)
+		}
+	}
+
+	return ss, true
 }
 
 // NotFound ...

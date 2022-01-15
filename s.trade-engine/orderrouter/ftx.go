@@ -2,11 +2,11 @@ package orderrouter
 
 import (
 	"context"
-	"swallowtail/libraries/gerrors"
-	ftxproto "swallowtail/s.ftx/proto"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"swallowtail/libraries/gerrors"
+	ftxproto "swallowtail/s.ftx/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 

@@ -23,7 +23,7 @@ func Retry(ctx context.Context, maxAttempts int, f func(ctx context.Context) (in
 	for i := 0; i < maxAttempts; i++ {
 		r, err := f(ctx)
 		if err != nil {
-			multierror.Append(merr, err)
+			merr = multierror.Append(merr, err)
 			d := boff.NextBackOff()
 			time.Sleep(d)
 			continue

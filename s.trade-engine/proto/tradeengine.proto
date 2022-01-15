@@ -180,7 +180,7 @@ message ExecutionError {
 }
 
 message ExecuteTradeStrategyForParticipantResponse {
-    float notional_size = 1;
+    float notional_size_is_usd = 1;
     VENUE venue = 2;
     int64 number_of_executed_orders = 3;
     EXECUTION_STRATEGY execution_strategy = 4;
@@ -191,6 +191,7 @@ message ExecuteTradeStrategyForParticipantResponse {
     string asset = 9;
     TRADE_PAIR pair = 10;
     string instrument = 11;
+    INSTRUMENT_TYPE instrument_type = 12;
 }
 
 message ReadTradeStrategyByTradeStrategyIDRequest {

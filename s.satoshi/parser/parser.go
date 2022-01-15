@@ -29,7 +29,7 @@ type TradeParser interface {
 // Currently we use Binance.
 func Init(ctx context.Context) error {
 	// Fetch Binance info.
-	rsp, err := util.Retry(ctx, 3, func(ctx context.Context) (interface{}, error) {
+	rsp, err := util.Retry(ctx, 5, func(ctx context.Context) (interface{}, error) {
 		return (&binanceproto.ListAllAssetPairsRequest{}).Send(context.Background()).Response()
 	})
 	if err != nil {
@@ -48,7 +48,7 @@ func Init(ctx context.Context) error {
 	slog.Trace(context.Background(), "Fetched all binance asset pairs for satoshi parser; total: %v", len(binanceInstruments))
 
 	// Fetch FTX info.
-	rsp, err = util.Retry(ctx, 3, func(ctx context.Context) (interface{}, error) {
+	rsp, err = util.Retry(ctx, 5, func(ctx context.Context) (interface{}, error) {
 		return (&ftxproto.ListFTXInstrumentsRequest{}).Send(context.Background()).Response()
 	})
 	if err != nil {
