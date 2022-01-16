@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SatoshiClient interface {
 	PublishStatus(ctx context.Context, in *PublishStatusRequest, opts ...grpc.CallOption) (*PublishStatusResponse, error)
-	PollTradeParticipants(ctx context.Context, in *PollTradeParticipantsRequest, opts ...grpc.CallOption) (*PollTradeParticipantsResponse, error)
+	PollTradeStrategyParticipants(ctx context.Context, in *PollTradeStrategyParticipantsRequest, opts ...grpc.CallOption) (*PollTradeStrategyParticipantsResponse, error)
 }
 
 type satoshiClient struct {
@@ -38,9 +38,9 @@ func (c *satoshiClient) PublishStatus(ctx context.Context, in *PublishStatusRequ
 	return out, nil
 }
 
-func (c *satoshiClient) PollTradeParticipants(ctx context.Context, in *PollTradeParticipantsRequest, opts ...grpc.CallOption) (*PollTradeParticipantsResponse, error) {
-	out := new(PollTradeParticipantsResponse)
-	err := c.cc.Invoke(ctx, "/satoshi/PollTradeParticipants", in, out, opts...)
+func (c *satoshiClient) PollTradeStrategyParticipants(ctx context.Context, in *PollTradeStrategyParticipantsRequest, opts ...grpc.CallOption) (*PollTradeStrategyParticipantsResponse, error) {
+	out := new(PollTradeStrategyParticipantsResponse)
+	err := c.cc.Invoke(ctx, "/satoshi/PollTradeStrategyParticipants", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (c *satoshiClient) PollTradeParticipants(ctx context.Context, in *PollTrade
 // for forward compatibility
 type SatoshiServer interface {
 	PublishStatus(context.Context, *PublishStatusRequest) (*PublishStatusResponse, error)
-	PollTradeParticipants(context.Context, *PollTradeParticipantsRequest) (*PollTradeParticipantsResponse, error)
+	PollTradeStrategyParticipants(context.Context, *PollTradeStrategyParticipantsRequest) (*PollTradeStrategyParticipantsResponse, error)
 	mustEmbedUnimplementedSatoshiServer()
 }
 
@@ -63,8 +63,8 @@ type UnimplementedSatoshiServer struct {
 func (*UnimplementedSatoshiServer) PublishStatus(context.Context, *PublishStatusRequest) (*PublishStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublishStatus not implemented")
 }
-func (*UnimplementedSatoshiServer) PollTradeParticipants(context.Context, *PollTradeParticipantsRequest) (*PollTradeParticipantsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PollTradeParticipants not implemented")
+func (*UnimplementedSatoshiServer) PollTradeStrategyParticipants(context.Context, *PollTradeStrategyParticipantsRequest) (*PollTradeStrategyParticipantsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PollTradeStrategyParticipants not implemented")
 }
 func (*UnimplementedSatoshiServer) mustEmbedUnimplementedSatoshiServer() {}
 
@@ -90,20 +90,20 @@ func _Satoshi_PublishStatus_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Satoshi_PollTradeParticipants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PollTradeParticipantsRequest)
+func _Satoshi_PollTradeStrategyParticipants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PollTradeStrategyParticipantsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SatoshiServer).PollTradeParticipants(ctx, in)
+		return srv.(SatoshiServer).PollTradeStrategyParticipants(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/satoshi/PollTradeParticipants",
+		FullMethod: "/satoshi/PollTradeStrategyParticipants",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SatoshiServer).PollTradeParticipants(ctx, req.(*PollTradeParticipantsRequest))
+		return srv.(SatoshiServer).PollTradeStrategyParticipants(ctx, req.(*PollTradeStrategyParticipantsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -117,8 +117,8 @@ var _Satoshi_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Satoshi_PublishStatus_Handler,
 		},
 		{
-			MethodName: "PollTradeParticipants",
-			Handler:    _Satoshi_PollTradeParticipants_Handler,
+			MethodName: "PollTradeStrategyParticipants",
+			Handler:    _Satoshi_PollTradeStrategyParticipants_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

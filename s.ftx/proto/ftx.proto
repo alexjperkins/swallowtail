@@ -1,16 +1,45 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "s.trade-engine/proto/tradeengine.proto";
 
-option go_package = "./;ftxproto";
+option go_package = "swallowtail/s.ftx/proto;ftxproto";
 
 service ftx {
-    rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
-
     rpc GetFTXStatus (GetFTXStatusRequest) returns (GetFTXStatusResponse) {}
 
     rpc GetFTXFundingRates (GetFTXFundingRatesRequest) returns (GetFTXFundingRatesResponse) {}
+
+    rpc ListAccountDeposits (ListAccountDepositsRequest) returns (ListAccountDepositsResponse) {}
+
+    rpc ExecuteNewOrder (ExecuteNewOrderRequest) returns (ExecuteNewOrderResponse) {}
+
+    rpc ListFTXInstruments (ListFTXInstrumentsRequest) returns (ListFTXInstrumentsResponse) {}
+
+    rpc ReadAccountInformation (ReadAccountInformationRequest) returns (ReadAccountInformationResponse) {}
+
+    rpc ListAccountBalances (ListAccountBalancesRequest) returns (ListAccountBalancesResponse) {}
 } 
+
+enum FTX_SIDE {
+    FTX_SIDE_BUY = 0;
+    FTX_SIDE_SELL = 1;
+}
+
+enum FTX_TRADE_TYPE {
+    FTX_TRADE_TYPE_LIMIT = 0;
+    FTX_TRADE_TYPE_MARKET = 1;
+    FTX_TRADE_TYPE_STOP = 2;
+    FTX_TRADE_TYPE_TRALING_STOP = 3;
+    FTX_TRADE_TYPE_TAKE_PROFIT = 4;
+}
+
+enum FTX_CONTRACT_TYPE {
+    FTX_CONTRACT_TYPE_SPOT = 0;
+    FTX_CONTRACT_TYPE_FUTURE = 1;
+    FTX_CONTRACT_TYPE_PERPETUAL = 2;
+    FTX_CONTRACT_TYPE_MOVE = 3;
+}
 
 message ListAccountDepositsRequest {
     string actor_id = 1;
@@ -65,4 +94,93 @@ message FTXFundingRatesInfo {
 
 message GetFTXFundingRatesResponse {
     repeated FTXFundingRatesInfo funding_rates = 1;
+}
+
+message FTXOrder {
+    string symbol = 1;
+    FTX_SIDE side = 2;
+    float price = 3;
+    FTX_TRADE_TYPE type = 4;
+    float quantity = 5;
+    bool reduce_only = 6;
+    bool ioc = 7;
+    bool post_only = 8;
+    bool reject_on_price_band = 9;
+    bool retry_until_filled = 10;
+    float trigger_price = 11;
+    float order_price = 12;
+    float trail_value = 13;
+}
+
+message ExecuteNewOrderRequest {
+    Order order = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    VenueCredentials credentials = 3;
+}
+
+message ExecuteNewOrderResponse {
+    Order order = 1;
+}
+
+message ListFTXInstrumentsRequest {
+    repeated FTX_CONTRACT_TYPE contract_types = 1;
+}
+
+message ListFTXInstrumentsResponse{
+    repeated Instrument instruments = 1;
+}
+
+message Instrument {
+    string symbol = 1;
+    bool post_only = 2;
+    bool enabled = 3;
+    float minimum_tick_size = 4;
+    float minimum_quantity = 5;
+    string type = 6;
+    string underlying = 7;
+    string base_currency = 8;
+    string quote_currency = 9;
+}
+
+message ReadAccountInformationRequest {
+    VenueCredentials credentials = 1;
+    string actor_id = 2;
+    string request_context = 3;
+}
+
+message ReadAccountInformationResponse {
+    bool backstopProvider = 1;
+    float collateral = 2;
+    float free_collateral = 3;
+    float initalMarginRequirement = 4;
+    float leverage = 5;
+    bool liquidating = 6;
+    float maintenanceMarginRequirement = 7;
+    float makerFee = 8;
+    float marginFraction = 9;
+    float openMarginFraction = 10;
+    float takerFee = 11;
+    float totalAccountValue = 12;
+    float totalPositionSize = 13;
+    string username = 14;
+}
+
+message ListAccountBalancesRequest {
+    VenueCredentials credentials = 1;
+    string actor_id = 2;
+    string request_context = 3;
+}
+
+message AccountBalance {
+    string asset = 1;
+    float quantity_available = 2;
+    float spot_borrow = 3;
+    float total = 4;
+    float usd_value = 5;
+    float available_without_borrow = 6;
+}
+
+message ListAccountBalancesResponse {
+    repeated AccountBalance account_balances = 1;
+    
 }

@@ -1,10 +1,13 @@
 package gerrors
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestIs_Basic(t *testing.T) {
@@ -85,4 +88,51 @@ func TestIs_Augmented(t *testing.T) {
 	}
 }
 
-// TODO: Test params under augment.
+func TestCollectDetailByKeyFromError(t *testing.T) {
+	t.Parallel()
+
+	var (
+		userIDKey   = "user_id"
+		userIDValue = "harrypotter"
+	)
+
+	err := New(ErrBadParam, "missing_param", map[string]string{
+		userIDKey: userIDValue,
+	})
+
+	details, ok := CollectDetailByKeyFromError(err, userIDKey)
+	require.True(t, ok)
+
+	assert.Equal(t, []string{userIDValue}, details)
+}
+
+func TestCollectDetailByKeyFromError_Augmented(t *testing.T) {
+	t.Parallel()
+
+	var (
+		userIDKey = "user_id"
+
+		userIDValue          = "harrypotter"
+		userIDValueAugmented = "dumbledore"
+	)
+
+	err := New(codes.FailedPrecondition, "missing_param", map[string]string{
+		userIDKey: userIDValue,
+	})
+
+	err = Augment(err, "failed_request", map[string]string{
+		userIDKey: userIDValueAugmented,
+	})
+
+	s, ok := status.FromError(err)
+
+	// Basic assertions on the error code in question.
+	require.True(t, ok)
+	require.Equal(t, s.Code(), codes.FailedPrecondition)
+
+	details, ok := CollectDetailByKeyFromError(err, userIDKey)
+	require.True(t, ok)
+
+	sort.Strings(details)
+	assert.Equal(t, []string{userIDValueAugmented, userIDValue}, details)
+}

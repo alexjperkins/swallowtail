@@ -63,6 +63,8 @@ services:
       - .envs/twitter.env
     depends_on:
       - postgres
+      - swallowtail.s.binance
+      - swallowtail.s.ftx
     profiles:
       - backend
 
@@ -183,11 +185,13 @@ services:
     profiles:
       - backend
 
-  swallowtail.c.exchanges:
-    hostname: swallowtail-c-exchanges
-    image: swallowtail.c.exchanges
+  swallowtail.c.venues:
+    hostname: swallowtail-c-venues
+    image: swallowtail.c.venues
     depends_on:
       - swallowtail.s.binance
+      - swallowtail.s.bitfinex
+      - swallowtail.s.ftx
     profiles:
       - backend
 

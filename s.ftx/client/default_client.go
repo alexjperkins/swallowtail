@@ -2,13 +2,14 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
+
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
-	"time"
+	"swallowtail/s.ftx/client/auth"
 )
 
 type ftxClient struct {
@@ -17,7 +18,7 @@ type ftxClient struct {
 }
 
 func (f *ftxClient) Ping(ctx context.Context) error {
-	err := f.do(ctx, http.MethodGet, "/api/stats/latency_stats", PingRequest{}, PingResponse{}, nil, nil)
+	err := f.do(ctx, http.MethodGet, "/api/stats/latency_stats", nil, nil, nil, nil)
 	switch {
 	case gerrors.Is(err, gerrors.ErrUnauthenticated):
 		return nil
@@ -28,9 +29,35 @@ func (f *ftxClient) Ping(ctx context.Context) error {
 	}
 }
 
+func (f *ftxClient) GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, error) {
+	rsp := &GetStatusResponse{}
+	if err := f.do(ctx, http.MethodGet, "/api/stats/latency_stats", req, rsp, nil, nil); err != nil {
+		return nil, gerrors.Augment(err, "failed_get_ftx_status", nil)
+	}
+
+	return rsp, nil
+}
+
+func (f *ftxClient) ExecuteOrder(ctx context.Context, req *ExecuteOrderRequest, credentials *auth.Credentials) (*ExecuteOrderResponse, error) {
+	var endpoint = "/api/orders"
+	switch req.Type {
+	case "stop", "trailingStop", "takeProfit":
+		endpoint = "/api/conditional_orders"
+	}
+
+	rsp := &ExecuteOrderResponse{}
+	if err := f.signBeforeDo(ctx, http.MethodPost, fmt.Sprintf(endpoint), req, rsp, nil, credentials); err != nil {
+		slog.Error(ctx, "Request [%s] failed: Order: %+v", endpoint, req)
+		return nil, gerrors.Augment(err, "failed_to_post_order", nil)
+	}
+
+	slog.Info(ctx, "Request [%s] successful: Executed order: %+v", endpoint, req)
+
+	return rsp, nil
+}
+
 func (f *ftxClient) ListAccountDeposits(ctx context.Context, req *ListAccountDepositsRequest, pagination *PaginationFilter) (*ListAccountDepositsResponse, error) {
 	rsp := &ListAccountDepositsResponse{}
-
 	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/wallet/deposits", req, rsp, pagination, depositAccountCredentials); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_list_account_deposits", map[string]string{
 			"subaccount": depositAccountCredentials.Subaccount,
@@ -40,9 +67,8 @@ func (f *ftxClient) ListAccountDeposits(ctx context.Context, req *ListAccountDep
 	return rsp, nil
 }
 
-func (f *ftxClient) VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *Credentials) (*VerifyCredentialsResponse, error) {
+func (f *ftxClient) VerifyCredentials(ctx context.Context, req *VerifyCredentialsRequest, credentials *auth.Credentials) (*VerifyCredentialsResponse, error) {
 	rsp := &VerifyCredentialsResponse{}
-
 	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/account", req, rsp, nil, credentials); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_verify_credentials", map[string]string{
 			"subaccount": credentials.Subaccount,
@@ -70,41 +96,30 @@ func (f *ftxClient) GetFundingRate(ctx context.Context, req *GetFundingRateReque
 	return rsp, nil
 }
 
-func (f *ftxClient) do(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *Credentials) error {
-	url := fmt.Sprintf("%s%s", f.hostname, buildEndpoint(endpoint, pagination))
-
-	var creds = credentials
-	if creds == nil {
-		creds = &Credentials{}
+func (f *ftxClient) ListInstruments(ctx context.Context, req *ListInstrumentsRequest, futuresOnly bool) (*ListInstrumentsResponse, error) {
+	// Determine the correct endpoint based on whether the caller requires `futuresOnly`.
+	rsp := &ListInstrumentsResponse{}
+	if err := f.do(ctx, http.MethodGet, "/api/markets", req, rsp, nil, nil); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_list_instruments", nil)
 	}
 
-	return f.http.DoWithEphemeralHeaders(ctx, method, url, req, rsp, creds.SubaccountAsHeaders())
+	return rsp, nil
 }
 
-func (f *ftxClient) signBeforeDo(ctx context.Context, method, endpoint string, req, rsp interface{}, pagination *PaginationFilter, credentials *Credentials) error {
-	ts := strconv.FormatInt(time.Now().UTC().Unix()*1000, 10)
-	preparedEndpoint := buildEndpoint(endpoint, pagination)
-
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return gerrors.Augment(err, "failed_to_sign_request.bad_request_body", nil)
+func (f *ftxClient) ReadAccountInformation(ctx context.Context, credentials *auth.Credentials) (*ReadAccountInformationResponse, error) {
+	rsp := &ReadAccountInformationResponse{}
+	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/account", nil, rsp, nil, credentials); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_read_account_information", nil)
 	}
 
-	signature, err := credentials.SignRequest(method, preparedEndpoint, ts, reqBody)
-	if err != nil {
-		return gerrors.Augment(err, "failed_to_send_request.failed_to_sign_request", nil)
-	}
-
-	url := fmt.Sprintf("%s%s", f.hostname, preparedEndpoint)
-
-	return f.http.DoWithEphemeralHeaders(ctx, method, url, req, rsp, credentials.AsHeaders(signature, ts))
+	return rsp, nil
 }
 
-func buildEndpoint(base string, pagination *PaginationFilter) string {
-	var endpoint = base
-	if pagination != nil {
-		endpoint = fmt.Sprintf("%s?%s", endpoint, pagination.ToQueryString())
+func (f *ftxClient) ListAccountBalances(ctx context.Context, credentials *auth.Credentials) (*ListAccountBalancesResponse, error) {
+	rsp := &ListAccountBalancesResponse{}
+	if err := f.signBeforeDo(ctx, http.MethodGet, "/api/wallet/balances", nil, rsp, nil, credentials); err != nil {
+		return nil, gerrors.Augment(err, "failed_to_list_account_balances", nil)
 	}
 
-	return endpoint
+	return rsp, nil
 }

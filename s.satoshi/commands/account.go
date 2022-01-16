@@ -86,7 +86,7 @@ func registerAccountHandler(ctx context.Context, tokens []string, s *discordgo.S
 	s.ChannelMessageSend(
 		m.ChannelID,
 		fmt.Sprintf(
-			":wave: I have registered your account with email: `%s`.\n\nRef Links\n Binance: %s\nFTX: %s",
+			":wave: I have registered your account with email: `%s`.\n\nRef Links:\n`Binance`: %s\n`FTX`: %s",
 			email,
 			binanceReferralLink,
 			ftxReferralLink,
@@ -117,14 +117,14 @@ func readAccountHandler(ctx context.Context, tokens []string, s *discordgo.Sessi
 	account := rsp.GetAccount()
 
 	tpl := `
-Username:          %s
-Email:             %s
-Created:           %s
-Last Updated:      %v
-Is Futures Member: %v
-Primary Exchange:  %s
+Username:               %s
+Email:                  %s
+Created:                %s
+Last Updated:           %v
+Is Futures Member:      %v
+Primary Venue:          %v
 	`
-	formattedMsg := fmt.Sprintf(tpl, account.Username, account.Email, account.Created.AsTime(), account.LastUpdated.AsTime(), account.IsFuturesMember, account.PrimaryExchange)
+	formattedMsg := fmt.Sprintf(tpl, account.Username, account.Email, account.Created.AsTime(), account.LastUpdated.AsTime(), account.IsFuturesMember, account.PrimaryVenue)
 
 	// Best Effort.
 	s.ChannelMessageSend(

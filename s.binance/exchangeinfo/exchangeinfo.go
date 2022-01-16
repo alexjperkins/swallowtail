@@ -73,7 +73,7 @@ func Init(ctx context.Context) error {
 }
 
 func refresh(ctx context.Context) {
-	t := time.NewTicker(24 * time.Hour)
+	t := time.NewTicker(23 * time.Hour)
 	for {
 		select {
 		case <-t.C:
@@ -207,14 +207,12 @@ func gatherExchangeInfo(ctx context.Context) error {
 		}
 
 		symbolInformation[strings.ToLower(s.Symbol)] = d
-
-		slog.Info(ctx, "SYMBOL: %s, TICK_SIZE: %v, LOT_SIZE: %v, DATA: %+v", s.Symbol, tickSize, lotSize, d)
 	}
 
 	return nil
 }
 
-// GetBaseAssetQuantityPrecision ...
+// GetBaseAssetQuantityPrecision returns the base asset quantity precision given the base asset.
 func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -239,7 +237,7 @@ func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (int, b
 	return calculatePrecision(vq), true
 }
 
-// GetBaseAssetPricePrecision ...
+// GetBaseAssetPricePrecision returns the base asset price precision given the base asset.
 func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -256,7 +254,7 @@ func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
 	return calculatePrecision(v.TickSize), true
 }
 
-// GetBaseAssetMinQty...
+// GetBaseAssetMinQty ...
 func GetBaseAssetMinQty(baseAsset string, isMarketOrder bool) (float64, bool, error) {
 	mu.RLock()
 	defer mu.RUnlock()

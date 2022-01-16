@@ -12,74 +12,80 @@ var (
 	longEmoji  = ":chart_with_upwards_trend:"
 )
 
-// FormatTrade humanizes a trade in string format.
-func FormatTrade(header string, trade *tradeengineproto.Trade, parsedFrom string) string {
+// FormatTradeStrategy humanizes a trade in string format.
+func FormatTradeStrategy(header string, trade *tradeengineproto.TradeStrategy, parsedFrom string) string {
 	switch len(trade.Entries) {
 	case 0:
-		return formatTrade(header, trade, parsedFrom)
+		return formatTradeStrategy(header, trade, parsedFrom)
 	case 1:
-		return formatTrade(header, trade, parsedFrom)
+		return formatTradeStrategy(header, trade, parsedFrom)
 	default:
 		return formatDCATrade(header, trade, parsedFrom)
 	}
 }
 
-func formatTrade(header string, trade *tradeengineproto.Trade, parsedFrom string) string {
+func formatTradeStrategy(header string, tradeStrategy *tradeengineproto.TradeStrategy, parsedFrom string) string {
 	var sideEmoji string
-	switch trade.TradeSide {
+	switch tradeStrategy.TradeSide {
 	case tradeengineproto.TRADE_SIDE_LONG, tradeengineproto.TRADE_SIDE_BUY:
 		sideEmoji = longEmoji
 	case tradeengineproto.TRADE_SIDE_SHORT, tradeengineproto.TRADE_SIDE_SELL:
 		sideEmoji = shortEmoji
 	}
 
-	base := fmt.Sprintf("%s   `NEW TRADE ALERT: %s: %s%s`    :rocket:", sideEmoji, header, trade.Asset, trade.Pair)
-	warning := `
+	base := fmt.Sprintf("%s   `NEW TRADE STRATEGY ALERT: %s: %s%s`    :rocket:", sideEmoji, header, tradeStrategy.Asset, tradeStrategy.Pair)
 
-:warning: Satoshi can not and **will** not be 100% accurate; please make sure the trade is sensible before placing :warning:
-`
+	var venues []string
+	for _, v := range tradeStrategy.TradeableVenues {
+		venues = append(venues, v.String())
+	}
+
+	var tps strings.Builder
+	for i, tp := range tradeStrategy.TakeProfits {
+		tps.WriteString(fmt.Sprintf("TP%v:               %v\n", i+1, tp))
+	}
 
 	content := `
-TRADE ID:     %s 
-TIMESTAMP:    %v
 
-ASSET:        %v
-PAIR:         %v
-TRADE TYPE:   %s
-TRADE SIDE:   %s
-ORDER TYPE:   %s
-MOD:          %s
-MOD TYPE:     %s
+BASE CCY:          %v
+QUOTE CCY:         %v
+CURRENT_PRICE      %v
+ENTRY:             %v
+STOP LOSS:         %v
+%s
 
-CURRENT_PRICE %v
+INSTRUMENT TYPE:   %s
+TRADE SIDE:        %s
+ORDER TYPE:        %s
 
-ENTRY:        %v
-STOP LOSS:    %v
+MOD:               %s
+MOD TYPE:          %s
+
+VENUES:            [%s]
+
+TRADE STRATEGY ID: %s 
+TIMESTAMP:         %v
 `
 	formattedContent := fmt.Sprintf(
 		content,
-		trade.TradeId,
-		trade.Created.AsTime(),
-
-		strings.ToUpper(trade.Asset),
-		trade.Pair.String(),
-
-		trade.TradeType.String(),
-		trade.TradeSide.String(),
-		trade.OrderType.String(),
-		trade.HumanizedActorName,
-		trade.ActorType.String(),
-		trade.CurrentPrice,
-		trade.Entries[0],
-		trade.StopLoss,
+		strings.ToUpper(tradeStrategy.Asset),
+		tradeStrategy.Pair.String(),
+		tradeStrategy.CurrentPrice,
+		tradeStrategy.Entries[0],
+		tradeStrategy.StopLoss,
+		tps.String(),
+		tradeStrategy.InstrumentType.String(),
+		tradeStrategy.TradeSide.String(),
+		tradeStrategy.ExecutionStrategy.String(),
+		tradeStrategy.HumanizedActorName,
+		tradeStrategy.ActorType.String(),
+		strings.Join(venues, ", "),
+		tradeStrategy.TradeStrategyId,
+		tradeStrategy.Created.AsTime(),
 	)
 
-	// Append take profits if they exist.
+	// Build footer.
 	var footer strings.Builder
-	for i, tp := range trade.TakeProfits {
-		footer.WriteString(fmt.Sprintf("TP%v:          %v\n", i+1, tp))
-	}
-
 	riskMessage := `
 Please manage your risk accordingly. To **place** a trade react with one of the following emojis within **15 minutes**:
 
@@ -88,76 +94,87 @@ Please manage your risk accordingly. To **place** a trade react with one of the 
 5%:  :five:
 10%: :keycap_ten:
 
+:warning: Satoshi can not and **will** not be 100% accurate; please make sure the trade is sensible before placing :warning:
 Always manually check the trade has been put on correctly on your account. Don't assume it will work 100% of the time whilst in **Beta**.
 `
 	// Append where we parsed the trade from.
 	footer.WriteString(fmt.Sprintf("\nParsed From:\n%s", parsedFrom))
 
-	return fmt.Sprintf("%s%s```%s%s```%s", base, warning, formattedContent, footer.String(), riskMessage)
+	return fmt.Sprintf("%s```%s%s```%s", base, formattedContent, footer.String(), riskMessage)
 }
 
-func formatDCATrade(header string, trade *tradeengineproto.Trade, parsedFrom string) string {
+func formatDCATrade(header string, tradeStrategy *tradeengineproto.TradeStrategy, parsedFrom string) string {
 	var sideEmoji string
-	switch trade.TradeSide {
+	switch tradeStrategy.TradeSide {
 	case tradeengineproto.TRADE_SIDE_LONG, tradeengineproto.TRADE_SIDE_BUY:
 		sideEmoji = longEmoji
 	case tradeengineproto.TRADE_SIDE_SHORT, tradeengineproto.TRADE_SIDE_SELL:
 		sideEmoji = shortEmoji
 	}
 
-	base := fmt.Sprintf("%s   `NEW DCA TRADE ALERT: %s: %s%s`    :lizard:", sideEmoji, header, trade.Asset, trade.Pair)
-	warning := `
+	base := fmt.Sprintf("%s   `NEW DCA TRADE STRATEGY ALERT: %s: %s%s`    :lizard:", sideEmoji, header, tradeStrategy.Asset, tradeStrategy.Pair)
 
-:warning: This is a DCA Order. Satoshi can not and **will** not be 100% accurate; please make sure the trade is sensible before placing :warning:
-`
-	sortedEntries := trade.Entries
+	sortedEntries := tradeStrategy.Entries
 	sort.Slice(sortedEntries, func(i, j int) bool {
 		return sortedEntries[i] > sortedEntries[j]
 	})
 
+	var venues []string
+	for _, v := range tradeStrategy.TradeableVenues {
+		venues = append(venues, v.String())
+	}
+
+	var tps strings.Builder
+	for i, tp := range tradeStrategy.TakeProfits {
+		tps.WriteString(fmt.Sprintf("TP%v:                %v\n", i+1, tp))
+	}
+
 	content := `
-TRADE ID:     %s 
-TIMESTAMP:    %v
 
-ASSET:        %v
-PAIR:         %v
-TRADE TYPE:   %s
-TRADE SIDE:   %s
-ORDER TYPE:   %s
-MOD:          %s
-MOD TYPE:     %s
+BASE CCY:           %v
+QUOTE CCY:          %v
+CURRENT_PRICE       %v
+UPPER:              %v
+LOWER:              %v
+STOP LOSS:          %v
+%s
+INSTRUMENT TYPE:    %s
+TRADE SIDE:         %s
+EXECUTION_STRATEGY: %s  
 
-CURRENT_PRICE %v
+MOD:                %s
+MOD TYPE:           %s
 
-UPPER:        %v
-LOWER:        %v
-STOP LOSS:    %v
+VENUES:             [%s]
+
+TRADE STRATEGY ID:  %s 
+TIMESTAMP:          %v
 `
 	formattedContent := fmt.Sprintf(
 		content,
-		trade.TradeId,
-		trade.Created.AsTime(),
-
-		strings.ToUpper(trade.Asset),
-		trade.Pair.String(),
-
-		trade.TradeType.String(),
-		trade.TradeSide.String(),
-		trade.OrderType.String(),
-		trade.HumanizedActorName,
-		trade.ActorType.String(),
-		trade.CurrentPrice,
+		strings.ToUpper(tradeStrategy.Asset),
+		tradeStrategy.Pair.String(),
+		tradeStrategy.CurrentPrice,
 		sortedEntries[0],
 		sortedEntries[1],
-		trade.StopLoss,
+		tradeStrategy.StopLoss,
+		tps.String(),
+
+		tradeStrategy.InstrumentType.String(),
+		tradeStrategy.TradeSide.String(),
+
+		tradeStrategy.ExecutionStrategy.String(),
+
+		tradeStrategy.HumanizedActorName,
+		tradeStrategy.ActorType.String(),
+
+		strings.Join(venues, ", "),
+		tradeStrategy.TradeStrategyId,
+		tradeStrategy.Created.AsTime(),
 	)
 
-	// Append take profits if they exist.
+	// Build footer.
 	var footer strings.Builder
-	for i, tp := range trade.TakeProfits {
-		footer.WriteString(fmt.Sprintf("TP%v:          %v\n", i+1, tp))
-	}
-
 	riskMessage := `
 Please manage your risk accordingly. To **place** a trade react with one of the following emojis within **15 minutes**:
 
@@ -171,5 +188,5 @@ Always manually check the trade has been put on correctly on your account. Don't
 	// Append where we parsed the trade from.
 	footer.WriteString(fmt.Sprintf("\nParsed From:\n%s", parsedFrom))
 
-	return fmt.Sprintf("%s%s```%s%s```%s", base, warning, formattedContent, footer.String(), riskMessage)
+	return fmt.Sprintf("%s```%s%s```%s", base, formattedContent, footer.String(), riskMessage)
 }

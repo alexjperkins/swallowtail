@@ -11,15 +11,20 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
 
 // FtxClient is the client API for Ftx service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FtxClient interface {
-	ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error)
 	GetFTXStatus(ctx context.Context, in *GetFTXStatusRequest, opts ...grpc.CallOption) (*GetFTXStatusResponse, error)
 	GetFTXFundingRates(ctx context.Context, in *GetFTXFundingRatesRequest, opts ...grpc.CallOption) (*GetFTXFundingRatesResponse, error)
+	ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error)
+	ExecuteNewOrder(ctx context.Context, in *ExecuteNewOrderRequest, opts ...grpc.CallOption) (*ExecuteNewOrderResponse, error)
+	ListFTXInstruments(ctx context.Context, in *ListFTXInstrumentsRequest, opts ...grpc.CallOption) (*ListFTXInstrumentsResponse, error)
+	ReadAccountInformation(ctx context.Context, in *ReadAccountInformationRequest, opts ...grpc.CallOption) (*ReadAccountInformationResponse, error)
+	ListAccountBalances(ctx context.Context, in *ListAccountBalancesRequest, opts ...grpc.CallOption) (*ListAccountBalancesResponse, error)
 }
 
 type ftxClient struct {
@@ -28,15 +33,6 @@ type ftxClient struct {
 
 func NewFtxClient(cc grpc.ClientConnInterface) FtxClient {
 	return &ftxClient{cc}
-}
-
-func (c *ftxClient) ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error) {
-	out := new(ListAccountDepositsResponse)
-	err := c.cc.Invoke(ctx, "/ftx/ListAccountDeposits", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *ftxClient) GetFTXStatus(ctx context.Context, in *GetFTXStatusRequest, opts ...grpc.CallOption) (*GetFTXStatusResponse, error) {
@@ -57,13 +53,62 @@ func (c *ftxClient) GetFTXFundingRates(ctx context.Context, in *GetFTXFundingRat
 	return out, nil
 }
 
+func (c *ftxClient) ListAccountDeposits(ctx context.Context, in *ListAccountDepositsRequest, opts ...grpc.CallOption) (*ListAccountDepositsResponse, error) {
+	out := new(ListAccountDepositsResponse)
+	err := c.cc.Invoke(ctx, "/ftx/ListAccountDeposits", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ftxClient) ExecuteNewOrder(ctx context.Context, in *ExecuteNewOrderRequest, opts ...grpc.CallOption) (*ExecuteNewOrderResponse, error) {
+	out := new(ExecuteNewOrderResponse)
+	err := c.cc.Invoke(ctx, "/ftx/ExecuteNewOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ftxClient) ListFTXInstruments(ctx context.Context, in *ListFTXInstrumentsRequest, opts ...grpc.CallOption) (*ListFTXInstrumentsResponse, error) {
+	out := new(ListFTXInstrumentsResponse)
+	err := c.cc.Invoke(ctx, "/ftx/ListFTXInstruments", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ftxClient) ReadAccountInformation(ctx context.Context, in *ReadAccountInformationRequest, opts ...grpc.CallOption) (*ReadAccountInformationResponse, error) {
+	out := new(ReadAccountInformationResponse)
+	err := c.cc.Invoke(ctx, "/ftx/ReadAccountInformation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ftxClient) ListAccountBalances(ctx context.Context, in *ListAccountBalancesRequest, opts ...grpc.CallOption) (*ListAccountBalancesResponse, error) {
+	out := new(ListAccountBalancesResponse)
+	err := c.cc.Invoke(ctx, "/ftx/ListAccountBalances", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FtxServer is the server API for Ftx service.
 // All implementations must embed UnimplementedFtxServer
 // for forward compatibility
 type FtxServer interface {
-	ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error)
 	GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error)
 	GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error)
+	ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error)
+	ExecuteNewOrder(context.Context, *ExecuteNewOrderRequest) (*ExecuteNewOrderResponse, error)
+	ListFTXInstruments(context.Context, *ListFTXInstrumentsRequest) (*ListFTXInstrumentsResponse, error)
+	ReadAccountInformation(context.Context, *ReadAccountInformationRequest) (*ReadAccountInformationResponse, error)
+	ListAccountBalances(context.Context, *ListAccountBalancesRequest) (*ListAccountBalancesResponse, error)
 	mustEmbedUnimplementedFtxServer()
 }
 
@@ -71,37 +116,38 @@ type FtxServer interface {
 type UnimplementedFtxServer struct {
 }
 
-func (*UnimplementedFtxServer) ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAccountDeposits not implemented")
-}
-func (*UnimplementedFtxServer) GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error) {
+func (UnimplementedFtxServer) GetFTXStatus(context.Context, *GetFTXStatusRequest) (*GetFTXStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFTXStatus not implemented")
 }
-func (*UnimplementedFtxServer) GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error) {
+func (UnimplementedFtxServer) GetFTXFundingRates(context.Context, *GetFTXFundingRatesRequest) (*GetFTXFundingRatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFTXFundingRates not implemented")
 }
-func (*UnimplementedFtxServer) mustEmbedUnimplementedFtxServer() {}
+func (UnimplementedFtxServer) ListAccountDeposits(context.Context, *ListAccountDepositsRequest) (*ListAccountDepositsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAccountDeposits not implemented")
+}
+func (UnimplementedFtxServer) ExecuteNewOrder(context.Context, *ExecuteNewOrderRequest) (*ExecuteNewOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExecuteNewOrder not implemented")
+}
+func (UnimplementedFtxServer) ListFTXInstruments(context.Context, *ListFTXInstrumentsRequest) (*ListFTXInstrumentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFTXInstruments not implemented")
+}
+func (UnimplementedFtxServer) ReadAccountInformation(context.Context, *ReadAccountInformationRequest) (*ReadAccountInformationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadAccountInformation not implemented")
+}
+func (UnimplementedFtxServer) ListAccountBalances(context.Context, *ListAccountBalancesRequest) (*ListAccountBalancesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAccountBalances not implemented")
+}
+func (UnimplementedFtxServer) mustEmbedUnimplementedFtxServer() {}
 
-func RegisterFtxServer(s *grpc.Server, srv FtxServer) {
-	s.RegisterService(&_Ftx_serviceDesc, srv)
+// UnsafeFtxServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FtxServer will
+// result in compilation errors.
+type UnsafeFtxServer interface {
+	mustEmbedUnimplementedFtxServer()
 }
 
-func _Ftx_ListAccountDeposits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListAccountDepositsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FtxServer).ListAccountDeposits(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ftx/ListAccountDeposits",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FtxServer).ListAccountDeposits(ctx, req.(*ListAccountDepositsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func RegisterFtxServer(s grpc.ServiceRegistrar, srv FtxServer) {
+	s.RegisterService(&Ftx_ServiceDesc, srv)
 }
 
 func _Ftx_GetFTXStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -140,14 +186,103 @@ func _Ftx_GetFTXFundingRates_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Ftx_serviceDesc = grpc.ServiceDesc{
+func _Ftx_ListAccountDeposits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAccountDepositsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FtxServer).ListAccountDeposits(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ftx/ListAccountDeposits",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FtxServer).ListAccountDeposits(ctx, req.(*ListAccountDepositsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Ftx_ExecuteNewOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExecuteNewOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FtxServer).ExecuteNewOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ftx/ExecuteNewOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FtxServer).ExecuteNewOrder(ctx, req.(*ExecuteNewOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Ftx_ListFTXInstruments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFTXInstrumentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FtxServer).ListFTXInstruments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ftx/ListFTXInstruments",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FtxServer).ListFTXInstruments(ctx, req.(*ListFTXInstrumentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Ftx_ReadAccountInformation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadAccountInformationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FtxServer).ReadAccountInformation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ftx/ReadAccountInformation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FtxServer).ReadAccountInformation(ctx, req.(*ReadAccountInformationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Ftx_ListAccountBalances_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAccountBalancesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FtxServer).ListAccountBalances(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ftx/ListAccountBalances",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FtxServer).ListAccountBalances(ctx, req.(*ListAccountBalancesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Ftx_ServiceDesc is the grpc.ServiceDesc for Ftx service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Ftx_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ftx",
 	HandlerType: (*FtxServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "ListAccountDeposits",
-			Handler:    _Ftx_ListAccountDeposits_Handler,
-		},
 		{
 			MethodName: "GetFTXStatus",
 			Handler:    _Ftx_GetFTXStatus_Handler,
@@ -155,6 +290,26 @@ var _Ftx_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFTXFundingRates",
 			Handler:    _Ftx_GetFTXFundingRates_Handler,
+		},
+		{
+			MethodName: "ListAccountDeposits",
+			Handler:    _Ftx_ListAccountDeposits_Handler,
+		},
+		{
+			MethodName: "ExecuteNewOrder",
+			Handler:    _Ftx_ExecuteNewOrder_Handler,
+		},
+		{
+			MethodName: "ListFTXInstruments",
+			Handler:    _Ftx_ListFTXInstruments_Handler,
+		},
+		{
+			MethodName: "ReadAccountInformation",
+			Handler:    _Ftx_ReadAccountInformation_Handler,
+		},
+		{
+			MethodName: "ListAccountBalances",
+			Handler:    _Ftx_ListAccountBalances_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

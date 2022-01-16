@@ -11,10 +11,10 @@ import (
 	"github.com/monzo/slog"
 
 	"swallowtail/libraries/gerrors"
-	accountproto "swallowtail/s.account/proto"
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.market-data/assets"
 	marketdataproto "swallowtail/s.market-data/proto"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 var (
@@ -22,15 +22,16 @@ var (
 )
 
 var (
-	exchanges = []accountproto.ExchangeType{
-		accountproto.ExchangeType_BINANCE,
-		accountproto.ExchangeType_FTX,
+	venues = []tradeengineproto.VENUE{
+		tradeengineproto.VENUE_BINANCE,
+		tradeengineproto.VENUE_FTX,
+		tradeengineproto.VENUE_BITFINEX,
 	}
 )
 
 // FundingRateInfo ...
 type FundingRateInfo struct {
-	Exchange        accountproto.ExchangeType
+	Venue           tradeengineproto.VENUE
 	Symbol          string
 	HumanizedSymbol string
 	FundingRate     float64
@@ -56,25 +57,25 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 			time.Sleep(jitter(0, 59))
 
 			var handler func(ctx context.Context, symbol string) (float64, error)
-			switch asset.Exchange {
-			case accountproto.ExchangeType_BINANCE:
+			switch asset.Venue {
+			case tradeengineproto.VENUE_BINANCE:
 				handler = getFundingRateFromBinance
-			case accountproto.ExchangeType_FTX:
+			case tradeengineproto.VENUE_FTX:
 				handler = getFundingRateFromFTX
-			case accountproto.ExchangeType_BITFINEX:
+			case tradeengineproto.VENUE_BITFINEX:
 				handler = getFundingRateFromBitfinex
 			}
 
 			fundingRate, err := handler(ctx, asset.Symbol)
 			if err != nil {
-				slog.Error(ctx, "Failed to get funding rate from: %v for %s: %v", asset.Exchange, asset.Symbol, err)
+				slog.Error(ctx, "Failed to get funding rate from: %v for %s: %v", asset.Venue, asset.Symbol, err)
 				return
 			}
 
 			mu.Lock()
 			defer mu.Unlock()
 			fundingRates = append(fundingRates, &FundingRateInfo{
-				Exchange:        asset.Exchange,
+				Venue:           asset.Venue,
 				Symbol:          asset.Symbol,
 				HumanizedSymbol: asset.HumanizedSymbol,
 				FundingRate:     fundingRate * 100,
@@ -109,13 +110,13 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 			return false
 		}
 
-		return fi.Exchange < fj.Exchange
+		return fi.Venue < fj.Venue
 	})
 
 	var exchangeIndent int
-	for _, ex := range exchanges {
-		if len(ex.String()) > exchangeIndent {
-			exchangeIndent = len(ex.String())
+	for _, venue := range venues {
+		if len(venue.String()) > exchangeIndent {
+			exchangeIndent = len(venue.String())
 		}
 	}
 
@@ -138,7 +139,7 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 
 	for _, fr := range fundingRates {
 		var (
-			exchangeInfo = assets.GetFundingRateCoefficientByExchange(fr.Exchange)
+			exchangeInfo = assets.GetFundingRateCoefficientByVenue(fr.Venue)
 			emoji        string
 		)
 		switch {
@@ -161,8 +162,8 @@ func (s *MarketDataService) PublishFundingRatesInformation(
 				emoji,
 				symbol,
 				addPadding(symbolsIndent-len(symbol)),
-				strings.ToTitle(fr.Exchange.String()),
-				addPadding(exchangeIndent-len(fr.Exchange.String())),
+				strings.ToTitle(fr.Venue.String()),
+				addPadding(exchangeIndent-len(fr.Venue.String())),
 				fr.FundingRate,
 			),
 		)

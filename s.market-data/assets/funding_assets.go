@@ -2,35 +2,36 @@ package assets
 
 import (
 	"math"
-	accountproto "swallowtail/s.account/proto"
 	"sync"
+
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 // FundingRateAsset ...
 type FundingRateAsset struct {
 	Symbol          string
-	Exchange        accountproto.ExchangeType
+	Venue           tradeengineproto.VENUE
 	HumanizedSymbol string
 }
 
-// FundingRateExchangeInfo ...
-type FundingRateExchangeInfo struct {
+// FundingRateVenueInfo ...
+type FundingRateVenueInfo struct {
 	HigherBound float64
 	LowerBound  float64
 }
 
 var (
-	coeffMu                 sync.RWMutex
-	fundingRateExchangeData = map[accountproto.ExchangeType]*FundingRateExchangeInfo{
-		accountproto.ExchangeType_BINANCE: {
+	coeffMu              sync.RWMutex
+	fundingRateVenueData = map[tradeengineproto.VENUE]*FundingRateVenueInfo{
+		tradeengineproto.VENUE_BINANCE: {
 			HigherBound: 0.4,
 			LowerBound:  0.025,
 		},
-		accountproto.ExchangeType_FTX: {
+		tradeengineproto.VENUE_FTX: {
 			HigherBound: 0.01,
 			LowerBound:  0.0,
 		},
-		accountproto.ExchangeType_BITFINEX: {
+		tradeengineproto.VENUE_BITFINEX: {
 			HigherBound: 0.025,
 			LowerBound:  -0.005,
 		},
@@ -41,92 +42,92 @@ var (
 	// FundingRateAssets ...
 	FundingRateAssets = []*FundingRateAsset{
 		{
-			Symbol:   "AVAX-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "AVAX-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
-			Symbol:   "AVAXUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "AVAXUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "BTC-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "BTC-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
-			Symbol:   "BTCUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "BTCUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "ETH-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "ETH-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
-			Symbol:   "ETHUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "ETHUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "LUNA-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "LUNA-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
-			Symbol:   "LUNAUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "LUNAUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "SOL-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "SOL-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
-			Symbol:   "SOLUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "SOLUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "FTMUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "FTMUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "FTM-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "FTM-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
-			Symbol:   "ATOMUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "ATOMUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "ATOM-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "ATOM-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
-			Symbol:   "ALGOUSDT",
-			Exchange: accountproto.ExchangeType_BINANCE,
+			Symbol: "ALGOUSDT",
+			Venue:  tradeengineproto.VENUE_BINANCE,
 		},
 		{
-			Symbol:   "ALGO-PERP",
-			Exchange: accountproto.ExchangeType_FTX,
+			Symbol: "ALGO-PERP",
+			Venue:  tradeengineproto.VENUE_FTX,
 		},
 		{
 			Symbol:          "tBTCF0:USTF0",
-			Exchange:        accountproto.ExchangeType_BITFINEX,
+			Venue:           tradeengineproto.VENUE_BITFINEX,
 			HumanizedSymbol: "BTCUSD",
 		},
 		{
 			Symbol:          "tETHF0:USTF0",
-			Exchange:        accountproto.ExchangeType_BITFINEX,
+			Venue:           tradeengineproto.VENUE_BITFINEX,
 			HumanizedSymbol: "ETHUSD",
 		},
 	}
 )
 
-// GetFundingRateCoefficientByExchange ...
-func GetFundingRateCoefficientByExchange(exchange accountproto.ExchangeType) *FundingRateExchangeInfo {
+// GetFundingRateCoefficientByVenue ...
+func GetFundingRateCoefficientByVenue(venue tradeengineproto.VENUE) *FundingRateVenueInfo {
 	coeffMu.RLock()
 	defer coeffMu.RUnlock()
 
-	if v, ok := fundingRateExchangeData[exchange]; ok {
+	if v, ok := fundingRateVenueData[venue]; ok {
 		return v
 	}
 
-	return &FundingRateExchangeInfo{
+	return &FundingRateVenueInfo{
 		HigherBound: math.MaxFloat64,
 		LowerBound:  -math.MaxFloat64,
 	}

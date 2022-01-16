@@ -31,9 +31,9 @@ func init() {
 				ID:                  "trade-execute",
 				IsPrivate:           false,
 				IsFuturesOnly:       true,
-				MinimumNumberOfArgs: 2,
+				MinimumNumberOfArgs: 3,
 				Usage:               `!trade execute <trade_id> <risk (%)>`,
-				Handler:             executeTradeHandler,
+				Handler:             executeTradeStrategyHandler,
 				FailureMsg:          "Please check the guide you have do the command correctly. Run `!trade help` to see it.",
 			},
 		},
@@ -44,13 +44,14 @@ func tradeHandler(ctx context.Context, tokens []string, s *discordgo.Session, m 
 	return gerrors.Unimplemented("parent_command_unimplemented.trade", nil)
 }
 
-func executeTradeHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	tradeID, riskStr := tokens[0], tokens[1]
+func executeTradeStrategyHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	tradeStrategyID, venue, riskStr := tokens[0], tokens[1], tokens[2]
 
 	errParams := map[string]string{
-		"risk":     riskStr,
-		"trade_id": tradeID,
-		"user_id":  m.Author.ID,
+		"risk":              riskStr,
+		"trade_strategy_id": tradeStrategyID,
+		"user_id":           m.Author.ID,
+		"venue":             venue,
 	}
 
 	// Convert risk to a float
@@ -60,12 +61,12 @@ func executeTradeHandler(ctx context.Context, tokens []string, s *discordgo.Sess
 		return gerrors.Augment(err, "failed_to_execute_trade.invalid_risk", errParams)
 	}
 
-	if _, err := (&tradeengineproto.AddParticipantToTradeRequest{
-		ActorId: tradeengineproto.TradeEngineActorSatoshiSystem,
-		UserId:  m.Author.ID,
-		TradeId: tradeID,
-		IsBot:   false,
-		Risk:    float32(risk),
+	if _, err := (&tradeengineproto.ExecuteTradeStrategyForParticipantRequest{
+		ActorId:         tradeengineproto.TradeEngineActorSatoshiSystem,
+		UserId:          m.Author.ID,
+		TradeStrategyId: tradeStrategyID,
+		IsBot:           false,
+		Risk:            float32(risk),
 	}).Send(ctx).Response(); err != nil {
 		_, err = s.ChannelMessageSend(
 			m.ChannelID,

@@ -2,18 +2,19 @@ package domain
 
 import "time"
 
+// Account defines the account object stored in the domain.
 type Account struct {
 	UserID               string    `db:"user_id"`
 	Username             string    `db:"username"`
 	Password             string    `db:"password"`
 	Email                string    `db:"email"`
 	PhoneNumber          string    `db:"phone_number"`
-	PrimaryExchange      string    `db:"primary_exchange"`
+	HighPriorityPager    string    `db:"high_priority_pager"`
+	LowPriorityPager     string    `db:"low_priority_pager"`
 	Created              time.Time `db:"created"`
 	Updated              time.Time `db:"updated"`
 	LastPaymentTimestamp time.Time `db:"last_payment_timestamp"`
-	HighPriorityPager    string    `db:"high_priority_pager"`
-	LowPriorityPager     string    `db:"low_priority_pager"`
+	PrimaryVenue         string    `db:"primary_venue"`
 	IsAdmin              bool      `db:"is_admin"`
 	IsFuturesMember      bool      `db:"is_futures_member"`
 	DefaultDCAStrategy   string    `db:"default_dca_strategy"`

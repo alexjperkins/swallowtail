@@ -1,10 +1,11 @@
 package marshaling
 
 import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"swallowtail/s.account/domain"
 	accountproto "swallowtail/s.account/proto"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
+	tradeengineproto "swallowtail/s.trade-engine/proto"
 )
 
 // AccountDomainToProto marshals an account domain object into the account proto definition.
@@ -17,13 +18,21 @@ func AccountDomainToProto(account *domain.Account) *accountproto.Account {
 		IsAdmin:            account.IsAdmin,
 		Created:            timestamppb.New(account.Created),
 		LastUpdated:        timestamppb.New(account.Updated),
-		PrimaryExchange:    account.PrimaryExchange,
+		PrimaryVenue:       account.PrimaryVenue,
 		DefaultDcaStrategy: account.DefaultDCAStrategy,
 	}
 }
 
 // UpdateAccountProtoToDomain marshals a `UpdateAccountRequest` proto message to the domain.
 func UpdateAccountProtoToDomain(in *accountproto.UpdateAccountRequest) *domain.Account {
+	var venue string
+	switch in.PrimaryVenue {
+	case tradeengineproto.VENUE_UNREQUIRED:
+		// Do nothing.
+	default:
+		venue = in.PrimaryVenue.String()
+	}
+
 	return &domain.Account{
 		UserID:             in.UserId,
 		Username:           in.Username,
@@ -34,5 +43,6 @@ func UpdateAccountProtoToDomain(in *accountproto.UpdateAccountRequest) *domain.A
 		IsFuturesMember:    in.IsFutures,
 		IsAdmin:            in.IsAdmin,
 		DefaultDCAStrategy: in.DefaultDcaStrategy,
+		PrimaryVenue:       venue,
 	}
 }

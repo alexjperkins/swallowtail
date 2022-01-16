@@ -7,6 +7,6 @@ import (
 func init() {
 	register(discordproto.DiscordSatoshiInternalCallsChannel, []TradeParser{
 		&DCAParser{},
-		&DefaultParser{},
+		&DMAParser{},
 	})
 }

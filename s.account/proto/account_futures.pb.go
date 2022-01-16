@@ -77,7 +77,7 @@ func (r *CreateAccountRequest) SendWithTimeout(ctx context.Context, timeout time
 	}
 }
 
-// --- ListAccount --- //
+// --- List Account --- //
 
 type ListAccountsFuture struct {
 	closer  func() error
@@ -251,9 +251,14 @@ func (r *UpdateAccountRequest) SendWithTimeout(ctx context.Context, timeout time
 	if err != nil {
 		errc <- err
 		return &UpdateAccountFuture{
-			ctx:     ctx,
-			errc:    errc,
-			closer:  conn.Close,
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					conn.Close()
+				}
+				return nil
+			},
 			resultc: resultc,
 		}
 	}
@@ -332,7 +337,7 @@ func (r *PageAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	go func() {
 		rsp, err := c.PageAccount(ctx, r)
 		if err != nil {
-			errc <- err
+			errc <- gerrors.Augment(err, "failed_update_account", nil)
 			return
 		}
 		resultc <- rsp
@@ -349,19 +354,19 @@ func (r *PageAccountRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	}
 }
 
-// --- Add Exchange --- //
+// --- Add Venue Account --- //
 
-type AddExchangeFuture struct {
+type AddVenueAccountFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *AddExchangeResponse
+	resultc chan *AddVenueAccountResponse
 	ctx     context.Context
 }
 
-func (a *AddExchangeFuture) Response() (*AddExchangeResponse, error) {
+func (a *AddVenueAccountFuture) Response() (*AddVenueAccountResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "add_exchange", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "add_venue_account", err)
 		}
 	}()
 
@@ -375,18 +380,18 @@ func (a *AddExchangeFuture) Response() (*AddExchangeResponse, error) {
 	}
 }
 
-func (r *AddExchangeRequest) Send(ctx context.Context) *AddExchangeFuture {
+func (r *AddVenueAccountRequest) Send(ctx context.Context) *AddVenueAccountFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *AddExchangeRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *AddExchangeFuture {
+func (r *AddVenueAccountRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *AddVenueAccountFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *AddExchangeResponse, 1)
+	resultc := make(chan *AddVenueAccountResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
-		return &AddExchangeFuture{
+		return &AddVenueAccountFuture{
 			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
@@ -398,7 +403,7 @@ func (r *AddExchangeRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.AddExchange(ctx, r)
+		rsp, err := c.AddVenueAccount(ctx, r)
 		if err != nil {
 			errc <- err
 			return
@@ -406,7 +411,7 @@ func (r *AddExchangeRequest) SendWithTimeout(ctx context.Context, timeout time.D
 		resultc <- rsp
 	}()
 
-	return &AddExchangeFuture{
+	return &AddVenueAccountFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()
@@ -417,19 +422,19 @@ func (r *AddExchangeRequest) SendWithTimeout(ctx context.Context, timeout time.D
 	}
 }
 
-// --- Read Primary Exchange By User ID--- //
+// --- Read Primary Venue Account By User ID--- //
 
-type ReadPrimaryExchangeByUserIDFuture struct {
+type ReadPrimaryVenueAccountByUserIDFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *ReadPrimaryExchangeByUserIDResponse
+	resultc chan *ReadPrimaryVenueAccountByUserIDResponse
 	ctx     context.Context
 }
 
-func (a *ReadPrimaryExchangeByUserIDFuture) Response() (*ReadPrimaryExchangeByUserIDResponse, error) {
+func (a *ReadPrimaryVenueAccountByUserIDFuture) Response() (*ReadPrimaryVenueAccountByUserIDResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_primary_exchange_by_user_id", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_primary_venue_account_by_user_id", err)
 		}
 	}()
 
@@ -443,18 +448,18 @@ func (a *ReadPrimaryExchangeByUserIDFuture) Response() (*ReadPrimaryExchangeByUs
 	}
 }
 
-func (r *ReadPrimaryExchangeByUserIDRequest) Send(ctx context.Context) *ReadPrimaryExchangeByUserIDFuture {
+func (r *ReadPrimaryVenueAccountByUserIDRequest) Send(ctx context.Context) *ReadPrimaryVenueAccountByUserIDFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *ReadPrimaryExchangeByUserIDRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadPrimaryExchangeByUserIDFuture {
+func (r *ReadPrimaryVenueAccountByUserIDRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadPrimaryVenueAccountByUserIDFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *ReadPrimaryExchangeByUserIDResponse, 1)
+	resultc := make(chan *ReadPrimaryVenueAccountByUserIDResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
-		return &ReadPrimaryExchangeByUserIDFuture{
+		return &ReadPrimaryVenueAccountByUserIDFuture{
 			ctx:  ctx,
 			errc: errc,
 			closer: func() error {
@@ -471,15 +476,161 @@ func (r *ReadPrimaryExchangeByUserIDRequest) SendWithTimeout(ctx context.Context
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.ReadPrimaryExchangeByUserID(ctx, r)
+		rsp, err := c.ReadPrimaryVenueAccountByUserID(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_to_read_primary_exchange_by_user_id", nil)
+			errc <- gerrors.Augment(err, "failed_to_read_primary_venue_account_by_user_id", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
-	return &ReadPrimaryExchangeByUserIDFuture{
+	return &ReadPrimaryVenueAccountByUserIDFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
+// --- Read Venue Account By VenueAccount Details --- //
+
+type ReadVenueAccountByVenueAccountDetailsFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ReadVenueAccountByVenueAccountDetailsResponse
+	ctx     context.Context
+}
+
+func (a *ReadVenueAccountByVenueAccountDetailsFuture) Response() (*ReadVenueAccountByVenueAccountDetailsResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "read_venue_account_by_venue_account_details", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ReadVenueAccountByVenueAccountDetailsRequest) Send(ctx context.Context) *ReadVenueAccountByVenueAccountDetailsFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ReadVenueAccountByVenueAccountDetailsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ReadVenueAccountByVenueAccountDetailsFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ReadVenueAccountByVenueAccountDetailsResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &ReadVenueAccountByVenueAccountDetailsFuture{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewAccountClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ReadVenueAccountByVenueAccountDetails(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_to_read_venue_account_by_venue_account_details", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ReadVenueAccountByVenueAccountDetailsFuture{
+		ctx: ctx,
+		closer: func() error {
+			cancel()
+			return conn.Close()
+		},
+		errc:    errc,
+		resultc: resultc,
+	}
+}
+
+// --- List Venue Accounts --- //
+
+type ListVenueAccountsFuture struct {
+	closer  func() error
+	errc    chan error
+	resultc chan *ListVenueAccountsResponse
+	ctx     context.Context
+}
+
+func (a *ListVenueAccountsFuture) Response() (*ListVenueAccountsResponse, error) {
+	defer func() {
+		if err := a.closer(); err != nil {
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "list_venue_accounts", err)
+		}
+	}()
+
+	select {
+	case r := <-a.resultc:
+		return r, nil
+	case <-a.ctx.Done():
+		return nil, a.ctx.Err()
+	case err := <-a.errc:
+		return nil, err
+	}
+}
+
+func (r *ListVenueAccountsRequest) Send(ctx context.Context) *ListVenueAccountsFuture {
+	return r.SendWithTimeout(ctx, 10*time.Second)
+}
+
+func (r *ListVenueAccountsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *ListVenueAccountsFuture {
+	errc := make(chan error, 1)
+	resultc := make(chan *ListVenueAccountsResponse, 1)
+
+	conn, err := grpc.DialContext(ctx, "swallowtail-s-account:8000", grpc.WithInsecure())
+	if err != nil {
+		errc <- err
+		return &ListVenueAccountsFuture{
+			ctx:  ctx,
+			errc: errc,
+			closer: func() error {
+				if conn != nil {
+					return conn.Close()
+				}
+				return nil
+			},
+			resultc: resultc,
+		}
+	}
+	c := NewAccountClient(conn)
+
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	go func() {
+		rsp, err := c.ListVenueAccounts(ctx, r)
+		if err != nil {
+			errc <- gerrors.Augment(err, "failed_list_venue_accounts", nil)
+			return
+		}
+		resultc <- rsp
+	}()
+
+	return &ListVenueAccountsFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

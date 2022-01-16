@@ -20,9 +20,9 @@ func ListAccounts(ctx context.Context) ([]*domain.Account, error) {
 		SELECT * FROM s_account_accounts`
 		accounts []*domain.Account
 	)
-	err := db.Select(ctx, &accounts, sql)
-	if err != nil {
-		return nil, terrors.Propagate(err)
+
+	if err := db.Select(ctx, &accounts, sql); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	return accounts, nil
@@ -36,9 +36,9 @@ func ListFuturesMembers(ctx context.Context) ([]*domain.Account, error) {
 		WHERE is_futures_member=true`
 		accounts []*domain.Account
 	)
-	err := db.Select(ctx, &accounts, sql)
-	if err != nil {
-		return nil, terrors.Propagate(err)
+
+	if err := db.Select(ctx, &accounts, sql); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
 	return accounts, nil
@@ -51,8 +51,7 @@ func ReadAccountByUserID(ctx context.Context, userID string) (*domain.Account, e
 		accounts []*domain.Account
 	)
 
-	err := db.Select(ctx, &accounts, sql, userID)
-	if err != nil {
+	if err := db.Select(ctx, &accounts, sql, userID); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
@@ -77,16 +76,18 @@ func ReadAccountByUsername(ctx context.Context, username string) (*domain.Accoun
 		sql      = `SELECT * FROM s_account_accounts WHERE username=$1`
 		accounts []*domain.Account
 	)
-	err := db.Select(ctx, &accounts, sql, username)
-	if err != nil {
-		return nil, terrors.Propagate(err)
+
+	if err := db.Select(ctx, &accounts, sql, username); err != nil {
+		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
+
 	if len(accounts) > 1 {
 		// We shouldn't have this case, since this is enforced at the persistence layer.
 		slog.Error(ctx, "More than one account with identical username", map[string]string{
 			"username": username,
 		})
 	}
+
 	return accounts[0], nil
 }
 
@@ -107,6 +108,7 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 		highPriorityPager = account.HighPriorityPager
 	)
 
+	// Set discord to default pager if non is defined.
 	if lowPriorityPager == "" {
 		lowPriorityPager = accountproto.PagerType_DISCORD.String()
 	}
@@ -115,14 +117,16 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 	}
 
 	now := time.Now().UTC()
+
 	if _, err := (db.Exec(
 		ctx, sql,
 		account.Username, account.Password, account.Email, account.UserID, account.PhoneNumber,
 		now, now, now,
 		highPriorityPager, lowPriorityPager, account.IsAdmin, account.IsFuturesMember,
 	)); err != nil {
-		return terrors.Propagate(err)
+		return gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
+
 	return nil
 }
 
@@ -132,28 +136,40 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	var (
 		sql = `
 		UPDATE s_account_accounts
-		SET username=$1, password=$2, email=$3, phone_number=$4, high_priority_pager=$5, low_priority_pager=$6, is_futures_member=$7, is_admin=$8, updated=$9
-		WHERE user_id=$10`
+		SET username=$1, password=$2, email=$3, phone_number=$4, high_priority_pager=$5, low_priority_pager=$6, is_futures_member=$7, is_admin=$8, updated=$9, primary_venue=$10
+		WHERE user_id=$11`
 	)
 	if mutation.UserID == "" {
 		return nil, terrors.PreconditionFailed("mutation-without-id", "Account mutation requires at least the account ID", nil)
 	}
 
+	// Read current account.
 	account, err := ReadAccountByUserID(ctx, mutation.UserID)
 	if err != nil {
 		return nil, err
 	}
 
+	// Merge current account with mutation.
 	if err := mergo.MergeWithOverwrite(account, mutation); err != nil {
 		return nil, gerrors.Augment(gerrors.Propagate(err, gerrors.ErrUnknown, nil), "failed_to_merge_accounts", nil)
 	}
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		account.Username, account.Password, account.Email, account.PhoneNumber, account.HighPriorityPager, account.LowPriorityPager, account.IsFuturesMember, account.IsAdmin, account.Updated,
+		account.Username,
+		account.Password,
+		account.Email,
+		account.PhoneNumber,
+		account.HighPriorityPager,
+		account.LowPriorityPager,
+		account.IsFuturesMember,
+		account.IsAdmin,
+		account.Updated,
+		account.PrimaryVenue,
 		account.UserID,
 	)); err != nil {
 		return nil, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
+
 	return account, nil
 }
