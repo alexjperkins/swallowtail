@@ -1,0 +1,204 @@
+version: "3.9"
+volumes:
+  swallowtail_zookeeper_data: {}
+  swallowtail_zookeeper_datalog: {}
+  swallowtail_kafka_data: {}
+
+services:
+  ### --- Infrastructure --- ###
+
+  ## -- postgres -- ##
+  postgres:
+    build:
+      context: .
+      dockerfile: ./infrastructure/postgres/Dockerfile
+    image: i.swallowtail.postgres 
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=swallowtail
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    profiles:
+      - backend
+
+  ### --- APIs --- ###
+
+  ### --- Backend --- ###
+  swallowtail.s.account:
+    hostname: swallowtail-s-account
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.account.arm
+    ports:
+      - "8001:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.discord:
+    hostname: swallowtail-s-discord
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.discord.arm 
+    ports:
+      - "8002:8000"
+    env_file:
+      - .envs/postgres.env
+      - .envs/discord.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.satoshi:
+    hostname: swallowtail-s-satoshi
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.satoshi.arm
+    ports:
+      - "8003:8000"
+    env_file:
+      - .envs/postgres.env
+      - .envs/discord.env
+      - .envs/twitter.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.googlesheets:
+    hostname: swallowtail-s-googlesheets
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.googlesheets.arm
+    ports:
+      - "8004:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.binance:
+    hostname: swallowtail-s-binance
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.binance.arm
+    ports:
+      - "8005:8000"
+    env_file:
+      - .envs/postgres.env
+      - .envs/binance.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.coingecko:
+    hostname: swallowtail-s-coingecko
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.coingecko.arm
+    ports:
+      - "8006:8000"
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.payments:
+    hostname: swallowtail-s-payments
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.payments.arm
+    ports:
+      - "8007:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.ftx:
+    hostname: swallowtail-s-ftx
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.ftx.arm
+    ports:
+      - "8008:8000"
+    env_file:
+      - .envs/ftx.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.tradeengine:
+    hostname: swallowtail-s-tradeengine
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.tradeengine.arm
+    ports:
+      - "8009:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.marketdata:
+    hostname: swallowtail-s-marketdata
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.marketdata.arm
+    ports:
+      - "8010:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.bitfinex:
+    hostname: swallowtail-s-bitfinex
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.bitfinex.arm
+    ports:
+      - "8011:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.solananfts:
+    hostname: swallowtail-s-solananfts
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.solananfts.arm
+    ports:
+      - "8012:8000"
+    env_file:
+      - .envs/postgres.env
+    depends_on:
+      - postgres
+    profiles:
+      - backend
+
+  ### -- Crons --- ###
+
+  swallowtail.c.payments:
+    hostname: swallowtail-c-payments
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.c.payments.arm
+    depends_on:
+      - swallowtail.s.payments
+    profiles:
+      - backend
+
+  swallowtail.c.exchanges:
+    hostname: swallowtail-c-exchanges
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.c.exchanges.arm
+    depends_on:
+      - swallowtail.s.binance
+    profiles:
+      - backend
+
+  swallowtail.c.satoshi:
+    hostname: swallowtail-c-satoshi
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.c.satoshi.arm
+    profiles:
+      - backend
+
+  swallowtail.c.marketdata:
+    hostname: swallowtail-c-marketdata
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.c.marketdata.arm
+    profiles:
+      - backend

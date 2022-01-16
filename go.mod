@@ -35,6 +35,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/superoo7/go-gecko v1.0.0
+	github.com/tidwall/gjson v1.11.0
 	github.com/vektah/gqlparser/v2 v2.1.0
 	github.com/wcharczuk/go-chart v2.0.1+incompatible
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
