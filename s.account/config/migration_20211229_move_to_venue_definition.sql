@@ -21,7 +21,7 @@ ALTER TABLE IF EXISTS s_account_venue_accounts ADD UNIQUE (user_id, account_alia
 ALTER TABLE IF EXISTS s_account_accounts DROP COLUMN primary_exchange;
 
 -- Rename enum type.
-ALTER TYPE exchange RENAME TO venue CASCADE;
+ALTER TYPE exchange RENAME TO venue;
 
 ALTER TABLE IF EXISTS s_account_accounts ADD COLUMN primary_venue venue DEFAULT 'BINANCE';
 
@@ -40,9 +40,6 @@ BEGIN
 	END IF;
 END
 $$;
-
--- Add testing venue account type testing singleton per venue constraint.
-CREATE UNIQUE INDEX ON s_account_venue_accounts(venue_id) WHERE venue_account_type = 'TESTING';
 
 -- Add internal account table.
 CREATE TABLE IF NOT EXISTS s_account_internal_venue_accounts (
@@ -63,5 +60,5 @@ CREATE TABLE IF NOT EXISTS s_account_internal_venue_accounts (
 
 	PRIMARY KEY(internal_account_id),
 
-	UNIQUE(venue_id, subaccount, account_type)
+	UNIQUE(venue_id, subaccount, venue_account_type)
 );
