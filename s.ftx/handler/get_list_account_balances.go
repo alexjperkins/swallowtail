@@ -19,7 +19,7 @@ func (s *FTXService) ListAccountBalances(
 		return nil, gerrors.BadParam("missing_param.credentials", nil)
 	}
 
-	// Validate credential.
+	// Validate credentials.
 	if err := validateCredentials(in.Credentials); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_list_account_balances", nil)
 	}

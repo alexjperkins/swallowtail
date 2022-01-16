@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
+
+	"github.com/cenkalti/backoff/v4"
+	"github.com/monzo/terrors"
+
 	"swallowtail/libraries/gerrors"
 	binanceclient "swallowtail/s.binance/client"
 	"swallowtail/s.binance/domain"
 	binanceproto "swallowtail/s.binance/proto"
 	tradeengineproto "swallowtail/s.trade-engine/proto"
-	"time"
-
-	"github.com/cenkalti/backoff/v4"
-	"github.com/monzo/terrors"
 )
 
 // executeTradeWithRetry attempts to execute a trade with the given executor, in a retry loop.

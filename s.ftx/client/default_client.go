@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/transport"
 	"swallowtail/s.ftx/client/auth"
-
-	"github.com/monzo/slog"
 )
 
 type ftxClient struct {

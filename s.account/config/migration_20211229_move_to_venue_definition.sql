@@ -17,8 +17,6 @@ ALTER TABLE IF EXISTS s_account_venue_accounts ADD UNIQUE (user_id, venue_id, su
 ALTER TABLE IF EXISTS s_account_venue_accounts ADD COLUMN account_alias VARCHAR(256) DEFAULT 'PRIMARY';
 ALTER TABLE IF EXISTS s_account_venue_accounts ADD UNIQUE (user_id, account_alias);
 
--- TODO drop primary exchange, enum & move to UUID on the s_account_venue_accounts table.
-
 -- Drop columns.
 ALTER TABLE IF EXISTS s_account_accounts DROP COLUMN primary_exchange;
 
