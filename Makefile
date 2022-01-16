@@ -16,7 +16,7 @@ build:
 	cd s.bitfinex &&  sudo make docker && cd .. && \
 	cd s.solana-nfts && sudo make docker && cd .. && \
 	cd c.payments && sudo make && cd .. && \
-	cd c.exchanges &&  sudo make && cd .. && \
+	cd c.venues &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
 	cd c.market-data &&  sudo make && cd
 
@@ -34,7 +34,7 @@ backend:
 	cd s.bitfinex && sudo make docker && cd .. && \
 	cd s.solana-nfts && sudo make docker && cd .. && \
 	cd c.payments && sudo make && cd .. && \
-	cd c.exchanges &&  sudo make && cd .. && \
+	cd c.venues &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
 	cd c.market-data &&  sudo make && cd .. && \
 	docker-compose -f local.yml --profile backend up --build
@@ -100,9 +100,9 @@ cronpayments:
 	cd c.payments &&  sudo make && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.c.payments
 
-cronexchanges:
-	cd c.exchanges &&  sudo make && cd .. && \
-	docker-compose -f local.yml up --build swallowtail.c.exchanges
+cronvenues:
+	cd c.venues &&  sudo make && cd .. && \
+	docker-compose -f local.yml up --build swallowtail.c.venues
 
 cronsatoshi:
 	cd c.satoshi &&  sudo make && cd .. && \
@@ -143,6 +143,6 @@ ecrpush: ecrlogin
 	cd s.market-data && sudo make ecrpush && cd .. && \
 	cd s.bitfinex && sudo make ecrpush && cd .. && \
 	cd c.payments && sudo make ecrpush && cd .. && \
-	cd c.exchanges &&  sudo make ecrpush && cd .. && \
+	cd c.venues &&  sudo make ecrpush && cd .. && \
 	cd c.satoshi &&  sudo make ecrpush && cd .. && \
 	cd c.market-data &&  sudo make ecrpush && cd ..

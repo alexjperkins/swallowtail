@@ -5,6 +5,7 @@ import (
 
 	"swallowtail/libraries/mariana"
 	"swallowtail/s.ftx/client"
+	"swallowtail/s.ftx/exchangeinfo"
 	"swallowtail/s.ftx/handler"
 	ftxproto "swallowtail/s.ftx/proto"
 )
@@ -20,6 +21,11 @@ func main() {
 
 	// Init client.
 	if err := client.Init(ctx); err != nil {
+		panic(err)
+	}
+
+	// Init exchangeinfo.
+	if err := exchangeinfo.Init(ctx); err != nil {
 		panic(err)
 	}
 

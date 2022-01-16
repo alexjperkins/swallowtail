@@ -16,6 +16,10 @@ func register(id string, command *Command) {
 		panic(fmt.Sprintf("Cannot register commands with the same ID: %s", id))
 	}
 
+	if command.Handler == nil {
+		panic(fmt.Sprintf("Cannot register command with nil handler: %s", id))
+	}
+
 	registry[id] = command
 }
 

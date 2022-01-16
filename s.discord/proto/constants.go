@@ -15,8 +15,8 @@ const (
 	DiscordSatoshiAlertsChannel  = "816794120851816479"
 	// DiscordSatoshiAlertsChannel = "896513299515047942"
 
-	DiscordSatoshiTestingChannel = "896513299796090881"
-	// DiscordSatoshiTestingChannel   = "817513133274824715" // TEST
+	// DiscordSatoshiTestingChannel = "896513299796090881"
+	DiscordSatoshiTestingChannel = "817513133274824715" // TEST
 
 	DiscordSatoshiWhaleChannel     = "817789196319195166"
 	DiscordSatoshiTradersChannel   = "817789261415448606"
@@ -34,9 +34,10 @@ const (
 
 	// Futures channels
 	DiscordSatoshiModMessagesChannel = "847954019758112808"
-	DiscordSatoshiSwingsChannel      = "847953925575671848"
-	DiscordSatoshiFuturesChannel     = "814146537088221284"
-	DiscordSatoshiModTradesChannel   = "883692707611050024"
+	// DiscordSatoshiModMessagesChannel = "896513299200479253" // TEST
+	DiscordSatoshiSwingsChannel    = "847953925575671848"
+	DiscordSatoshiFuturesChannel   = "814146537088221284"
+	DiscordSatoshiModTradesChannel = "883692707611050024"
 	// DiscordSatoshiModTradesChannel  = "896513299200479256" // TEST
 	DiscordSatoshiChallengesChannel = "884524239410061323"
 

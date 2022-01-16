@@ -9,19 +9,19 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-// --- Poll Trade Participants--- //
+// --- Poll Trade Strategy Participants--- //
 
-type PollTradeParticipantsFuture struct {
+type PollTradeStrategyParticipantsFuture struct {
 	closer  func() error
 	errc    chan error
-	resultc chan *PollTradeParticipantsResponse
+	resultc chan *PollTradeStrategyParticipantsResponse
 	ctx     context.Context
 }
 
-func (a *PollTradeParticipantsFuture) Response() (*PollTradeParticipantsResponse, error) {
+func (a *PollTradeStrategyParticipantsFuture) Response() (*PollTradeStrategyParticipantsResponse, error) {
 	defer func() {
 		if err := a.closer(); err != nil {
-			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "poll_trade_participants", err)
+			slog.Critical(context.Background(), "Failed to close %s grpc connection: %v", "poll_trade_strategy_participants", err)
 		}
 	}()
 
@@ -35,18 +35,18 @@ func (a *PollTradeParticipantsFuture) Response() (*PollTradeParticipantsResponse
 	}
 }
 
-func (r *PollTradeParticipantsRequest) Send(ctx context.Context) *PollTradeParticipantsFuture {
+func (r *PollTradeStrategyParticipantsRequest) Send(ctx context.Context) *PollTradeStrategyParticipantsFuture {
 	return r.SendWithTimeout(ctx, 10*time.Second)
 }
 
-func (r *PollTradeParticipantsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *PollTradeParticipantsFuture {
+func (r *PollTradeStrategyParticipantsRequest) SendWithTimeout(ctx context.Context, timeout time.Duration) *PollTradeStrategyParticipantsFuture {
 	errc := make(chan error, 1)
-	resultc := make(chan *PollTradeParticipantsResponse, 1)
+	resultc := make(chan *PollTradeStrategyParticipantsResponse, 1)
 
 	conn, err := grpc.DialContext(ctx, "swallowtail-s-satoshi:8000", grpc.WithInsecure())
 	if err != nil {
 		errc <- err
-		return &PollTradeParticipantsFuture{
+		return &PollTradeStrategyParticipantsFuture{
 			ctx:     ctx,
 			errc:    errc,
 			closer:  conn.Close,
@@ -58,15 +58,15 @@ func (r *PollTradeParticipantsRequest) SendWithTimeout(ctx context.Context, time
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
 	go func() {
-		rsp, err := c.PollTradeParticipants(ctx, r)
+		rsp, err := c.PollTradeStrategyParticipants(ctx, r)
 		if err != nil {
-			errc <- gerrors.Augment(err, "failed_to_poll_trade_participants", nil)
+			errc <- gerrors.Augment(err, "failed_to_poll_trade_strategy_participants", nil)
 			return
 		}
 		resultc <- rsp
 	}()
 
-	return &PollTradeParticipantsFuture{
+	return &PollTradeStrategyParticipantsFuture{
 		ctx: ctx,
 		closer: func() error {
 			cancel()

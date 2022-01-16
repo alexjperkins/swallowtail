@@ -1,11 +1,11 @@
 package gerrors
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/monzo/terrors"
+	"github.com/monzo/slog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -41,38 +41,29 @@ func Augment(err error, msg string, params map[string]string) error {
 	// Convert error to status.Status
 	s, ok := status.FromError(err)
 	if !ok {
-		return terrors.Augment(err, "Failed to augment gerror", nil)
-	}
-	details := map[string]string{}
-	for k, v := range params {
-		details[k] = v
+		slog.Warn(context.Background(), "failed to convert err to gerror: %v", err)
+		return status.Error(ErrUnknown, fmt.Sprintf("Failed to augment gerror: %s", msg))
 	}
 
 	// Create new status; append message, with the same code & add new metadata details.
 	ns := status.Newf(s.Code(), "%s: %s", msg, s.Message())
 	ns, e := ns.WithDetails(&gerrorsproto.GerrorMessage{
-		Params: details,
+		Params: params,
 	})
 	if e != nil {
 		return e
 	}
 
 	// Update with old metadata.
-	for _, v := range s.Details() {
-		m, ok := v.(proto.Message)
-		if !ok {
-			// Best effort
-			continue
-		}
-
-		dv, e := ptypes.MarshalAny(m)
-		if e != nil {
-			return e
-		}
-
-		ns, e = ns.WithDetails(dv)
-		if e != nil {
-			return e
+	for _, detail := range s.Details() {
+		switch d := detail.(type) {
+		case *gerrorsproto.GerrorMessage:
+			ns, e = ns.WithDetails(d)
+			if e != nil {
+				return e
+			}
+		default:
+			// Ignore.
 		}
 	}
 
@@ -91,6 +82,29 @@ func New(code codes.Code, msg string, params map[string]string) error {
 	}
 
 	return s.Err()
+}
+
+// CollectDetailByKeyFromError ...
+func CollectDetailByKeyFromError(err error, key string) ([]string, bool) {
+	st, ok := status.FromError(err)
+	if !ok {
+		return nil, false
+	}
+
+	var ss []string
+	for _, detail := range st.Details() {
+		switch d := detail.(type) {
+		case *gerrorsproto.GerrorMessage:
+			s, ok := d.Params[key]
+			if !ok {
+				continue
+			}
+
+			ss = append(ss, s)
+		}
+	}
+
+	return ss, true
 }
 
 // NotFound ...
@@ -118,6 +132,7 @@ func Unauthenticated(msg string, params map[string]string) error {
 	return New(ErrUnauthenticated, msg, params)
 }
 
+// Unimplemented ...
 func Unimplemented(msg string, params map[string]string) error {
 	return New(ErrUnimplemented, msg, params)
 }

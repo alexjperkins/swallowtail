@@ -1,0 +1,5 @@
+*/5 * * * * sh /jobs/get_binance_venue_status.sh
+
+*/5 * * * * sh /jobs/get_bitfinex_venue_status.sh
+
+*/5 * * * * sh /jobs/get_ftx_venue_status.sh

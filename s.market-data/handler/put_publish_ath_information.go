@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	discordproto "swallowtail/s.discord/proto"
-	"swallowtail/s.market-data/assets"
 	"sync"
 	"time"
 
-	marketdataproto "swallowtail/s.market-data/proto"
-
 	"github.com/monzo/slog"
+
+	discordproto "swallowtail/s.discord/proto"
+	"swallowtail/s.market-data/assets"
+	marketdataproto "swallowtail/s.market-data/proto"
 )
 
 var (

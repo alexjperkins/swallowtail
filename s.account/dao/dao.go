@@ -24,14 +24,17 @@ func Init(ctx context.Context, serviceName string) error {
 			"service_name": serviceName,
 		})
 	}
-	db = psql
-	if db == nil {
+
+	if psql == nil {
 		panic("nil db")
 	}
+
+	db = psql
 
 	slog.Debug(ctx, "Dao initialized", map[string]string{
 		"service_name": serviceName,
 	})
+
 	return nil
 }
 
@@ -40,6 +43,7 @@ func WithMock() {
 	if db != nil {
 		panic("Cannot set running db as Mock.")
 	}
+
 	mu.Lock()
 	defer mu.Unlock()
 

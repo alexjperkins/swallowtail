@@ -31,6 +31,7 @@ func main() {
 
 	// Init Mariana Server
 	srv := mariana.Init(svcName)
+
 	binanceproto.RegisterBinanceServer(srv.Grpc(), &handler.BinanceService{})
 	srv.Run(ctx)
 }

@@ -7,6 +7,6 @@ import (
 func init() {
 	register(discordproto.DiscordMoonModMessagesChannel, []TradeParser{
 		&DCAParser{},
-		&DefaultParser{},
+		&DMAParser{},
 	})
 }

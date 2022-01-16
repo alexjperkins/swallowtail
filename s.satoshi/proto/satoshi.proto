@@ -5,7 +5,7 @@ option go_package = "./;satoshiproto";
 service satoshi {
     rpc PublishStatus (PublishStatusRequest) returns (PublishStatusResponse) {}
 
-    rpc PollTradeParticipants (PollTradeParticipantsRequest) returns (PollTradeParticipantsResponse) {}
+    rpc PollTradeStrategyParticipants (PollTradeStrategyParticipantsRequest) returns (PollTradeStrategyParticipantsResponse) {}
 } 
 
 message PublishStatusRequest {
@@ -16,12 +16,12 @@ message PublishStatusResponse{
     string version = 2;
 }
 
-message PollTradeParticipantsRequest {
+message PollTradeStrategyParticipantsRequest {
     string actor_id = 1;
     string message_id = 2;
     int64 timeout_in_minutes = 3;
-    string trade_id = 4;
+    string trade_strategy_id = 4;
     string channel_id = 5;
 }
 
-message PollTradeParticipantsResponse {}
+message PollTradeStrategyParticipantsResponse {}

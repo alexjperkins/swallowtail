@@ -32,7 +32,7 @@ func Init(ctx context.Context) error {
 }
 
 func refresh(ctx context.Context) {
-	t := time.NewTicker(24 * time.Hour)
+	t := time.NewTicker(23 * time.Hour)
 	for {
 		select {
 		case <-t.C:
@@ -66,7 +66,6 @@ func gatherExchangeInfo(ctx context.Context) error {
 	if err != nil {
 		return gerrors.Augment(err, "failed_to_init_exchange_info", nil)
 	}
-
 	if rsp == nil {
 		return gerrors.Augment(err, "failed_to_init_exchange_info.empty_response", nil)
 	}
@@ -82,7 +81,7 @@ func gatherExchangeInfo(ctx context.Context) error {
 	return nil
 }
 
-// GetBaseAssetQuantityPrecision ...
+// GetBaseAssetQuantityPrecision returns the base asset quantity precision given the base asset.
 func GetBaseAssetQuantityPrecision(baseAsset string) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -95,7 +94,7 @@ func GetBaseAssetQuantityPrecision(baseAsset string) (int, bool) {
 	return v, true
 }
 
-// GetBaseAssetPricePrecision ...
+// GetBaseAssetPricePrecision returns the base asset price precision given the base asset.
 func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()

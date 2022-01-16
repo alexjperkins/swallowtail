@@ -9,11 +9,16 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"swallowtail/libraries/gerrors"
 	"time"
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc/codes"
+
+	"swallowtail/libraries/gerrors"
+)
+
+const (
+	RequestErrorMessageDetailKey = "http_request_error_body"
 )
 
 type HTTPRateLimiter interface {
@@ -106,7 +111,8 @@ func (h *httpClient) DoWithEphemeralHeaders(ctx context.Context, method, url str
 	}
 
 	if err := json.Unmarshal(rspBodyBytes, rspBody); err != nil {
-		return gerrors.FailedPrecondition("bad_request.unmarshal_error", errParams)
+		slog.Error(ctx, "Response body for marshaling failure: %v", string(rspBodyBytes))
+		return gerrors.Augment(err, "bad_request.unmarshal_error", errParams)
 	}
 
 	return nil
@@ -153,7 +159,7 @@ func (h *httpClient) doRawRequest(ctx context.Context, method, url string, body 
 		rspBodyBytes, _ := ioutil.ReadAll(rsp.Body)
 		slog.Error(ctx, "Failed request: %s %s Response: %+v, %s", method, url, rsp, string(rspBodyBytes))
 
-		errParams["error"] = string(rspBodyBytes)
+		errParams[RequestErrorMessageDetailKey] = string(rspBodyBytes)
 		return nil, gerrors.Augment(err, "failed_to_execute_request.status_code", errParams)
 	}
 

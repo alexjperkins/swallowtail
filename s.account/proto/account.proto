@@ -1,8 +1,9 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "s.trade-engine/proto/tradeengine.proto";
 
-option go_package = "./;accountproto";
+option go_package = "swallowtail/s.account/proto;accountproto";
 
 service account {
 
@@ -22,17 +23,25 @@ service account {
   rpc PageAccount (PageAccountRequest) returns (PageAccountResponse) {
   }
 
-  /// --- Exchanges --- ///
-  rpc AddExchange (AddExchangeRequest) returns (AddExchangeResponse) {
+  /// --- Venue Account --- ///
+  rpc AddVenueAccount (AddVenueAccountRequest) returns (AddVenueAccountResponse) {
   }
 
-  rpc ListExchanges (ListExchangesRequest) returns (ListExchangesResponse) {
+  rpc CreateOrUpdateInternalVenueAccount (CreateOrUpdateInternalVenueAccountRequest) returns (CreateOrUpdateInternalVenueAccountResponse) {
   }
 
-  rpc ReadExchange (ReadExchangeRequest) returns (ReadExchangeResponse) {
+  rpc ListVenueAccounts (ListVenueAccountsRequest) returns (ListVenueAccountsResponse) {
   }
 
-  rpc ReadPrimaryExchangeByUserID (ReadPrimaryExchangeByUserIDRequest) returns (ReadPrimaryExchangeByUserIDResponse) {}
+  rpc ReadVenueAccountByVenueAccountID (ReadVenueAccountByVenueAccountIDRequest) returns (ReadVenueAccountByVenueAccountIDResponse) {
+  }
+
+  rpc ReadVenueAccountByVenueAccountDetails (ReadVenueAccountByVenueAccountDetailsRequest) returns (ReadVenueAccountByVenueAccountDetailsResponse) {
+  }
+
+  rpc ReadPrimaryVenueAccountByUserID (ReadPrimaryVenueAccountByUserIDRequest) returns (ReadPrimaryVenueAccountByUserIDResponse) {}
+
+  rpc ReadInternalVenueAccount (ReadInternalVenueAccountRequest) returns (ReadInternalVenueAccountResponse) {}
 }
 
 enum PagerType {
@@ -47,6 +56,12 @@ enum PagerPriority {
     LOW = 1;
 }
 
+enum VenueAccountType {
+    TESTING = 0;
+    TRADING = 1;
+    TREASURY = 2;
+}
+
 // Only used for responses, we currently don't have mechanisms to remove sensitived data such
 // as keys or phones. This should only contain insensitive data.
 message Account {
@@ -57,8 +72,32 @@ message Account {
     string username = 5;
     google.protobuf.Timestamp created = 6;
     google.protobuf.Timestamp last_updated = 7;
-    string primary_exchange = 8;
-    string default_dca_strategy = 9;
+    google.protobuf.Timestamp last_payment_timestamp = 8;
+    string primary_venue = 9;
+    string default_dca_strategy = 10;
+}
+
+message VenueAccount {
+    VENUE venue = 1;
+    string api_key = 2;
+    string secret_key = 3;
+    string sub_account = 4;
+    bool is_active = 5;
+    string venue_account_id = 6;
+    string url = 7;
+    string ws_url = 8;
+    string account_alias = 9;
+}
+
+message InternalVenueAccount {
+    VENUE venue = 1;
+    string api_key = 2;
+    string secret_key = 3;
+    string sub_account = 4;
+    string venue_account_id = 6;
+    string url = 7;
+    string ws_url = 8;
+    VenueAccountType venue_account_type = 9;
 }
 
 message ListAccountsRequest{
@@ -101,6 +140,7 @@ message UpdateAccountRequest {
     bool is_futures = 10; 
     string actor_id = 11;
     string default_dca_strategy = 12;
+    VENUE primary_venue = 13;
 }
 
 message UpdateAccountResponse {
@@ -115,55 +155,79 @@ message PageAccountRequest {
 
 message PageAccountResponse {}
 
-enum ExchangeType {
-    BINANCE = 0;
-    FTX = 1;
-    DERIBIT = 2;
-    BITFINEX = 3;
-}
-
-message Exchange {
-    ExchangeType exchange_type = 1;
-    string api_key = 2;
-    string secret_key = 3;
-    string sub_account = 4;
-    bool is_active = 5;
-    string exchange_id = 6;
-}
-
-message AddExchangeRequest {
-    Exchange exchange = 1;
+message AddVenueAccountRequest {
+    VenueAccount venue_account = 1;
     string user_id = 2;
+    string actor_id = 3;
 }
 
-message AddExchangeResponse {
-    Exchange exchange = 1;
+message AddVenueAccountResponse {
+    VenueAccount venue_account = 1;
     bool verified = 2;
     string reason = 3;
 }
 
-message ListExchangesRequest {
+message CreateOrUpdateInternalVenueAccountRequest {
+    InternalVenueAccount internal_venue_account = 1;
+    string user_id = 2;
+    string actor_id = 3;
+    bool allow_updates = 4;
+}
+
+message CreateOrUpdateInternalVenueAccountResponse {
+    InternalVenueAccount internal_venue_account = 1;
+    bool verified = 2;
+    string reason = 3;
+}
+
+message ListVenueAccountsRequest {
     string user_id = 1;
     bool active_only = 2;
+    string actor_id = 3;
+    bool with_unmasked_credentials = 4;
 }
 
-message ListExchangesResponse {
-    repeated Exchange exchanges = 1;
+message ListVenueAccountsResponse {
+    repeated VenueAccount venue_accounts = 1;
 }
 
-message ReadExchangeRequest {
-    string exchange_id = 1;
+message ReadVenueAccountByVenueAccountIDRequest {
+    string venue_account_id = 1;
 }
 
-message ReadExchangeResponse{
-    Exchange exchange = 1;
+message ReadVenueAccountByVenueAccountIDResponse{
+    VenueAccount venue_account = 1;
 }
 
-message ReadPrimaryExchangeByUserIDRequest {
+message ReadPrimaryVenueAccountByUserIDRequest {
     string user_id = 1;
     string actor_id = 2;
 }
 
-message ReadPrimaryExchangeByUserIDResponse {
-    Exchange primary_exchange = 1;
+message ReadPrimaryVenueAccountByUserIDResponse {
+    VenueAccount primary_venue_account = 1;
+}
+
+message ReadVenueAccountByVenueAccountDetailsRequest {
+    VENUE venue = 1;
+    string user_id = 2;
+    string subaccount = 3;
+    string actor_id = 4;
+    string request_context = 5;
+    string account_alias = 6;
+}
+
+message ReadVenueAccountByVenueAccountDetailsResponse {
+    VenueAccount venue_account = 1;
+} 
+
+message ReadInternalVenueAccountRequest {
+    VENUE venue = 1;
+    VenueAccountType venue_account_type = 2;
+    string subaccount = 3;
+    string actor_id = 4;
+}
+
+message ReadInternalVenueAccountResponse {
+    InternalVenueAccount internal_venue_account = 1;
 }

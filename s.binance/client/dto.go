@@ -48,8 +48,12 @@ type ListAllAssetPairsResponse struct {
 	Symbols []*BinanceAssetItem `json:"symbols"`
 }
 
-type ExecuteSpotTradeRequest struct{}
-type ExecuteSpotTradeResponse struct{}
+type ExecuteSpotOrderRequest struct{}
+
+type ExecuteSpotOrderResponse struct {
+	ExternalOrderID    string
+	ExecutionTimestamp int
+}
 
 // PingRequest data transfer object for ping request.
 type PingRequest struct{}
@@ -82,31 +86,31 @@ type PerpetualFuturesAccountBalance struct {
 // ReadPerpetualFuturesAccountResponse an array of balances; identical to the Binance exchange API definition.
 type ReadPerpetualFuturesAccountResponse []*PerpetualFuturesAccountBalance
 
-// ExecutePerpetualFuturesTradeRequest...
+// ExecutePerpetualFuturesOrderRequest ...
 // https://binance-docs.github.io/apidocs/futures/en/#place-multiple-orders-trade
-type ExecutePerpetualFuturesTradeRequest struct {
+type ExecutePerpetualFuturesOrderRequest struct {
 	// Required
 	Symbol    string `json:"string"`
 	Side      string `json:"side"`
 	OrderType string `json:"type"`
 	// ---
-	PositionSide     string  `json:"positionSide"` // "BOTH", "LONG", "SHORT"
-	TimeInForce      string  `json:"timeInForce"`
-	Quantity         string  `json:"quantity"`
-	ReduceOnly       string  `json:"reduceOnly"` // "true" or "false"
-	Price            string  `json:"price"`
-	NewClientOrderID string  `json:"newClientOrderId"`
-	StopPrice        string  `json:"stopPrice"`
-	ClosePosition    string  `json:"closePosition"`
-	ActivationPrice  float64 `json:"activationPrice"`
-	CallbackRate     float64 `json:"callbackRate"` // Used with trailing stop
-	WorkingType      string  `json:"workingType"`  // "MARK_PRICE" or "CONTRACT_PRICE"
-	PriceProtect     string  `json:"priceProtect"`
-	NewOrderRespType string  `json:"newOrderRespType"` // "ACK" or "RESULT"
+	PositionSide     string `json:"positionSide"` // "BOTH", "LONG", "SHORT"
+	TimeInForce      string `json:"timeInForce"`
+	Quantity         string `json:"quantity"`
+	ReduceOnly       string `json:"reduceOnly"` // "true" or "false"
+	LimitPrice       string `json:"price"`
+	NewClientOrderID string `json:"newClientOrderId"`
+	StopPrice        string `json:"stopPrice"`
+	ClosePosition    string `json:"closePosition"`
+	ActivationPrice  string `json:"activationPrice"`
+	CallbackRate     string `json:"callbackRate"` // Used with trailing stop
+	WorkingType      string `json:"workingType"`  // "MARK_PRICE" or "CONTRACT_PRICE"
+	PriceProtect     string `json:"priceProtect"`
+	NewOrderRespType string `json:"newOrderRespType"` // "ACK" or "RESULT"
 }
 
-// ExecutePerpetualFuturesTradeResponse ...
-type ExecutePerpetualFuturesTradeResponse struct {
+// ExecutePerpetualFuturesOrderResponse ...
+type ExecutePerpetualFuturesOrderResponse struct {
 	OrderID            int `json:"orderId"`
 	ExecutionTimestamp int `json:"updateTime"`
 }
