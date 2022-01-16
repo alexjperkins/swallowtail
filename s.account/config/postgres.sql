@@ -95,6 +95,3 @@ CREATE TABLE IF NOT EXISTS s_account_internal_venue_accounts (
 
 	UNIQUE(venue_id, subaccount, venue_account_type)
 );
-
--- Unique index to enforce singleton test accounts across venues.
-CREATE UNIQUE INDEX ON s_account_venue_accounts(venue_id) WHERE venue_account_type = 'TESTING';
