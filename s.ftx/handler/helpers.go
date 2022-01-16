@@ -59,7 +59,7 @@ func validateOrder(order *tradeengineproto.Order) error {
 		case order.LimitPrice <= 0:
 			return gerrors.BadParam("bad_param.limit_price", nil)
 		}
-	case tradeengineproto.ORDER_TYPE_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
+	case tradeengineproto.ORDER_TYPE_STOP_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
 		switch {
 		case order.StopPrice <= 0:
 			return gerrors.BadParam("bad_param.stop_price", nil)

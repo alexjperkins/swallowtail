@@ -240,9 +240,9 @@ func setPrimaryExchangeCommand(ctx context.Context, tokens []string, s *discordg
 
 	// Read exchanges to see if venue account actually exists.
 	rsp, err := (&accountproto.ListVenueAccountsRequest{
-		UserId:                   m.Author.ID,
-		ActiveOnly:               true,
-		WithUnmaaskedCredentials: false,
+		UserId:                  m.Author.ID,
+		ActiveOnly:              true,
+		WithUnmaskedCredentials: false,
 	}).SendWithTimeout(ctx, 10*time.Second).Response()
 	if err != nil {
 		slog.Error(ctx, "Failed to read venue accounts for user: %s", m.Author.ID)

@@ -184,7 +184,7 @@ message ListVenueAccountsRequest {
     string user_id = 1;
     bool active_only = 2;
     string actor_id = 3;
-    bool with_unmaasked_credentials = 4;
+    bool with_unmasked_credentials = 4;
 }
 
 message ListVenueAccountsResponse {

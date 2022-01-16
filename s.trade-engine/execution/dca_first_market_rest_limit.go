@@ -204,7 +204,7 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	case err != nil:
 		slog.Error(ctx, "Failed to execute given order: %+v, Error: %v", executionErr.FailedOrder, executionErr.ErrorMessage, errParams)
 	default:
-		slog.Info(ctx, "Successfully placed trade strategy: %s for user: %s, risk: , total quantity: ", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
+		slog.Info(ctx, "Successfully placed trade strategy: %s for user: %s, risk: %v, total quantity: %v", strategy.TradeStrategyId, participant.UserId, participant.Risk, totalQuantity)
 	}
 
 	// TODO: store into persistance layer.

@@ -18,7 +18,7 @@ func (s *AccountService) ListVenueAccounts(
 	switch {
 	case in.UserId == "":
 		return nil, gerrors.FailedPrecondition("missing-param.user_id", nil)
-	case !isValidActorUnmaskedRequest(in.ActorId, in.WithUnmaaskedCredentials):
+	case !isValidActorUnmaskedRequest(in.ActorId, in.WithUnmaskedCredentials):
 		return nil, gerrors.Unauthenticated("failed_to_list_venue_accounts_by_user_id.unauthenticated", map[string]string{
 			"user_id":  "user_id",
 			"actor_id": "actor_id",
@@ -28,14 +28,14 @@ func (s *AccountService) ListVenueAccounts(
 	errParams := map[string]string{
 		"user_id":  in.UserId,
 		"actor_id": in.ActorId,
-		"unmasked": strconv.FormatBool(in.WithUnmaaskedCredentials),
+		"unmasked": strconv.FormatBool(in.WithUnmaskedCredentials),
 	}
 
 	// Determine the correct marshaller to user depending on whether the requester is allowed
 	// unmasked credentials.
 	var marshaller func([]*domain.VenueAccount) ([]*accountproto.VenueAccount, error)
 	switch {
-	case in.WithUnmaaskedCredentials:
+	case in.WithUnmaskedCredentials:
 		marshaller = marshaling.VenueAccountDomainsToProtosUnmasked
 	default:
 		marshaller = marshaling.VenueAccountDomainsToProtos

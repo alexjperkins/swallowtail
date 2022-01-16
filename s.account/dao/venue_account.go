@@ -89,7 +89,7 @@ func ReadVenueAccountByVenueAccountID(ctx context.Context, venueAccountID string
 }
 
 // ReadVenueAccountByVenueAccountDetails ...
-func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID, _ string) (*domain.VenueAccount, error) {
+func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID string) (*domain.VenueAccount, error) {
 	var (
 		sql = `
 		SELECT 
@@ -112,11 +112,6 @@ func ReadVenueAccountByVenueAccountDetails(ctx context.Context, venueID, userID,
 		`
 		venueAccounts []*domain.VenueAccount
 	)
-
-	// Switch empty subaccount to the default value we store in the db.
-	//if subaccount == "" {
-	//	subaccount = accountproto.SubAccountUnknown
-	//}
 
 	accountAlias := strings.ToUpper(fmt.Sprintf("%s-MAIN", venueID))
 

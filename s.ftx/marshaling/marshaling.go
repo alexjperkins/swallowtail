@@ -86,25 +86,46 @@ func OrderProtoToDTO(order *tradeengineproto.Order) (*client.ExecuteOrderRequest
 
 	// Parse prices.
 	var (
-		price        string
-		triggerPrice string
-		orderPrice   string
-		trailValue   string
+		price        float64
+		triggerPrice float64
+		orderPrice   float64
+		trailValue   float64
 	)
 	switch order.OrderType {
 	case tradeengineproto.ORDER_TYPE_LIMIT:
-		price = roundToPrecisionString(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
+		var err error
+		price, err = roundToPrecision(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_marshal_new_order_request", nil)
+		}
 	case tradeengineproto.ORDER_TYPE_STOP_LIMIT, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_LIMIT:
-		orderPrice = roundToPrecisionString(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
-		triggerPrice = roundToPrecisionString(float64(order.StopPrice), exchangeInstrumentData.MininumTickSize)
+		var err error
+		orderPrice, err = roundToPrecision(float64(order.LimitPrice), exchangeInstrumentData.MininumTickSize)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_marshal_new_order_request", nil)
+		}
+
+		triggerPrice, err = roundToPrecision(float64(order.StopPrice), exchangeInstrumentData.MininumTickSize)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_marshal_new_order_request", nil)
+		}
 	case tradeengineproto.ORDER_TYPE_STOP_MARKET, tradeengineproto.ORDER_TYPE_TAKE_PROFIT_MARKET:
-		triggerPrice = roundToPrecisionString(float64(order.StopPrice), exchangeInstrumentData.MininumTickSize)
+		var err error
+		triggerPrice, err = roundToPrecision(float64(order.StopPrice), exchangeInstrumentData.MininumTickSize)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_marshal_new_order_request", nil)
+		}
 	}
 
 	// Parse quantity.
-	var quantity string
+	var quantity float64
 	if !order.ClosePosition {
-		quantity = roundToPrecisionString(float64(order.Quantity), exchangeInstrumentData.MininumQuantity)
+		// TODO: inefficient, improve.
+		var err error
+		quantity, err = roundToPrecision(float64(order.Quantity), exchangeInstrumentData.MininumQuantity)
+		if err != nil {
+			return nil, gerrors.Augment(err, "failed_to_convert_quantity_to_float", nil)
+		}
 	}
 
 	// Parse IOC.
@@ -238,9 +259,9 @@ func AccountBalancesDTOToProto(in *client.AccountBalance) *ftxproto.AccountBalan
 	}
 }
 
-func roundToPrecisionString(f float64, minIncrement float64) string {
+func roundToPrecision(f float64, minIncrement float64) (float64, error) {
 	if f <= 0.0 {
-		return "0.0"
+		return 0.0, nil
 	}
 
 	v := f / minIncrement
@@ -254,5 +275,10 @@ func roundToPrecisionString(f float64, minIncrement float64) string {
 	}
 
 	// Format float & trim zeros.
-	return strings.TrimRight(strconv.FormatFloat(p, 'f', 6, 64), "0")
+	out, err := strconv.ParseFloat(strings.TrimRight(strconv.FormatFloat(p, 'f', 6, 64), "0"), 64)
+	if err != nil {
+		return 0.0, gerrors.Augment(err, "failed_to_convert_quantity_to_float.parse_as_float", nil)
+	}
+
+	return out, nil
 }

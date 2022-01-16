@@ -9,11 +9,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"swallowtail/libraries/gerrors"
 	"time"
 
 	"github.com/monzo/slog"
 	"google.golang.org/grpc/codes"
+
+	"swallowtail/libraries/gerrors"
 )
 
 const (

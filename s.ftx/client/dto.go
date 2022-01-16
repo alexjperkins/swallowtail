@@ -19,19 +19,19 @@ func (p *PaginationFilter) ToQueryString() string {
 
 // ExecuteOrderRequest ...
 type ExecuteOrderRequest struct {
-	ClientID         string `json:"clientId,omitempty"`
-	Market           string `json:"market"`
-	Side             string `json:"side"`
-	Type             string `json:"type"`
-	Size             string `json:"size"`
-	Price            string `json:"price,omitempty"`
-	ReduceOnly       bool   `json:"reduceOnly,omitempty"`
-	IOC              bool   `json:"ioc,omitempty"`
-	PostOnly         bool   `json:"postOnly,omitempty"`
-	RetryUntilFilled bool   `json:"retryUntilFilled,omitempty"`
-	TriggerPrice     string `json:"triggerPrice,omitempty"`
-	OrderPrice       string `json:"orderPrice,omitempty"`
-	TrailValue       string `json:"trailValue,omitempty"`
+	ClientID         string  `json:"clientId,omitempty"`
+	Market           string  `json:"market"`
+	Side             string  `json:"side"`
+	Type             string  `json:"type"`
+	Size             float64 `json:"size"`
+	Price            float64 `json:"price"`
+	ReduceOnly       bool    `json:"reduceOnly,omitempty"`
+	IOC              bool    `json:"ioc,omitempty"`
+	PostOnly         bool    `json:"postOnly,omitempty"`
+	RetryUntilFilled bool    `json:"retryUntilFilled,omitempty"`
+	TriggerPrice     float64 `json:"triggerPrice,omitempty"`
+	OrderPrice       float64 `json:"orderPrice,omitempty"`
+	TrailValue       float64 `json:"trailValue,omitempty"`
 }
 
 // ExecuteOrderResponse ...
