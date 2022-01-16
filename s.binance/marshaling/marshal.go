@@ -1,13 +1,11 @@
 package marshaling
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/monzo/slog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"swallowtail/libraries/gerrors"
@@ -79,7 +77,7 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 	}
 
 	// Round the quantity to the minimum precision allowed on the exchange.
-	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(symbol)
+	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(symbol, in.OrderType == tradeengineproto.ORDER_TYPE_MARKET)
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", errParams)
 	}
@@ -96,8 +94,6 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 	case in.OrderId != "":
 		clientOrderID = in.OrderId
 	}
-
-	slog.Warn(context.Background(), "HERE %s: Lot size: %v, tick size: %v", in.Symbol, assetQuantityPrecision, assetPricePrecision)
 
 	// Convert floats to minimum precision rounded strings.
 	quantity := roundToPrecisionString(float64(in.Quantity), assetQuantityPrecision)

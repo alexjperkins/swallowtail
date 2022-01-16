@@ -38,7 +38,7 @@ func (s *AccountService) ReadVenueAccountByVenueAccountDetails(
 	}
 
 	// Read.
-	venueAccount, err := dao.ReadVenueAccountByVenueAccountDetails(ctx, in.Venue.String(), in.UserId, in.Subaccount)
+	venueAccount, err := dao.ReadVenueAccountByVenueAccountDetails(ctx, in.Venue.String(), in.UserId)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_read_venue_account_by_venue_details.dao", errParams)
 	}

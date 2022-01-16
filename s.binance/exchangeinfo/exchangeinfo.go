@@ -207,15 +207,13 @@ func gatherExchangeInfo(ctx context.Context) error {
 		}
 
 		symbolInformation[strings.ToLower(s.Symbol)] = d
-
-		slog.Info(ctx, "SYMBOL: %s, TICK_SIZE: %v, LOT_SIZE: %v, DATA: %+v", s.Symbol, tickSize, lotSize, d)
 	}
 
 	return nil
 }
 
 // GetBaseAssetQuantityPrecision returns the base asset quantity precision given the base asset.
-func GetBaseAssetQuantityPrecision(baseAsset string) (int, bool) {
+func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (int, bool) {
 	mu.RLock()
 	defer mu.RUnlock()
 
@@ -256,7 +254,7 @@ func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
 	return calculatePrecision(v.TickSize), true
 }
 
-// GetBaseAssetMinQty...
+// GetBaseAssetMinQty ...
 func GetBaseAssetMinQty(baseAsset string, isMarketOrder bool) (float64, bool, error) {
 	mu.RLock()
 	defer mu.RUnlock()
