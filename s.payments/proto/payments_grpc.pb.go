@@ -11,7 +11,8 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
 
 // PaymentsClient is the client API for Payments service.
 //
@@ -20,6 +21,7 @@ type PaymentsClient interface {
 	RegisterPayment(ctx context.Context, in *RegisterPaymentRequest, opts ...grpc.CallOption) (*RegisterPaymentResponse, error)
 	EnforceSubscriptions(ctx context.Context, in *EnforceSubscriptionsRequest, opts ...grpc.CallOption) (*EnforceSubscriptionsResponse, error)
 	PublishSubscriptionReminder(ctx context.Context, in *PublishSubscriptionReminderRequest, opts ...grpc.CallOption) (*PublishSubscriptionReminderResponse, error)
+	ReadUsersLastPayment(ctx context.Context, in *ReadUsersLastPaymentRequest, opts ...grpc.CallOption) (*ReadUsersLastPaymentResponse, error)
 }
 
 type paymentsClient struct {
@@ -57,6 +59,15 @@ func (c *paymentsClient) PublishSubscriptionReminder(ctx context.Context, in *Pu
 	return out, nil
 }
 
+func (c *paymentsClient) ReadUsersLastPayment(ctx context.Context, in *ReadUsersLastPaymentRequest, opts ...grpc.CallOption) (*ReadUsersLastPaymentResponse, error) {
+	out := new(ReadUsersLastPaymentResponse)
+	err := c.cc.Invoke(ctx, "/payments/ReadUsersLastPayment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentsServer is the server API for Payments service.
 // All implementations must embed UnimplementedPaymentsServer
 // for forward compatibility
@@ -64,6 +75,7 @@ type PaymentsServer interface {
 	RegisterPayment(context.Context, *RegisterPaymentRequest) (*RegisterPaymentResponse, error)
 	EnforceSubscriptions(context.Context, *EnforceSubscriptionsRequest) (*EnforceSubscriptionsResponse, error)
 	PublishSubscriptionReminder(context.Context, *PublishSubscriptionReminderRequest) (*PublishSubscriptionReminderResponse, error)
+	ReadUsersLastPayment(context.Context, *ReadUsersLastPaymentRequest) (*ReadUsersLastPaymentResponse, error)
 	mustEmbedUnimplementedPaymentsServer()
 }
 
@@ -71,19 +83,29 @@ type PaymentsServer interface {
 type UnimplementedPaymentsServer struct {
 }
 
-func (*UnimplementedPaymentsServer) RegisterPayment(context.Context, *RegisterPaymentRequest) (*RegisterPaymentResponse, error) {
+func (UnimplementedPaymentsServer) RegisterPayment(context.Context, *RegisterPaymentRequest) (*RegisterPaymentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterPayment not implemented")
 }
-func (*UnimplementedPaymentsServer) EnforceSubscriptions(context.Context, *EnforceSubscriptionsRequest) (*EnforceSubscriptionsResponse, error) {
+func (UnimplementedPaymentsServer) EnforceSubscriptions(context.Context, *EnforceSubscriptionsRequest) (*EnforceSubscriptionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnforceSubscriptions not implemented")
 }
-func (*UnimplementedPaymentsServer) PublishSubscriptionReminder(context.Context, *PublishSubscriptionReminderRequest) (*PublishSubscriptionReminderResponse, error) {
+func (UnimplementedPaymentsServer) PublishSubscriptionReminder(context.Context, *PublishSubscriptionReminderRequest) (*PublishSubscriptionReminderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublishSubscriptionReminder not implemented")
 }
-func (*UnimplementedPaymentsServer) mustEmbedUnimplementedPaymentsServer() {}
+func (UnimplementedPaymentsServer) ReadUsersLastPayment(context.Context, *ReadUsersLastPaymentRequest) (*ReadUsersLastPaymentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadUsersLastPayment not implemented")
+}
+func (UnimplementedPaymentsServer) mustEmbedUnimplementedPaymentsServer() {}
 
-func RegisterPaymentsServer(s *grpc.Server, srv PaymentsServer) {
-	s.RegisterService(&_Payments_serviceDesc, srv)
+// UnsafePaymentsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PaymentsServer will
+// result in compilation errors.
+type UnsafePaymentsServer interface {
+	mustEmbedUnimplementedPaymentsServer()
+}
+
+func RegisterPaymentsServer(s grpc.ServiceRegistrar, srv PaymentsServer) {
+	s.RegisterService(&Payments_ServiceDesc, srv)
 }
 
 func _Payments_RegisterPayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -140,7 +162,28 @@ func _Payments_PublishSubscriptionReminder_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Payments_serviceDesc = grpc.ServiceDesc{
+func _Payments_ReadUsersLastPayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadUsersLastPaymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentsServer).ReadUsersLastPayment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payments/ReadUsersLastPayment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentsServer).ReadUsersLastPayment(ctx, req.(*ReadUsersLastPaymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Payments_ServiceDesc is the grpc.ServiceDesc for Payments service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Payments_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "payments",
 	HandlerType: (*PaymentsServer)(nil),
 	Methods: []grpc.MethodDesc{
@@ -155,6 +198,10 @@ var _Payments_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PublishSubscriptionReminder",
 			Handler:    _Payments_PublishSubscriptionReminder_Handler,
+		},
+		{
+			MethodName: "ReadUsersLastPayment",
+			Handler:    _Payments_ReadUsersLastPayment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

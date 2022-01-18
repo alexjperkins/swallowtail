@@ -34,6 +34,14 @@ func init() {
 				Handler:             registerPaymentHandler,
 				FailureMsg:          "Please check that you have an account registered; or maybe you've already paid for this month? ping @ajperkins if unsure",
 			},
+			"uptodate": {
+				ID:                  "payment-up-to-date",
+				IsPrivate:           true,
+				MinimumNumberOfArgs: 0,
+				Usage:               `!payment up-to-date`,
+				Description:         "Checks if you are up to date on payments with the bot.",
+				Handler:             upToDatePaymentHandler,
+			},
 		},
 	})
 }
@@ -91,4 +99,31 @@ func registerPaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 	)
 
 	return err
+}
+
+func upToDatePaymentHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	var msg string
+	rsp, err := (&paymentsproto.ReadUsersLastPaymentRequest{
+		UserId:  m.Author.ID,
+		ActorId: paymentsproto.ActorSatoshiSystem,
+	}).Send(ctx).Response()
+	switch {
+	case gerrors.PartialIs(err, gerrors.ErrUnknown, "no_rows_in_result_set"):
+		msg = "I can't find any payment I'm afraid :grimacing:"
+	case err != nil:
+		return gerrors.Augment(err, "failed_up_to_date_payment_command", nil)
+	case rsp.GetHasUserPaidForLastMonth():
+		msg = "it looks like you've already paid for the month! :rocket: :dove:"
+	default:
+		msg = "I can't find a payment for the last month I'm afraid. Please ask in support channels if you think this is wrong!"
+	}
+
+	if _, err := s.ChannelMessageSend(
+		m.ChannelID,
+		fmt.Sprintf(":wave: <@%s> %s", m.Author.ID, msg),
+	); err != nil {
+		slog.Error(ctx, "Failed to publish up to date message to user via discord: %s", m.Author.Username)
+	}
+
+	return nil
 }

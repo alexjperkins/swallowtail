@@ -21,4 +21,8 @@ type Database interface {
 
 	// Transaction beings a transaction on the underlying database & return a transaction object.
 	Transaction(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
+
+	// Get performs a query on the db with the expectation that there will be only one result.
+	// It will error otherwise.
+	Get(ctx context.Context, destination interface{}, query string, args ...interface{}) error
 }

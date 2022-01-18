@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"swallowtail/libraries/gerrors"
-	"swallowtail/libraries/util"
 	"sync"
 	"time"
 
@@ -18,6 +16,9 @@ import (
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
 	"github.com/opentracing/opentracing-go"
+
+	"swallowtail/libraries/gerrors"
+	"swallowtail/libraries/util"
 )
 
 const (
@@ -107,6 +108,12 @@ func (p *psql) Select(ctx context.Context, dest interface{}, sql string, args ..
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Postgres select statement.")
 	defer span.Finish()
 	return pgxscan.Select(ctx, p.p, dest, sql, args...)
+}
+
+func (p *psql) Get(ctx context.Context, destination interface{}, query string, args ...interface{}) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Postgres get statement")
+	defer span.Finish()
+	return p.p.QueryRow(ctx, query, args...).Scan(destination)
 }
 
 func (p *psql) Transaction(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {

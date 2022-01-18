@@ -17,7 +17,7 @@ func Propagate(err error, code codes.Code, params map[string]string) error {
 	return New(code, err.Error(), params)
 }
 
-// Is compares gerrors
+// Is compares gerrors.
 func Is(err error, code codes.Code, msgs ...string) bool {
 	s, ok := status.FromError(err)
 	if !ok {
@@ -34,6 +34,25 @@ func Is(err error, code codes.Code, msgs ...string) bool {
 	}
 
 	return true
+}
+
+// Is partially compares gerrors. We must match a code & a single message to be a partial match.
+func PartialIs(err error, code codes.Code, msgs ...string) bool {
+	s, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	if s.Code() != code {
+		return false
+	}
+
+	for _, msg := range msgs {
+		if strings.Contains(s.Message(), msg) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Augment augments the given error with a message & extra metadata via params.
