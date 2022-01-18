@@ -113,9 +113,9 @@ func upToDatePaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 	case err != nil:
 		return gerrors.Augment(err, "failed_up_to_date_payment_command", nil)
 	case rsp.GetHasUserPaidForLastMonth():
-		msg = "it looks like you've already paid for the month! :rocket: :dove:"
+		msg = fmt.Sprintf("it looks like you've already paid for the month, at %s! :rocket: :dove:", rsp.GetLastPaymentTimestamp())
 	default:
-		msg = "I can't find a payment for the last month I'm afraid. Please ask in support channels if you think this is wrong!"
+		msg = fmt.Sprintf("I can't find a payment for the last month I'm afraid, your last was: `%s`.\nPlease ask in support channels if you think this is wrong!", rsp.GetLastPaymentTimestamp())
 	}
 
 	if _, err := s.ChannelMessageSend(
