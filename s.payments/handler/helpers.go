@@ -3,9 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"swallowtail/libraries/gerrors"
 	discordproto "swallowtail/s.discord/proto"
-	"time"
+	paymentsproto "swallowtail/s.payments/proto"
 )
 
 // CurrentMonthStartTimestamp returns the timestamp of the start of the current month.
@@ -61,4 +63,31 @@ Timestamp: %v
 	}
 
 	return nil
+}
+
+func isActorValid(actorID string) error {
+	switch actorID {
+	case paymentsproto.ActorEnforceSubscriptionsCron, paymentsproto.ActorPublishReminderCron:
+		// Do nothing.
+		// TODO: once we have a metrics system we can infer request context.
+	case paymentsproto.ActorSatoshiSystem:
+		// Do nothing.
+		// TODO: once we have a metrics system we can infer request context.
+	default:
+		return gerrors.Unauthenticated("actor_unauthorized", nil)
+	}
+
+	return nil
+}
+
+func formatCronitorMsg(job, actor, status string, timestamp time.Time) string {
+	header := ":shark:    `CRONITOR: PHIL MITCHELL`    :robot:"
+	base := `
+Job: %s
+Status: %s
+Actor: %s
+Timestamp: %v
+	`
+	formattedBase := fmt.Sprintf(base, job, status, actor, timestamp)
+	return fmt.Sprintf("%s```%s```", header, formattedBase)
 }

@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "./;paymentsproto";
 
 service payments {
@@ -8,10 +10,8 @@ service payments {
     rpc EnforceSubscriptions (EnforceSubscriptionsRequest) returns (EnforceSubscriptionsResponse) {}
 
     rpc PublishSubscriptionReminder(PublishSubscriptionReminderRequest) returns (PublishSubscriptionReminderResponse) {}
-}
 
-enum PaymentType {
-    FUTURES = 0;
+    rpc ReadUsersLastPayment(ReadUsersLastPaymentRequest) returns (ReadUsersLastPaymentResponse) {}
 }
 
 message RegisterPaymentRequest{
@@ -44,4 +44,14 @@ message PublishSubscriptionReminderRequest {
 
 message PublishSubscriptionReminderResponse {
     bool success = 1;
+}
+
+message ReadUsersLastPaymentRequest {
+    string actor_id = 1;
+    string user_id = 2;
+}
+
+message ReadUsersLastPaymentResponse {
+    google.protobuf.Timestamp last_payment_timestamp = 1;
+    bool has_user_paid_for_last_month = 2;
 }

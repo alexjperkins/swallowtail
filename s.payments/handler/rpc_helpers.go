@@ -82,14 +82,14 @@ func readUserRoles(ctx context.Context, userID string) ([]*discordproto.Role, er
 	return rsp.GetRoles(), nil
 }
 
-// isUserRegistered checks if the userID has an account registered in `s.account`
-func isUserRegistered(ctx context.Context, userID string) (*accountproto.Account, error) {
+// readAccount checks if the userID has an account registered in `s.account`
+func readAccount(ctx context.Context, userID string) (*accountproto.Account, error) {
 	rsp, err := (&accountproto.ReadAccountRequest{
 		UserId: userID,
 	}).Send(ctx).Response()
 	switch {
 	case gerrors.Is(err, gerrors.ErrNotFound, "account_not_found"):
-		return nil, nil
+		return nil, err
 	case err != nil:
 		return nil, gerrors.Augment(err, "failed_to_check_if_user_register", nil)
 	}
@@ -99,7 +99,7 @@ func isUserRegistered(ctx context.Context, userID string) (*accountproto.Account
 
 // isMonthlyTransactionInDepositAccount checks if the txid exists in the deposit account.
 func isMonthlyTransactionInDepositAccount(ctx context.Context, transactionID string, minimumExpectedAmount float64) (bool, error) {
-	start := currentMonthStartFromTimestamp(time.Now())
+	start := currentMonthStartFromTimestamp(time.Now().UTC())
 
 	rsp, err := (&ftxproto.ListAccountDepositsRequest{
 		ActorId: ftxproto.FTXDepositAccountActorPaymentsSystem,

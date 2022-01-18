@@ -2,14 +2,14 @@ package handler
 
 import (
 	"context"
-	"fmt"
+	"time"
+
+	"github.com/monzo/slog"
+
 	"swallowtail/libraries/gerrors"
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.payments/dao"
 	paymentsproto "swallowtail/s.payments/proto"
-	"time"
-
-	"github.com/monzo/slog"
 )
 
 // EnforceSubscriptions ...
@@ -28,12 +28,8 @@ func (s *PaymentsService) EnforceSubscriptions(
 	}
 
 	// Validate the caller is authorized to call this RPC.
-	validActor, err := isActorValid(ctx, in.ActorId)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions.actor_check", errParams)
-	}
-	if !validActor {
-		return nil, gerrors.Unauthenticated("failed_to_enforce_subscriptions.unauthorized", errParams)
+	if err := isActorValid(in.ActorId); err != nil {
+		return nil, gerrors.Unauthenticated("failed_to_enforce_subscriptions", errParams)
 	}
 
 	// Notify Pulse channel.
@@ -43,7 +39,7 @@ func (s *PaymentsService) EnforceSubscriptions(
 		SenderId:  "system:payments",
 		Force:     true,
 	}).Send(ctx).Response(); err != nil {
-		return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions.failed_to_notify_pulse_channel", errParams)
+		slog.Error(ctx, "Failed to notify pulse channel of subsciption enforcement")
 	}
 
 	futuresMembers, err := listFuturesMembers(ctx)
@@ -63,9 +59,8 @@ func (s *PaymentsService) EnforceSubscriptions(
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions", errParams)
 		}
-
-		// Futures member has paid for the month; we can continue.
 		if ok {
+			// Futures member has paid for the month; we can continue.
 			continue
 		}
 
@@ -73,30 +68,10 @@ func (s *PaymentsService) EnforceSubscriptions(
 
 		// Uh-oh they haven't paid, lets offboard them.
 		if err := offboardSubscriber(ctx, fm.UserId, fm.Username); err != nil {
+			slog.Error(ctx, "Failed to enforce subscriber, Error: %v", err)
 			return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions", errParams)
 		}
 	}
 
 	return &paymentsproto.EnforceSubscriptionsResponse{}, nil
-}
-
-func isActorValid(ctx context.Context, actorID string) (bool, error) {
-	switch actorID {
-	case paymentsproto.ActorEnforceSubscriptionsCron, paymentsproto.ActorPublishReminderCron:
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func formatCronitorMsg(job, actor, status string, timestamp time.Time) string {
-	header := ":shark:    `CRONITOR: PHIL MITCHELL`    :robot:"
-	base := `
-Job: %s
-Status: %s
-Actor: %s
-Timestamp: %v
-	`
-	formattedBase := fmt.Sprintf(base, job, status, actor, timestamp)
-	return fmt.Sprintf("%s```%s```", header, formattedBase)
 }

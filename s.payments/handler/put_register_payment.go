@@ -28,38 +28,37 @@ func (s *PaymentsService) RegisterPayment(
 		return nil, gerrors.BadParam("bad_param.amount_in_usdt_cannot_be_negative", nil)
 	}
 
+	now := time.Now().UTC()
+	timestampOfChecks := currentMonthStartFromTimestamp(now)
+
 	errParams := map[string]string{
-		"user_id":        in.UserId,
-		"transaction_id": in.TransactionId,
-		"amount_in_usdt": strconv.FormatFloat(float64(in.AmountInUsdt), 'f', 6, 64),
+		"user_id":             in.UserId,
+		"transaction_id":      in.TransactionId,
+		"amount_in_usdt":      strconv.FormatFloat(float64(in.AmountInUsdt), 'f', 6, 64),
+		"timestamp_of_checks": timestampOfChecks.String(),
 	}
 
 	// Check the user does indeed have an account.
-	account, err := isUserRegistered(ctx, in.UserId)
+	account, err := readAccount(ctx, in.UserId)
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_register_payment", errParams)
-	}
-
-	if account == nil {
-		return nil, gerrors.FailedPrecondition("failed_to_register_payment.user_does_not_have_an_account", errParams)
 	}
 
 	// Check that the txid doesn't already exist.
 	payment, err := dao.ReadPaymentByTransactionID(ctx, in.TransactionId)
-	if err != nil {
-		return nil, gerrors.Augment(err, "failed_to_register_payment", errParams)
-	}
-
-	if payment != nil {
-		return nil, gerrors.AlreadyExists("failed_to_register_payment.payment_already_exists", errParams)
+	switch {
+	case gerrors.Is(err, gerrors.ErrNotFound, "payment_not_found"):
+	case payment != nil:
+		return nil, gerrors.Augment(err, "payment_already_made", errParams)
+	case err != nil:
+		return nil, gerrors.Augment(err, "failed_to_register_payment.read_payment", errParams)
 	}
 
 	// Check the user hasn't already paid this month
-	hasAlreadyPaid, err := dao.UserPaymentExistsSince(ctx, in.UserId, currentMonthStartFromTimestamp(time.Now()))
+	hasAlreadyPaid, err := dao.UserPaymentExistsSince(ctx, in.UserId, timestampOfChecks)
 	if err != nil {
 		return nil, gerrors.AlreadyExists("failed_to_register_payment.failed_check_if_user_already_paid", errParams)
 	}
-
 	if hasAlreadyPaid {
 		return nil, gerrors.FailedPrecondition("failed_to_register_payment.user_has_already_paid", errParams)
 	}
@@ -69,12 +68,9 @@ func (s *PaymentsService) RegisterPayment(
 	if err != nil {
 		return nil, gerrors.Augment(err, "failed_to_register_payment", errParams)
 	}
-
 	if !doesTxExist {
 		return nil, gerrors.FailedPrecondition("failed_to_register_payment.transaction_of_correct_amount_does_not_exist_in_deposit_account", errParams)
 	}
-
-	now := time.Now().UTC()
 
 	// Set user as a futures member on s.account & in discord
 	if err := setUserAsFuturesMember(ctx, in.UserId); err != nil {

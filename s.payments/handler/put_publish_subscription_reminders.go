@@ -24,12 +24,8 @@ func (s *PaymentsService) PublishSubscriptionReminder(
 	}
 
 	// Validate the caller is authorized to call this RPC.
-	validActor, err := isActorValid(ctx, in.ActorId)
-	if err != nil {
+	if err := isActorValid(in.ActorId); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions.actor_check", errParams)
-	}
-	if !validActor {
-		return nil, gerrors.Unauthenticated("failed_to_enforce_subscriptions.unauthorized", errParams)
 	}
 
 	var reminder string
