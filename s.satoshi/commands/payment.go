@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 	"swallowtail/libraries/gerrors"
 	paymentsproto "swallowtail/s.payments/proto"
 
@@ -34,13 +35,21 @@ func init() {
 				Handler:             registerPaymentHandler,
 				FailureMsg:          "Please check that you have an account registered; or maybe you've already paid for this month? ping @ajperkins if unsure",
 			},
-			"uptodate": {
-				ID:                  "payment-up-to-date",
+			"check": {
+				ID:                  "payment-check",
 				IsPrivate:           true,
 				MinimumNumberOfArgs: 0,
-				Usage:               `!payment up-to-date`,
+				Usage:               `!payment check`,
 				Description:         "Checks if you are up to date on payments with the bot.",
-				Handler:             upToDatePaymentHandler,
+				Handler:             checkPaymentHandler,
+			},
+			"list": {
+				ID:                  "payment-list",
+				IsPrivate:           true,
+				MinimumNumberOfArgs: 0,
+				Usage:               `!payment list`,
+				Description:         "Lists all payments registered with the bot for the last 10 years",
+				Handler:             listPaymentHandler,
 			},
 		},
 	})
@@ -101,7 +110,7 @@ func registerPaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 	return err
 }
 
-func upToDatePaymentHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+func checkPaymentHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
 	var msg string
 	rsp, err := (&paymentsproto.ReadUsersLastPaymentRequest{
 		UserId:  m.Author.ID,
@@ -113,9 +122,9 @@ func upToDatePaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 	case err != nil:
 		return gerrors.Augment(err, "failed_up_to_date_payment_command", nil)
 	case rsp.GetHasUserPaidForLastMonth():
-		msg = fmt.Sprintf("it looks like you've already paid for the month, at %s! :rocket: :dove:", rsp.GetLastPaymentTimestamp())
+		msg = fmt.Sprintf("it looks like you've already paid for the month, at %s! :rocket: :dove:", rsp.GetLastPaymentTimestamp().AsTime())
 	default:
-		msg = fmt.Sprintf("I can't find a payment for the last month I'm afraid, your last was: `%s`.\nPlease ask in support channels if you think this is wrong!", rsp.GetLastPaymentTimestamp())
+		msg = fmt.Sprintf("I can't seem to find a payment for the last month I'm afraid, your last was: `%s`.\nPlease ask in support channels if you think this is wrong!", rsp.GetLastPaymentTimestamp().AsTime())
 	}
 
 	if _, err := s.ChannelMessageSend(
@@ -126,4 +135,42 @@ func upToDatePaymentHandler(ctx context.Context, tokens []string, s *discordgo.S
 	}
 
 	return nil
+}
+
+func listPaymentHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
+	rsp, err := (&paymentsproto.ListPaymentsByUserIDRequest{
+		UserId:  m.Author.ID,
+		ActorId: paymentsproto.ActorSatoshiSystem,
+		Limit:   24, // This gives us the last 2 years of payments.
+	}).Send(ctx).Response()
+	if err != nil {
+		return gerrors.Augment(err, "failed_to_list_payments", nil)
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("\nTotal Amount (USDT): %.2f\n", sumPayments(rsp.GetPayments())))
+	sb.WriteString(fmt.Sprintf("Number of payments:  %d\n", len(rsp.GetPayments())))
+
+	sb.WriteString("\nPayments:\n")
+
+	for _, payment := range rsp.GetPayments() {
+		sb.WriteString(fmt.Sprintf("\n[%s] txid: %s amount: %.2f", payment.GetPaymentTimestamp().AsTime(), payment.GetTransactionId(), payment.GetAmountInUsdt()))
+	}
+
+	if _, err := s.ChannelMessageSend(
+		m.ChannelID,
+		fmt.Sprintf(":wave: <@%s> I've found your payments over the last two years :dove:\n```%s```", m.Author.ID, sb.String()),
+	); err != nil {
+		slog.Error(ctx, "Failed to send user [%s] list payments message", m.Author.Username)
+	}
+
+	return nil
+}
+
+func sumPayments(payments []*paymentsproto.Payment) float32 {
+	if len(payments) == 0 {
+		return 0
+	}
+
+	return payments[0].GetAmountInUsdt() + sumPayments(payments[1:])
 }

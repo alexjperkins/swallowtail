@@ -76,6 +76,7 @@ func UserPaymentExistsSince(ctx context.Context, userID string, after time.Time)
 	return hasPaid, nil
 }
 
+// ReadUsersLastPaymentTimestamp ...
 func ReadUsersLastPaymentTimestamp(ctx context.Context, userID string) (*time.Time, error) {
 	var (
 		query = `
@@ -92,4 +93,27 @@ func ReadUsersLastPaymentTimestamp(ctx context.Context, userID string) (*time.Ti
 	}
 
 	return &lastPaymentTimestamp, nil
+}
+
+// ListPaymentsByUserID ...
+func ListPaymentsByUserID(ctx context.Context, userID string, limit int) ([]*domain.Payment, error) {
+	var (
+		query = `
+		SELECT 
+			transaction_id,
+			payment_timestamp,
+			amount_in_usdt
+		FROM s_payments_payments
+		WHERE user_id=$1
+		ORDER BY payment_timestamp DESC
+		LIMIT $2
+		`
+		payments []*domain.Payment
+	)
+
+	if err := db.Select(ctx, &payments, query, userID, limit); err != nil {
+		return nil, sql.PostgresSelectFailed(err)
+	}
+
+	return payments, nil
 }

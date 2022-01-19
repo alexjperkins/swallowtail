@@ -12,11 +12,6 @@ import (
 	discordproto "swallowtail/s.discord/proto"
 	"swallowtail/s.satoshi/consumers"
 	satoshiproto "swallowtail/s.satoshi/proto"
-	"swallowtail/s.satoshi/satoshi"
-)
-
-var (
-	version = satoshi.Version
 )
 
 // PublishStatus ...
@@ -25,13 +20,13 @@ func (s *SatoshiService) PublishStatus(
 ) (*satoshiproto.PublishStatusResponse, error) {
 	cs := consumers.Registry()
 
-	if err := notifyPulseChannelSuccess(ctx, version, cs); err != nil {
+	if err := notifyPulseChannelSuccess(ctx, satoshiproto.SatoshiVersion, cs); err != nil {
 		return nil, gerrors.Augment(err, "failed_to_publish_status.notify_pulse_channel", nil)
 	}
 
 	return &satoshiproto.PublishStatusResponse{
 		Alive:   true,
-		Version: version,
+		Version: satoshiproto.SatoshiVersion,
 	}, nil
 }
 

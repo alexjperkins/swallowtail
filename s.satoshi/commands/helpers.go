@@ -33,11 +33,16 @@ func formatNonPublicMsg(userID string) string {
 	return fmt.Sprintf(":wave: <@%s>, Please DM satoshi this command instead, the response may contain sensitive information. Thanks", userID)
 }
 
-func formatFailureMsg(userID, usage, failureMsg string, err error) string {
-	return fmt.Sprintf(
-		":disappointed: Sorry <@%s>, I failed to execute that command: %s \nError: `%v`\n",
-		userID, failureMsg, err,
-	)
+func formatFailureMsg(userID, failureMsg string, err error) string {
+	header := fmt.Sprintf(":disappointed: Sorry <@%s>, I failed to execute that command.", userID)
+
+	content := `
+Msg:     %s
+Error:   %s
+`
+	formattedContent := fmt.Sprintf(content, failureMsg, sanitizeError(err))
+
+	return fmt.Sprintf("%s```%s```", header, formattedContent)
 }
 
 func formatHelpMsg(command *Command, isFuturesMember, isAdmin bool) string {
@@ -157,4 +162,13 @@ func getMembersRolesFromGuild(session *discordgo.Session, userID string) ([]stri
 	}
 
 	return m.Roles, nil
+}
+
+func sanitizeError(err error) string {
+	switch {
+	case gerrors.Is(err, gerrors.ErrUnimplemented, "parent_command_unimplemented"):
+		return "This command isn't implemented: use the help command for a hand: `!help`"
+	default:
+		return "Internal error: ping @dot.hash or ask an admin in the support channels"
+	}
 }

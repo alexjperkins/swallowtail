@@ -22,6 +22,7 @@ type PaymentsClient interface {
 	EnforceSubscriptions(ctx context.Context, in *EnforceSubscriptionsRequest, opts ...grpc.CallOption) (*EnforceSubscriptionsResponse, error)
 	PublishSubscriptionReminder(ctx context.Context, in *PublishSubscriptionReminderRequest, opts ...grpc.CallOption) (*PublishSubscriptionReminderResponse, error)
 	ReadUsersLastPayment(ctx context.Context, in *ReadUsersLastPaymentRequest, opts ...grpc.CallOption) (*ReadUsersLastPaymentResponse, error)
+	ListPaymentsByUserID(ctx context.Context, in *ListPaymentsByUserIDRequest, opts ...grpc.CallOption) (*ListPaymentsByUserIDResponse, error)
 }
 
 type paymentsClient struct {
@@ -68,6 +69,15 @@ func (c *paymentsClient) ReadUsersLastPayment(ctx context.Context, in *ReadUsers
 	return out, nil
 }
 
+func (c *paymentsClient) ListPaymentsByUserID(ctx context.Context, in *ListPaymentsByUserIDRequest, opts ...grpc.CallOption) (*ListPaymentsByUserIDResponse, error) {
+	out := new(ListPaymentsByUserIDResponse)
+	err := c.cc.Invoke(ctx, "/payments/ListPaymentsByUserID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentsServer is the server API for Payments service.
 // All implementations must embed UnimplementedPaymentsServer
 // for forward compatibility
@@ -76,6 +86,7 @@ type PaymentsServer interface {
 	EnforceSubscriptions(context.Context, *EnforceSubscriptionsRequest) (*EnforceSubscriptionsResponse, error)
 	PublishSubscriptionReminder(context.Context, *PublishSubscriptionReminderRequest) (*PublishSubscriptionReminderResponse, error)
 	ReadUsersLastPayment(context.Context, *ReadUsersLastPaymentRequest) (*ReadUsersLastPaymentResponse, error)
+	ListPaymentsByUserID(context.Context, *ListPaymentsByUserIDRequest) (*ListPaymentsByUserIDResponse, error)
 	mustEmbedUnimplementedPaymentsServer()
 }
 
@@ -94,6 +105,9 @@ func (UnimplementedPaymentsServer) PublishSubscriptionReminder(context.Context, 
 }
 func (UnimplementedPaymentsServer) ReadUsersLastPayment(context.Context, *ReadUsersLastPaymentRequest) (*ReadUsersLastPaymentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadUsersLastPayment not implemented")
+}
+func (UnimplementedPaymentsServer) ListPaymentsByUserID(context.Context, *ListPaymentsByUserIDRequest) (*ListPaymentsByUserIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPaymentsByUserID not implemented")
 }
 func (UnimplementedPaymentsServer) mustEmbedUnimplementedPaymentsServer() {}
 
@@ -180,6 +194,24 @@ func _Payments_ReadUsersLastPayment_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payments_ListPaymentsByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPaymentsByUserIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentsServer).ListPaymentsByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payments/ListPaymentsByUserID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentsServer).ListPaymentsByUserID(ctx, req.(*ListPaymentsByUserIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payments_ServiceDesc is the grpc.ServiceDesc for Payments service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,6 +234,10 @@ var Payments_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadUsersLastPayment",
 			Handler:    _Payments_ReadUsersLastPayment_Handler,
+		},
+		{
+			MethodName: "ListPaymentsByUserID",
+			Handler:    _Payments_ListPaymentsByUserID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
