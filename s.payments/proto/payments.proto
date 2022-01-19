@@ -11,7 +11,15 @@ service payments {
 
     rpc PublishSubscriptionReminder(PublishSubscriptionReminderRequest) returns (PublishSubscriptionReminderResponse) {}
 
-    rpc ReadUsersLastPayment(ReadUsersLastPaymentRequest) returns (ReadUsersLastPaymentResponse) {}
+    rpc ReadUsersLastPayment (ReadUsersLastPaymentRequest) returns (ReadUsersLastPaymentResponse) {}
+
+    rpc ListPaymentsByUserID (ListPaymentsByUserIDRequest) returns (ListPaymentsByUserIDResponse) {}
+}
+
+message Payment {
+    string transaction_id = 1;
+    google.protobuf.Timestamp payment_timestamp = 2;
+    float amount_in_usdt = 3;
 }
 
 message RegisterPaymentRequest{
@@ -54,4 +62,15 @@ message ReadUsersLastPaymentRequest {
 message ReadUsersLastPaymentResponse {
     google.protobuf.Timestamp last_payment_timestamp = 1;
     bool has_user_paid_for_last_month = 2;
+}
+
+message ListPaymentsByUserIDRequest {
+    string user_id = 1;
+    string actor_id = 2;
+    int64 limit = 3;
+}
+
+message ListPaymentsByUserIDResponse {
+    repeated Payment payments = 1;
+    string user_id = 2;
 }

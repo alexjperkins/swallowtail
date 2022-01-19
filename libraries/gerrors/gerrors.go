@@ -36,6 +36,16 @@ func Is(err error, code codes.Code, msgs ...string) bool {
 	return true
 }
 
+// IsCode solely checks the code.
+func IsCode(err error, code codes.Code) bool {
+	s, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+
+	return s.Code() == code
+}
+
 // Is partially compares gerrors. We must match a code & a single message to be a partial match.
 func PartialIs(err error, code codes.Code, msgs ...string) bool {
 	s, ok := status.FromError(err)

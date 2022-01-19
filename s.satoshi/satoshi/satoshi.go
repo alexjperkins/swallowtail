@@ -3,6 +3,7 @@ package satoshi
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/monzo/slog"
 
@@ -10,10 +11,6 @@ import (
 	discord "swallowtail/s.discord/client"
 	"swallowtail/s.satoshi/commands"
 	"swallowtail/s.satoshi/consumers"
-)
-
-const (
-	Version = "v0.1.9"
 )
 
 var (
@@ -26,7 +23,7 @@ func Init(ctx context.Context) error {
 	dc := discord.New(SatoshiBotID, satoshiToken, true)
 
 	for id, command := range commands.List() {
-		slog.Info(context.TODO(), "Registering command %d) %s to %s", id, command.ID, SatoshiBotID)
+		slog.Info(ctx, "Registering command %d) %s to %s", id, strings.ToUpper(command.ID), strings.ToUpper(SatoshiBotID))
 		dc.AddHandler(command.Exec)
 	}
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/monzo/slog"
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/libraries/util"
@@ -71,16 +70,9 @@ func registerAccountHandler(ctx context.Context, tokens []string, s *discordgo.S
 			m.ChannelID,
 			":wave: Hi, I've already got an account registered for you.  You're all good!",
 		)
-	case err != nil:
-		slog.Error(ctx, "Failed to create new account: %v", err, map[string]string{
-			"user_id": m.Author.ID,
-			"email":   email,
-		})
-		s.ChannelMessageSend(
-			m.ChannelID,
-			fmt.Sprintf(":disappointed: Sorry, I failed to create an account with email: `%s`, please ping @ajperkins to investigate. Thanks", email),
-		)
 		return nil
+	case err != nil:
+		return gerrors.Augment(err, "failed_register_account", nil)
 	}
 
 	s.ChannelMessageSend(

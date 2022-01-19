@@ -5,3 +5,7 @@ const (
 	SatoshiActorCron          = "satoshi-actor-cron"
 	SatoshiActorManual        = "satoshi-actor-manual"
 )
+
+const (
+	SatoshiVersion = "v0.3.0"
+)

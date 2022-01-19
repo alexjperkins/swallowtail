@@ -103,7 +103,7 @@ func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Sessio
 	// If we have no args; then we must not have any subcommand; so let's try the parent command default.
 	if len(tokens) == 0 {
 		if err := c.Handler(ctx, tokens, s, m); err != nil {
-			_, err := s.ChannelMessageSend(m.ChannelID, formatFailureMsg(m.Author.ID, c.Usage, c.FailureMsg, err))
+			_, err := s.ChannelMessageSend(m.ChannelID, formatFailureMsg(m.Author.ID, c.FailureMsg, err))
 			return gerrors.Augment(err, "failed_to_page_user.command_failure_no_tokens", nil)
 		}
 
@@ -115,7 +115,7 @@ func (c *Command) exec(ctx context.Context, tokens []string, s *discordgo.Sessio
 	subCommand, ok := c.SubCommands[tokens[0]]
 	if !ok {
 		if err := c.Handler(ctx, tokens, s, m); err != nil {
-			_, err := s.ChannelMessageSend(m.ChannelID, formatFailureMsg(m.Author.ID, c.Usage, c.FailureMsg, err))
+			_, err := s.ChannelMessageSend(m.ChannelID, formatFailureMsg(m.Author.ID, c.FailureMsg, err))
 			return gerrors.Augment(err, "failed_to_page_user.command_failure", nil)
 		}
 
