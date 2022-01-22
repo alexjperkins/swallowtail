@@ -1,8 +1,17 @@
+## -- Envs
 .envs
 .env
 s.twitter/setenv
+setenv
+
+## -- Credentials
 credentials.json
 token.json
-setenv
+
+## -- Docker
 *Dockerfile*
 *.dockerignore*
+
+## -- Tmuxp
+*.tmuxp.yaml
+*.tmuxp.json
