@@ -82,6 +82,7 @@ func TestDMAParser(t *testing.T) {
 				},
 				TradeableVenues: []tradeengineproto.VENUE{
 					tradeengineproto.VENUE_BINANCE,
+					tradeengineproto.VENUE_FTX,
 				},
 			},
 		},
@@ -104,7 +105,7 @@ func TestDMAParser(t *testing.T) {
 				Asset:              "AAVE",
 				Pair:               tradeengineproto.TRADE_PAIR_USDT,
 				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
-				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_SPOT,
 				CurrentPrice:       344,
 				Entries:            []float32{343},
 				StopLoss:           323,
@@ -283,6 +284,31 @@ func TestDMAParser(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "single_venue_entry_above_current_price_long",
+			username:     "rego",
+			currentValue: 91.41,
+			content: `
+			SOL 99 77
+			`,
+			expectedTrade: &tradeengineproto.TradeStrategy{
+				HumanizedActorName: "REGO",
+				ActorType:          tradeengineproto.ACTOR_TYPE_EXTERNAL,
+				ExecutionStrategy:  tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
+				Asset:              "SOL",
+				Pair:               tradeengineproto.TRADE_PAIR_USDT,
+				TradeSide:          tradeengineproto.TRADE_SIDE_LONG,
+				InstrumentType:     tradeengineproto.INSTRUMENT_TYPE_FUTURE_PERPETUAL,
+				CurrentPrice:       91.41,
+				Entries:            []float32{99},
+				StopLoss:           77,
+				TakeProfits:        []float32{},
+				TradeableVenues: []tradeengineproto.VENUE{
+					tradeengineproto.VENUE_BINANCE,
+					tradeengineproto.VENUE_FTX,
+				},
+			},
+		},
 	}
 
 	originalBinanceAssetPairs := binanceInstruments
@@ -300,15 +326,8 @@ func TestDMAParser(t *testing.T) {
 
 	originalFTXAssetPairs := ftxInstruments
 	ftxInstruments = map[string]bool{
-		"btc":  true,
-		"sol":  true,
-		"aave": true,
-		"srm":  true,
-		"rsr":  true,
-		"xtz":  true,
-		"ftt":  true,
-		"avax": true,
-		"step": true,
+		"sol-perp":  true,
+		"step-perp": true,
 	}
 
 	originalFetcher := fetchLatestPrice

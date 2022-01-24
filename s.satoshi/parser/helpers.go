@@ -223,6 +223,10 @@ func parseExecutionStrategy(content string, currentValue float64, entries []floa
 
 	// If we have a DCA order; we determine the order side by the % of the last entry in value order.
 	if len(entries) > 1 {
+		if containsLimit {
+			return tradeengineproto.EXECUTION_STRATEGY_DCA_ALL_LIMIT, true
+		}
+
 		lastEntry := entries[len(entries)-1]
 		if withinRange(lastEntry, currentValue, 2.5) {
 			return tradeengineproto.EXECUTION_STRATEGY_DCA_FIRST_MARKET_REST_LIMIT, true
@@ -235,6 +239,10 @@ func parseExecutionStrategy(content string, currentValue float64, entries []floa
 	switch {
 	case containsLimit:
 		return tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT, true
+	case (side == tradeengineproto.TRADE_SIDE_BUY || side == tradeengineproto.TRADE_SIDE_LONG) && entry > currentValue:
+		return tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET, true
+	case (side == tradeengineproto.TRADE_SIDE_SELL || side == tradeengineproto.TRADE_SIDE_SHORT) && entry < currentValue:
+		return tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET, true
 	case !withinRange(entry, currentValue, 5):
 		return tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT, true
 	default:

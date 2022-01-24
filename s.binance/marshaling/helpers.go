@@ -1,21 +1,28 @@
 package marshaling
 
 import (
-	"fmt"
 	"math"
+	"strconv"
+	"strings"
 )
 
-// NOTE: this **does** not account for large floats & can lead to overflow
-func roundToPrecision(f float64, p int) float64 {
-	return math.Round(f*(math.Pow10(p))) / math.Pow10(p)
-}
-
-// NOTE: this **does** not account for large floats & can lead to overflow
-func roundToPrecisionString(f float64, p int) string {
-	if f == 0 {
-		return ""
+// TODO: this is copy from & tested in `s.ftx` - we should centralize this logic & somepoint
+// or use a proper decimal library.
+func roundToPrecisionString(f float64, minIncrement float64) string {
+	if f <= 0.0 {
+		return "0.0"
 	}
 
-	format := fmt.Sprintf("%%.%vf", p)
-	return fmt.Sprintf(format, math.Round(f*(math.Pow10(p)))/math.Pow10(p))
+	v := f / minIncrement
+
+	var p float64
+	switch {
+	case v < 1.0:
+		p = math.Ceil(v) * minIncrement
+	default:
+		p = math.Floor(v) * minIncrement
+	}
+
+	// Format float & trim zeros.
+	return strings.TrimRight(strconv.FormatFloat(p, 'f', 6, 64), "0")
 }

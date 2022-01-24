@@ -81,7 +81,7 @@ func refresh(ctx context.Context) {
 				slog.Error(ctx, "Failed to refresh binance exchange info: Error: %v", err)
 				continue
 			}
-			slog.Info(ctx, "Refreshed binance info")
+			slog.Info(ctx, "Refreshed binance exchange info")
 		case <-ctx.Done():
 			return
 		}
@@ -213,13 +213,13 @@ func gatherExchangeInfo(ctx context.Context) error {
 }
 
 // GetBaseAssetQuantityPrecision returns the base asset quantity precision given the base asset.
-func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (int, bool) {
+func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (float64, bool, error) {
 	mu.RLock()
 	defer mu.RUnlock()
 
 	v, ok := symbolInformation[strings.ToLower(baseAsset)]
 	if !ok {
-		return 0, false
+		return 0, false, nil
 	}
 
 	var vq string
@@ -231,30 +231,44 @@ func GetBaseAssetQuantityPrecision(baseAsset string, isMarketOrder bool) (int, b
 	}
 
 	if vq == "" {
-		return 0, false
+		return 0, false, nil
 	}
 
-	return calculatePrecision(vq), true
+	f, err := strconv.ParseFloat(vq, 64)
+	if err != nil {
+		return 0.0, false, gerrors.Augment(err, "failed_to_parse_lot_size", map[string]string{
+			"lot_size": vq,
+		})
+	}
+
+	return f, true, nil
 }
 
 // GetBaseAssetPricePrecision returns the base asset price precision given the base asset.
-func GetBaseAssetPricePrecision(baseAsset string) (int, bool) {
+func GetBaseAssetPricePrecision(baseAsset string) (float64, bool, error) {
 	mu.RLock()
 	defer mu.RUnlock()
 
 	v, ok := symbolInformation[strings.ToLower(baseAsset)]
 	if !ok {
-		return 0, false
+		return 0, false, nil
 	}
 
 	if v.TickSize == "" {
-		return 0, false
+		return 0, false, nil
 	}
 
-	return calculatePrecision(v.TickSize), true
+	f, err := strconv.ParseFloat(v.TickSize, 64)
+	if err != nil {
+		return 0.0, false, gerrors.Augment(err, "failed_to_parse_tick_size", map[string]string{
+			"tick_size": v.TickSize,
+		})
+	}
+
+	return f, true, nil
 }
 
-// GetBaseAssetMinQty ...
+// GetBaseAssetMinQty returns the base asset minimum quantity.
 func GetBaseAssetMinQty(baseAsset string, isMarketOrder bool) (float64, bool, error) {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -280,13 +294,4 @@ func GetBaseAssetMinQty(baseAsset string, isMarketOrder bool) (float64, bool, er
 	}
 
 	return vf, true, nil
-}
-
-func calculatePrecision(v string) int {
-	trimmed := strings.TrimRight(v, "0")
-	if strings.Contains(trimmed, ".") {
-		return len(trimmed) - 2
-	}
-
-	return 0
 }
