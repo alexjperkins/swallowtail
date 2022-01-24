@@ -77,13 +77,19 @@ func ProtoOrderToExecutePerpetualsFutureOrderRequest(in *tradeengineproto.Order)
 	}
 
 	// Round the quantity to the minimum precision allowed on the exchange.
-	assetQuantityPrecision, ok := exchangeinfo.GetBaseAssetQuantityPrecision(symbol, in.OrderType == tradeengineproto.ORDER_TYPE_MARKET)
+	assetQuantityPrecision, ok, err := exchangeinfo.GetBaseAssetQuantityPrecision(symbol, in.OrderType == tradeengineproto.ORDER_TYPE_MARKET)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_marshal_perpetuals_trade", nil)
+	}
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_quantity_precision_unknown", errParams)
 	}
 
 	// Round the price to the minimum precision allowed on the exchange.
-	assetPricePrecision, ok := exchangeinfo.GetBaseAssetPricePrecision(symbol)
+	assetPricePrecision, ok, err := exchangeinfo.GetBaseAssetPricePrecision(symbol)
+	if err != nil {
+		return nil, gerrors.Augment(err, "failed_to_marshal_perpetuals_trade", nil)
+	}
 	if !ok {
 		return nil, gerrors.FailedPrecondition("failed_to_execute_perpetuals_trade.asset_price_precision_unknown", errParams)
 	}

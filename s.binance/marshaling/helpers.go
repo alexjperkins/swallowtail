@@ -8,7 +8,7 @@ import (
 
 // TODO: this is copy from & tested in `s.ftx` - we should centralize this logic & somepoint
 // or use a proper decimal library.
-func roundToPrecision(f float64, minIncrement float64) string {
+func roundToPrecisionString(f float64, minIncrement float64) string {
 	if f <= 0.0 {
 		return "0.0"
 	}
