@@ -49,7 +49,7 @@ func (s *BinanceService) ExecuteNewFuturesPerpetualOrder(
 	// Execute order.
 	rsp, err := client.ExecutePerpetualFuturesOrder(ctx, dtoOrder, dtoCredentials)
 	if err != nil {
-		slog.Error(ctx, "Failed to execute order: Error: %v, Order: %+v", err, rsp)
+		slog.Error(ctx, "Failed to execute order: Error: %v, Order: %+v", err, in.Order)
 		return nil, gerrors.Augment(err, "failed_to_execute_perpetuals_order.order", nil)
 	}
 
