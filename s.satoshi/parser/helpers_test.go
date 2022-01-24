@@ -134,7 +134,7 @@ func TestParseExecutionStrategy(t *testing.T) {
 			currentValue:              50000,
 			entries:                   []float64{55000},
 			side:                      tradeengineproto.TRADE_SIDE_BUY,
-			expectedExecutionStrategy: tradeengineproto.EXECUTION_STRATEGY_DMA_MARKET,
+			expectedExecutionStrategy: tradeengineproto.EXECUTION_STRATEGY_DMA_LIMIT,
 		},
 	}
 

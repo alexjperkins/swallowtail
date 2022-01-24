@@ -265,7 +265,7 @@ func GetBaseAssetPricePrecision(baseAsset string) (float64, bool, error) {
 		})
 	}
 
-	return f, false, nil
+	return f, true, nil
 }
 
 // GetBaseAssetMinQty returns the base asset minimum quantity.
