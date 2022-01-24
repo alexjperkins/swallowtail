@@ -147,6 +147,8 @@ func (*DCAFirstMarketRestLimit) Execute(ctx context.Context, strategy *tradeengi
 	// Add first entry as market order.
 	orders = append(orders, &tradeengineproto.Order{
 		ActorId:          tradeengineproto.TradeEngineActorSatoshiSystem,
+		Instrument:       strategy.Instrument,
+		Asset:            strategy.Asset,
 		Pair:             strategy.Pair,
 		InstrumentType:   strategy.InstrumentType,
 		OrderType:        tradeengineproto.ORDER_TYPE_MARKET,
