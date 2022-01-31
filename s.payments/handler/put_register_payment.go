@@ -57,7 +57,8 @@ func (s *PaymentsService) RegisterPayment(
 	// Check the user hasn't already paid this month
 	hasAlreadyPaid, err := dao.UserPaymentExistsSince(ctx, in.UserId, timestampOfChecks)
 	if err != nil {
-		return nil, gerrors.AlreadyExists("failed_to_register_payment.failed_check_if_user_already_paid", errParams)
+		slog.Info(ctx, "User has already paid: timestamp: %v user_id: %s err: %v", timestampOfChecks, in.UserId, err)
+		return nil, gerrors.Augment(err, "failed_to_register_payment.failed_check_if_user_already_paid", errParams)
 	}
 	if hasAlreadyPaid {
 		return nil, gerrors.FailedPrecondition("failed_to_register_payment.user_has_already_paid", errParams)
