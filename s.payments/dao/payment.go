@@ -71,7 +71,7 @@ func UserPaymentExistsSince(ctx context.Context, userID string, after time.Time)
 		hasPaid bool
 	)
 
-	if err := db.Select(ctx, &hasPaid, sql, userID, after); err != nil {
+	if err := db.Get(ctx, &hasPaid, sql, userID, after); err != nil {
 		return false, gerrors.Propagate(err, gerrors.ErrUnknown, nil)
 	}
 
