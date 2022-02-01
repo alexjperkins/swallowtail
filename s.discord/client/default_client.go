@@ -146,14 +146,10 @@ func (d *discordClient) ReadMessageReactions(ctx context.Context, messageID, cha
 }
 
 func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate)) {
-	slog.Info(nil, "Adding handler")
-
 	d.session.AddHandler(handler)
 }
 
-func (d *discordClient) AddHandlerGuildMemberAdd(handler func(s *discordgo.Session, m *discordgo.GuildMemberAdd)) {
-	slog.Info(nil, "Adding guild member add handler")
-
+func (d *discordClient) AddHandlerGuildMemberAdd(handler func(s *discordgo.Session, u *discordgo.GuildMemberAdd)) {
 	d.session.AddHandler(handler)
 }
 
