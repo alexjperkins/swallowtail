@@ -8,7 +8,6 @@ import (
 	"github.com/monzo/terrors"
 
 	"swallowtail/libraries/gerrors"
-	"swallowtail/libraries/util"
 	"swallowtail/s.account/dao"
 	"swallowtail/s.account/domain"
 	accountproto "swallowtail/s.account/proto"
@@ -20,11 +19,9 @@ func (a *AccountService) CreateAccount(
 ) (*accountproto.CreateAccountResponse, error) {
 	switch {
 	case in.UserId == "":
-		return nil, terrors.PreconditionFailed("missing_param.user_id", "Missing Param; user_id", nil)
-	case in.Password == "":
-		return nil, terrors.PreconditionFailed("missing_param.username", "Missing Param; username", nil)
+		return nil, gerrors.FailedPrecondition("missing_param.user_id", nil)
 	case in.Username == "":
-		return nil, terrors.PreconditionFailed("missing_param.password", "Missing Param; password", nil)
+		return nil, gerrors.FailedPrecondition("missing_param.username", nil)
 	}
 
 	errParams := map[string]string{
@@ -47,7 +44,6 @@ func (a *AccountService) CreateAccount(
 	account = &domain.Account{
 		UserID:            in.UserId,
 		Username:          in.Username,
-		Password:          util.Sha256Hash(in.Password),
 		Email:             in.Email,
 		HighPriorityPager: in.HighPriorityPager.String(),
 		LowPriorityPager:  in.LowPriorityPager.String(),

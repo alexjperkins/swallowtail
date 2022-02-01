@@ -6,16 +6,19 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.discord/domain"
-	discordproto "swallowtail/s.discord/proto"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	discordproto "swallowtail/s.discord/proto"
 )
 
 // New creates a new discord client
 func New(name, token string, isBot bool) DiscordClient {
 	t := formatToken(token, isBot)
+
+	// Create session.
 	s, err := discordgo.New(t)
 	if err != nil {
 		panic(terrors.Augment(err, "Failed to create discord client", map[string]string{
@@ -23,6 +26,10 @@ func New(name, token string, isBot bool) DiscordClient {
 			"name":          name,
 		}))
 	}
+
+	// Set intents to all including privileged. We must do this before open.
+	intents := discordgo.MakeIntent(discordgo.IntentsAll)
+	s.Identify.Intents = intents
 
 	// Open websocket session.
 	if err = s.Open(); err != nil {
@@ -145,7 +152,10 @@ func (d *discordClient) ReadMessageReactions(ctx context.Context, messageID, cha
 }
 
 func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate)) {
-	slog.Info(nil, "Adding handler")
+	d.session.AddHandler(handler)
+}
+
+func (d *discordClient) AddHandlerGuildMemberAdd(handler func(s *discordgo.Session, u *discordgo.GuildMemberAdd)) {
 	d.session.AddHandler(handler)
 }
 

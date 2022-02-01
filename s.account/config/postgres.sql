@@ -7,7 +7,7 @@ BEGIN
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'venue') THEN
-		CREATE TYPE exchange AS ENUM ('BINANCE', 'FTX', 'DERIBIT', 'BITFINEX');
+		CREATE TYPE venue AS ENUM ('BINANCE', 'FTX', 'DERIBIT', 'BITFINEX');
 	END IF;
 
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dca_strategy') THEN
@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS s_account_accounts (
 	-- use the discord id associated to the user here
 	user_id VARCHAR(20) NOT NULL UNIQUE,
 	username VARCHAR(50) NOT NULL UNIQUE,
-	password VARCHAR(64) NOT NULL,
 
 	email VARCHAR(50),
 	phone_number VARCHAR(20),
