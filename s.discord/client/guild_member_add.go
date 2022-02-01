@@ -65,7 +65,7 @@ UserID:             %s
 Email:              %s
 Username:           %s
 Created:            %s
-Is Futures Member:  %s
+Is Futures Member:  %v
 Primary Venue:      %s
 	`
 	formattedAccountMsg := fmt.Sprintf(
@@ -73,13 +73,13 @@ Primary Venue:      %s
 		account.GetUserId(),
 		account.GetEmail(),
 		account.GetUsername(),
-		account.GetCreated(),
+		account.GetCreated().AsTime(),
 		account.GetIsFuturesMember(),
 		account.GetPrimaryVenue(),
 	)
 
 	// Send welcome message.
-	idempotencyKey := fmt.Sprintf("guildmemberaddwelcome-%s-%s-%s", u.User.ID, time.Now().UTC().Truncate(10*time.Minute))
+	idempotencyKey := fmt.Sprintf("guildmemberaddwelcome-%s-%s", u.User.ID, time.Now().UTC().Truncate(10*time.Minute))
 	errParams["idempotency_key"] = idempotencyKey
 
 	if _, err := (&discordproto.SendMsgToPrivateChannelRequest{

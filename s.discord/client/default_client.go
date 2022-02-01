@@ -17,6 +17,8 @@ import (
 // New creates a new discord client
 func New(name, token string, isBot bool) DiscordClient {
 	t := formatToken(token, isBot)
+
+	// Create session.
 	s, err := discordgo.New(t)
 	if err != nil {
 		panic(terrors.Augment(err, "Failed to create discord client", map[string]string{
@@ -24,6 +26,10 @@ func New(name, token string, isBot bool) DiscordClient {
 			"name":          name,
 		}))
 	}
+
+	// Set intents to all including privileged. We must do this before open.
+	intents := discordgo.MakeIntent(discordgo.IntentsAll)
+	s.Identify.Intents = intents
 
 	// Open websocket session.
 	if err = s.Open(); err != nil {
