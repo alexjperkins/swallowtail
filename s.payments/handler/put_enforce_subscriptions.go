@@ -47,6 +47,11 @@ func (s *PaymentsService) EnforceSubscriptions(
 		return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions", errParams)
 	}
 
+	now := time.Now().UTC()
+	errParams["enforcement_timestamp"] = now.String()
+
+	slog.Info(ctx, "Subscription enforcement starting: total futures members: %d", len(futuresMembers))
+
 	for _, fm := range futuresMembers {
 		if fm.IsAdmin {
 			slog.Warn(ctx, "Skipping subscription payment check for admin: %s: %s", fm.UserId, fm.Username)
@@ -55,7 +60,7 @@ func (s *PaymentsService) EnforceSubscriptions(
 
 		errParams["user_id"] = fm.UserId
 
-		ok, err := dao.UserPaymentExistsSince(ctx, fm.UserId, currentMonthStartFromTimestamp(time.Now()))
+		ok, err := dao.UserPaymentExistsSince(ctx, fm.UserId, currentMonthStartFromTimestamp(now))
 		if err != nil {
 			return nil, gerrors.Augment(err, "failed_to_enforce_subscriptions", errParams)
 		}
