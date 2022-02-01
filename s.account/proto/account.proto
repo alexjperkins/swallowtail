@@ -119,7 +119,6 @@ message ReadAccountResponse {
 message CreateAccountRequest {
     string user_id = 4;
     string username = 1;
-    string password = 2;
     string email = 3;
     string phone_number = 5;
     PagerType high_priority_pager = 6;
@@ -131,7 +130,6 @@ message CreateAccountResponse {}
 message UpdateAccountRequest {
     string user_id = 1;
     string username = 2;
-    string password = 3;
     string email = 4;
     string phone_number = 5;
     PagerType high_priority_pager = 6;

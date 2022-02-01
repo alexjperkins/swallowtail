@@ -34,29 +34,17 @@ func init() {
 	}
 }
 
-func Init(ctx context.Context) error {
-	// Won't work yet until we migrate to RPCs.
-	c := New(DiscordClientID, clientToken, true)
-
-	if err := c.Ping(ctx); err != nil {
-		return terrors.Augment(err, "Failed to establish connection with discord client", nil)
-	}
-
-	slog.Info(ctx, "Discord client initialized", nil)
-
-	client = c
-	return nil
-}
-
 // DiscordClient ...
 type DiscordClient interface {
-	// Send
+	// Send ...
 	Send(ctx context.Context, message, channelID string) (*discordgo.Message, error)
-	// SendPrivateMessage
+	// SendPrivateMessage ...
 	SendPrivateMessage(ctx context.Context, message, userID string) error
-	// AddHandler
+	// AddHandler ...
 	AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate))
-	// ReadRoles
+	// AddHandlerGuildMemberAdd ...
+	AddHandlerGuildMemberAdd(func(s *discordgo.Session, u *discordgo.GuildMemberAdd)) error
+	// ReadRoles ...
 	ReadRoles(ctx context.Context, userID string) ([]*domain.Role, error)
 	// SetRoles set the users roles to the roles passed. It replaces all the roles the user currently has.
 	SetRoles(ctx context.Context, userID string, roles []*domain.Role) error
@@ -66,6 +54,26 @@ type DiscordClient interface {
 	// TODO: Remove below
 	Close()
 	Ping(ctx context.Context) error
+}
+
+// Init initialises the internal discord client.
+func Init(ctx context.Context) error {
+	c := New(DiscordClientID, clientToken, true)
+
+	if err := c.Ping(ctx); err != nil {
+		return terrors.Augment(err, "Failed to establish connection with discord client", nil)
+	}
+
+	slog.Info(ctx, "Discord client initialized", nil)
+
+	// Register guild member add handlers to client.
+	for id, guildMemberAddHandler := range guildMemberAddRegistry {
+		c.AddHandlerGuildMemberAdd(guildMemberAddHandler)
+		slog.Info(ctx, "Guild member handler: %s adding to client", id)
+	}
+
+	client = c
+	return nil
 }
 
 // Send sends a message to a given channel`channel_id` via discord.

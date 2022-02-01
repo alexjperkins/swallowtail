@@ -96,11 +96,11 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 	var (
 		sql = `
 		INSERT INTO
-			s_account_accounts(username, password, email, user_id, phone_number,
+			s_account_accounts(username, email, user_id, phone_number,
 				created, updated, last_payment_timestamp,
 				high_priority_pager, low_priority_pager, is_admin, is_futures_member) 
 		VALUES
-			($1, $2, $3 ,$4, $5, $6, $7, $8, $9, $10, $11, $12)`
+			($1, $2, $3 ,$4, $5, $6, $7, $8, $9, $10, $11)`
 	)
 
 	var (
@@ -120,7 +120,7 @@ func CreateAccount(ctx context.Context, account *domain.Account) error {
 
 	if _, err := (db.Exec(
 		ctx, sql,
-		account.Username, account.Password, account.Email, account.UserID, account.PhoneNumber,
+		account.Username, account.Email, account.UserID, account.PhoneNumber,
 		now, now, now,
 		highPriorityPager, lowPriorityPager, account.IsAdmin, account.IsFuturesMember,
 	)); err != nil {
@@ -136,8 +136,8 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	var (
 		sql = `
 		UPDATE s_account_accounts
-		SET username=$1, password=$2, email=$3, phone_number=$4, high_priority_pager=$5, low_priority_pager=$6, is_futures_member=$7, is_admin=$8, updated=$9, primary_venue=$10
-		WHERE user_id=$11`
+		SET username=$1, email=$2, phone_number=$3, high_priority_pager=$4, low_priority_pager=$5, is_futures_member=$6, is_admin=$7, updated=$8, primary_venue=$9
+		WHERE user_id=$10`
 	)
 	if mutation.UserID == "" {
 		return nil, terrors.PreconditionFailed("mutation-without-id", "Account mutation requires at least the account ID", nil)
@@ -157,7 +157,6 @@ func UpdateAccount(ctx context.Context, mutation *domain.Account) (*domain.Accou
 	if _, err := (db.Exec(
 		ctx, sql,
 		account.Username,
-		account.Password,
 		account.Email,
 		account.PhoneNumber,
 		account.HighPriorityPager,

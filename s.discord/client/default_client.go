@@ -6,11 +6,12 @@ import (
 
 	"swallowtail/libraries/gerrors"
 	"swallowtail/s.discord/domain"
-	discordproto "swallowtail/s.discord/proto"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	discordproto "swallowtail/s.discord/proto"
 )
 
 // New creates a new discord client
@@ -146,6 +147,13 @@ func (d *discordClient) ReadMessageReactions(ctx context.Context, messageID, cha
 
 func (d *discordClient) AddHandler(handler func(s *discordgo.Session, m *discordgo.MessageCreate)) {
 	slog.Info(nil, "Adding handler")
+
+	d.session.AddHandler(handler)
+}
+
+func (d *discordClient) AddHandlerGuildMemberAdd(handler func(s *discordgo.Session, m *discordgo.GuildMemberAdd)) {
+	slog.Info(nil, "Adding guild member add handler")
+
 	d.session.AddHandler(handler)
 }
 

@@ -6,7 +6,6 @@ import "time"
 type Account struct {
 	UserID               string    `db:"user_id"`
 	Username             string    `db:"username"`
-	Password             string    `db:"password"`
 	Email                string    `db:"email"`
 	PhoneNumber          string    `db:"phone_number"`
 	HighPriorityPager    string    `db:"high_priority_pager"`

@@ -33,8 +33,8 @@ func init() {
 			"register": {
 				ID:                  "account-register",
 				IsPrivate:           true,
-				MinimumNumberOfArgs: 2,
-				Usage:               `!account register <email> <password>`,
+				MinimumNumberOfArgs: 0,
+				Usage:               `!account register`,
 				Description:         "Manages everything related to your account.",
 				Handler:             registerAccountHandler,
 				FailureMsg:          "Please check you already don't have an account; ping @ajperkins with your message if you need help",
@@ -56,13 +56,10 @@ func accountHandler(ctx context.Context, tokens []string, s *discordgo.Session, 
 }
 
 func registerAccountHandler(ctx context.Context, tokens []string, s *discordgo.Session, m *discordgo.MessageCreate) error {
-	email, password := tokens[0], tokens[1]
-
 	_, err := (&accountproto.CreateAccountRequest{
 		UserId:   m.Author.ID,
 		Username: m.Author.Username,
-		Email:    email,
-		Password: password,
+		Email:    m.Author.Email,
 	}).Send(ctx).Response()
 	switch {
 	case gerrors.Is(err, gerrors.ErrAlreadyExists, "account-already-exists"):
@@ -79,7 +76,7 @@ func registerAccountHandler(ctx context.Context, tokens []string, s *discordgo.S
 		m.ChannelID,
 		fmt.Sprintf(
 			":wave: I have registered your account with email: `%s`.\n\nRef Links:\n`Binance`: %s\n`FTX`: %s",
-			email,
+			m.Author.Email,
 			binanceReferralLink,
 			ftxReferralLink,
 		),

@@ -55,6 +55,7 @@ func (s *satoshi) run(ctx context.Context) {
 func (s *satoshi) Stop() {
 	slog.Info(context.TODO(), "Satoshi stop signal received.")
 	defer close(s.consumerStream)
+
 	select {
 	case s.done <- struct{}{}:
 	default:
@@ -84,7 +85,7 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 			case e.IsPrivate:
 				if len(e.ParticipentIDs) == 0 {
 					slog.Warn(
-						ctx, "Dropping event; cannot send private message with no participents.",
+						ctx, "Dropping event; cannot send private message with no participants.",
 						map[string]string{
 							"event": fmt.Sprintf("%+v", e),
 						},
@@ -117,7 +118,6 @@ func (s *satoshi) streamEventHandler(ctx context.Context) {
 
 				slog.Info(ctx, "Called poller for [%v]", m.ID)
 			}
-
 		case <-ctx.Done():
 			return
 		case <-s.done:
