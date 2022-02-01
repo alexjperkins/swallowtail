@@ -66,8 +66,7 @@ func UserPaymentExistsSince(ctx context.Context, userID string, after time.Time)
 			SELECT 1 FROM s_payments_payments
 			WHERE user_id=$1
 			AND payment_timestamp >= $2
-		)
-		`
+		)`
 		hasPaid bool
 	)
 

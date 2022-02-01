@@ -3,10 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"swallowtail/libraries/gerrors"
 	discordproto "swallowtail/s.discord/proto"
 	paymentsproto "swallowtail/s.payments/proto"
-	"time"
 )
 
 // PublishSubscriptionReminder ...
@@ -31,7 +32,7 @@ func (s *PaymentsService) PublishSubscriptionReminder(
 	var reminder string
 	switch in.ReminderType {
 	case paymentsproto.SubscriptionReminderType_MINUS_54_HOURS:
-		reminder = "tomorrow before 5 minutes before midnight"
+		reminder = "tomorrow at 11:00pm"
 	case paymentsproto.SubscriptionReminderType_MINUS_4_HOURS:
 		reminder = "in 4 hours"
 	case paymentsproto.SubscriptionReminderType_MINUS_1_HOUR:
