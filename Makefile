@@ -39,6 +39,9 @@ backend:
 	cd c.market-data &&  sudo make && cd .. && \
 	docker-compose -f local.yml --profile backend up --build
 
+kafka-cluster:
+	docker-compose -f local.yml --profile kafka-cluster up --build
+
 run:
 	docker-compose -f local.yml --profile backend up --build
 

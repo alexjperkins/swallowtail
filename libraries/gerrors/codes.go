@@ -15,4 +15,5 @@ const (
 	ErrDeadlineExceeded   = codes.DeadlineExceeded
 	ErrBadParam           = codes.InvalidArgument
 	ErrRateLimited        = codes.ResourceExhausted
+	ErrInternalService    = codes.Internal
 )

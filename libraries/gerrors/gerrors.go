@@ -165,3 +165,7 @@ func Unauthenticated(msg string, params map[string]string) error {
 func Unimplemented(msg string, params map[string]string) error {
 	return New(ErrUnimplemented, msg, params)
 }
+
+func InternalService(msg string, params map[string]string) error {
+	return New(ErrInternalService, msg, params)
+}

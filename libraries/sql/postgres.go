@@ -66,8 +66,7 @@ func NewPostgresSQL(ctx context.Context, applySchema bool, serviceName string) (
 
 	// Apply schema.
 	if applySchema {
-		err = CreateSchema(ctx, pool, serviceName)
-		if err != nil {
+		if err = CreateSchema(ctx, pool, serviceName); err != nil {
 			pool.Close()
 			return nil, err
 		}

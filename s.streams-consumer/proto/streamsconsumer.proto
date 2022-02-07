@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "swallowtail/s.streams-consumer/proto;streamsconsumerproto";
+
+service streamsconsumer {
+    rpc Subscribe(stream Command) returns (stream Response) {}
+}
+
+enum StreamsRequestType {
+    Subscribe = 0;
+}
+
+message Command {
+    StreamsRequestType request_type = 1;
+    Result result = 2;
+}
+
+message Response {
+}
+
+message Result {
+}
