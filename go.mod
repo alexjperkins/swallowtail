@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/compute v1.1.0 // indirect
 	github.com/99designs/gqlgen v0.13.0
 	github.com/ReneKroon/ttlcache/v2 v2.11.0
+	github.com/Shopify/sarama v1.31.1 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/blend/go-sdk v1.20211025.3 // indirect
 	github.com/bwmarrin/discordgo v0.23.2
@@ -60,10 +61,10 @@ require (
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
+	golang.org/x/sys v0.0.0-20220204135822-1c1b9b1eba6a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.66.0
-	google.golang.org/genproto v0.0.0-20220201184016-50beb8ab5c44 // indirect
+	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e // indirect
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect

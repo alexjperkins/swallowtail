@@ -1,1 +1,1 @@
-FROM zookeeper:latest
+FROM bitnami/zookeeper:3.6.2

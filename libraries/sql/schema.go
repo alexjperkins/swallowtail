@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"swallowtail/libraries/util"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/monzo/slog"
 	"github.com/monzo/terrors"
+
+	"swallowtail/libraries/util"
 )
 
 const (
@@ -18,13 +19,12 @@ const (
 // CreateSchema creates the schema in the local config `postgres.sql` file if it doesn't already exist.
 // TODO: diff between postgres & other dbs config files.
 func CreateSchema(ctx context.Context, dbpool *pgxpool.Pool, serviceName string) error {
-	sql, err := loadSQLFile(ctx, serviceName)
+	query, err := loadSQLFile(ctx, serviceName)
 	if err != nil {
 		return err
 	}
 
-	_, err = dbpool.Exec(ctx, sql)
-	if err != nil {
+	if _, err = dbpool.Exec(ctx, query); err != nil {
 		return terrors.Augment(err, "Failed to create initial postgres schema", nil)
 	}
 
@@ -39,6 +39,7 @@ func loadSQLFile(ctx context.Context, serviceName string) (string, error) {
 			"service_name": serviceName,
 		})
 	}
+
 	path := fmt.Sprintf("%s/%s/%s/%s", root, serviceName, "config", postgresConfigFileName)
 	slog.Debug(ctx, "Loading postgres sql file", map[string]string{
 		"postgres_config_path": path,

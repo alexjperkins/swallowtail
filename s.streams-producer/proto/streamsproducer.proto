@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "swallowtail/s.streams-producer/proto;streamsproducerproto";
+
+service streamsproducer {
+    rpc Publish(PublishRequest) returns (PublishResponse) {}
+}
+
+message PublishRequest {
+    string topic = 1;
+    Event event = 2;
+}
+
+message PublishResponse {}
+
+message Event {
+    bytes payload = 1;
+    map<string, string> metadata = 2;
+    string partition_key = 3;
+}

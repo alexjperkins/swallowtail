@@ -1,29 +1,11 @@
 version: "3.9"
+
 volumes:
   swallowtail_zookeeper_data: {}
   swallowtail_zookeeper_datalog: {}
   swallowtail_kafka_data: {}
 
 services:
-  ### --- Infrastructure --- ###
-
-  ## -- postgres -- ##
-  postgres:
-    build:
-      context: .
-      dockerfile: ./infrastructure/postgres/Dockerfile
-    image: i.swallowtail.postgres 
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=swallowtail
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
-    profiles:
-      - backend
-
   ### --- APIs --- ###
 
   ### --- Backend --- ###
@@ -204,5 +186,115 @@ services:
   swallowtail.c.marketdata:
     hostname: swallowtail-c-marketdata
     image: swallowtail.c.marketdata
+    profiles:
+      - backend
+
+  ### --- Infrastructure --- ###
+
+  ## -- Kafka -- ##
+  zookeeper:
+    build:
+      context: .
+      dockerfile: ./infrastructure/zookeeper/Dockerfile
+    container_name: swallowtail_zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    profiles:
+      - backend
+      - kafka-cluster
+
+  kafka_1:
+    build:
+      context: .
+      dockerfile: ./infrastructure/kafka/Dockerfile
+    container_name: swallowtail_kafka_1
+    ports: 
+      - "9093:9093"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=swallowtail_zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://swallowtail_kafka_1:9092,EXTERNAL://localhost:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    depends_on:
+      - zookeeper
+    profiles:
+      - backend
+      - kafka-cluster
+
+  kafka_2:
+    build:
+      context: .
+      dockerfile: ./infrastructure/kafka/Dockerfile
+    container_name: swallowtail_kafka_2
+    ports: 
+      - "9094:9094"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=swallowtail_zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://swallowtail_kafka_2:9092,EXTERNAL://localhost:9094
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    depends_on:
+      - zookeeper
+    profiles:
+      - backend
+      - kafka-cluster
+
+  kafka_3:
+    build:
+      context: .
+      dockerfile: ./infrastructure/kafka/Dockerfile
+    container_name: swallowtail_kafka_3
+    ports: 
+      - "9095:9095"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=swallowtail_zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9095
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://swallowtail_kafka_3:9092,EXTERNAL://localhost:9095
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    depends_on:
+      - zookeeper
+    profiles:
+      - backend
+      - kafka-cluster
+
+  kafdrop:
+    build:
+      context: .
+      dockerfile: ./infrastructure/kafdrop/Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      - KAFKA_BROKERCONNECT=swallowtail_kafka_1:9092,swallowtail_kafka_2:9092,swallowtail_kafka_3:9092
+    depends_on:
+      - kafka_1
+    profiles:
+      - backend
+      - kafka-cluster
+
+  ## -- Postgres -- ##
+  postgres:
+    build:
+      context: .
+      dockerfile: ./infrastructure/postgres/Dockerfile
+    image: i.swallowtail.postgres 
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=swallowtail
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
     profiles:
       - backend

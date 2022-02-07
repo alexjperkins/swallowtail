@@ -10,10 +10,22 @@ func SetEnv(variableName string) string {
 	return v
 }
 
+// EnvGetOrDefault ...
+// TODO: Deprecated.
 func EnvGetOrDefault(key string, d interface{}) interface{} {
 	v, ok := os.LookupEnv(key)
 	if !ok {
 		return d
 	}
+	return v
+}
+
+// EnvWithDefault ...
+func EnvWithDefault(key string, d string) string {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return d
+	}
+
 	return v
 }
