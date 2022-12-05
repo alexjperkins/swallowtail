@@ -12,7 +12,7 @@ services:
     build:
       context: .
       dockerfile: ./infrastructure/postgres/Dockerfile
-    image: i.swallowtail.postgres 
+    image: i.swallowtail.postgres
     ports:
       - "5432:5432"
     environment:
@@ -41,7 +41,7 @@ services:
 
   swallowtail.s.discord:
     hostname: swallowtail-s-discord
-    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.discord.arm 
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.discord.arm
     ports:
       - "8002:8000"
     env_file:
@@ -172,6 +172,14 @@ services:
       - .envs/postgres.env
     depends_on:
       - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.bookmarker:
+    hostname: swallowtail-s-bookmarker
+    image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.bookmarker.arm
+    ports:
+      - "8013:8000"
     profiles:
       - backend
 

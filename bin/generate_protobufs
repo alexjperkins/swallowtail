@@ -3,6 +3,11 @@
 # TODO: Usage & prevention from calling from anywhere other than project root.
 
 SERVICE=$1
-SERVICE_NAME=$(echo "$SERVICE" | cut -c 3-100 | sed "s/\-//g")
+SERVICE_NAME=$(echo "$SERVICE" | cut -c 3-100 | sed "s/\-//g" | sed "s/s\.//g")
+
+echo "🛠   Generating protobuf definitions for: $SERVICE..."
 
 protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative $SERVICE/proto/$SERVICE_NAME.proto
+
+echo ""
+echo "✅   Done"

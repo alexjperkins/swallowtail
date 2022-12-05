@@ -12,7 +12,7 @@ services:
     build:
       context: .
       dockerfile: ./infrastructure/postgres/Dockerfile
-    image: i.swallowtail.postgres 
+    image: i.swallowtail.postgres
     ports:
       - "5432:5432"
     environment:
@@ -172,6 +172,14 @@ services:
       - .envs/postgres.env
     depends_on:
       - postgres
+    profiles:
+      - backend
+
+  swallowtail.s.bookmarker:
+    hostname: swallowtail-s-bookmarker
+    image: swallowtail.s.bookmarker
+    ports:
+      - "8013:8000"
     profiles:
       - backend
 

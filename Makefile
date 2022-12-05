@@ -15,6 +15,7 @@ build:
 	cd s.market-data &&  sudo make && cd .. && \
 	cd s.bitfinex &&  sudo make docker && cd .. && \
 	cd s.solana-nfts && sudo make docker && cd .. && \
+	cd s.bookmarker && sudo make docker && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.venues &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
@@ -33,6 +34,7 @@ backend:
 	cd s.market-data && sudo make docker && cd .. && \
 	cd s.bitfinex && sudo make docker && cd .. && \
 	cd s.solana-nfts && sudo make docker && cd .. && \
+	cd s.bookmarker && sudo make docker && cd .. && \
 	cd c.payments && sudo make && cd .. && \
 	cd c.venues &&  sudo make && cd .. && \
 	cd c.satoshi &&  sudo make && cd .. && \
@@ -96,6 +98,10 @@ solana-nfts:
 	cd s.solana-nfts &&  sudo make docker && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.s.solananfts
 
+bookmarker:
+	cd s.bookmarker && sudo make docker && cd .. && \
+	docker-compose -f local.yml up --build swallowtail.s.bookmarker
+
 cronpayments:
 	cd c.payments &&  sudo make && cd .. && \
 	docker-compose -f local.yml up --build swallowtail.c.payments
@@ -124,7 +130,7 @@ test-integration: postgres_test
 
 protos:
 	find . -type d -name s.\* -exec bash -c './bin/generate_protobufs {}' \;
-	
+
 .PHONY: ecrlogin
 ecrlogin:
 	 aws --region us-east-2 ecr get-login-password | docker login --username AWS --password-stdin 638234331039.dkr.ecr.us-east-2.amazonaws.com
@@ -141,6 +147,7 @@ ecrpush: ecrlogin
 	cd s.ftx && sudo make ecrpush && cd .. && \
 	cd s.trade-engine && sudo make ecrpush && cd .. && \
 	cd s.market-data && sudo make ecrpush && cd .. && \
+	cd s.bookmarker && sudo make ecrpush && cd .. && \
 	cd s.bitfinex && sudo make ecrpush && cd .. && \
 	cd c.payments && sudo make ecrpush && cd .. && \
 	cd c.venues &&  sudo make ecrpush && cd .. && \
