@@ -1,0 +1,155 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    envoy-sidecar: "true"
+    birdperch.io/routing-name: s.bookmarker
+    birdperch.io/service-type: backend
+  name: s-bookmarker
+  namespace: birdperch-io-s101
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: birdperch.io.s.bookmarker
+      birdperch.io/routing-name: s.bookmarker
+  strategy:
+    rollingUpdate:
+      maxSurge: 30%
+      maxUnavailable: 20%
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: birdperch.io.s.bookmarker
+        birdperch.io/routing-name: s.bookmarker
+        birdperch.io/service-type: backend
+      namespace: birdperch-io-s101
+    spec:
+      containers:
+      - args:
+        - -cluster
+        env:
+        - name: PORT
+          value: "8080"
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: LISTEN_ADDR
+          value: 127.0.0.1:8080
+        - name: GOMAXPROCS
+          value: "1"
+        image: templated
+        name: s-bookmarker
+        readinessProbe:
+          httpGet:
+            httpHeaders:
+            - name: Host
+              value: s.bookmarker
+            path: /ping
+            port: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 50Mi
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /etc/ssl/certs
+          name: etc-ssl-certs
+          readOnly: true
+        - mountPath: /usr/share/ca-certificates
+          name: usr-share-ca-certificates
+          readOnly: true
+        - mountPath: /usr/share/zoneinfo
+          name: zoneinfo
+          readOnly: true
+      - command:
+        - go run s-bookmarker
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: LIMIT_CORES
+          valueFrom:
+            resourceFieldRef:
+              divisor: "0"
+              resource: limits.cpu
+        image: 638234331039.dkr.ecr.us-east-2.amazonaws.com/swallowtail-arm:swallowtail.s.bookmarker.arm
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - nc -w 30 127.0.0.1 9109 || true
+      serviceAccountName: s-bookmarker
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    birdperch.io/routing-name: s.bookmarker
+  name: s-bookmarker
+  namespace: birdperch-io-s101
+spec:
+  clusterIP: None
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: birdperch.io.s.bookmarker'
+    birdperch.io/routing-name: s.bookmarker
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+  name: s-bookmarker
+  namespace: birdperch-io-s101
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: s-bookmarker
+  namespace: birdperch-io-s101
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: birdperch.io.s.bookmarker
+      birdperch.io/routing-name: s.bookmarker
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: s-bookmarker
+  namespace: birdperch-io-s101
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchExpressions:
+        - key: birdperch-io/egress-s-bookmarker
+          operator: In
+          values:
+          - "true"
+    ports:
+    - port: 80
+  podSelector:
+    matchLabels:
+      birdperch.io/routing-name: s.bookmarker

@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.gmon/routing-name: $(SERVICE_NAME)
+    birdperch.io/routing-name: $(SERVICE_NAME)
+    birdperch.io/service-type: $(SERVICE_TYPE)
+  name: s-
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: birdperch.io.$(SERVICE_NAME)
+      birdperch.io/routing-name: $(SERVICE_NAME)
+  strategy:
+    rollingUpdate:
+      maxSurge: 30%
+      maxUnavailable: 20%
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: birdperch.io.$(SERVICE_NAME)
+        birdperch.io/routing-name: $(SERVICE_NAME)
+        birdperch.io/service-type: $(SERVICE_TYPE)
+    spec:
+      containers:
