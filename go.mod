@@ -16,11 +16,14 @@ require (
 	github.com/dlclark/regexp2 v1.4.0
 	github.com/fatih/color v1.10.0
 	github.com/georgysavva/scany v0.3.0
+	github.com/gocassa/gocassa v1.2.0 // indirect
+	github.com/gocql/gocql v1.3.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/websocket v1.4.2
+	github.com/hailocab/gocassa v1.2.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
@@ -34,6 +37,8 @@ require (
 	github.com/jackc/pgtype v1.9.1 // indirect
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jackc/puddle v1.2.1 // indirect
+	github.com/joho/godotenv v1.4.0 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/monzo/slog v0.0.0-20211123154010-52a5ddb2ba55
 	github.com/monzo/terrors v0.0.0-20211018135141-bff28203d17a
