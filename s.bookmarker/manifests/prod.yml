@@ -2,7 +2,6 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    envoy-sidecar: "true"
     birdperch.io/routing-name: s.bookmarker
     birdperch.io/service-type: backend
   name: s-bookmarker
@@ -63,16 +62,6 @@ spec:
             memory: 50Mi
         securityContext:
           readOnlyRootFilesystem: true
-        volumeMounts:
-        - mountPath: /etc/ssl/certs
-          name: etc-ssl-certs
-          readOnly: true
-        - mountPath: /usr/share/ca-certificates
-          name: usr-share-ca-certificates
-          readOnly: true
-        - mountPath: /usr/share/zoneinfo
-          name: zoneinfo
-          readOnly: true
       - command:
         - go run s-bookmarker
         env:

@@ -1,0 +1,10 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: s-
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      birdperch.io/routing-name: $(SERVICE_NAME)
+      app: birdperch.io.$(SERVICE_NAME)
