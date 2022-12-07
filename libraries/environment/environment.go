@@ -13,6 +13,11 @@ var (
 // Environment defines the full environment for the application as a typed struct.
 type Environment struct {
 	Cassandra Cassandra
+	Metadata  Metadata
+}
+
+type Metadata struct {
+	ServiceName string `envconfig:"SERVICE_NAME"`
 }
 
 // Cassandra defines the cassandra specific environment.
