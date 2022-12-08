@@ -7,6 +7,53 @@ volumes:
 services:
   ### --- Infrastructure --- ###
 
+  ## -- Cassandra -- ##
+  cassandra1:
+    build:
+      context: .
+      dockerfile: ./infrastructure/cassandra/Dockerfile
+    image: i.swallowtail.cassandra1
+    container_name: cassandra1
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=birdperch
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    environment:
+      - CASSANDRA_SEEDS=cassandra1,cassandra2
+      - MAX_HEAP_SIZE=2G
+      - HEAP_NEWSIZE=200M
+    profiles:
+      - backend
+
+  cassandra2:
+    build:
+      context: .
+      dockerfile: ./infrastructure/cassandra/Dockerfile
+    image: i.swallowtail.cassandra2
+    container_name: cassandra2
+    ports:
+      - "9043:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=birdperch
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    environment:
+      - CASSANDRA_SEEDS=cassandra1,cassandra2
+      - MAX_HEAP_SIZE=2G
+      - HEAP_NEWSIZE=200M
+    depends_on:
+      - cassandra1
+    profiles:
+      - backend
+
   ## -- postgres -- ##
   postgres:
     build:
@@ -180,6 +227,14 @@ services:
     image: swallowtail.s.bookmarker
     ports:
       - "8013:8000"
+    environment:
+      - SERVICE_NAME=s.bookmarker
+      - ENVIRONMENT_FILE=SKIP
+    env_file:
+      - .envs/birdperch.cassandra.env
+    depends_on:
+      - cassandra1
+      - cassandra2
     profiles:
       - backend
 

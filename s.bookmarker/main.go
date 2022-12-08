@@ -9,6 +9,8 @@ import (
 	"swallowtail/s.bookmarker/dao"
 	"swallowtail/s.bookmarker/handler"
 	bookmarkerproto "swallowtail/s.bookmarker/proto"
+
+	"github.com/monzo/slog"
 )
 
 func main() {
@@ -27,7 +29,8 @@ func main() {
 
 	// Init Dao.
 	if err := dao.Init(cfg.Cassandra); err != nil {
-		log.Fatalf("Failed to initialize dao: %v", err)
+        // TODO: lets panic here.
+		slog.Error(ctx, "Failed to initialize dao: %v", err)
 	}
 
 	// Run server.

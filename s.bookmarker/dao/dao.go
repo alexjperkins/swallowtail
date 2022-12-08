@@ -2,6 +2,7 @@ package dao
 
 import (
 	"fmt"
+
 	"swallowtail/libraries/cassandra"
 	"swallowtail/libraries/environment"
 
@@ -10,7 +11,7 @@ import (
 
 var (
 	keyspaceName = "bookmarker"
-	Keyspace     gocassa.KeySpace
+    Keyspace gocassa.KeySpace
 )
 
 // Init initializes the DAO.

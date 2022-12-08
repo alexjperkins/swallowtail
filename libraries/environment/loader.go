@@ -1,11 +1,13 @@
 package environment
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/monzo/slog"
 )
 
 // LoadEnvironment loads the environment and returns as a typed struct.
@@ -18,18 +20,28 @@ func LoadEnvironment() (*Environment, error) {
 		return nil, fmt.Errorf("load environment variable: %w", ErrMissingEnvironmentFileEnvVar)
 	}
 
-	// Load environment.
-	if err := loadEnvFile(envFile); err != nil {
-		return nil, fmt.Errorf("load environment: %w", err)
+	switch envFile {
+	case "SKIP":
+		// Continue, no env file to load.
+		slog.Info(context.Background(), "No environment to load, flag recevied to skip")
+	default:
+		slog.Info(context.Background(), "Loading environment by file", map[string]string{
+			"env_file": envFile,
+		})
+
+		// Load environment.
+		if err := loadEnvFile(envFile); err != nil {
+			return nil, fmt.Errorf("load environment: %w", err)
+		}
 	}
 
 	// Process environment.
-	var env *Environment
-	if err := envconfig.Process("", env); err != nil {
+	var env = Environment{}
+	if err := envconfig.Process("", &env); err != nil {
 		return nil, fmt.Errorf("process environment: %w", err)
 	}
 
-	return env, nil
+	return &env, nil
 }
 
 func loadEnvFile(filename string) error {

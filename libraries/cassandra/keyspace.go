@@ -21,7 +21,7 @@ func validateKeyspace(keyspace string) error {
 
 	for _, r := range keyspace {
 		if !isAlpha(r) && !isNumeric(r) && !isUnderscore(r) {
-            return fmt.Errorf("keyspace name invalid char %s: %w", string(r), ErrKeyspaceNameInvalidChar)
+			return fmt.Errorf("keyspace name invalid char %s: %w", string(r), ErrKeyspaceNameInvalidChar)
 		}
 	}
 
