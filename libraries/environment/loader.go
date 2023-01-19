@@ -8,16 +8,16 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+const envPrefix = "birdperch"
+
 // LoadEnvironment loads the environment and returns as a typed struct.
 //
 // Returns an error if for some reason we fail to read the environment file.
 func LoadEnvironment() (*Environment, error) {
 	// Validate environent file env var.
 	envFile := os.Getenv(environmentFileName)
-	if envFile == "" {
-		return nil, fmt.Errorf("load environment variable: %w", ErrMissingEnvironmentFileEnvVar)
-	}
 
+<<<<<<< Updated upstream
 	// Load environment.
 	if err := loadEnvFile(envFile); err != nil {
 		return nil, fmt.Errorf("load environment: %w", err)
@@ -26,6 +26,26 @@ func LoadEnvironment() (*Environment, error) {
 	// Process environment.
 	var env *Environment
 	if err := envconfig.Process("", env); err != nil {
+=======
+	switch envFile {
+	case "":
+		// Continue, no env file to load.
+		slog.Info(context.Background(), "No environment to load, skipping")
+	default:
+		slog.Info(context.Background(), "Loading environment by file", map[string]string{
+			"env_file": envFile,
+		})
+
+		// Load environment.
+		if err := loadEnvFile(envFile); err != nil {
+			return nil, fmt.Errorf("load environment: %w", err)
+		}
+	}
+
+	// Process environment.
+	var env = Environment{}
+	if err := envconfig.Process(envPrefix, &env); err != nil {
+>>>>>>> Stashed changes
 		return nil, fmt.Errorf("process environment: %w", err)
 	}
 
