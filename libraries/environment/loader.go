@@ -1,11 +1,13 @@
 package environment
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/monzo/slog"
 )
 
 const envPrefix = "birdperch"
@@ -17,16 +19,7 @@ func LoadEnvironment() (*Environment, error) {
 	// Validate environent file env var.
 	envFile := os.Getenv(environmentFileName)
 
-<<<<<<< Updated upstream
-	// Load environment.
-	if err := loadEnvFile(envFile); err != nil {
-		return nil, fmt.Errorf("load environment: %w", err)
-	}
-
 	// Process environment.
-	var env *Environment
-	if err := envconfig.Process("", env); err != nil {
-=======
 	switch envFile {
 	case "":
 		// Continue, no env file to load.
@@ -43,9 +36,8 @@ func LoadEnvironment() (*Environment, error) {
 	}
 
 	// Process environment.
-	var env = Environment{}
+	var env = &Environment{}
 	if err := envconfig.Process(envPrefix, &env); err != nil {
->>>>>>> Stashed changes
 		return nil, fmt.Errorf("process environment: %w", err)
 	}
 
