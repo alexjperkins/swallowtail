@@ -1,6 +1,0 @@
-resources:
-- ../prod
-
-replicas:
-- name: s-
-  count: 1

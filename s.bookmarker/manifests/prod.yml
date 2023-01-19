@@ -101,7 +101,7 @@ spec:
   - name: http
     port: 80
   selector:
-    app: birdperch.io.s.bookmarker'
+    app: birdperch.io.s.bookmarker
     birdperch.io/routing-name: s.bookmarker
 ---
 apiVersion: v1

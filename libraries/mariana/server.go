@@ -9,6 +9,8 @@ import (
 	"github.com/monzo/slog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	"swallowtail/libraries/environment"
 )
 
 const (
@@ -23,18 +25,36 @@ type Server interface {
 }
 
 // Init inits our base server.
-func Init(service string) Server {
-	s := grpc.NewServer()
-	reflection.Register(s)
-	return &server{
-		s:           s,
-		ServiceName: service,
+// TODO: deprecate.
+func Init(serviceName string) Server {
+	return initServer(serviceName, nil)
+}
+
+// InitWithConfig ...
+func InitWithConfig(serviceName string, cfg *environment.Environment) Server {
+	return initServer(serviceName, cfg)
+}
+
+func initServer(serviceName string, cfg *environment.Environment) *server {
+	grpcs := grpc.NewServer()
+
+	reflection.Register(grpcs)
+	s := &server{
+		s:           grpcs,
+		ServiceName: serviceName,
 	}
+
+	if cfg != nil {
+		s.Config = cfg
+	}
+
+	return s
 }
 
 type server struct {
 	// Service Name
 	ServiceName string
+	Config      *environment.Environment
 
 	// GRPC server.
 	s *grpc.Server
@@ -71,5 +91,7 @@ func (s *server) Grpc() *grpc.Server {
 }
 
 func formatAddr(serviceName, port string) string {
+    serviceName = "localhost"
+
 	return fmt.Sprintf("%s:%s", serviceName, port)
 }

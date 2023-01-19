@@ -12,12 +12,15 @@ import (
 
 const envPrefix = "birdperch"
 
+// TODO: we need a better way here.
+const defaultEnvFilePath = "birdpirch.env"
+
 // LoadEnvironment loads the environment and returns as a typed struct.
 //
 // Returns an error if for some reason we fail to read the environment file.
 func LoadEnvironment() (*Environment, error) {
 	// Validate environent file env var.
-	envFile := os.Getenv(environmentFileName)
+	envFile := os.Getenv(defaultEnvFilePath)
 
 	// Process environment.
 	switch envFile {
@@ -37,7 +40,7 @@ func LoadEnvironment() (*Environment, error) {
 
 	// Process environment.
 	var env = &Environment{}
-	if err := envconfig.Process(envPrefix, &env); err != nil {
+	if err := envconfig.Process(envPrefix, env); err != nil {
 		return nil, fmt.Errorf("process environment: %w", err)
 	}
 

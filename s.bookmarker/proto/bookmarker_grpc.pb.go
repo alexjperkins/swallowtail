@@ -7,7 +7,10 @@
 package bookmarkerproto
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BookmarkerClient interface {
+	TmpPing(ctx context.Context, in *TmpPingRequest, opts ...grpc.CallOption) (*TmpPingResponse, error)
 }
 
 type bookmarkerClient struct {
@@ -29,10 +33,20 @@ func NewBookmarkerClient(cc grpc.ClientConnInterface) BookmarkerClient {
 	return &bookmarkerClient{cc}
 }
 
+func (c *bookmarkerClient) TmpPing(ctx context.Context, in *TmpPingRequest, opts ...grpc.CallOption) (*TmpPingResponse, error) {
+	out := new(TmpPingResponse)
+	err := c.cc.Invoke(ctx, "/bookmarker/TmpPing", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BookmarkerServer is the server API for Bookmarker service.
 // All implementations must embed UnimplementedBookmarkerServer
 // for forward compatibility
 type BookmarkerServer interface {
+	TmpPing(context.Context, *TmpPingRequest) (*TmpPingResponse, error)
 	mustEmbedUnimplementedBookmarkerServer()
 }
 
@@ -40,6 +54,9 @@ type BookmarkerServer interface {
 type UnimplementedBookmarkerServer struct {
 }
 
+func (UnimplementedBookmarkerServer) TmpPing(context.Context, *TmpPingRequest) (*TmpPingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TmpPing not implemented")
+}
 func (UnimplementedBookmarkerServer) mustEmbedUnimplementedBookmarkerServer() {}
 
 // UnsafeBookmarkerServer may be embedded to opt out of forward compatibility for this service.
@@ -53,13 +70,36 @@ func RegisterBookmarkerServer(s grpc.ServiceRegistrar, srv BookmarkerServer) {
 	s.RegisterService(&Bookmarker_ServiceDesc, srv)
 }
 
+func _Bookmarker_TmpPing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TmpPingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookmarkerServer).TmpPing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bookmarker/TmpPing",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookmarkerServer).TmpPing(ctx, req.(*TmpPingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Bookmarker_ServiceDesc is the grpc.ServiceDesc for Bookmarker service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Bookmarker_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "bookmarker",
 	HandlerType: (*BookmarkerServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "s.bookmarker/proto/bookmarker.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "TmpPing",
+			Handler:    _Bookmarker_TmpPing_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "s.bookmarker/proto/bookmarker.proto",
 }

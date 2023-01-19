@@ -1,5 +1,15 @@
 syntax = "proto3";
 
-option go_package = "./;bookmarkerproto";
+option go_package = "swallowtail/s.binance/proto;bookmarkerproto";
 
-service bookmarker {}
+service bookmarker {
+    rpc TmpPing (TmpPingRequest) returns (TmpPingResponse) {}
+}
+
+message TmpPingRequest {
+    string message = 1;
+}
+
+message TmpPingResponse {
+    string message = 1;
+}
