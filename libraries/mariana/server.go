@@ -91,7 +91,5 @@ func (s *server) Grpc() *grpc.Server {
 }
 
 func formatAddr(serviceName, port string) string {
-    serviceName = "localhost"
-
 	return fmt.Sprintf("%s:%s", serviceName, port)
 }
